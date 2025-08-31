@@ -1,0 +1,29 @@
+[project]
+name = "gemini-sre-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.11"
+dependencies = [
+    "pyyaml",
+    "pydantic",
+    "hyx",
+    "tenacity",
+    "slowapi",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "google-cloud-logging",
+    "google-cloud-pubsub",
+    "google-cloud-aiplatform",
+    "aiofiles",
+    "pytest",
+    "pytest-asyncio",
+    "PyGithub",  # Added
+    "google-auth",  # Added
+    "google-auth-oauthlib",  # Added
+    "google-auth-httplib2",  # Added
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
