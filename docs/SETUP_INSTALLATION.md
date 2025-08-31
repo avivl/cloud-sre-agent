@@ -10,6 +10,7 @@ Before you begin, ensure you have the following installed and configured:
     *   [Download Python](https://www.python.org/downloads/)
 *   **`uv` (recommended) or `pip`:** For efficient Python package management.
     *   [Install `uv`](https://astral.sh/blog/uv-a-new-python-package-installer)
+    *   **Note:** Core dependencies including `pyyaml`, `pydantic`, `hyx`, `tenacity`, `PyGithub`, `google-auth`, `google-cloud-logging`, `google-cloud-pubsub`, and `google-cloud-aiplatform` will be installed automatically by `uv sync`.
 *   **Google Cloud Platform (GCP) Project:** You need an active GCP project with the following services enabled:
     *   **Cloud Logging API:** To collect and export logs.
     *   **Pub/Sub API:** To stream log data in real-time. Ensure you have Pub/Sub topics and subscriptions configured for your log exports.

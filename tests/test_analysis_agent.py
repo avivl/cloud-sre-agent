@@ -1,5 +1,6 @@
 import pytest
-from unittest.mock import patch
+import json
+from unittest.mock import patch, MagicMock
 from gemini_sre_agent.analysis_agent import AnalysisAgent, RemediationPlan
 from gemini_sre_agent.triage_agent import TriagePacket
 
@@ -20,8 +21,23 @@ def triage_packet():
         natural_language_summary="The billing service is experiencing a high rate of 500 errors."
     )
 
-def test_analyze_issue(mock_aiplatform, triage_packet):
+@pytest.fixture
+def mock_gemini_response_analysis():
+    return {
+        "root_cause_analysis": "Simulated root cause: memory leak in billing service.",
+        "proposed_fix": "Simulated fix: apply patch to address memory leak.",
+        "code_patch": "def fix_memory_leak():\n    pass",
+        "iac_fix": "resource \"google_compute_instance\" \"fixed\" {}"
+    }
+
+@patch('gemini_sre_agent.analysis_agent.GenerativeModel')
+def test_analyze_issue(mock_generative_model, mock_aiplatform, triage_packet, mock_gemini_response_analysis):
     # Arrange
+    # Configure the mock GenerativeModel to return a predefined response
+    mock_instance = MagicMock()
+    mock_instance.generate_content.return_value.text = json.dumps(mock_gemini_response_analysis)
+    mock_generative_model.return_value = mock_instance
+
     agent = AnalysisAgent(
         project_id="test-project",
         location="us-central1",
@@ -35,5 +51,16 @@ def test_analyze_issue(mock_aiplatform, triage_packet):
 
     # Assert
     assert isinstance(remediation_plan, RemediationPlan)
-    assert remediation_plan.root_cause_analysis == "The root cause of the issue is a memory leak in the billing service."
-    assert remediation_plan.proposed_fix == "The proposed fix is to patch the memory leak."
+    assert remediation_plan.root_cause_analysis == mock_gemini_response_analysis["root_cause_analysis"]
+    assert remediation_plan.proposed_fix == mock_gemini_response_analysis["proposed_fix"]
+    assert remediation_plan.code_patch == mock_gemini_response_analysis["code_patch"]
+    assert remediation_plan.iac_fix == mock_gemini_response_analysis["iac_fix"]
+
+    # Verify that generate_content was called with the correct prompt
+    expected_prompt_part = "You are an expert SRE Analysis Agent."
+    mock_instance.generate_content.assert_called_once()
+    call_args = mock_instance.generate_content.call_args[0][0]
+    assert expected_prompt_part in call_args
+    assert triage_packet.model_dump_json() in call_args
+    assert json.dumps(historical_logs, indent=2) in call_args
+    assert json.dumps(configs, indent=2) in call_args

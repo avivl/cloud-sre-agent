@@ -44,7 +44,7 @@ pytest
 Tests are located in the `tests/` directory, mirroring the structure of the `src/` directory. Each core module (e.g., `triage_agent.py`, `analysis_agent.py`) has a corresponding test file (e.g., `test_triage_agent.py`, `test_analysis_agent.py`).
 
 *   **`pytest-asyncio`**: Used for testing asynchronous functions and methods.
-*   **Mocking:** `unittest.mock.patch` is used extensively to mock external dependencies (like GCP Vertex AI API calls or GitHub API calls) to ensure tests are isolated and fast.
+*   **Mocking:** `unittest.mock.patch` is used extensively to mock external dependencies (like GCP Vertex AI API calls or GitHub API calls) to ensure tests are isolated, fast, and do not require live credentials.
 
 ## Code Quality
 
@@ -52,7 +52,7 @@ Maintaining high code quality is crucial for the project's long-term maintainabi
 
 ### Type Hinting
 
-The codebase extensively uses [Python type hints](https://docs.python.org/3/library/typing.html) to improve code readability, enable static analysis, and reduce runtime errors. Developers are expected to adhere to existing type hinting conventions when contributing new code or modifying existing sections.
+The codebase extensively uses [Python type hints](https://docs.python.org/3/library/typing.html) to improve code readability, enable static analysis, and reduce runtime errors. Developers are expected to adhere to existing type hinting conventions when contributing new code or modifying existing sections. Pydantic models are also used for robust data validation and clear data structures, further enhancing type safety and code quality.
 
 ### Linting and Formatting
 
@@ -70,6 +70,10 @@ The codebase extensively uses [Python type hints](https://docs.python.org/3/libr
     # uv pip install black
     black .
     ```
+
+### Resilience Implementation
+
+The agent incorporates robust resilience patterns using the `hyx` library (for circuit breakers, retries, bulkheads, rate limiting) and `asyncio.wait_for()` for explicit timeout handling. When developing, consider how new components or external interactions can benefit from these patterns to ensure the agent's stability under adverse conditions. The `tenacity` library is also used for simpler retry mechanisms on specific operations.
 
 ## Contributing
 
