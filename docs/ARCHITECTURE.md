@@ -16,11 +16,11 @@ The agent's functionality is distributed across several key components, each wit
 
 ### 3. Triage Agent (`TriageAgent`)
 *   **Role:** Performs rapid, preliminary analysis of incoming log data.
-*   **Functionality:** Utilizes a **Gemini Flash model** (e.g., `gemini-1.5-flash-001`) for quick assessment. It identifies potential issues, assigns a preliminary severity score, and summarizes the findings into a structured `TriagePacket`. This acts as a crucial filtering step to prioritize critical events. Includes built-in retry mechanisms for model calls to enhance robustness.
+*   **Functionality:** Utilizes a **Gemini Flash model** for quick assessment. It identifies potential issues, assigns a preliminary severity score, and summarizes the findings into a structured `TriagePacket`. This acts as a crucial filtering step to prioritize critical events. Includes built-in retry mechanisms for model calls to enhance robustness.
 
 ### 4. Analysis Agent (`AnalysisAgent`)
 *   **Role:** Conducts in-depth root cause analysis and generates comprehensive remediation plans.
-*   **Functionality:** Receives `TriagePacket`s from the `TriageAgent`. It employs a more powerful **Gemini Pro model** (e.g., `gemini-1.5-pro-001`) to perform detailed analysis, often incorporating historical logs and relevant configuration data. The output is a `RemediationPlan`, detailing the root cause, proposed fix, and potential code or Infrastructure as Code (IaC) patches. Includes built-in retry mechanisms for model calls to enhance robustness.
+*   **Functionality:** Receives `TriagePacket`s from the `TriageAgent`. It employs a more powerful **Gemini Pro model** to perform detailed analysis, often incorporating historical logs and relevant configuration data. The output is a `RemediationPlan`, detailing the root cause, proposed fix, and potential code or Infrastructure as Code (IaC) patches. Includes built-in retry mechanisms for model calls to enhance robustness.
 
 ### 5. Remediation Agent (`RemediationAgent`)
 *   **Role:** Automates the implementation of proposed remediation actions.
@@ -37,6 +37,47 @@ The agent's functionality is distributed across several key components, each wit
 ## Data Flow and Interaction
 
 The agent operates in a continuous feedback loop:
+
+```mermaid
+sequenceDiagram
+    participant CL as Cloud Logging
+    participant PS as Pub/Sub
+    participant LS as LogSubscriber
+    participant TA as TriageAgent<br/>(Flash)
+    participant AA as AnalysisAgent<br/>(Pro)
+    participant QA as QuantitativeAnalyzer<br/>(Code Execution)
+    participant RA as RemediationAgent
+    participant GH as GitHub
+
+    CL->>PS: Export logs (severity>=ERROR)
+    PS->>LS: Push log message
+    LS->>TA: process_log_data(log_entry)
+    
+    Note over TA: Quick classification<br/>Gemini Flash
+    TA->>TA: Generate TriagePacket
+    
+    alt Issue Severity >= HIGH
+        TA->>AA: analyze_issue(triage_packet)
+        
+        Note over AA: Deep root cause analysis<br/>Gemini Pro
+        AA->>AA: Analyze historical logs<br/>+ configuration context
+        
+        AA->>QA: validate_hypothesis(analysis_result)
+        Note over QA: Generate & execute<br/>Python validation code
+        QA->>AA: empirical_data
+        
+        AA->>RA: create_pull_request(remediation_plan)
+        Note over RA: Generate code patches<br/>& PR description
+        RA->>GH: Create branch & PR
+        GH-->>RA: PR URL
+        
+        RA-->>LS: Success notification
+    else Issue Severity < HIGH
+        TA-->>LS: Log and continue
+    end
+```
+
+### Detailed Process Flow
 
 1.  **Logs to Pub/Sub:** Google Cloud Logging is configured to export relevant log streams to designated Pub/Sub topics.
 2.  **Subscriber Activation:** The `main.py` orchestrator launches an asynchronous task for each configured service. The `LogSubscriber` within each task listens to its respective Pub/Sub topic. Upon receiving a new log message, it triggers an asynchronous processing pipeline via a callback.

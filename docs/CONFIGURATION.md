@@ -6,12 +6,63 @@ The Gemini SRE Agent's behavior is highly configurable through the `config/confi
 
 The main configuration file is organized under the `gemini_cloud_log_monitor` key, containing global defaults and a list of services to monitor.
 
+```mermaid
+graph TD
+    subgraph "config.yaml Structure"
+        ROOT[gemini_cloud_log_monitor]
+        
+        ROOT --> DMS[default_model_selection]
+        DMS --> |triage_model| TM[gemini-flash]
+        DMS --> |analysis_model| AM[gemini-pro]
+        DMS --> |classification_model| CM[gemini-flash-lite]
+        
+        ROOT --> DGC[default_github_config]
+        DGC --> |repository| REPO[owner/repo]
+        DGC --> |base_branch| BRANCH[main]
+        
+        ROOT --> LOG[logging]
+        LOG --> |log_level| LL[INFO]
+        LOG --> |json_format| JF[false]
+        LOG --> |log_file| LF[null]
+        
+        ROOT --> SERVICES[services: List]
+        SERVICES --> S1[Service 1]
+        SERVICES --> S2[Service 2]
+        SERVICES --> S3[Service N...]
+        
+        S1 --> |service_name| SN1[billing-service]
+        S1 --> |project_id| PI1[your-gcp-project]
+        S1 --> |location| LOC1[us-central1]
+        S1 --> |subscription_id| SUB1[billing-logs-subscription]
+        S1 --> |model_selection*| MS1[Optional Override]
+        S1 --> |github*| GH1[Optional Override]
+        
+        MS1 -.-> |overrides| DMS
+        GH1 -.-> |overrides| DGC
+    end
+    
+    classDef required fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef optional fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef override fill:#fff3e0,stroke:#f57c00,stroke-width:2px,stroke-dasharray: 5 5
+    
+    class ROOT,SERVICES,S1,S2,S3,SN1,PI1,LOC1,SUB1 required
+    class DMS,DGC,LOG,TM,AM,CM,REPO,BRANCH,LL,JF,LF optional
+    class MS1,GH1 override
+```
+
+### Configuration Hierarchy
+
+The configuration follows a hierarchical structure where:
+- **Global defaults** apply to all services unless overridden
+- **Service-specific overrides** take precedence for individual services
+- **Optional fields** can be omitted to use system defaults
+
 ```yaml
 gemini_cloud_log_monitor:
   default_model_selection:
-    triage_model: "gemini-1.5-flash-001"
-    analysis_model: "gemini-1.5-pro-001"
-    classification_model: "gemini-2.5-flash-lite"
+    triage_model: "gemini-flash"
+    analysis_model: "gemini-pro"
+    classification_model: "gemini-flash-lite"
 
   default_github_config:
     repository: "owner/repo"
@@ -29,7 +80,7 @@ gemini_cloud_log_monitor:
       subscription_id: "billing-logs-subscription"
       # Optional: Override default model_selection or github for this service
       # model_selection:
-      #   triage_model: "gemini-1.5-flash-special"
+      #   triage_model: "gemini-flash-experimental"
       # github:
       #   repository: "owner/billing-repo" # Can be a different repo for this service
 
@@ -46,9 +97,9 @@ gemini_cloud_log_monitor:
 
 This section defines the global default Gemini models to be used by the Triage and Analysis agents. These models will be used for any service that does not specify its own `model_selection` override.
 
-*   **`triage_model`** (`str`): The name of the Gemini model to use for initial log triage (e.g., `gemini-1.5-flash-001`). This model should be optimized for speed and cost-efficiency.
-*   **`analysis_model`** (`str`): The name of the Gemini model to use for deep root cause analysis and remediation plan generation (e.g., `gemini-1.5-pro-001`). This model should be optimized for reasoning and complex problem-solving.
-*   **`classification_model`** (`str`): The name of the Gemini model to use for log classification (e.g., `gemini-2.5-flash-lite`).
+*   **`triage_model`** (`str`): The name of the Gemini model to use for initial log triage (e.g., `gemini-flash`). This model should be optimized for speed and cost-efficiency.
+*   **`analysis_model`** (`str`): The name of the Gemini model to use for deep root cause analysis and remediation plan generation (e.g., `gemini-pro`). This model should be optimized for reasoning and complex problem-solving.
+*   **`classification_model`** (`str`): The name of the Gemini model to use for log classification (e.g., `gemini-flash-lite`).
 
 ### `default_github_config`
 
@@ -133,9 +184,9 @@ services:
     location: "us-central1"
     subscription_id: "exp-logs-sub"
     model_selection:
-      triage_model: "gemini-1.5-flash-experimental"
-      analysis_model: "gemini-1.5-pro-experimental"
-      classification_model: "gemini-2.5-flash-experimental"
+      triage_model: "gemini-flash-experimental"
+      analysis_model: "gemini-pro-experimental"
+      classification_model: "gemini-flash-experimental"
 
   # ... other services
 ```
