@@ -231,3 +231,6 @@ node_modules/
 # tasks/
 .cursor
 .taskmaster
+
+# Ignore config.yaml
+config/config.yaml
