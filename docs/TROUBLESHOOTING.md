@@ -1,104 +1,348 @@
 # Troubleshooting Guide
 
-This guide provides solutions to common issues you might encounter while setting up, deploying, or running the Gemini SRE Agent.
+This guide provides systematic approaches for troubleshooting the Gemini SRE Agent using the flow tracking system described in [LOGGING.md](LOGGING.md).
 
-## 1. Authentication and Permission Issues
+## Overview
 
-### Issue: `google.api_core.exceptions.ServiceUnavailable: 503 Getting metadata from plugin failed with error: Reauthentication is needed.`
+The Gemini SRE Agent uses structured logging with flow tracking to enable complete traceability from log ingestion through remediation. Every issue can be traced using:
 
-**Cause:** Your `gcloud` application default credentials have expired or are invalid.
+- **`flow_id`**: Tracks a single log entry through the entire pipeline
+- **`issue_id`**: Identifies a specific issue/incident across components
 
-**Solution:** Reauthenticate your `gcloud` CLI by running:
+## Common Issues and Solutions
+
+### 1. Log Processing Failures
+
+#### Symptom: Messages are received but not processed
 ```bash
-gcloud auth application-default login
+# Look for LOG_INGESTION messages without corresponding TRIAGE messages
+grep "[LOG_INGESTION] Received message" /path/to/logs | head -5
+grep "[TRIAGE] Starting triage analysis" /path/to/logs | head -5
 ```
-Follow the prompts in your browser to complete the authentication process.
 
-### Issue: `google.api_core.exceptions.NotFound: 404 Publisher Model ... was not found or your project does not have access to it.`
+**Root Cause Analysis:**
+```bash
+# Find specific flow_id that failed
+FLOW_ID="log-20250127-100000"
+grep "flow_id=$FLOW_ID" /path/to/logs
 
-**Cause:** The specified Gemini model is not available in your project/location, or your service account lacks the necessary permissions.
+# Look for error patterns
+grep -E "(flow_id=$FLOW_ID.*ERROR_HANDLING|ERROR_HANDLING.*flow_id=$FLOW_ID)" /path/to/logs
+```
 
-**Solution:**
-1.  **Verify Project ID and Location:** Ensure the `project_id` and `location` in your `config/config.yaml` (or service-specific overrides) are correct for your GCP project.
-2.  **Check Model Availability:** In the GCP Console, navigate to **Vertex AI > Language models** or **Vertex AI > Model Garden** for your project. Verify that the specified Gemini models (e.g., `gemini-1.5-flash-001`, `gemini-1.5-pro-001`) are available in the region you are using (`us-central1` by default).
-3.  **Enable Vertex AI API:** Ensure the Vertex AI API is enabled in your GCP project.
-4.  **Check Service Account Permissions:** Confirm that the service account running the agent has the `Vertex AI User` role (`roles/aiplatform.user`) in that project.
+**Common Solutions:**
+- **JSON Decode Errors**: Check Pub/Sub message format
+- **Model API Errors**: Verify GCP credentials and quotas
+- **Network Issues**: Check connectivity to Vertex AI
 
-### Issue: `github.GithubException: 401 Unauthorized` or `403 Forbidden`
+#### Symptom: Triage completes but analysis never starts
+```bash
+# Find triage completion without analysis start
+ISSUE_ID="database-connection-failure-001"
+grep "issue_id=$ISSUE_ID" /path/to/logs | grep -E "(TRIAGE.*complete|ANALYSIS.*Starting)"
+```
 
-**Cause:** Your GitHub Personal Access Token (PAT) is invalid, has expired, or lacks the necessary `repo` scope.
+**Troubleshooting Steps:**
+1. Check if severity threshold is met (default: severity >= 7)
+2. Verify AnalysisAgent initialization
+3. Check for validation errors in triage output
 
-**Solution:**
-1.  **Verify PAT:** Go to your GitHub settings > Developer settings > Personal access tokens and ensure your PAT is still valid.
-2.  **Check Scopes:** Confirm that your PAT has the `repo` scope enabled.
-3.  **Environment Variable:** Ensure the `GITHUB_TOKEN` environment variable is correctly set in your environment where the agent is running.
+### 2. GitHub Integration Issues
 
-## 2. Pub/Sub Configuration Problems
+#### Symptom: Analysis completes but no pull request is created
+```bash
+# Trace remediation flow
+ISSUE_ID="database-connection-failure-001"
+grep "issue_id=$ISSUE_ID" /path/to/logs | grep "REMEDIATION"
+```
 
-### Issue: Agent not receiving messages from Pub/Sub
+**Common Issues:**
+- **Branch Creation Failures**: Look for GitHub API 422 errors
+- **File Path Extraction**: Check for "FILE:" comment in code patches
+- **Permission Errors**: Verify GitHub token permissions
 
-**Cause:** The Pub/Sub topic or subscription is misconfigured, or the Cloud Logging sink is not correctly exporting logs.
+#### Symptom: "Reference already exists" errors
+```bash
+# This should be handled idempotently - look for the handling
+grep "Branch already exists (idempotent)" /path/to/logs
+```
 
-**Solution:**
-1.  **Verify Pub/Sub Topic and Subscription:**
-    *   Ensure the Pub/Sub topic and subscription exist and their names match those in your `config/config.yaml`.
-    *   Use `gcloud pubsub topics describe YOUR_TOPIC_NAME` and `gcloud pubsub subscriptions describe YOUR_SUBSCRIPTION_NAME` to verify.
-2.  **Check Cloud Logging Sink:**
-    *   Verify that the Cloud Logging sink exists and is correctly configured to export logs to your Pub/Sub topic.
-    *   Ensure the sink's filter matches the logs you expect to be exported.
-    *   Check the sink's writer identity has the `roles/pubsub.publisher` role on the Pub/Sub topic.
-3.  **Log Volume:** Confirm that logs are actually being generated and sent to Cloud Logging for the services you are monitoring.
+**Expected Behavior:**
+The system should gracefully handle existing branches and continue processing.
 
-## 3. Deployment Errors
+### 3. Performance Issues
 
-### Issue: Docker image build fails
+#### Symptom: Processing takes too long
+```bash
+# Analyze processing times for a specific flow
+FLOW_ID="log-20250127-100000"
 
-**Cause:** Missing dependencies, incorrect `Dockerfile` path, or issues with `uv` installation.
+echo "=== Triage Timing ==="
+grep -E "\[TRIAGE\] (Starting|complete)" /path/to/logs | grep "flow_id=$FLOW_ID"
 
-**Solution:**
-1.  **Check `Dockerfile`:** Ensure the `Dockerfile` is in the project root and is correctly written.
-2.  **Verify `uv` installation:** Run `uv --version` to confirm `uv` is installed and accessible.
-3.  **Dependency Issues:** Ensure `pyproject.toml` is correctly formatted and all dependencies are resolvable.
+echo "=== Analysis Timing ==="
+grep -E "\[ANALYSIS\] (Starting|complete)" /path/to/logs | grep "flow_id=$FLOW_ID"
 
-### Issue: Cloud Run deployment fails
+echo "=== Remediation Timing ==="
+grep -E "\[REMEDIATION\] (Creating|created successfully)" /path/to/logs | grep "flow_id=$FLOW_ID"
+```
 
-**Cause:** Incorrect `gcloud` command, insufficient permissions for the deploying user/service account, or issues with the Docker image.
+**Performance Benchmarks:**
+- Triage: < 10 seconds
+- Analysis: < 30 seconds  
+- Remediation: < 20 seconds
 
-**Solution:**
-1.  **`gcloud` CLI Configuration:** Ensure your `gcloud` CLI is authenticated and configured for the correct project and region.
-2.  **IAM Permissions:** The user or service account deploying to Cloud Run needs the `Cloud Run Developer` role (`roles/run.developer`) and `Service Account User` role (`roles/iam.serviceAccountUser`) on the service account used by the Cloud Run service.
-3.  **Docker Image:** Verify that the Docker image was successfully built and pushed to GCR.
-4.  **Cloud Run Logs:** Check the Cloud Run service logs in GCP Console for more detailed error messages.
+## Execution Path Tracing Scripts
 
-## 4. Model API and Billing Troubleshooting
+### Complete Flow Analysis
+```bash
+#!/bin/bash
+# trace_flow.sh - Trace a complete flow from start to finish
 
-### Issue: Gemini model calls are slow or fail frequently
+FLOW_ID="$1"
+if [ -z "$FLOW_ID" ]; then
+    echo "Usage: $0 <flow_id>"
+    exit 1
+fi
 
-**Cause:** API rate limits, network latency, or model capacity issues.
+echo "=== Tracing Flow: $FLOW_ID ==="
+echo
 
-**Solution:**
-1.  **Check Quotas:** Review your Vertex AI API quotas in the GCP Console. You might be hitting rate limits.
-2.  **Monitor Latency:** Use Cloud Monitoring to observe latency metrics for Vertex AI API calls.
-3.  **Resilience Configuration:** Adjust the resilience parameters in `config/config.yaml` (e.g., `retry` attempts, `wait` times, `bulkhead` limits) to better handle transient issues.
+echo "1. LOG INGESTION:"
+grep "\[LOG_INGESTION\].*flow_id=$FLOW_ID" /path/to/logs
 
-### Issue: Unexpected billing charges for Vertex AI
+echo
+echo "2. TRIAGE:"
+grep "\[TRIAGE\].*flow_id=$FLOW_ID" /path/to/logs
 
-**Cause:** High volume of model calls, using expensive models, or inefficient prompt design.
+echo
+echo "3. ANALYSIS:"
+grep "\[ANALYSIS\].*flow_id=$FLOW_ID" /path/to/logs
 
-**Solution:**
-1.  **Monitor Usage:** Regularly review your Vertex AI usage in the GCP Billing console.
-2.  **Model Selection:** Ensure you are using the most cost-effective models for each task (e.g., Flash models for triage, Pro models for analysis only when necessary).
-3.  **Prompt Optimization:** Optimize your prompts to reduce token usage and unnecessary model calls.
-4.  **Logging:** Use the agent's structured logging to track model call frequency and associated costs.
+echo
+echo "4. REMEDIATION:"
+grep "\[REMEDIATION\].*flow_id=$FLOW_ID" /path/to/logs
 
-## 5. GitHub Integration Issues
+echo
+echo "5. ERRORS:"
+grep "\[ERROR_HANDLING\].*flow_id=$FLOW_ID" /path/to/logs
+```
 
-### Issue: Agent fails to create branches or Pull Requests
+### Issue Impact Analysis
+```bash
+#!/bin/bash
+# issue_analysis.sh - Analyze all flows for a specific issue
 
-**Cause:** Incorrect GitHub PAT, insufficient PAT scopes, or repository access issues.
+ISSUE_ID="$1"
+if [ -z "$ISSUE_ID" ]; then
+    echo "Usage: $0 <issue_id>"
+    exit 1
+fi
 
-**Solution:**
-1.  **Verify PAT:** Double-check your `GITHUB_TOKEN` environment variable and ensure the PAT is valid and not expired.
-2.  **Check PAT Scopes:** Confirm that the PAT has the `repo` scope enabled, which grants full control over private repositories.
-3.  **Repository Access:** Ensure the GitHub user associated with the PAT has write access to the target repository.
-4.  **GitHub API Rate Limits:** Check if you are hitting GitHub API rate limits. The `RemediationAgent` does not currently implement specific rate limiting for GitHub API calls, which could be a future enhancement.
+echo "=== Issue Analysis: $ISSUE_ID ==="
+
+echo
+echo "All flows for this issue:"
+grep "issue_id=$ISSUE_ID" /path/to/logs | cut -d' ' -f1-3 | sort -u
+
+echo
+echo "Success/Failure summary:"
+echo "Successful remediations:"
+grep "issue_id=$ISSUE_ID.*Pull request created successfully" /path/to/logs | wc -l
+
+echo "Failed attempts:"
+grep "issue_id=$ISSUE_ID.*ERROR_HANDLING" /path/to/logs | wc -l
+```
+
+### Recent Activity Monitor
+```bash
+#!/bin/bash
+# recent_activity.sh - Monitor recent system activity
+
+TIME_WINDOW="${1:-10m}"  # Default to last 10 minutes
+
+echo "=== Recent Activity (last $TIME_WINDOW) ==="
+
+echo
+echo "New flows started:"
+grep "\[LOG_INGESTION\] Received message" /path/to/logs | tail -10
+
+echo
+echo "Issues triaged:"
+grep "\[TRIAGE\] Triage analysis complete" /path/to/logs | tail -5
+
+echo
+echo "Pull requests created:"
+grep "\[REMEDIATION\] Pull request created successfully" /path/to/logs | tail -5
+
+echo
+echo "Recent errors:"
+grep "\[ERROR_HANDLING\]" /path/to/logs | tail -10
+```
+
+## Debugging Specific Components
+
+### TriageAgent Debugging
+```bash
+# Check triage model responses
+grep "\[TRIAGE\] Raw model response" /path/to/logs | tail -5
+
+# Validation errors
+grep "Failed to validate TriagePacket schema" /path/to/logs
+
+# Model call failures  
+grep "Error calling Gemini Triage model" /path/to/logs
+```
+
+### AnalysisAgent Debugging
+```bash
+# Check analysis model responses
+grep "\[ANALYSIS\] Raw model response" /path/to/logs | tail -5
+
+# Validation errors
+grep "Failed to validate RemediationPlan schema" /path/to/logs
+
+# Model call failures
+grep "Error calling Gemini Analysis model" /path/to/logs
+```
+
+### RemediationAgent Debugging
+```bash
+# GitHub API errors
+grep "GitHub API error during PR creation" /path/to/logs
+
+# File path extraction issues
+grep "Invalid file path extracted" /path/to/logs
+
+# Branch creation issues
+grep "Branch.*already exists\|Branch created successfully" /path/to/logs | tail -10
+```
+
+## System Health Checks
+
+### Daily Health Check Script
+```bash
+#!/bin/bash
+# health_check.sh - Daily system health verification
+
+echo "=== Gemini SRE Agent Health Check ==="
+echo "Date: $(date)"
+echo
+
+# Check for recent activity (last 24 hours)
+echo "Messages processed (last 24h):"
+grep "\[LOG_INGESTION\] Received message" /path/to/logs | grep "$(date +%Y-%m-%d)" | wc -l
+
+echo "Issues triaged (last 24h):"
+grep "\[TRIAGE\] Triage analysis complete" /path/to/logs | grep "$(date +%Y-%m-%d)" | wc -l
+
+echo "Pull requests created (last 24h):"
+grep "\[REMEDIATION\] Pull request created successfully" /path/to/logs | grep "$(date +%Y-%m-%d)" | wc -l
+
+echo
+echo "Error summary (last 24h):"
+echo "Triage errors:"
+grep "\[ERROR_HANDLING\].*TRIAGE" /path/to/logs | grep "$(date +%Y-%m-%d)" | wc -l
+
+echo "Analysis errors:"
+grep "\[ERROR_HANDLING\].*ANALYSIS" /path/to/logs | grep "$(date +%Y-%m-%d)" | wc -l
+
+echo "Remediation errors:"
+grep "\[ERROR_HANDLING\].*REMEDIATION" /path/to/logs | grep "$(date +%Y-%m-%d)" | wc -l
+```
+
+### Performance Monitoring
+```bash
+#!/bin/bash
+# performance_monitor.sh - Track processing performance
+
+echo "=== Performance Analysis ==="
+
+# Average processing times (requires more sophisticated parsing)
+echo "Recent triage completion times:"
+grep "\[TRIAGE\] Triage analysis complete" /path/to/logs | tail -10 | while read line; do
+    FLOW_ID=$(echo "$line" | grep -o "flow_id=[^,]*" | cut -d= -f2)
+    START_TIME=$(grep "\[TRIAGE\] Starting triage analysis.*flow_id=$FLOW_ID" /path/to/logs | head -1 | cut -d' ' -f1)
+    END_TIME=$(echo "$line" | cut -d' ' -f1)
+    echo "Flow $FLOW_ID: $START_TIME -> $END_TIME"
+done
+```
+
+## Recovery Procedures
+
+### Stuck Processing Recovery
+If a flow appears stuck in processing:
+
+1. **Identify the stuck flow:**
+   ```bash
+   # Find flows that started but never completed
+   grep "\[TRIAGE\] Starting triage analysis" /path/to/logs | tail -10
+   grep "\[TRIAGE\] Triage analysis complete" /path/to/logs | tail -10
+   ```
+
+2. **Check for errors:**
+   ```bash
+   FLOW_ID="stuck-flow-id"
+   grep "flow_id=$FLOW_ID" /path/to/logs | grep "ERROR_HANDLING"
+   ```
+
+3. **Manual retry (if needed):**
+   The system has built-in retry mechanisms, but manual intervention may be needed for persistent issues.
+
+### System Restart Recovery
+After system restart:
+
+1. **Verify all agents initialize:**
+   ```bash
+   grep "\[STARTUP\]" /path/to/logs | tail -20
+   ```
+
+2. **Check subscription resumption:**
+   ```bash
+   grep "\[LOG_INGESTION\] Listening for messages" /path/to/logs | tail -1
+   ```
+
+3. **Monitor first few messages:**
+   ```bash
+   grep "\[LOG_INGESTION\] Received message" /path/to/logs | tail -5
+   ```
+
+## Alerting Recommendations
+
+### Critical Alerts
+- No messages received for > 1 hour
+- Error rate > 10% for any component
+- No pull requests created for > 4 hours (during business hours)
+
+### Warning Alerts  
+- Processing time > 2 minutes for any flow
+- Model API errors > 5% rate
+- GitHub API errors
+
+### Monitoring Queries
+```bash
+# Error rate calculation (last hour)
+TOTAL=$(grep "\[LOG_INGESTION\] Received message" /path/to/logs | tail -100 | wc -l)
+ERRORS=$(grep "\[ERROR_HANDLING\]" /path/to/logs | tail -100 | wc -l)
+ERROR_RATE=$(echo "scale=2; $ERRORS * 100 / $TOTAL" | bc)
+echo "Error rate: $ERROR_RATE%"
+```
+
+## Contact and Escalation
+
+### Log Collection for Support
+When reporting issues, collect:
+
+1. **Flow trace:** Complete log output for affected flow_id
+2. **Error context:** All ERROR_HANDLING messages with timestamps
+3. **Configuration:** Current config.yaml (redacted)
+4. **System info:** Version, deployment environment
+
+### Support Information
+- **Documentation:** [LOGGING.md](LOGGING.md) for log format reference  
+- **Architecture:** [ARCHITECTURE.md](../ARCHITECTURE.md) for system design
+- **Configuration:** [README.md](../README.md) for setup instructions
+
+---
+
+**Note:** Replace `/path/to/logs` with your actual log file path or use journalctl/kubectl logs as appropriate for your deployment environment.

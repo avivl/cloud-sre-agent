@@ -86,7 +86,8 @@ For detailed information on the Gemini SRE Agent, please refer to the following 
 *   [**Security Guide**](docs/SECURITY.md): Best practices and considerations for securing the agent.
 *   [**Performance Tuning Guide**](docs/PERFORMANCE.md): Recommendations for optimizing agent performance and cost.
 *   [**Operations Runbook**](docs/OPERATIONS.md): Guidelines for operating, monitoring, and maintaining the agent.
-*   [**Troubleshooting Guide**](docs/TROUBLESHOOTING.md): Solutions to common issues.
+*   [**Logging and Flow Tracking**](docs/LOGGING.md): Complete guide to the flow tracking system and structured logging format.
+*   [**Troubleshooting Guide**](docs/TROUBLESHOOTING.md): Systematic approaches for debugging issues using flow tracking and execution path tracing.
 *   [**Development Guide**](docs/DEVELOPMENT.md): Information for contributors, including testing, code style, and contributing.
 
 ## Getting Started (Quick Overview)
