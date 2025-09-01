@@ -2,6 +2,75 @@
 
 This guide provides instructions for setting up the necessary Google Cloud Platform (GCP) infrastructure components required for the Gemini SRE Agent to function. This primarily involves configuring Google Cloud Logging to export logs to Pub/Sub, which the agent then consumes.
 
+## GCP Infrastructure Overview
+
+The following diagram shows the required GCP components and their relationships:
+
+```mermaid
+graph TB
+    subgraph "Google Cloud Project"
+        subgraph "APIs & Services"
+            APIS[Enabled APIs<br/>• Logging API<br/>• Pub/Sub API<br/>• Vertex AI API]
+        end
+        
+        subgraph "Cloud Logging"
+            APPS[Your Applications<br/>Cloud Run, GKE, etc.]
+            LOGS[Cloud Logging<br/>Centralized Logs]
+            SINK[Log Sink<br/>Filter: severity>=ERROR]
+        end
+        
+        subgraph "Pub/Sub"
+            TOPIC[Pub/Sub Topic<br/>my-service-logs]
+            SUB[Pub/Sub Subscription<br/>my-service-logs-sub]
+        end
+        
+        subgraph "Vertex AI"
+            FLASH[Gemini 1.5 Flash<br/>Triage Model]
+            PRO[Gemini 1.5 Pro<br/>Analysis Model]
+            EXEC[Code Execution<br/>Quantitative Analysis]
+        end
+        
+        subgraph "IAM & Security"
+            SA_LOGGING[Logging Service Account<br/>Publisher Role]
+            SA_AGENT[Agent Service Account<br/>Subscriber + AI User]
+        end
+    end
+    
+    subgraph "External Services"
+        AGENT[Gemini SRE Agent<br/>Cloud Run / Local]
+        GITHUB[GitHub Repository<br/>Pull Requests]
+    end
+    
+    APPS --> LOGS
+    LOGS --> SINK
+    SINK --> |Export Filtered Logs| TOPIC
+    TOPIC --> SUB
+    
+    SA_LOGGING --> |Publish Permissions| TOPIC
+    SA_AGENT --> |Subscribe Permissions| SUB
+    SA_AGENT --> |Inference Permissions| FLASH
+    SA_AGENT --> |Inference Permissions| PRO
+    SA_AGENT --> |Execution Permissions| EXEC
+    
+    SUB --> |Pull Messages| AGENT
+    AGENT --> |Model Calls| FLASH
+    AGENT --> |Model Calls| PRO
+    AGENT --> |Code Execution| EXEC
+    AGENT --> |Create PRs| GITHUB
+    
+    classDef gcp fill:#4285f4,stroke:#1a73e8,stroke-width:2px,color:white
+    classDef pubsub fill:#ff6d01,stroke:#e8530e,stroke-width:2px,color:white
+    classDef ai fill:#0f9d58,stroke:#0d8043,stroke-width:2px,color:white
+    classDef security fill:#ea4335,stroke:#d33b2c,stroke-width:2px,color:white
+    classDef external fill:#9aa0a6,stroke:#5f6368,stroke-width:2px,color:white
+    
+    class APIS,LOGS,SINK gcp
+    class TOPIC,SUB pubsub
+    class FLASH,PRO,EXEC ai
+    class SA_LOGGING,SA_AGENT security
+    class AGENT,GITHUB external
+```
+
 ## 1. Enable Required APIs
 
 Ensure the following APIs are enabled in your GCP project:

@@ -38,6 +38,47 @@ The agent's functionality is distributed across several key components, each wit
 
 The agent operates in a continuous feedback loop:
 
+```mermaid
+sequenceDiagram
+    participant CL as Cloud Logging
+    participant PS as Pub/Sub
+    participant LS as LogSubscriber
+    participant TA as TriageAgent<br/>(Flash)
+    participant AA as AnalysisAgent<br/>(Pro)
+    participant QA as QuantitativeAnalyzer<br/>(Code Execution)
+    participant RA as RemediationAgent
+    participant GH as GitHub
+
+    CL->>PS: Export logs (severity>=ERROR)
+    PS->>LS: Push log message
+    LS->>TA: process_log_data(log_entry)
+    
+    Note over TA: Quick classification<br/>Gemini 1.5 Flash
+    TA->>TA: Generate TriagePacket
+    
+    alt Issue Severity >= HIGH
+        TA->>AA: analyze_issue(triage_packet)
+        
+        Note over AA: Deep root cause analysis<br/>Gemini 1.5 Pro
+        AA->>AA: Analyze historical logs<br/>+ configuration context
+        
+        AA->>QA: validate_hypothesis(analysis_result)
+        Note over QA: Generate & execute<br/>Python validation code
+        QA->>AA: empirical_data
+        
+        AA->>RA: create_pull_request(remediation_plan)
+        Note over RA: Generate code patches<br/>& PR description
+        RA->>GH: Create branch & PR
+        GH-->>RA: PR URL
+        
+        RA-->>LS: Success notification
+    else Issue Severity < HIGH
+        TA-->>LS: Log and continue
+    end
+```
+
+### Detailed Process Flow
+
 1.  **Logs to Pub/Sub:** Google Cloud Logging is configured to export relevant log streams to designated Pub/Sub topics.
 2.  **Subscriber Activation:** The `main.py` orchestrator launches an asynchronous task for each configured service. The `LogSubscriber` within each task listens to its respective Pub/Sub topic. Upon receiving a new log message, it triggers an asynchronous processing pipeline via a callback.
 3.  **Triage & Analysis Pipeline:** The received log data is first sent to the `TriageAgent`. If a significant issue is identified, the resulting `TriagePacket` is then passed to the `AnalysisAgent` for deeper investigation. Both agents incorporate retry logic for their Gemini model interactions. The `AnalysisAgent` may also interact with the `QuantitativeAnalyzer` for empirical validation of its findings.

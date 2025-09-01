@@ -2,6 +2,66 @@
 
 This guide provides instructions for deploying the Gemini SRE Agent to Google Cloud Run, a fully managed compute platform for deploying containerized applications. While Cloud Run is the recommended deployment target for its simplicity and scalability, the provided `Dockerfile` allows for deployment to other container orchestration platforms like Google Kubernetes Engine (GKE) or custom environments.
 
+## Deployment Flow Overview
+
+The deployment process follows a straightforward containerization and Cloud Run deployment pattern:
+
+```mermaid
+flowchart TB
+    subgraph "Development Environment"
+        DEV[Developer Workstation]
+        CODE[Application Code]
+        CONFIG[config.yaml]
+        DOCKER[Dockerfile]
+    end
+    
+    subgraph "Build Process"
+        BUILD[Docker Build]
+        IMAGE[Docker Image]
+        TAG[Tag Image]
+    end
+    
+    subgraph "Google Cloud Platform"
+        GCR[Google Container Registry]
+        CR[Cloud Run Service]
+        SM[Secret Manager]
+        LOGS[Cloud Logging]
+    end
+    
+    subgraph "External Services"
+        GITHUB[GitHub Repository]
+        VERTEX[Vertex AI Models]
+        PUBSUB[Pub/Sub Subscriptions]
+    end
+    
+    DEV --> BUILD
+    CODE --> BUILD
+    CONFIG --> BUILD
+    DOCKER --> BUILD
+    
+    BUILD --> IMAGE
+    IMAGE --> TAG
+    TAG --> GCR
+    
+    GCR --> CR
+    SM --> |Secrets| CR
+    CR --> LOGS
+    
+    CR <--> |Pull Requests| GITHUB
+    CR <--> |Model Inference| VERTEX
+    CR <--> |Log Messages| PUBSUB
+    
+    classDef dev fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef build fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef gcp fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef external fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    
+    class DEV,CODE,CONFIG,DOCKER dev
+    class BUILD,IMAGE,TAG build
+    class GCR,CR,SM,LOGS gcp
+    class GITHUB,VERTEX,PUBSUB external
+```
+
 ## Containerization with Docker
 
 The agent is packaged as a Docker image, ensuring a consistent and isolated runtime environment. The `Dockerfile` defines the steps to build this image:

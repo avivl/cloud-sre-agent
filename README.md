@@ -14,6 +14,56 @@ Whether you're looking to streamline your incident management, gain deeper insig
 
 Dive in to discover how this agent can transform your cloud log monitoring into an intelligent, automated, and resilient operation.
 
+## System Architecture
+
+The Gemini SRE Agent employs a sophisticated multi-model AI architecture for intelligent log monitoring and automated remediation:
+
+```mermaid
+graph TB
+    subgraph "Google Cloud Platform"
+        CL[Cloud Logging] --> PS[Pub/Sub Topics]
+        PS --> |Log Messages| SUB[Pub/Sub Subscriptions]
+    end
+    
+    subgraph "Gemini SRE Agent"
+        SUB --> LS[Log Subscriber]
+        LS --> |Raw Logs| TA[Triage Agent<br/>Gemini 1.5 Flash]
+        TA --> |TriagePacket| AA[Analysis Agent<br/>Gemini 1.5 Pro]
+        AA --> |ValidationRequest| QA[Quantitative Analyzer<br/>Code Execution]
+        QA --> |EmpiricalData| AA
+        AA --> |RemediationPlan| RA[Remediation Agent]
+    end
+    
+    subgraph "External Services"
+        RA --> |Create PR| GH[GitHub Repository]
+        RA --> |Notifications| SLACK[Slack/PagerDuty]
+    end
+    
+    subgraph "Configuration & Resilience"
+        CONFIG[config.yaml<br/>Multi-Service Setup] --> LS
+        RESILIENCE[Hyx Resilience<br/>Circuit Breakers] --> TA
+        RESILIENCE --> AA
+        RESILIENCE --> RA
+    end
+    
+    classDef aiComponent fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef gcpService fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef external fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef config fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    
+    class TA,AA,QA aiComponent
+    class CL,PS,SUB gcpService
+    class GH,SLACK external
+    class CONFIG,RESILIENCE config
+```
+
+### Multi-Model AI Strategy
+
+The system leverages different Gemini models optimized for specific tasks:
+- **Gemini 1.5 Flash**: High-speed log triage and classification (cost-optimized)
+- **Gemini 1.5 Pro**: Deep analysis and code generation (accuracy-optimized)  
+- **Code Execution**: Empirical validation and quantitative analysis
+
 ## Key Features
 
 *   **Intelligent Log Analysis:** Leverages Gemini models for advanced pattern detection and root cause analysis in cloud logs.
