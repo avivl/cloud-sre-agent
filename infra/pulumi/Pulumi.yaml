@@ -1,0 +1,3 @@
+name: gemini-sre-agent-infra
+runtime: python
+description: Infrastructure for Gemini SRE Agent
