@@ -26,8 +26,7 @@ def mock_gemini_response_analysis():
     return {
         "root_cause_analysis": "Simulated root cause: memory leak in billing service.",
         "proposed_fix": "Simulated fix: apply patch to address memory leak.",
-        "code_patch": "def fix_memory_leak():\n    pass",
-        "iac_fix": "resource \"google_compute_instance\" \"fixed\" {}"
+        "code_patch": "def fix_memory_leak():\n    pass"
     }
 
 @patch('gemini_sre_agent.analysis_agent.GenerativeModel')
@@ -47,14 +46,15 @@ def test_analyze_issue(mock_generative_model, mock_aiplatform, triage_packet, mo
     configs = {"main.tf": "..."}
 
     # Act
-    remediation_plan = agent.analyze_issue(triage_packet, historical_logs, configs)
+    flow_id = "test-flow-001"
+    remediation_plan = agent.analyze_issue(triage_packet, historical_logs, configs, flow_id)
 
     # Assert
     assert isinstance(remediation_plan, RemediationPlan)
     assert remediation_plan.root_cause_analysis == mock_gemini_response_analysis["root_cause_analysis"]
     assert remediation_plan.proposed_fix == mock_gemini_response_analysis["proposed_fix"]
     assert remediation_plan.code_patch == mock_gemini_response_analysis["code_patch"]
-    assert remediation_plan.iac_fix == mock_gemini_response_analysis["iac_fix"]
+    # Note: iac_fix is no longer part of RemediationPlan in this version
 
     # Verify that generate_content was called with the correct prompt
     expected_prompt_part = "You are an expert SRE Analysis Agent."

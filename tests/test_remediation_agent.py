@@ -13,25 +13,19 @@ def mock_github():
 def remediation_plan_with_code_iac():
     return RemediationPlan(
         root_cause_analysis="The root cause is a simulated bug.",
-        proposed_fix="Apply a simulated code and IaC patch.",
+        proposed_fix="Apply a simulated code patch.",
         code_patch="""# FILE: fix/code_patch.py
 def new_feature():
     return "fixed"
-""",
-        iac_fix="""# FILE: fix/iac_patch.tf
-resource "aws_s3_bucket" "fixed_bucket" {
-  bucket = "my-fixed-bucket"
-}
 """
     )
 
 @pytest.fixture
 def remediation_plan_no_patches():
     return RemediationPlan(
-        root_cause_analysis="No code or IaC changes needed.",
+        root_cause_analysis="No code changes needed.",
         proposed_fix="Configuration update.",
-        code_patch="",
-        iac_fix=""
+        code_patch=""
     )
 
 @pytest.mark.asyncio # Added async marker
@@ -58,7 +52,9 @@ async def test_create_pull_request_with_patches(mock_github, remediation_plan_wi
     base_branch = "main"
 
     # Act
-    pr_url = await agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch) # Added await
+    flow_id = "test-flow-001"
+    issue_id = "test-issue-001"
+    pr_url = await agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch, flow_id, issue_id) # Added await
 
     # Assert
     mock_github.assert_called_once_with("test-token")
@@ -68,19 +64,12 @@ async def test_create_pull_request_with_patches(mock_github, remediation_plan_wi
     mock_repo.create_git_ref.assert_called_once_with(ref=f"refs/heads/{branch_name}", sha="base_sha")
 
     # Assert file creation
-    mock_repo.create_file.assert_any_call(
+    mock_repo.create_file.assert_called_once_with(
         "fix/code_patch.py",
-        "Add fix/code_patch.py",
+        "Add service code fix in fix/code_patch.py",
         'def new_feature():\n    return "fixed"',
         branch=branch_name
     )
-    mock_repo.create_file.assert_any_call(
-        "fix/iac_patch.tf",
-        "Add fix/iac_patch.tf",
-        'resource "aws_s3_bucket" "fixed_bucket" {\n  bucket = "my-fixed-bucket"\n}',
-        branch=branch_name
-    )
-    assert mock_repo.create_file.call_count == 2 # Ensure both files were created
 
     # Assert pull request creation
     expected_title = f"Fix: {remediation_plan_with_code_iac.proposed_fix[:50]}..."
@@ -114,7 +103,9 @@ async def test_create_pull_request_no_patches(mock_github, remediation_plan_no_p
     base_branch = "main"
 
     # Act
-    pr_url = await agent.create_pull_request(remediation_plan_no_patches, branch_name, base_branch) # Added await
+    flow_id = "test-flow-002"
+    issue_id = "test-issue-002"
+    pr_url = await agent.create_pull_request(remediation_plan_no_patches, branch_name, base_branch, flow_id, issue_id) # Added await
 
     # Assert
     mock_repo.create_file.assert_not_called() # No files should be created
@@ -144,8 +135,10 @@ async def test_create_pull_request_github_exception(mock_github, remediation_pla
     base_branch = "main"
 
     # Act & Assert
+    flow_id = "test-flow-003"
+    issue_id = "test-issue-003"
     with pytest.raises(RuntimeError, match="Failed to create pull request due to GitHub API error"):
-        await agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch) # Added await
+        await agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch, flow_id, issue_id) # Added await
 
     mock_repo.create_git_ref.assert_called_once()
     mock_repo.create_pull.assert_not_called() # PR should not be created
