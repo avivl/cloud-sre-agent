@@ -1,8 +1,8 @@
-import logging # Added
+import logging
 from google.cloud.logging_v2.services.logging_service_v2 import LoggingServiceV2Client
 from typing import List
 
-logger = logging.getLogger(__name__) # Added
+logger = logging.getLogger(__name__)
 
 class LogIngestor:
     """
@@ -17,7 +17,7 @@ class LogIngestor:
         """
         self.client = LoggingServiceV2Client()
         self.project_id = project_id
-        logger.info(f"LogIngestor initialized for project: {project_id}") # Added
+        logger.info(f"LogIngestor initialized for project: {project_id}")
 
     def get_logs(self, filter_str: str, limit: int = 100) -> List[str]:
         """
@@ -30,7 +30,7 @@ class LogIngestor:
         Returns:
             List[str]: A list of log entry payloads.
         """
-        logger.info(f"Fetching logs with filter: {filter_str} and limit: {limit}") # Added
+        logger.info(f"Fetching logs with filter: {filter_str} and limit: {limit}")
         resource_names = [f"projects/{self.project_id}"]
         entries = self.client.list_log_entries(
             resource_names=resource_names,
@@ -38,16 +38,17 @@ class LogIngestor:
             page_size=limit,
         )
         logs = [entry.payload for entry in entries]
-        logger.info(f"Fetched {len(logs)} logs.") # Added
+        logger.info(f"Fetched {len(logs)} logs.")
         return logs
 
-    def start_monitoring(self):
-        """
-        Starts monitoring logs in near real-time.
-        This is a placeholder for the real-time monitoring logic, which would typically
-        use Pub/Sub for an event-driven approach.
-        """
-        logger.info("Starting log monitoring...") # Changed from print
+# Removed start_monitoring method
+# def start_monitoring(self):
+#     """
+#     Starts monitoring logs in near real-time.
+#     This is a placeholder for the real-time monitoring logic, which would typically
+#     use Pub/Sub for an event-driven approach.
+#     """
+#     logger.info("Starting log monitoring...")
 
 # Example usage:
 # ingestor = LogIngestor(project_id="your-gcp-project")

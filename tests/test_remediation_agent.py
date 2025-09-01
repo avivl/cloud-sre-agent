@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
+from github import GithubException # Import GithubException for testing
 from gemini_sre_agent.remediation_agent import RemediationAgent
 from gemini_sre_agent.analysis_agent import RemediationPlan
 
@@ -9,25 +10,139 @@ def mock_github():
         yield mock_github
 
 @pytest.fixture
-def remediation_plan():
+def remediation_plan_with_code_iac():
     return RemediationPlan(
-        root_cause_analysis="The root cause of the issue is a memory leak in the billing service.",
-        proposed_fix="The proposed fix is to patch the memory leak.",
-        code_patch="...",
-        iac_fix="..."
+        root_cause_analysis="The root cause is a simulated bug.",
+        proposed_fix="Apply a simulated code and IaC patch.",
+        code_patch="""# FILE: fix/code_patch.py
+def new_feature():
+    return "fixed"
+""",
+        iac_fix="""# FILE: fix/iac_patch.tf
+resource "aws_s3_bucket" "fixed_bucket" {
+  bucket = "my-fixed-bucket"
+}
+"""
     )
 
-def test_create_pull_request(mock_github, remediation_plan):
+@pytest.fixture
+def remediation_plan_no_patches():
+    return RemediationPlan(
+        root_cause_analysis="No code or IaC changes needed.",
+        proposed_fix="Configuration update.",
+        code_patch="",
+        iac_fix=""
+    )
+
+def test_create_pull_request_with_patches(mock_github, remediation_plan_with_code_iac):
     # Arrange
     mock_repo = MagicMock()
     mock_github.return_value.get_repo.return_value = mock_repo
+    
+    # Mock get_branch
+    mock_branch = MagicMock()
+    mock_branch.commit.sha = "base_sha"
+    mock_repo.get_branch.return_value = mock_branch
+
+    # Mock get_contents for existing files (simulate file not found initially)
+    mock_repo.get_contents.side_effect = GithubException(status=404, data={})
+
+    # Mock create_pull
+    mock_pull = MagicMock()
+    mock_pull.html_url = "https://github.com/owner/repo/pull/1"
+    mock_repo.create_pull.return_value = mock_pull
+
     agent = RemediationAgent(github_token="test-token", repo_name="owner/repo")
+    branch_name = "fix/simulated-issue"
+    base_branch = "main"
 
     # Act
-    agent.create_pull_request(remediation_plan, "fix/memory-leak", "main")
+    pr_url = agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch)
 
     # Assert
     mock_github.assert_called_once_with("test-token")
     mock_github.return_value.get_repo.assert_called_once_with("owner/repo")
-    # In a real implementation, we would assert that the correct GitHub API
-    # methods were called with the correct parameters.
+    mock_repo.get_branch.assert_called_once_with(base_branch)
+    # Fixed: Use keyword arguments for create_git_ref assertion
+    mock_repo.create_git_ref.assert_called_once_with(ref=f"refs/heads/{branch_name}", sha="base_sha")
+
+    # Assert file creation
+    mock_repo.create_file.assert_any_call(
+        "fix/code_patch.py",
+        "Add fix/code_patch.py",
+        'def new_feature():\n    return "fixed"',
+        branch=branch_name
+    )
+    mock_repo.create_file.assert_any_call(
+        "fix/iac_patch.tf",
+        "Add fix/iac_patch.tf",
+        'resource "aws_s3_bucket" "fixed_bucket" {\n  bucket = "my-fixed-bucket"\n}',
+        branch=branch_name
+    )
+    assert mock_repo.create_file.call_count == 2 # Ensure both files were created
+
+    # Assert pull request creation
+    expected_title = f"Fix: {remediation_plan_with_code_iac.proposed_fix[:50]}..."
+    expected_body = f"Root Cause Analysis:\n{remediation_plan_with_code_iac.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan_with_code_iac.proposed_fix}"
+    mock_repo.create_pull.assert_called_once_with(
+        title=expected_title,
+        body=expected_body,
+        head=branch_name,
+        base=base_branch
+    )
+    assert pr_url == "https://github.com/owner/repo/pull/1"
+
+def test_create_pull_request_no_patches(mock_github, remediation_plan_no_patches):
+    # Arrange
+    mock_repo = MagicMock()
+    mock_github.return_value.get_repo.return_value = mock_repo
+    
+    # Mock get_branch
+    mock_branch = MagicMock()
+    mock_branch.commit.sha = "base_sha"
+    mock_repo.get_branch.return_value = mock_branch
+
+    # Mock create_pull
+    mock_pull = MagicMock()
+    mock_pull.html_url = "https://github.com/owner/repo/pull/2"
+    mock_repo.create_pull.return_value = mock_pull
+
+    agent = RemediationAgent(github_token="test-token", repo_name="owner/repo")
+    branch_name = "fix/no-patches"
+    base_branch = "main"
+
+    # Act
+    pr_url = agent.create_pull_request(remediation_plan_no_patches, branch_name, base_branch)
+
+    # Assert
+    mock_repo.create_file.assert_not_called() # No files should be created
+    mock_repo.update_file.assert_not_called() # No files should be updated
+
+    expected_title = f"Fix: {remediation_plan_no_patches.proposed_fix[:50]}..."
+    expected_body = f"Root Cause Analysis:\n{remediation_plan_no_patches.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan_no_patches.proposed_fix}"
+    mock_repo.create_pull.assert_called_once_with(
+        title=expected_title,
+        body=expected_body,
+        head=branch_name,
+        base=base_branch
+    )
+    assert pr_url == "https://github.com/owner/repo/pull/2"
+
+def test_create_pull_request_github_exception(mock_github, remediation_plan_with_code_iac):
+    # Arrange
+    mock_repo = MagicMock()
+    mock_github.return_value.get_repo.return_value = mock_repo
+    
+    # Simulate a GitHubException during branch creation
+    mock_repo.create_git_ref.side_effect = GithubException(status=422, data={})
+
+    agent = RemediationAgent(github_token="test-token", repo_name="owner/repo")
+    branch_name = "fix/simulated-error"
+    base_branch = "main"
+
+    # Act & Assert
+    with pytest.raises(RuntimeError, match="Failed to create pull request due to GitHub API error"):
+        agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch)
+
+    mock_repo.create_git_ref.assert_called_once()
+    mock_repo.create_pull.assert_not_called() # PR should not be created

@@ -4,6 +4,8 @@ from .analysis_agent import RemediationPlan
 from github.Repository import Repository
 from github.Branch import Branch
 from github.PullRequest import PullRequest
+import re # Added for regex parsing
+from typing import Optional # Added for Optional type hint
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,16 @@ class RemediationAgent:
         self.github: Github = Github(github_token)
         self.repo: Repository = self.github.get_repo(repo_name)
         logger.info(f"RemediationAgent initialized for repository: {repo_name}")
+
+    def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
+        """
+        Extracts the target file path from a special comment in the patch content.
+        Assumes the format: # FILE: path/to/file.ext
+        """
+        match = re.match(r'#\s*FILE:\s*(.+)', patch_content.strip().split('\n')[0])
+        if match:
+            return match.group(1).strip()
+        return None
 
     def create_pull_request(self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str) -> str:
         """
@@ -48,38 +60,43 @@ class RemediationAgent:
             logger.info(f"Branch '{branch_name}' created successfully.")
 
             # 3. Create/Update files with the proposed fix
-            # This is a simplification. In a real scenario, determining the exact file paths
-            # and handling existing file content would be more complex.
-            # For now, we assume the code_patch and iac_fix contain the full file content
-            # and we'll use placeholder paths.
-            
-            # Example for code_patch (assuming a file named 'fix.py' in the root of the repo)
+            # Process code_patch
             if remediation_plan.code_patch:
-                file_path_code: str = "fix/code_patch.py"
-                try:
-                    contents = self.repo.get_contents(file_path_code, ref=branch_name)
-                    self.repo.update_file(contents.path, "Update code patch", remediation_plan.code_patch, contents.sha, branch=branch_name)
-                    logger.info(f"Updated code patch file: {file_path_code}")
-                except GithubException as e:
-                    if e.status == 404: # File does not exist, create it
-                        self.repo.create_file(file_path_code, "Add code patch", remediation_plan.code_patch, branch=branch_name)
-                        logger.info(f"Created code patch file: {file_path_code}")
-                    else:
-                        raise
+                file_path_code = self._extract_file_path_from_patch(remediation_plan.code_patch)
+                if not file_path_code:
+                    logger.warning("Code patch provided but no target file path found in comment. Skipping code patch.")
+                else:
+                    # Remove the FILE comment line from the patch content
+                    content_to_write = '\n'.join(remediation_plan.code_patch.strip().split('\n')[1:])
+                    try:
+                        contents = self.repo.get_contents(file_path_code, ref=branch_name)
+                        self.repo.update_file(contents.path, f"Update {file_path_code}", content_to_write, contents.sha, branch=branch_name)
+                        logger.info(f"Updated code patch file: {file_path_code}")
+                    except GithubException as e:
+                        if e.status == 404: # File does not exist, create it
+                            self.repo.create_file(file_path_code, f"Add {file_path_code}", content_to_write, branch=branch_name)
+                            logger.info(f"Created code patch file: {file_path_code}")
+                        else:
+                            raise
             
-            # Example for iac_fix (assuming a file named 'iac_fix.tf' in the root of the repo)
+            # Process iac_fix
             if remediation_plan.iac_fix:
-                file_path_iac: str = "fix/iac_patch.tf"
-                try:
-                    contents = self.repo.get_contents(file_path_iac, ref=branch_name)
-                    self.repo.update_file(contents.path, "Update IaC patch", remediation_plan.iac_fix, contents.sha, branch=branch_name)
-                    logger.info(f"Updated IaC patch file: {file_path_iac}")
-                except GithubException as e:
-                    if e.status == 404: # File does not exist, create it
-                        self.repo.create_file(file_path_iac, "Add IaC patch", remediation_plan.iac_fix, branch=branch_name)
-                        logger.info(f"Created IaC patch file: {file_path_iac}")
-                    else:
-                        raise
+                file_path_iac = self._extract_file_path_from_patch(remediation_plan.iac_fix)
+                if not file_path_iac:
+                    logger.warning("IaC patch provided but no target file path found in comment. Skipping IaC patch.")
+                else:
+                    # Remove the FILE comment line from the patch content
+                    content_to_write = '\n'.join(remediation_plan.iac_fix.strip().split('\n')[1:])
+                    try:
+                        contents = self.repo.get_contents(file_path_iac, ref=branch_name)
+                        self.repo.update_file(contents.path, f"Update {file_path_iac}", content_to_write, contents.sha, branch=branch_name)
+                        logger.info(f"Updated IaC patch file: {file_path_iac}")
+                    except GithubException as e:
+                        if e.status == 404: # File does not exist, create it
+                            self.repo.create_file(file_path_iac, f"Add {file_path_iac}", content_to_write, branch=branch_name)
+                            logger.info(f"Created IaC patch file: {file_path_iac}")
+                        else:
+                            raise
 
             # 4. Create a pull request
             pull_request: PullRequest = self.repo.create_pull(

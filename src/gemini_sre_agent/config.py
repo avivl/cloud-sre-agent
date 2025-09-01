@@ -1,5 +1,5 @@
 import yaml
-from pydantic import BaseModel, Field, validator # Added validator
+from pydantic import BaseModel, Field, field_validator # Updated to field_validator
 from typing import Dict, List, Optional
 
 class ModelSelection(BaseModel):
@@ -30,13 +30,14 @@ class ServiceMonitorConfig(BaseModel): # Renamed from GeminiCloudLogMonitorConfi
     Configuration model for a single service to be monitored.
     """
     service_name: str = Field(min_length=1, max_length=50) # Added validation
-    project_id: str = Field(regex=r'^[a-z][a-z0-9-]*[a-z0-9]$') # Added validation
-    location: str = Field(regex=r'^[a-z0-9-]+$') # Added validation
+    project_id: str = Field(pattern=r'^[a-z][a-z0-9-]*[a-z0-9]$') # Added validation
+    location: str = Field(pattern=r'^[a-z0-9-]+$') # Added validation
     subscription_id: str = Field(min_length=1) # Added validation
     model_selection: Optional[ModelSelection] = None
     github: Optional[GitHubConfig] = None
 
-    @validator('project_id') # Added custom validator
+    @field_validator('project_id') # Updated to field_validator
+    @classmethod
     def validate_project_id(cls, v):
         if len(v) < 6 or len(v) > 30:
             raise ValueError('Project ID must be 6-30 characters')
