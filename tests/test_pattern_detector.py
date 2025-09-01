@@ -24,7 +24,10 @@ from gemini_sre_agent.pattern_detector import (
     ThresholdConfig,
     ThresholdResult,
     BaselineTracker,
-    ThresholdEvaluator
+    ThresholdEvaluator,
+    PatternType,
+    PatternMatch,
+    PatternClassifier
 )
 
 
@@ -1146,3 +1149,702 @@ class TestSmartThresholdsIntegration:
                 # Should trigger when error rate jumps significantly
                 if error_rate >= 0.4:  # 40% vs ~13% baseline
                     assert rate_result.triggered is True
+
+
+# ==========================================
+# Layer 3: Pattern Classification Tests
+# ==========================================
+
+
+class TestPatternType:
+    """Test PatternType enumeration."""
+    
+    def test_pattern_type_constants(self):
+        """Test that all pattern types are defined correctly."""
+        assert PatternType.SPORADIC_ERRORS == "sporadic_errors"
+        assert PatternType.SERVICE_DEGRADATION == "service_degradation"
+        assert PatternType.CASCADE_FAILURE == "cascade_failure"
+        assert PatternType.TRAFFIC_SPIKE == "traffic_spike"
+        assert PatternType.CONFIGURATION_ISSUE == "configuration_issue"
+        assert PatternType.DEPENDENCY_FAILURE == "dependency_failure"
+        assert PatternType.RESOURCE_EXHAUSTION == "resource_exhaustion"
+
+
+class TestPatternMatch:
+    """Test PatternMatch dataclass."""
+    
+    def test_pattern_match_creation(self):
+        """Test creating PatternMatch objects."""
+        pattern = PatternMatch(
+            pattern_type=PatternType.SERVICE_DEGRADATION,
+            confidence_score=0.85,
+            primary_service="billing-service",
+            affected_services=["billing-service"],
+            severity_level="HIGH",
+            evidence={"error_count": 15},
+            remediation_priority="HIGH",
+            suggested_actions=["Restart service", "Check logs"]
+        )
+        
+        assert pattern.pattern_type == PatternType.SERVICE_DEGRADATION
+        assert pattern.confidence_score == 0.85
+        assert pattern.primary_service == "billing-service"
+        assert pattern.affected_services == ["billing-service"]
+        assert pattern.severity_level == "HIGH"
+        assert pattern.evidence == {"error_count": 15}
+        assert pattern.remediation_priority == "HIGH"
+        assert len(pattern.suggested_actions) == 2
+
+
+class TestPatternClassifier:
+    """Test PatternClassifier functionality."""
+    
+    @pytest.fixture
+    def classifier(self):
+        """Create a pattern classifier for testing."""
+        return PatternClassifier()
+    
+    @pytest.fixture
+    def cascade_failure_window(self):
+        """Create a window simulating cascade failure."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 0, 0),
+            duration_minutes=5
+        )
+        
+        # Add errors from multiple services in rapid succession
+        services = ["auth-service", "billing-service", "notification-service"]
+        for i in range(15):
+            service = services[i % len(services)]
+            severity = "ERROR" if i < 12 else "CRITICAL"
+            
+            log = LogEntry(
+                insert_id=f"cascade-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*5),  # Rapid succession
+                severity=severity,
+                service_name=service,
+                error_message=f"Service {service} connection failed",
+                raw_data={"severity": severity}
+            )
+            window.add_log(log)
+        
+        return window
+    
+    @pytest.fixture
+    def service_degradation_window(self):
+        """Create a window simulating service degradation."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 5, 0),
+            duration_minutes=5
+        )
+        
+        # Add errors mostly from one service
+        for i in range(10):
+            service = "billing-service" if i < 8 else "auth-service"  # 80% from billing
+            severity = "ERROR"
+            
+            log = LogEntry(
+                insert_id=f"degradation-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*30),
+                severity=severity,
+                service_name=service,
+                error_message=f"Database query failed in {service}",
+                raw_data={"severity": severity}
+            )
+            window.add_log(log)
+        
+        return window
+    
+    @pytest.fixture
+    def configuration_issue_window(self):
+        """Create a window simulating configuration issues."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 10, 0),
+            duration_minutes=5
+        )
+        
+        # Add errors with configuration-related messages
+        config_errors = [
+            "Invalid configuration parameter",
+            "Missing required setting",
+            "Configuration file not found",
+            "Invalid config value for timeout",
+            "Configuration validation failed"
+        ]
+        
+        for i, error_msg in enumerate(config_errors):
+            log = LogEntry(
+                insert_id=f"config-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*10),  # Rapid onset
+                severity="ERROR",
+                service_name="config-service",
+                error_message=error_msg,
+                raw_data={"severity": "ERROR"}
+            )
+            window.add_log(log)
+        
+        # Add some normal logs
+        for i in range(5):
+            log = LogEntry(
+                insert_id=f"normal-{i}",
+                timestamp=window.start_time + timedelta(seconds=100 + i*30),
+                severity="INFO",
+                service_name="other-service",
+                error_message="Normal operation",
+                raw_data={"severity": "INFO"}
+            )
+            window.add_log(log)
+        
+        return window
+    
+    @pytest.fixture
+    def triggered_threshold_results(self):
+        """Create threshold results that should trigger pattern detection."""
+        return [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=12.0,
+                details={"error_count": 12},
+                triggering_logs=[],  # Will be populated by individual tests
+                affected_services=["auth-service", "billing-service"]
+            ),
+            ThresholdResult(
+                threshold_type=ThresholdType.SERVICE_IMPACT,
+                triggered=True,
+                score=2.0,
+                details={"affected_services": 2},
+                triggering_logs=[],
+                affected_services=["auth-service", "billing-service"]
+            )
+        ]
+    
+    def test_classifier_initialization(self, classifier):
+        """Test PatternClassifier initialization."""
+        assert classifier is not None
+        assert classifier.classification_rules is not None
+        
+        # Check that all expected rule types are loaded
+        expected_rules = [
+            "cascade_failure",
+            "service_degradation", 
+            "traffic_spike",
+            "configuration_issue",
+            "dependency_failure",
+            "resource_exhaustion"
+        ]
+        
+        for rule_type in expected_rules:
+            assert rule_type in classifier.classification_rules
+            assert "min_confidence" in classifier.classification_rules[rule_type]
+    
+    def test_no_patterns_when_no_triggered_thresholds(self, classifier, cascade_failure_window):
+        """Test that no patterns are detected when no thresholds are triggered."""
+        # Create non-triggered threshold results
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=False,
+                score=2.0,
+                details={"error_count": 2},
+                triggering_logs=[],
+                affected_services=[]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(cascade_failure_window, threshold_results)
+        
+        assert len(patterns) == 0
+    
+    def test_cascade_failure_detection(self, classifier, cascade_failure_window):
+        """Test cascade failure pattern detection."""
+        # Create threshold results simulating cascade failure
+        all_logs = cascade_failure_window.logs
+        error_logs = cascade_failure_window.get_error_logs()
+        
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.CASCADE_FAILURE,
+                triggered=True,
+                score=3.0,
+                details={"services_with_errors": 3},
+                triggering_logs=error_logs,
+                affected_services=["auth-service", "billing-service", "notification-service"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(cascade_failure_window, threshold_results)
+        
+        # Should detect cascade failure
+        assert len(patterns) >= 1
+        cascade_pattern = next((p for p in patterns if p.pattern_type == PatternType.CASCADE_FAILURE), None)
+        
+        assert cascade_pattern is not None
+        assert cascade_pattern.confidence_score >= 0.7
+        assert len(cascade_pattern.affected_services) >= 2
+        assert cascade_pattern.remediation_priority == "IMMEDIATE"
+        assert "Investigate primary failure service" in cascade_pattern.suggested_actions
+    
+    def test_service_degradation_detection(self, classifier, service_degradation_window):
+        """Test service degradation pattern detection."""
+        error_logs = service_degradation_window.get_error_logs()
+        
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=8.0,
+                details={"error_count": 8},
+                triggering_logs=error_logs,
+                affected_services=["billing-service", "auth-service"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(service_degradation_window, threshold_results)
+        
+        # Should detect service degradation
+        degradation_pattern = next((p for p in patterns if p.pattern_type == PatternType.SERVICE_DEGRADATION), None)
+        
+        assert degradation_pattern is not None
+        assert degradation_pattern.confidence_score >= 0.6
+        assert degradation_pattern.primary_service == "billing-service"
+        assert "billing-service" in degradation_pattern.affected_services
+        assert degradation_pattern.remediation_priority in ["HIGH", "MEDIUM"]
+        assert "Investigate billing-service service health" in degradation_pattern.suggested_actions
+    
+    def test_configuration_issue_detection(self, classifier, configuration_issue_window):
+        """Test configuration issue pattern detection."""
+        error_logs = configuration_issue_window.get_error_logs()
+        
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=5.0,
+                details={"error_count": 5},
+                triggering_logs=error_logs,
+                affected_services=["config-service"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(configuration_issue_window, threshold_results)
+        
+        # Should detect configuration issue
+        config_pattern = next((p for p in patterns if p.pattern_type == PatternType.CONFIGURATION_ISSUE), None)
+        
+        assert config_pattern is not None
+        assert config_pattern.confidence_score >= 0.6
+        assert config_pattern.primary_service == "config-service"
+        assert config_pattern.evidence["rapid_onset"] is True
+        assert config_pattern.remediation_priority == "HIGH"
+        assert "Review recent configuration changes" in config_pattern.suggested_actions
+    
+    def test_dependency_failure_detection(self, classifier):
+        """Test dependency failure pattern detection."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 15, 0),
+            duration_minutes=5
+        )
+        
+        # Add dependency-related error logs
+        dependency_errors = [
+            "Connection timeout to external API",
+            "DNS resolution failed for external service",
+            "Network connection refused",
+            "Third-party service unavailable"
+        ]
+        
+        for i, error_msg in enumerate(dependency_errors):
+            log = LogEntry(
+                insert_id=f"dependency-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*20),
+                severity="ERROR",
+                service_name="api-gateway",
+                error_message=error_msg,
+                raw_data={"severity": "ERROR"}
+            )
+            window.add_log(log)
+        
+        error_logs = window.get_error_logs()
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=4.0,
+                details={"error_count": 4},
+                triggering_logs=error_logs,
+                affected_services=["api-gateway"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(window, threshold_results)
+        
+        # Should detect dependency failure
+        dependency_pattern = next((p for p in patterns if p.pattern_type == PatternType.DEPENDENCY_FAILURE), None)
+        
+        assert dependency_pattern is not None
+        assert dependency_pattern.confidence_score >= 0.7
+        assert dependency_pattern.evidence["external_service"] is True
+        assert dependency_pattern.remediation_priority == "HIGH"
+        assert "Check external service status" in dependency_pattern.suggested_actions
+    
+    def test_resource_exhaustion_detection(self, classifier):
+        """Test resource exhaustion pattern detection."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 20, 0),
+            duration_minutes=5
+        )
+        
+        # Add resource exhaustion error logs
+        resource_errors = [
+            "Out of memory error",
+            "CPU limit exceeded",
+            "Disk space quota exhausted",
+            "Memory allocation failed"
+        ]
+        
+        for i, error_msg in enumerate(resource_errors):
+            log = LogEntry(
+                insert_id=f"resource-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*60),  # More spread out
+                severity="ERROR",
+                service_name="compute-service",
+                error_message=error_msg,
+                raw_data={"severity": "ERROR"}
+            )
+            window.add_log(log)
+        
+        error_logs = window.get_error_logs()
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=4.0,
+                details={"error_count": 4},
+                triggering_logs=error_logs,
+                affected_services=["compute-service"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(window, threshold_results)
+        
+        # Should detect resource exhaustion
+        resource_pattern = next((p for p in patterns if p.pattern_type == PatternType.RESOURCE_EXHAUSTION), None)
+        
+        assert resource_pattern is not None
+        assert resource_pattern.confidence_score >= 0.6
+        assert resource_pattern.remediation_priority == "MEDIUM"
+        assert "Check resource utilization" in resource_pattern.suggested_actions
+    
+    def test_traffic_spike_detection(self, classifier):
+        """Test traffic spike pattern detection."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 25, 0),
+            duration_minutes=5
+        )
+        
+        # Add many concurrent errors (simulating traffic spike)
+        for i in range(15):
+            service = "api-gateway" if i < 10 else "load-balancer"
+            log = LogEntry(
+                insert_id=f"traffic-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*5),  # Very concentrated
+                severity="ERROR",
+                service_name=service,
+                error_message="Request processing failed",
+                raw_data={"severity": "ERROR"}
+            )
+            window.add_log(log)
+        
+        error_logs = window.get_error_logs()
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=15.0,
+                details={"error_count": 15},
+                triggering_logs=error_logs,
+                affected_services=["api-gateway", "load-balancer"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(window, threshold_results)
+        
+        # Should detect traffic spike
+        traffic_pattern = next((p for p in patterns if p.pattern_type == PatternType.TRAFFIC_SPIKE), None)
+        
+        assert traffic_pattern is not None
+        assert traffic_pattern.confidence_score >= 0.5
+        assert traffic_pattern.evidence["concurrent_errors"] == 15
+        assert traffic_pattern.remediation_priority == "HIGH"
+        assert "Scale up affected services" in traffic_pattern.suggested_actions
+    
+    def test_sporadic_errors_detection(self, classifier):
+        """Test sporadic errors pattern detection (fallback)."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 30, 0),
+            duration_minutes=5
+        )
+        
+        # Add distributed errors across services and time
+        services = ["service-a", "service-b", "service-c", "service-d"]
+        for i in range(8):
+            service = services[i % len(services)]
+            log = LogEntry(
+                insert_id=f"sporadic-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*40),  # Well distributed
+                severity="ERROR",
+                service_name=service,
+                error_message="Random error occurred",
+                raw_data={"severity": "ERROR"}
+            )
+            window.add_log(log)
+        
+        error_logs = window.get_error_logs()
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=8.0,
+                details={"error_count": 8},
+                triggering_logs=error_logs,
+                affected_services=["service-a", "service-b", "service-c", "service-d"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(window, threshold_results)
+        
+        # Should detect sporadic errors as fallback
+        sporadic_pattern = next((p for p in patterns if p.pattern_type == PatternType.SPORADIC_ERRORS), None)
+        
+        assert sporadic_pattern is not None
+        assert sporadic_pattern.confidence_score <= 0.6
+        assert len(sporadic_pattern.affected_services) == 4
+        assert sporadic_pattern.evidence["error_distribution"] == "dispersed"
+        assert "Monitor error trends" in sporadic_pattern.suggested_actions
+    
+    def test_multiple_pattern_detection_sorted_by_confidence(self, classifier):
+        """Test detection of multiple patterns sorted by confidence."""
+        # Create a window that could match multiple patterns
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 35, 0),
+            duration_minutes=5
+        )
+        
+        # Add errors that could be both service degradation AND cascade failure
+        for i in range(12):
+            # 8 errors from primary service, 4 from secondary
+            service = "primary-service" if i < 8 else "secondary-service"
+            severity = "CRITICAL" if i < 3 else "ERROR"
+            
+            log = LogEntry(
+                insert_id=f"multi-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*10),
+                severity=severity,
+                service_name=service,
+                error_message="Service failure detected",
+                raw_data={"severity": severity}
+            )
+            window.add_log(log)
+        
+        error_logs = window.get_error_logs()
+        threshold_results = [
+            ThresholdResult(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                triggered=True,
+                score=12.0,
+                details={"error_count": 12},
+                triggering_logs=error_logs,
+                affected_services=["primary-service", "secondary-service"]
+            ),
+            ThresholdResult(
+                threshold_type=ThresholdType.SERVICE_IMPACT,
+                triggered=True,
+                score=2.0,
+                details={"affected_services": 2},
+                triggering_logs=error_logs,
+                affected_services=["primary-service", "secondary-service"]
+            )
+        ]
+        
+        patterns = classifier.classify_patterns(window, threshold_results)
+        
+        # Should detect multiple patterns
+        assert len(patterns) >= 1
+        
+        # Should be sorted by confidence score (highest first)
+        if len(patterns) > 1:
+            for i in range(1, len(patterns)):
+                assert patterns[i-1].confidence_score >= patterns[i].confidence_score
+    
+    def test_severity_level_calculation(self, classifier):
+        """Test severity level calculation from logs."""
+        # Test different severity distributions
+        
+        # High severity: mostly critical/error logs
+        critical_logs = [
+            LogEntry(
+                insert_id=f"critical-{i}",
+                timestamp=datetime(2025, 1, 27, 10, 0, 0),
+                severity="CRITICAL" if i < 2 else "ERROR",
+                service_name="test-service",
+                raw_data={"severity": "CRITICAL" if i < 2 else "ERROR"}
+            ) for i in range(5)
+        ]
+        
+        severity = classifier._determine_severity_level(critical_logs)
+        assert severity == "CRITICAL"  # > 10% critical
+        
+        # Medium severity: some errors
+        error_logs = [
+            LogEntry(
+                insert_id=f"error-{i}",
+                timestamp=datetime(2025, 1, 27, 10, 0, 0),
+                severity="ERROR" if i < 3 else "INFO",
+                service_name="test-service", 
+                raw_data={"severity": "ERROR" if i < 3 else "INFO"}
+            ) for i in range(10)
+        ]
+        
+        severity = classifier._determine_severity_level(error_logs)
+        assert severity == "MEDIUM"  # 30% errors
+        
+        # Low severity: mostly info logs
+        info_logs = [
+            LogEntry(
+                insert_id=f"info-{i}",
+                timestamp=datetime(2025, 1, 27, 10, 0, 0),
+                severity="INFO",
+                service_name="test-service",
+                raw_data={"severity": "INFO"}
+            ) for i in range(10)
+        ]
+        
+        severity = classifier._determine_severity_level(info_logs)
+        assert severity == "LOW"
+    
+    def test_primary_service_identification(self, classifier):
+        """Test identification of primary service from logs."""
+        logs = [
+            LogEntry(
+                insert_id="1",
+                timestamp=datetime(2025, 1, 27, 10, 0, 0),
+                severity="ERROR",
+                service_name="service-a",
+                raw_data={"severity": "ERROR"}
+            ),
+            LogEntry(
+                insert_id="2", 
+                timestamp=datetime(2025, 1, 27, 10, 0, 0),
+                severity="ERROR",
+                service_name="service-a",
+                raw_data={"severity": "ERROR"}
+            ),
+            LogEntry(
+                insert_id="3",
+                timestamp=datetime(2025, 1, 27, 10, 0, 0), 
+                severity="ERROR",
+                service_name="service-b",
+                raw_data={"severity": "ERROR"}
+            )
+        ]
+        
+        primary_service = classifier._identify_primary_service(logs)
+        assert primary_service == "service-a"  # Has 2 errors vs 1
+        
+        # Test with no service names
+        logs_no_service = [
+            LogEntry(
+                insert_id="1",
+                timestamp=datetime(2025, 1, 27, 10, 0, 0),
+                severity="ERROR",
+                service_name=None,
+                raw_data={"severity": "ERROR"}
+            )
+        ]
+        
+        primary_service = classifier._identify_primary_service(logs_no_service)
+        assert primary_service is None
+
+
+@pytest.mark.integration
+class TestPatternClassificationIntegration:
+    """Integration tests for pattern classification with threshold evaluation."""
+    
+    @pytest.mark.asyncio
+    async def test_end_to_end_pattern_detection(self):
+        """Test complete pattern detection pipeline."""
+        # Create window manager and pattern classifier
+        pattern_callback_results = []
+        
+        def pattern_callback(window: TimeWindow):
+            """Callback to capture processed windows."""
+            pattern_callback_results.append(window)
+        
+        window_manager = WindowManager(
+            fast_window_minutes=5,
+            trend_window_minutes=15,
+            pattern_callback=pattern_callback
+        )
+        
+        # Create threshold evaluator and classifier
+        threshold_configs = [
+            ThresholdConfig(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                min_value=5.0,
+                min_error_count=3
+            ),
+            ThresholdConfig(
+                threshold_type=ThresholdType.SERVICE_IMPACT, 
+                min_value=2.0,
+                min_affected_services=2
+            )
+        ]
+        
+        threshold_evaluator = ThresholdEvaluator(threshold_configs)
+        pattern_classifier = PatternClassifier()
+        
+        # Simulate cascade failure scenario - use very old time so windows will be expired
+        base_time = datetime(2024, 1, 27, 10, 0, 0, tzinfo=timezone.utc)
+        services = ["auth-service", "billing-service", "notification-service"]
+        
+        # Add logs that should trigger cascade failure detection
+        for i in range(15):
+            service = services[i % len(services)]
+            log_data = {
+                "insertId": f"cascade-test-{i}",
+                "timestamp": (base_time + timedelta(seconds=i*10)).isoformat(),
+                "severity": "ERROR",
+                "textPayload": f"Service {service} connection failed",
+                "resource": {
+                    "type": "cloud_run_revision",
+                    "labels": {"service_name": service}
+                }
+            }
+            
+            # Add log to window manager
+            window_manager.add_log(log_data)
+        
+        # Force window completion for testing
+        await window_manager.fast_accumulator._process_expired_windows()
+        
+        # Verify callback was triggered
+        assert len(pattern_callback_results) >= 1
+        
+        # Test pattern classification on the completed window
+        completed_window = pattern_callback_results[0]
+        threshold_results = threshold_evaluator.evaluate_window(completed_window)
+        patterns = pattern_classifier.classify_patterns(completed_window, threshold_results)
+        
+        # Should detect patterns due to multiple service failures
+        assert len(patterns) >= 1
+        
+        # Should have high-confidence pattern detection
+        high_confidence_patterns = [p for p in patterns if p.confidence_score >= 0.7]
+        assert len(high_confidence_patterns) >= 1
+        
+        # Patterns should have appropriate remediation priorities
+        immediate_patterns = [p for p in patterns if p.remediation_priority == "IMMEDIATE"]
+        high_patterns = [p for p in patterns if p.remediation_priority == "HIGH"]
+        
+        assert len(immediate_patterns) + len(high_patterns) >= 1

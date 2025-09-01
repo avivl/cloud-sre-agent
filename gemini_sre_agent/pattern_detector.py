@@ -24,6 +24,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pydantic import BaseModel
 
+from .logger import setup_logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -806,3 +808,671 @@ class ThresholdEvaluator:
         for log in logs:
             breakdown[log.severity] += 1
         return dict(breakdown)
+
+
+# ==========================================
+# Layer 3: Pattern Classification
+# ==========================================
+
+
+class PatternType:
+    """Enumeration of detectable issue patterns."""
+    
+    SPORADIC_ERRORS = "sporadic_errors"          # Random errors across services
+    SERVICE_DEGRADATION = "service_degradation"  # Single service having issues
+    CASCADE_FAILURE = "cascade_failure"          # Multi-service failure chain
+    TRAFFIC_SPIKE = "traffic_spike"              # High volume causing errors
+    CONFIGURATION_ISSUE = "configuration_issue"  # Config-related problems
+    DEPENDENCY_FAILURE = "dependency_failure"    # External dependency issues
+    RESOURCE_EXHAUSTION = "resource_exhaustion"  # Memory/CPU/disk issues
+
+
+@dataclass
+class PatternMatch:
+    """Result of pattern classification."""
+    
+    pattern_type: str
+    confidence_score: float  # 0.0 to 1.0
+    primary_service: Optional[str]
+    affected_services: List[str]
+    severity_level: str  # LOW, MEDIUM, HIGH, CRITICAL
+    
+    # Evidence supporting the pattern classification
+    evidence: Dict[str, Any]
+    
+    # Recommended remediation approach
+    remediation_priority: str  # IMMEDIATE, HIGH, MEDIUM, LOW
+    suggested_actions: List[str]
+
+
+class PatternClassifier:
+    """Classifies threshold evaluation results into actionable patterns."""
+    
+    def __init__(self):
+        """Initialize the pattern classifier."""
+        self.logger = setup_logging()
+        
+        # Pattern detection rules and thresholds
+        self.classification_rules = self._load_classification_rules()
+        
+        self.logger.info("[PATTERN_DETECTION] PatternClassifier initialized")
+    
+    def classify_patterns(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """
+        Classify threshold evaluation results into actionable patterns.
+        
+        Args:
+            window: Time window containing log data
+            threshold_results: Results from threshold evaluation
+            
+        Returns:
+            List of detected patterns with confidence scores
+        """
+        patterns = []
+        
+        # Only classify if we have triggered thresholds
+        triggered_results = [r for r in threshold_results if r.triggered]
+        if not triggered_results:
+            self.logger.debug(
+                f"[PATTERN_DETECTION] No triggered thresholds to classify: window={window.start_time}"
+            )
+            return patterns
+        
+        self.logger.info(
+            f"[PATTERN_DETECTION] Classifying patterns: window={window.start_time}, "
+            f"triggered_thresholds={len(triggered_results)}"
+        )
+        
+        # Analyze each pattern type
+        patterns.extend(self._detect_cascade_failure(window, triggered_results))
+        patterns.extend(self._detect_service_degradation(window, triggered_results))
+        patterns.extend(self._detect_traffic_spike(window, triggered_results))
+        patterns.extend(self._detect_configuration_issue(window, triggered_results))
+        patterns.extend(self._detect_dependency_failure(window, triggered_results))
+        patterns.extend(self._detect_resource_exhaustion(window, triggered_results))
+        patterns.extend(self._detect_sporadic_errors(window, triggered_results))
+        
+        # Sort by confidence score (highest first)
+        patterns.sort(key=lambda p: p.confidence_score, reverse=True)
+        
+        self.logger.info(
+            f"[PATTERN_DETECTION] Pattern classification complete: "
+            f"patterns_detected={len(patterns)}, window={window.start_time}"
+        )
+        
+        return patterns
+    
+    def _load_classification_rules(self) -> Dict[str, Dict[str, Any]]:
+        """Load pattern classification rules and thresholds."""
+        return {
+            "cascade_failure": {
+                "min_services": 2,
+                "min_confidence": 0.7,
+                "error_correlation_window_seconds": 300,  # 5 minutes
+                "severity_threshold": ["ERROR", "CRITICAL"]
+            },
+            "service_degradation": {
+                "min_error_rate": 0.05,  # 5% error rate
+                "min_confidence": 0.6,
+                "single_service_threshold": 0.8  # 80% of errors from one service
+            },
+            "traffic_spike": {
+                "volume_increase_threshold": 2.0,  # 2x normal volume
+                "min_confidence": 0.5,
+                "concurrent_error_threshold": 10
+            },
+            "configuration_issue": {
+                "config_keywords": ["config", "configuration", "settings", "invalid", "missing"],
+                "min_confidence": 0.6,
+                "rapid_onset_threshold_seconds": 60  # Errors start quickly
+            },
+            "dependency_failure": {
+                "dependency_keywords": ["timeout", "connection", "unavailable", "refused", "dns", "network"],
+                "min_confidence": 0.7,
+                "external_service_indicators": ["api", "external", "third-party"]
+            },
+            "resource_exhaustion": {
+                "resource_keywords": ["memory", "cpu", "disk", "space", "limit", "quota", "throttle"],
+                "min_confidence": 0.6,
+                "gradual_onset_indicators": ["slow", "degraded", "performance"]
+            }
+        }
+    
+    def _detect_cascade_failure(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """Detect cascade failure patterns across multiple services."""
+        patterns = []
+        rules = self.classification_rules["cascade_failure"]
+        
+        # Look for CASCADE_FAILURE threshold triggers or multiple service impact
+        cascade_triggers = [
+            r for r in threshold_results 
+            if r.threshold_type == ThresholdType.CASCADE_FAILURE and r.triggered
+        ]
+        
+        service_impact_triggers = [
+            r for r in threshold_results
+            if r.threshold_type == ThresholdType.SERVICE_IMPACT and r.triggered
+        ]
+        
+        if cascade_triggers or (service_impact_triggers and 
+                               any(len(r.affected_services) >= rules["min_services"] for r in service_impact_triggers)):
+            
+            all_affected_services = set()
+            all_triggering_logs = []
+            
+            for result in threshold_results:
+                if result.triggered:
+                    all_affected_services.update(result.affected_services)
+                    all_triggering_logs.extend(result.triggering_logs)
+            
+            # Calculate confidence based on service correlation and timing
+            confidence = self._calculate_cascade_confidence(
+                list(all_affected_services),
+                all_triggering_logs,
+                rules
+            )
+            
+            if confidence >= rules["min_confidence"]:
+                severity = self._determine_severity_level(all_triggering_logs)
+                primary_service = self._identify_primary_service(all_triggering_logs)
+                
+                patterns.append(PatternMatch(
+                    pattern_type=PatternType.CASCADE_FAILURE,
+                    confidence_score=confidence,
+                    primary_service=primary_service,
+                    affected_services=list(all_affected_services),
+                    severity_level=severity,
+                    evidence={
+                        "service_count": len(all_affected_services),
+                        "error_correlation": "high",
+                        "failure_chain": list(all_affected_services)
+                    },
+                    remediation_priority="IMMEDIATE",
+                    suggested_actions=[
+                        "Investigate primary failure service",
+                        "Check service dependencies",
+                        "Implement circuit breakers",
+                        "Scale up affected services"
+                    ]
+                ))
+        
+        return patterns
+    
+    def _detect_service_degradation(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """Detect single service degradation patterns."""
+        patterns = []
+        rules = self.classification_rules["service_degradation"]
+        
+        # Group errors by service
+        service_errors: Dict[str, List[LogEntry]] = defaultdict(list)
+        for result in threshold_results:
+            if result.triggered:
+                for log in result.triggering_logs:
+                    if log.service_name:
+                        service_errors[log.service_name].append(log)
+        
+        total_errors = sum(len(logs) for logs in service_errors.values())
+        
+        for service_name, error_logs in service_errors.items():
+            service_error_ratio = len(error_logs) / total_errors if total_errors > 0 else 0
+            
+            if service_error_ratio >= rules["single_service_threshold"]:
+                confidence = min(0.9, service_error_ratio + 0.1)
+                
+                if confidence >= rules["min_confidence"]:
+                    severity = self._determine_severity_level(error_logs)
+                    
+                    patterns.append(PatternMatch(
+                        pattern_type=PatternType.SERVICE_DEGRADATION,
+                        confidence_score=confidence,
+                        primary_service=service_name,
+                        affected_services=[service_name],
+                        severity_level=severity,
+                        evidence={
+                            "error_concentration": service_error_ratio,
+                            "error_count": len(error_logs),
+                            "service_dominance": "high"
+                        },
+                        remediation_priority="HIGH" if severity in ["HIGH", "CRITICAL"] else "MEDIUM",
+                        suggested_actions=[
+                            f"Investigate {service_name} service health",
+                            "Check service logs and metrics",
+                            "Verify service dependencies",
+                            "Consider service restart or rollback"
+                        ]
+                    ))
+        
+        return patterns
+    
+    def _detect_traffic_spike(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """Detect traffic spike patterns causing errors."""
+        patterns = []
+        rules = self.classification_rules["traffic_spike"]
+        
+        # Look for high error frequency with concurrent timing
+        frequency_triggers = [
+            r for r in threshold_results
+            if (r.threshold_type == ThresholdType.ERROR_FREQUENCY and 
+                r.triggered and r.score >= rules["concurrent_error_threshold"])
+        ]
+        
+        if frequency_triggers:
+            all_logs = []
+            affected_services = set()
+            
+            for result in frequency_triggers:
+                all_logs.extend(result.triggering_logs)
+                affected_services.update(result.affected_services)
+            
+            # Check if errors are concentrated in time (indicating traffic spike)
+            time_concentration = self._calculate_time_concentration(all_logs, window)
+            
+            confidence = min(0.8, time_concentration * rules["min_confidence"] * 2)
+            
+            if confidence >= rules["min_confidence"]:
+                severity = self._determine_severity_level(all_logs)
+                primary_service = self._identify_primary_service(all_logs)
+                
+                patterns.append(PatternMatch(
+                    pattern_type=PatternType.TRAFFIC_SPIKE,
+                    confidence_score=confidence,
+                    primary_service=primary_service,
+                    affected_services=list(affected_services),
+                    severity_level=severity,
+                    evidence={
+                        "concurrent_errors": len(all_logs),
+                        "time_concentration": time_concentration,
+                        "spike_intensity": "high"
+                    },
+                    remediation_priority="HIGH",
+                    suggested_actions=[
+                        "Scale up affected services",
+                        "Implement rate limiting",
+                        "Check load balancer configuration",
+                        "Monitor traffic patterns"
+                    ]
+                ))
+        
+        return patterns
+    
+    def _detect_configuration_issue(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """Detect configuration-related issue patterns."""
+        patterns = []
+        rules = self.classification_rules["configuration_issue"]
+        
+        config_logs = []
+        affected_services = set()
+        
+        for result in threshold_results:
+            if result.triggered:
+                for log in result.triggering_logs:
+                    if log.error_message and any(
+                        keyword in log.error_message.lower() 
+                        for keyword in rules["config_keywords"]
+                    ):
+                        config_logs.append(log)
+                        if log.service_name:
+                            affected_services.add(log.service_name)
+        
+        if config_logs:
+            # Configuration issues often have rapid onset
+            rapid_onset = self._check_rapid_onset(
+                config_logs, 
+                rules["rapid_onset_threshold_seconds"]
+            )
+            
+            keyword_density = len(config_logs) / len(window.logs) if window.logs else 0
+            base_confidence = min(0.8, keyword_density * 3)
+            
+            confidence = base_confidence + (0.2 if rapid_onset else 0)
+            
+            if confidence >= rules["min_confidence"]:
+                severity = self._determine_severity_level(config_logs)
+                primary_service = self._identify_primary_service(config_logs)
+                
+                patterns.append(PatternMatch(
+                    pattern_type=PatternType.CONFIGURATION_ISSUE,
+                    confidence_score=confidence,
+                    primary_service=primary_service,
+                    affected_services=list(affected_services),
+                    severity_level=severity,
+                    evidence={
+                        "config_error_count": len(config_logs),
+                        "rapid_onset": rapid_onset,
+                        "keyword_matches": rules["config_keywords"]
+                    },
+                    remediation_priority="HIGH",
+                    suggested_actions=[
+                        "Review recent configuration changes",
+                        "Validate configuration files",
+                        "Check environment variables",
+                        "Rollback recent config deployments"
+                    ]
+                ))
+        
+        return patterns
+    
+    def _detect_dependency_failure(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """Detect dependency failure patterns."""
+        patterns = []
+        rules = self.classification_rules["dependency_failure"]
+        
+        dependency_logs = []
+        affected_services = set()
+        
+        for result in threshold_results:
+            if result.triggered:
+                for log in result.triggering_logs:
+                    if log.error_message and any(
+                        keyword in log.error_message.lower()
+                        for keyword in rules["dependency_keywords"]
+                    ):
+                        dependency_logs.append(log)
+                        if log.service_name:
+                            affected_services.add(log.service_name)
+        
+        if dependency_logs:
+            # Check for external service indicators
+            external_indicators = any(
+                indicator in log.error_message.lower()
+                for log in dependency_logs
+                for indicator in rules["external_service_indicators"]
+                if log.error_message
+            )
+            
+            keyword_density = len(dependency_logs) / len(window.logs) if window.logs else 0
+            base_confidence = min(0.8, keyword_density * 2.5)
+            
+            confidence = base_confidence + (0.2 if external_indicators else 0)
+            
+            if confidence >= rules["min_confidence"]:
+                severity = self._determine_severity_level(dependency_logs)
+                primary_service = self._identify_primary_service(dependency_logs)
+                
+                patterns.append(PatternMatch(
+                    pattern_type=PatternType.DEPENDENCY_FAILURE,
+                    confidence_score=confidence,
+                    primary_service=primary_service,
+                    affected_services=list(affected_services),
+                    severity_level=severity,
+                    evidence={
+                        "dependency_error_count": len(dependency_logs),
+                        "external_service": external_indicators,
+                        "keyword_matches": rules["dependency_keywords"]
+                    },
+                    remediation_priority="HIGH",
+                    suggested_actions=[
+                        "Check external service status",
+                        "Verify network connectivity",
+                        "Implement fallback mechanisms",
+                        "Review timeout configurations"
+                    ]
+                ))
+        
+        return patterns
+    
+    def _detect_resource_exhaustion(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """Detect resource exhaustion patterns."""
+        patterns = []
+        rules = self.classification_rules["resource_exhaustion"]
+        
+        resource_logs = []
+        affected_services = set()
+        
+        for result in threshold_results:
+            if result.triggered:
+                for log in result.triggering_logs:
+                    if log.error_message and any(
+                        keyword in log.error_message.lower()
+                        for keyword in rules["resource_keywords"]
+                    ):
+                        resource_logs.append(log)
+                        if log.service_name:
+                            affected_services.add(log.service_name)
+        
+        if resource_logs:
+            # Resource exhaustion often has gradual onset
+            gradual_onset = self._check_gradual_onset(resource_logs)
+            
+            keyword_density = len(resource_logs) / len(window.logs) if window.logs else 0
+            base_confidence = min(0.8, keyword_density * 2)
+            
+            confidence = base_confidence + (0.1 if gradual_onset else 0)
+            
+            if confidence >= rules["min_confidence"]:
+                severity = self._determine_severity_level(resource_logs)
+                primary_service = self._identify_primary_service(resource_logs)
+                
+                patterns.append(PatternMatch(
+                    pattern_type=PatternType.RESOURCE_EXHAUSTION,
+                    confidence_score=confidence,
+                    primary_service=primary_service,
+                    affected_services=list(affected_services),
+                    severity_level=severity,
+                    evidence={
+                        "resource_error_count": len(resource_logs),
+                        "gradual_onset": gradual_onset,
+                        "resource_types": rules["resource_keywords"]
+                    },
+                    remediation_priority="MEDIUM",
+                    suggested_actions=[
+                        "Check resource utilization",
+                        "Scale up affected services",
+                        "Optimize resource usage",
+                        "Review resource limits"
+                    ]
+                ))
+        
+        return patterns
+    
+    def _detect_sporadic_errors(
+        self,
+        window: TimeWindow,
+        threshold_results: List[ThresholdResult]
+    ) -> List[PatternMatch]:
+        """Detect sporadic error patterns (fallback for unclassified errors)."""
+        patterns = []
+        
+        # Only create sporadic pattern if no other patterns were detected
+        # This serves as a fallback classification
+        
+        triggered_results = [r for r in threshold_results if r.triggered]
+        if not triggered_results:
+            return patterns
+        
+        all_logs = []
+        affected_services = set()
+        
+        for result in triggered_results:
+            all_logs.extend(result.triggering_logs)
+            affected_services.update(result.affected_services)
+        
+        # Check if errors are distributed across services and time
+        service_distribution = len(affected_services) / max(1, len(all_logs))
+        time_distribution = self._calculate_time_distribution(all_logs, window)
+        
+        # Sporadic errors have high distribution (not concentrated)
+        if service_distribution > 0.3 and time_distribution > 0.4:
+            confidence = min(0.6, (service_distribution + time_distribution) / 2)
+            severity = self._determine_severity_level(all_logs)
+            primary_service = self._identify_primary_service(all_logs)
+            
+            patterns.append(PatternMatch(
+                pattern_type=PatternType.SPORADIC_ERRORS,
+                confidence_score=confidence,
+                primary_service=primary_service,
+                affected_services=list(affected_services),
+                severity_level=severity,
+                evidence={
+                    "error_distribution": "dispersed",
+                    "service_spread": len(affected_services),
+                    "time_spread": time_distribution
+                },
+                remediation_priority="LOW" if severity in ["LOW", "MEDIUM"] else "MEDIUM",
+                suggested_actions=[
+                    "Monitor error trends",
+                    "Investigate common root causes",
+                    "Improve error handling",
+                    "Check system stability"
+                ]
+            ))
+        
+        return patterns
+    
+    # Helper methods for confidence calculation
+    
+    def _calculate_cascade_confidence(
+        self,
+        affected_services: List[str],
+        triggering_logs: List[LogEntry],
+        rules: Dict[str, Any]
+    ) -> float:
+        """Calculate confidence for cascade failure detection."""
+        base_confidence = min(0.8, len(affected_services) / 5.0)
+        
+        # Bonus for temporal correlation
+        time_correlation = self._calculate_time_correlation(triggering_logs)
+        
+        # Bonus for severity correlation
+        severity_bonus = 0.1 if any(
+            log.severity in rules["severity_threshold"] 
+            for log in triggering_logs
+        ) else 0
+        
+        return min(1.0, base_confidence + time_correlation * 0.2 + severity_bonus)
+    
+    def _calculate_time_concentration(self, logs: List[LogEntry], window: TimeWindow) -> float:
+        """Calculate how concentrated errors are in time within the window."""
+        if not logs or len(logs) < 2:
+            return 0.0
+        
+        timestamps = sorted([log.timestamp for log in logs])
+        first_error = timestamps[0]
+        last_error = timestamps[-1]
+        
+        error_span = (last_error - first_error).total_seconds()
+        window_span = window.duration_minutes * 60
+        
+        # Higher concentration = errors happen in smaller time span
+        return 1.0 - (error_span / window_span) if window_span > 0 else 1.0
+    
+    def _calculate_time_distribution(self, logs: List[LogEntry], window: TimeWindow) -> float:
+        """Calculate how distributed errors are across time within the window."""
+        # Opposite of concentration - higher value means more spread out
+        return 1.0 - self._calculate_time_concentration(logs, window)
+    
+    def _calculate_time_correlation(self, logs: List[LogEntry]) -> float:
+        """Calculate temporal correlation between error logs."""
+        if len(logs) < 2:
+            return 0.0
+        
+        # Simple correlation: if errors happen close together, correlation is high
+        timestamps = sorted([log.timestamp for log in logs])
+        total_span = (timestamps[-1] - timestamps[0]).total_seconds()
+        
+        if total_span == 0:
+            return 1.0  # All errors at same time
+        
+        # High correlation if errors happen within 1 minute
+        return max(0.0, 1.0 - (total_span / 60.0))
+    
+    def _check_rapid_onset(self, logs: List[LogEntry], threshold_seconds: int) -> bool:
+        """Check if errors have rapid onset (all within threshold seconds)."""
+        if not logs:
+            return False
+        
+        timestamps = [log.timestamp for log in logs]
+        time_span = (max(timestamps) - min(timestamps)).total_seconds()
+        
+        return time_span <= threshold_seconds
+    
+    def _check_gradual_onset(self, logs: List[LogEntry]) -> bool:
+        """Check if errors have gradual onset pattern."""
+        if len(logs) < 3:
+            return False
+        
+        timestamps = sorted([log.timestamp for log in logs])
+        
+        # Check if timestamps are somewhat evenly distributed
+        intervals = []
+        for i in range(1, len(timestamps)):
+            interval = (timestamps[i] - timestamps[i-1]).total_seconds()
+            intervals.append(interval)
+        
+        if not intervals:
+            return False
+        
+        avg_interval = sum(intervals) / len(intervals)
+        
+        # Gradual onset: intervals are relatively consistent and not too small
+        variance = sum((interval - avg_interval) ** 2 for interval in intervals) / len(intervals)
+        
+        return avg_interval > 30 and variance < (avg_interval ** 2)  # Low variance, reasonable spacing
+    
+    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+        """Determine overall severity level from log entries."""
+        if not logs:
+            return "LOW"
+        
+        severity_counts = {"CRITICAL": 0, "ERROR": 0, "WARNING": 0, "INFO": 0}
+        
+        for log in logs:
+            if log.severity in severity_counts:
+                severity_counts[log.severity] += 1
+        
+        total_logs = len(logs)
+        critical_ratio = severity_counts["CRITICAL"] / total_logs
+        error_ratio = severity_counts["ERROR"] / total_logs
+        
+        if critical_ratio > 0.1:  # 10% critical
+            return "CRITICAL"
+        elif error_ratio > 0.5:  # 50% errors
+            return "HIGH"
+        elif error_ratio > 0.2:  # 20% errors
+            return "MEDIUM"
+        else:
+            return "LOW"
+    
+    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+        """Identify the service with the most errors as primary service."""
+        if not logs:
+            return None
+        
+        service_counts: Dict[str, int] = defaultdict(int)
+        
+        for log in logs:
+            if log.service_name:
+                service_counts[log.service_name] += 1
+        
+        if not service_counts:
+            return None
+        
+        return max(service_counts.items(), key=lambda x: x[1])[0]
