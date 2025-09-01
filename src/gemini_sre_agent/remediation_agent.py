@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 class RemediationAgent:
     """
-    A class responsible for creating pull requests on GitHub with proposed remediation plans.
+    A class responsible for creating pull requests on GitHub with service code fixes
+    based on log analysis and remediation plans.
     """
 
     def __init__(self, github_token: str, repo_name: str):
@@ -76,10 +77,10 @@ class RemediationAgent:
         self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str
     ) -> str:  # Changed to async def
         """
-        Creates a pull request on GitHub with the proposed fix.
+        Creates a pull request on GitHub with the proposed service code fix.
 
         Args:
-            remediation_plan (RemediationPlan): The remediation plan containing the fix details.
+            remediation_plan (RemediationPlan): The remediation plan containing the service code fix.
             branch_name (str): The name of the new branch to create for the pull request.
             base_branch (str): The name of the base branch to merge into (e.g., "main").
 
@@ -102,98 +103,54 @@ class RemediationAgent:
             self.repo.create_git_ref(ref=ref, sha=base.commit.sha)
             logger.info(f"[REMEDIATION] Branch '{branch_name}' created successfully.")
 
-            # 3. Create/Update files with the proposed fix
-            # Process code_patch
+            # 3. Apply the service code fix
             if remediation_plan.code_patch:
-                file_path_code = self._extract_file_path_from_patch(
+                file_path = self._extract_file_path_from_patch(
                     remediation_plan.code_patch
                 )
-                if not file_path_code:
+                if not file_path:
                     logger.warning(
-                        "[REMEDIATION] Code patch provided but no target file path found in comment. Skipping code patch."
+                        "[REMEDIATION] Service code patch provided but no target file path found in comment. Skipping patch."
                     )
                 else:
+                    # Extract code content (skip the first line with FILE: comment)
                     content_to_write = "\n".join(
                         remediation_plan.code_patch.strip().split("\n")[1:]
                     )
                     try:
                         contents: Union[ContentFile, List[ContentFile]] = (
-                            self.repo.get_contents(file_path_code, ref=branch_name)
+                            self.repo.get_contents(file_path, ref=branch_name)
                         )
                         if isinstance(
                             contents, list
                         ):  # Handle case where get_contents returns a list (i.e., it's a directory)
                             logger.error(
-                                f"[ERROR_HANDLING] Cannot update directory {file_path_code}. Expected a file."
+                                f"[ERROR_HANDLING] Cannot update directory {file_path}. Expected a service code file."
                             )
                             raise RuntimeError(
-                                f"Cannot update directory {file_path_code}. Expected a file."
+                                f"Cannot update directory {file_path}. Expected a service code file."
                             )
                         self.repo.update_file(
                             contents.path,
-                            f"Update {file_path_code}",
+                            f"Fix service issue in {file_path}",
                             content_to_write,
                             contents.sha,
                             branch=branch_name,
                         )
-                        logger.info(f"[REMEDIATION] Updated code patch file: {file_path_code}")
+                        logger.info(f"[REMEDIATION] Updated service code file: {file_path}")
                     except GithubException as e:
                         if e.status == 404:  # File does not exist, create it
                             self.repo.create_file(
-                                file_path_code,
-                                f"Add {file_path_code}",
+                                file_path,
+                                f"Add service code fix in {file_path}",
                                 content_to_write,
                                 branch=branch_name,
                             )
-                            logger.info(f"[REMEDIATION] Created code patch file: {file_path_code}")
+                            logger.info(f"[REMEDIATION] Created service code file: {file_path}")
                         else:
                             raise
-
-            # Process iac_fix
-            if remediation_plan.iac_fix:
-                file_path_iac = self._extract_file_path_from_patch(
-                    remediation_plan.iac_fix
-                )
-                if not file_path_iac:
-                    logger.warning(
-                        "[REMEDIATION] IaC patch provided but no target file path found in comment. Skipping IaC patch."
-                    )
-                else:
-                    content_to_write = "\n".join(
-                        remediation_plan.iac_fix.strip().split("\n")[1:]
-                    )
-                    try:
-                        contents: Union[ContentFile, List[ContentFile]] = (
-                            self.repo.get_contents(file_path_iac, ref=branch_name)
-                        )
-                        if isinstance(
-                            contents, list
-                        ):  # Handle case where get_contents returns a list (i.e., it's a directory)
-                            logger.error(
-                                f"[ERROR_HANDLING] Cannot update directory {file_path_iac}. Expected a file."
-                            )
-                            raise RuntimeError(
-                                f"Cannot update directory {file_path_iac}. Expected a file."
-                            )
-                        self.repo.update_file(
-                            contents.path,
-                            f"Update {file_path_iac}",
-                            content_to_write,
-                            contents.sha,
-                            branch=branch_name,
-                        )
-                        logger.info(f"[REMEDIATION] Updated IaC patch file: {file_path_iac}")
-                    except GithubException as e:
-                        if e.status == 404:  # File does not exist, create it
-                            self.repo.create_file(
-                                file_path_iac,
-                                f"Add {file_path_iac}",
-                                content_to_write,
-                                branch=branch_name,
-                            )
-                            logger.info(f"[REMEDIATION] Created IaC patch file: {file_path_iac}")
-                        else:
-                            raise
+            else:
+                logger.warning("[REMEDIATION] No service code patch provided in remediation plan.")
 
             # 4. Create a pull request
             pull_request: PullRequest = self.repo.create_pull(

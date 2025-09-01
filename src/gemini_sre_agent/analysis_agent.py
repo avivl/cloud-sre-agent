@@ -11,13 +11,12 @@ logger = logging.getLogger(__name__)
 
 class RemediationPlan(BaseModel):
     """
-    Represents a detailed plan for remediating an issue, including root cause, proposed fix,
-    and code/IaC patches.
+    Represents a detailed plan for remediating a service code issue, including root cause, 
+    proposed fix, and code patch.
     """
     root_cause_analysis: str
     proposed_fix: str
     code_patch: str
-    iac_fix: str
 
 class AnalysisAgent:
     """
@@ -66,14 +65,13 @@ class AnalysisAgent:
         prompt_template: str = """
         You are an expert SRE Analysis Agent. Your task is to perform a deep root cause analysis of the provided issue,
         considering the triage information, historical logs, and relevant configurations.
-        Then, generate a comprehensive remediation plan in structured JSON format.
+        Then, generate a comprehensive remediation plan focused on SERVICE CODE fixes in structured JSON format.
 
         The JSON object must conform to the following schema:
         {{
             "root_cause_analysis": "A detailed analysis of the root cause of the issue.",
-            "proposed_fix": "A clear description of the proposed fix.",
-            "code_patch": "If applicable, a code patch (e.g., Python, Java, Go) to fix the issue. Provide the full code block.",
-            "iac_fix": "If applicable, an Infrastructure as Code (IaC) fix (e.g., Terraform, Kubernetes YAML) for the issue. Provide the full code block."
+            "proposed_fix": "A clear description of the proposed service code fix.",
+            "code_patch": "A service code patch (e.g., Python, Java, Go, JavaScript) to fix the issue. Always include a comment at the top specifying the target file path using '# FILE: path/to/file.py' format. Provide the complete corrected code."
         }}
 
         Triage Packet:
