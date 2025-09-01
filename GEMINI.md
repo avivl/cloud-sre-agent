@@ -86,7 +86,7 @@ The `deploy.sh` script automates the containerization and deployment to Google C
 
 *   **Package Management:** Dependencies are managed using `uv` (specified in `pyproject.toml`).
 *   **Testing:** Unit tests are written using `pytest` and `pytest-asyncio` (configured in `pyproject.toml` and demonstrated in `tests/`).
-*   **Configuration:** Application settings are defined in `config/config.yaml` and loaded/validated using Pydantic models (`src/gemini_sre_agent/config.py`). The configuration supports global defaults and service-specific overrides for multi-service monitoring.
-*   **Logging:** Structured logging is implemented using Python's `logging` module with a custom JSON formatter (`src/gemini_sre_agent/logger.py`), ensuring machine-readable logs in production and human-readable logs in development.
-*   **Resilience:** The `hyx` library (`src/gemini_sre_agent/resilience.py`) is used to apply various resilience patterns to critical operations, enhancing the agent's robustness.
+*   **Configuration:** Application settings are defined in `config/config.yaml` and loaded/validated using Pydantic models (`gemini_sre_agent/config.py`). The configuration supports global defaults and service-specific overrides for multi-service monitoring.
+*   **Logging:** Structured logging is implemented using Python's `logging` module with a custom JSON formatter (`gemini_sre_agent/logger.py`), ensuring machine-readable logs in production and human-readable logs in development.
+*   **Resilience:** The `hyx` library (`gemini_sre_agent/resilience.py`) is used to apply various resilience patterns to critical operations, enhancing the agent's robustness.
 *   **Code Structure:** The codebase follows a modular design, separating concerns into distinct agent classes (e.g., `LogSubscriber`, `TriageAgent`, `AnalysisAgent`, `RemediationAgent`).

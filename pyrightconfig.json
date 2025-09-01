@@ -2,7 +2,7 @@
   "venvPath": ".",
   "venv": ".venv",
   "include": [
-    "src",
+    "gemini_sre_agent",
     "main.py",
     "tests"
   ],
@@ -11,7 +11,7 @@
     "**/.pytest_cache"
   ],
   "extraPaths": [
-    "src"
+    "gemini_sre_agent"
   ],
   "reportMissingImports": true,
   "reportMissingModuleSource": false,
