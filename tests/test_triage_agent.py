@@ -21,7 +21,8 @@ def mock_gemini_response():
     }
 
 @patch('gemini_sre_agent.triage_agent.GenerativeModel')
-def test_analyze_logs(mock_generative_model, mock_aiplatform, mock_gemini_response):
+@pytest.mark.asyncio
+async def test_analyze_logs(mock_generative_model, mock_aiplatform, mock_gemini_response):
     # Arrange
     # Configure the mock GenerativeModel to return a predefined response
     mock_instance = MagicMock()
@@ -36,7 +37,8 @@ def test_analyze_logs(mock_generative_model, mock_aiplatform, mock_gemini_respon
     logs = ["log entry 1", "log entry 2"]
 
     # Act
-    triage_packet = agent.analyze_logs(logs)
+    flow_id = "test-flow-001"
+    triage_packet = await agent.analyze_logs(logs, flow_id)
 
     # Assert
     assert isinstance(triage_packet, TriagePacket)
@@ -47,7 +49,7 @@ def test_analyze_logs(mock_generative_model, mock_aiplatform, mock_gemini_respon
     assert triage_packet.natural_language_summary == mock_gemini_response["natural_language_summary"]
 
     # Verify that generate_content was called with the correct prompt
-    expected_prompt_part = "Analyze the following log entries:"
+    expected_prompt_part = "You are an expert SRE Triage Agent"
     mock_instance.generate_content.assert_called_once()
     call_args = mock_instance.generate_content.call_args[0][0]
     assert expected_prompt_part in call_args

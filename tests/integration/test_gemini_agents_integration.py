@@ -65,7 +65,8 @@ async def test_triage_agent_live_call(gcp_project_id, gcp_location, integration_
     logs = [json.dumps(sample_log)]
 
     # Call the actual Gemini API
-    triage_packet = await agent.analyze_logs(logs)
+    flow_id = "test-integration-flow-001"
+    triage_packet = await agent.analyze_logs(logs, flow_id)
 
     # Assertions for a successful triage (adjust expectations based on model behavior)
     assert isinstance(triage_packet, TriagePacket)
