@@ -32,12 +32,15 @@ class LogIngestor:
         """
         logger.info(f"Fetching logs with filter: {filter_str} and limit: {limit}")
         resource_names = [f"projects/{self.project_id}"]
-        entries = self.client.list_log_entries(
-            resource_names=resource_names,
-            filter_=filter_str,
-            page_size=limit,
+        # Use request object format for newer API versions
+        pager = self.client.list_log_entries(
+            request={
+                "resource_names": resource_names,
+                "filter": filter_str,
+                "page_size": limit,
+            }
         )
-        logs = [entry.payload for entry in entries]
+        logs = [entry.payload for entry in pager]
         logger.info(f"Fetched {len(logs)} logs.")
         return logs
 

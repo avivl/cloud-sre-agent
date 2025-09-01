@@ -34,7 +34,8 @@ def remediation_plan_no_patches():
         iac_fix=""
     )
 
-def test_create_pull_request_with_patches(mock_github, remediation_plan_with_code_iac):
+@pytest.mark.asyncio # Added async marker
+async def test_create_pull_request_with_patches(mock_github, remediation_plan_with_code_iac): # Changed to async def
     # Arrange
     mock_repo = MagicMock()
     mock_github.return_value.get_repo.return_value = mock_repo
@@ -57,7 +58,7 @@ def test_create_pull_request_with_patches(mock_github, remediation_plan_with_cod
     base_branch = "main"
 
     # Act
-    pr_url = agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch)
+    pr_url = await agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch) # Added await
 
     # Assert
     mock_github.assert_called_once_with("test-token")
@@ -92,7 +93,8 @@ def test_create_pull_request_with_patches(mock_github, remediation_plan_with_cod
     )
     assert pr_url == "https://github.com/owner/repo/pull/1"
 
-def test_create_pull_request_no_patches(mock_github, remediation_plan_no_patches):
+@pytest.mark.asyncio # Added async marker
+async def test_create_pull_request_no_patches(mock_github, remediation_plan_no_patches): # Changed to async def
     # Arrange
     mock_repo = MagicMock()
     mock_github.return_value.get_repo.return_value = mock_repo
@@ -112,7 +114,7 @@ def test_create_pull_request_no_patches(mock_github, remediation_plan_no_patches
     base_branch = "main"
 
     # Act
-    pr_url = agent.create_pull_request(remediation_plan_no_patches, branch_name, base_branch)
+    pr_url = await agent.create_pull_request(remediation_plan_no_patches, branch_name, base_branch) # Added await
 
     # Assert
     mock_repo.create_file.assert_not_called() # No files should be created
@@ -128,7 +130,8 @@ def test_create_pull_request_no_patches(mock_github, remediation_plan_no_patches
     )
     assert pr_url == "https://github.com/owner/repo/pull/2"
 
-def test_create_pull_request_github_exception(mock_github, remediation_plan_with_code_iac):
+@pytest.mark.asyncio # Added async marker
+async def test_create_pull_request_github_exception(mock_github, remediation_plan_with_code_iac): # Changed to async def
     # Arrange
     mock_repo = MagicMock()
     mock_github.return_value.get_repo.return_value = mock_repo
@@ -142,7 +145,7 @@ def test_create_pull_request_github_exception(mock_github, remediation_plan_with
 
     # Act & Assert
     with pytest.raises(RuntimeError, match="Failed to create pull request due to GitHub API error"):
-        agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch)
+        await agent.create_pull_request(remediation_plan_with_code_iac, branch_name, base_branch) # Added await
 
     mock_repo.create_git_ref.assert_called_once()
     mock_repo.create_pull.assert_not_called() # PR should not be created

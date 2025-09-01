@@ -1,6 +1,6 @@
 import logging
 import asyncio
-from typing import Dict, Any, Optional, Callable, TypeVar, Generic, Awaitable
+from typing import Dict, Any, Callable, TypeVar, Awaitable
 from dataclasses import dataclass
 from hyx.retry import retry, backoffs
 from hyx.circuitbreaker import consecutive_breaker as circuitbreaker

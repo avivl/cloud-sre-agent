@@ -4,15 +4,18 @@ from .analysis_agent import RemediationPlan
 from github.Repository import Repository
 from github.Branch import Branch
 from github.PullRequest import PullRequest
+from github.ContentFile import ContentFile
 import re
-from typing import Optional
+from typing import Optional, Union, List
 
 logger = logging.getLogger(__name__)
+
 
 class RemediationAgent:
     """
     A class responsible for creating pull requests on GitHub with proposed remediation plans.
     """
+
     def __init__(self, github_token: str, repo_name: str):
         """
         Initializes the RemediationAgent with a GitHub token and repository name.
@@ -34,7 +37,7 @@ class RemediationAgent:
         if not patch_content.strip():
             return None
 
-        lines = patch_content.strip().split('\n')
+        lines = patch_content.strip().split("\n")
         if not lines:
             return None
 
@@ -42,9 +45,9 @@ class RemediationAgent:
 
         # Support multiple comment formats
         patterns = [
-            r'#\s*FILE:\s*(.+)',           # # FILE: path/to/file
-            r'//\s*FILE:\s*(.+)',          # // FILE: path/to/file
-            r'/\*\s*FILE:\s*(.+)\s*\*/',   # /* FILE: path/to/file */
+            r"#\s*FILE:\s*(.+)",  # # FILE: path/to/file
+            r"//\s*FILE:\s*(.+)",  # // FILE: path/to/file
+            r"/\*\s*FILE:\s*(.+)\s*\*/",  # /* FILE: path/to/file */
         ]
 
         for pattern in patterns:
@@ -65,11 +68,13 @@ class RemediationAgent:
         Validates that the extracted file path is safe and reasonable.
         Prevents directory traversal and absolute paths.
         """
-        if not path or '..' in path or path.startswith('/') or path.startswith('\\'):
+        if not path or ".." in path or path.startswith("/") or path.startswith("\\"):
             return False
         return True
 
-    def create_pull_request(self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str) -> str:
+    async def create_pull_request(
+        self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str
+    ) -> str:  # Changed to async def
         """
         Creates a pull request on GitHub with the proposed fix.
 
@@ -81,12 +86,16 @@ class RemediationAgent:
         Returns:
             str: The HTML URL of the created pull request.
         """
-        logger.info(f"Attempting to create pull request for branch {branch_name} targeting {base_branch}...")
+        logger.info(
+            f"Attempting to create pull request for branch {branch_name} targeting {base_branch}..."
+        )
 
         try:
             # 1. Get the base branch
             base: Branch = self.repo.get_branch(base_branch)
-            logger.debug(f"Base branch '{base_branch}' found with SHA: {base.commit.sha}")
+            logger.debug(
+                f"Base branch '{base_branch}' found with SHA: {base.commit.sha}"
+            )
 
             # 2. Create a new branch
             ref: str = f"refs/heads/{branch_name}"
@@ -96,55 +105,111 @@ class RemediationAgent:
             # 3. Create/Update files with the proposed fix
             # Process code_patch
             if remediation_plan.code_patch:
-                file_path_code = self._extract_file_path_from_patch(remediation_plan.code_patch)
+                file_path_code = self._extract_file_path_from_patch(
+                    remediation_plan.code_patch
+                )
                 if not file_path_code:
-                    logger.warning("Code patch provided but no target file path found in comment. Skipping code patch.")
+                    logger.warning(
+                        "Code patch provided but no target file path found in comment. Skipping code patch."
+                    )
                 else:
-                    # Remove the FILE comment line from the patch content
-                    content_to_write = '\n'.join(remediation_plan.code_patch.strip().split('\n')[1:])
+                    content_to_write = "\n".join(
+                        remediation_plan.code_patch.strip().split("\n")[1:]
+                    )
                     try:
-                        contents = self.repo.get_contents(file_path_code, ref=branch_name)
-                        self.repo.update_file(contents.path, f"Update {file_path_code}", content_to_write, contents.sha, branch=branch_name)
+                        contents: Union[ContentFile, List[ContentFile]] = (
+                            self.repo.get_contents(file_path_code, ref=branch_name)
+                        )
+                        if isinstance(
+                            contents, list
+                        ):  # Handle case where get_contents returns a list (i.e., it's a directory)
+                            logger.error(
+                                f"Cannot update directory {file_path_code}. Expected a file."
+                            )
+                            raise RuntimeError(
+                                f"Cannot update directory {file_path_code}. Expected a file."
+                            )
+                        self.repo.update_file(
+                            contents.path,
+                            f"Update {file_path_code}",
+                            content_to_write,
+                            contents.sha,
+                            branch=branch_name,
+                        )
                         logger.info(f"Updated code patch file: {file_path_code}")
                     except GithubException as e:
-                        if e.status == 404: # File does not exist, create it
-                            self.repo.create_file(file_path_code, f"Add {file_path_code}", content_to_write, branch=branch_name)
+                        if e.status == 404:  # File does not exist, create it
+                            self.repo.create_file(
+                                file_path_code,
+                                f"Add {file_path_code}",
+                                content_to_write,
+                                branch=branch_name,
+                            )
                             logger.info(f"Created code patch file: {file_path_code}")
                         else:
                             raise
-            
+
             # Process iac_fix
             if remediation_plan.iac_fix:
-                file_path_iac = self._extract_file_path_from_patch(remediation_plan.iac_fix)
+                file_path_iac = self._extract_file_path_from_patch(
+                    remediation_plan.iac_fix
+                )
                 if not file_path_iac:
-                    logger.warning("IaC patch provided but no target file path found in comment. Skipping IaC patch.")
+                    logger.warning(
+                        "IaC patch provided but no target file path found in comment. Skipping IaC patch."
+                    )
                 else:
-                    # Remove the FILE comment line from the patch content
-                    content_to_write = '\n'.join(remediation_plan.iac_fix.strip().split('\n')[1:])
+                    content_to_write = "\n".join(
+                        remediation_plan.iac_fix.strip().split("\n")[1:]
+                    )
                     try:
-                        contents = self.repo.get_contents(file_path_iac, ref=branch_name)
-                        self.repo.update_file(contents.path, f"Update {file_path_iac}", content_to_write, contents.sha, branch=branch_name)
+                        contents: Union[ContentFile, List[ContentFile]] = (
+                            self.repo.get_contents(file_path_iac, ref=branch_name)
+                        )
+                        if isinstance(
+                            contents, list
+                        ):  # Handle case where get_contents returns a list (i.e., it's a directory)
+                            logger.error(
+                                f"Cannot update directory {file_path_iac}. Expected a file."
+                            )
+                            raise RuntimeError(
+                                f"Cannot update directory {file_path_iac}. Expected a file."
+                            )
+                        self.repo.update_file(
+                            contents.path,
+                            f"Update {file_path_iac}",
+                            content_to_write,
+                            contents.sha,
+                            branch=branch_name,
+                        )
                         logger.info(f"Updated IaC patch file: {file_path_iac}")
                     except GithubException as e:
-                        if e.status == 404: # File does not exist, create it
-                            self.repo.create_file(file_path_iac, f"Add {file_path_iac}", content_to_write, branch=branch_name)
+                        if e.status == 404:  # File does not exist, create it
+                            self.repo.create_file(
+                                file_path_iac,
+                                f"Add {file_path_iac}",
+                                content_to_write,
+                                branch=branch_name,
+                            )
                             logger.info(f"Created IaC patch file: {file_path_iac}")
                         else:
                             raise
 
             # 4. Create a pull request
             pull_request: PullRequest = self.repo.create_pull(
-                title=f"Fix: {remediation_plan.proposed_fix[:50]}...", # Truncate title if too long
+                title=f"Fix: {remediation_plan.proposed_fix[:50]}...",  # Truncate title if too long
                 body=f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}",
                 head=branch_name,
-                base=base_branch
+                base=base_branch,
             )
             logger.info(f"Pull request created successfully: {pull_request.html_url}")
-            return pull_request.html_url # Return the URL of the created PR
+            return pull_request.html_url
 
         except GithubException as e:
             logger.error(f"GitHub API error during PR creation: {e.status} - {e.data}")
-            raise RuntimeError(f"Failed to create pull request due to GitHub API error: {e.data}") from e
+            raise RuntimeError(
+                f"Failed to create pull request due to GitHub API error: {e.data}"
+            ) from e
         except Exception as e:
             logger.error(f"An unexpected error occurred during PR creation: {e}")
             raise RuntimeError(f"Failed to create pull request: {e}") from e

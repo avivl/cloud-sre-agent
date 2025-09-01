@@ -1,7 +1,7 @@
 import yaml
 from pydantic import BaseModel, Field, field_validator
 import re # Added for regex validation
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 class ModelSelection(BaseModel):
     """

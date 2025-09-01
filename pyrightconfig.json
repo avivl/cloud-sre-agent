@@ -1,0 +1,22 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "include": [
+    "src",
+    "main.py",
+    "tests"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache"
+  ],
+  "extraPaths": [
+    "src"
+  ],
+  "reportMissingImports": true,
+  "reportMissingModuleSource": false,
+  "reportUndefinedVariable": true,
+  "reportPossiblyUnboundVariable": true,
+  "reportArgumentType": true,
+  "reportAttributeAccessIssue": true
+}

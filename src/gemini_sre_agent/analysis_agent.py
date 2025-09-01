@@ -1,11 +1,11 @@
 import logging
 import json
-from typing import List, Dict, Union
+from typing import List, Dict, Any
 from pydantic import BaseModel, ValidationError
 from google.cloud import aiplatform
 from vertexai.preview.generative_models import GenerativeModel
 from .triage_agent import TriagePacket
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type # Added
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,9 @@ class AnalysisAgent:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError)) # Retry on model call errors or parsing errors
+        retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError))
     )
-    def analyze_issue(
+    async def analyze_issue( # Changed to async def
         self, triage_packet: TriagePacket, historical_logs: List[str], configs: Dict[str, str]
     ) -> RemediationPlan:
         """
@@ -93,14 +93,16 @@ class AnalysisAgent:
             historical_logs_str=json.dumps(historical_logs, indent=2),
             configs_str=json.dumps(configs, indent=2)
         )
-        logger.debug(f"Prompt for analysis model: {prompt[:500]}...") # Log a snippet of the prompt
+        logger.debug(f"Prompt for analysis model: {prompt[:500]}...")
+
+        json_response_str: str = "" # Initialize json_response_str
 
         try:
-            # Call the Gemini model
-            response = self.model.generate_content(prompt)
+            # Call the Gemini model (synchronous)
+            response = self.model.generate_content(prompt) # Removed await
             
             # Extract and parse the JSON response
-            json_response_str: str = response.text.strip()
+            json_response_str = response.text.strip()
             logger.debug(f"Raw model response: {json_response_str[:500]}...")
 
             remediation_data: Dict[str, Any] = json.loads(json_response_str)

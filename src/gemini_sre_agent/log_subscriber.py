@@ -3,7 +3,7 @@ import json
 from concurrent.futures import TimeoutError, ThreadPoolExecutor
 from google.cloud import pubsub_v1
 from google.cloud.pubsub_v1.subscriber.message import Message
-from typing import Callable, Awaitable, Any, Dict
+from typing import Callable, Awaitable, Any, Dict, Optional
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ class LogSubscriber:
     """
     A class responsible for subscribing to Google Cloud Pub/Sub for real-time log ingestion.
     """
-    def __init__(self, project_id: str, subscription_id: str, triage_callback: Callable[[Dict], Awaitable[Any]] = None):
+    def __init__(self, project_id: str, subscription_id: str, triage_callback: Optional[Callable[[Dict], Awaitable[Any]]] = None):
         """
         Initializes the LogSubscriber with GCP project and Pub/Sub subscription details.
 
@@ -29,14 +29,18 @@ class LogSubscriber:
         self._loop = None
         logger.info(f"LogSubscriber initialized for subscription: {self.subscription_path}")
 
-    async def start(self): # Changed to async def
+    async def start(self):
         """
         Starts listening for messages on the Pub/Sub subscription.
         This method blocks until the subscription is cancelled or a timeout occurs.
         """
-        self._loop = asyncio.get_event_loop()
+        self._loop = asyncio.get_running_loop()
 
         def _callback_wrapper(message: Message):
+            if self._loop is None:
+                logger.error("Event loop not initialized")
+                message.nack()
+                return
             future = asyncio.run_coroutine_threadsafe(
                 self._process_message(message),
                 self._loop
@@ -50,11 +54,10 @@ class LogSubscriber:
         streaming_pull_future = self.subscriber.subscribe(
             self.subscription_path, callback=_callback_wrapper
         )
-        logger.info(f"Listening for messages on {self.subscription_path}..")
+        logger.info(f"Listening for messages on {self.subscription_path}..\n")
 
         try:
-            # Await the future to ensure it runs in the event loop
-            await streaming_pull_future # Removed blocking .result() call
+            streaming_pull_future.result(timeout=60)
         except TimeoutError:
             streaming_pull_future.cancel()
             logger.warning(f"Pub/Sub subscription timed out after 60 seconds.")

@@ -65,7 +65,7 @@ async def test_triage_agent_live_call(gcp_project_id, gcp_location, integration_
     logs = [json.dumps(sample_log)]
 
     # Call the actual Gemini API
-    triage_packet = agent.analyze_logs(logs)
+    triage_packet = await agent.analyze_logs(logs)
 
     # Assertions for a successful triage (adjust expectations based on model behavior)
     assert isinstance(triage_packet, TriagePacket)
@@ -103,7 +103,7 @@ async def test_analysis_agent_live_call(gcp_project_id, gcp_location, integratio
     configs = {"nginx.conf": "worker_processes auto;", "app.py": "import time; time.sleep(10)"}
 
     # Call the actual Gemini API
-    remediation_plan = agent.analyze_issue(dummy_triage_packet, historical_logs, configs)
+    remediation_plan = await agent.analyze_issue(dummy_triage_packet, historical_logs, configs)
 
     # Assertions for a successful analysis (adjust expectations based on model behavior)
     assert isinstance(remediation_plan, RemediationPlan)
@@ -129,13 +129,13 @@ async def test_remediation_agent_live_github(github_token, github_repo_name, git
     remediation_plan = RemediationPlan(
         root_cause_analysis=f"Integration test: Simulated root cause for {branch_name}",
         proposed_fix=f"Integration test: Apply a dummy fix for {branch_name}",
-        code_patch=f"# {branch_name}/dummy_code.py\nprint(\"Hello from integration test {timestamp}\")",
-        iac_fix=f"# {branch_name}/dummy_iac.tf\nresource \"null_resource\" \"test_iac_{timestamp}\" {{}}"
+        code_patch=f"# FILE: {branch_name}/dummy_code.py\nprint(\"Hello from integration test {timestamp}\")",
+        iac_fix=f"# FILE: {branch_name}/dummy_iac.tf\nresource \"null_resource\" \"test_iac_{timestamp}\" {{}}"
     )
 
     pr_url = None
     try:
-        pr_url = agent.create_pull_request(remediation_plan, branch_name, github_base_branch)
+        pr_url = await agent.create_pull_request(remediation_plan, branch_name, github_base_branch)
         assert pr_url is not None
         assert "https://github.com/" in pr_url
         print(f"Successfully created PR: {pr_url}")
@@ -145,17 +145,17 @@ async def test_remediation_agent_live_github(github_token, github_repo_name, git
     finally:
         # --- Cleanup ---
         # Attempt to close the PR and delete the branch
-        if pr_url:
+        if pr_url is not None: 
             try:
                 # Extract PR number from URL
-                parts = pr_url.split('/')
+                parts = pr_url.split('/') 
                 pr_number = int(parts[-1])
-                repo = agent.repo # Use the repo object from the agent
+                repo = agent.repo
                 pull = repo.get_pull(pr_number)
                 if pull.state != 'closed':
                     pull.edit(state='closed')
                     print(f"Closed PR: {pr_url}")
-            except Exception as e: # Catch any exception during PR closing
+            except Exception as e:
                 print(f"Warning: Failed to close PR {pr_url}: {e}")
 
         try:
@@ -164,5 +164,5 @@ async def test_remediation_agent_live_github(github_token, github_repo_name, git
             ref = agent.repo.get_git_ref(ref_to_delete)
             ref.delete()
             print(f"Deleted branch: {branch_name}")
-        except Exception as e: # Catch any exception during branch deletion
+        except Exception as e:
             print(f"Warning: Failed to delete branch {branch_name}: {e}")

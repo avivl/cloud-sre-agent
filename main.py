@@ -64,8 +64,10 @@ async def monitor_service(
             analysis_model=model_selection.analysis_model,
         )
 
-        # GITHUB_TOKEN validation is now handled by validate_environment()
-        github_token = os.getenv("GITHUB_TOKEN") # It will be present if validate_environment passes
+        # Get GitHub token from environment variable
+        github_token = os.getenv("GITHUB_TOKEN")
+        # Assert that github_token is not None, as validate_environment() should have ensured it
+        assert github_token is not None, "GITHUB_TOKEN should be set by validate_environment()"
 
         remediation_agent = RemediationAgent(
             github_token=github_token, repo_name=github_config.repository
@@ -92,15 +94,15 @@ async def monitor_service(
 
             Example:
                 >>> # This function is called by LogSubscriber
-                >>> # Example log_data:
+                >>> # Example log_data: 
                 >>> # log_data = {
-                >>> #     "insertId": "abc-123",
-                >>> #     "timestamp": "2025-01-27T10:00:00Z",
-                >>> #     "severity": "ERROR",
-                >>> #     "textPayload": "Database connection failed",
-                >>> #     "resource": {"type": "cloud_run_revision", "labels": {"service_name": "my-service"}}
-                >>> # }
-                >>> # await process_log_data(log_data)
+                >>> # #     "insertId": "abc-123",
+                >>> # #     "timestamp": "2025-01-27T10:00:00Z",
+                >>> # #     "severity": "ERROR",
+                >>> # #     "textPayload": "Database connection failed",
+                >>> # #     "resource": {"type": "cloud_run_revision", "labels": {"service_name": "my-service"}}
+                >>> # # }
+                >>> # # await process_log_data(log_data)
             """
             # This is where the log data will be processed by the agents
             logger.info(

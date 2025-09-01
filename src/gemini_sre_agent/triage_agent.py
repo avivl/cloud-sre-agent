@@ -1,10 +1,10 @@
 import logging
 import json
-from typing import List, Dict, Union
-from pydantic import BaseModel, Field, ValidationError
+from typing import List, Dict, Any
+from pydantic import BaseModel, ValidationError
 from google.cloud import aiplatform
-from vertexai.preview.generative_models import GenerativeModel, Part, Image
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type # Added
+from vertexai.preview.generative_models import GenerativeModel
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,9 @@ class TriageAgent:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError)) # Retry on model call errors or parsing errors
+        retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError))
     )
-    def analyze_logs(self, logs: List[str]) -> TriagePacket:
+    async def analyze_logs(self, logs: List[str]) -> TriagePacket:
         """
         Analyzes logs using the triage model and returns a TriagePacket.
 
@@ -77,19 +77,21 @@ class TriageAgent:
         Provide only the JSON response.
         """
         prompt: str = prompt_template.format(log_entries="\n".join(logs))
-        logger.debug(f"Prompt for triage model: {prompt[:500]}...") # Log a snippet of the prompt
+        logger.debug(f"Prompt for triage model: {prompt[:500]}...")
+
+        json_response_str: str = "" # Initialize json_response_str
 
         try:
-            # Call the Gemini model
+            # Call the Gemini model (synchronous)
             response = self.model.generate_content(prompt)
             
             # Extract and parse the JSON response
-            json_response_str: str = response.text.strip()
+            json_response_str = response.text.strip()
             logger.debug(f"Raw model response: {json_response_str[:500]}...")
 
             # Attempt to parse the JSON response
-            triage_data: Dict[str, Any] = json.loads(json_response_str) # Added type hint
-            triage_packet: TriagePacket = TriagePacket(**triage_data) # Added type hint
+            triage_data: Dict[str, Any] = json.loads(json_response_str)
+            triage_packet: TriagePacket = TriagePacket(**triage_data)
             
             logger.info(f"Triage analysis complete. Issue ID: {triage_packet.issue_id}")
             return triage_packet
