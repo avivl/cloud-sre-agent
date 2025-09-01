@@ -26,11 +26,18 @@ Dive in to discover how this agent can transform your cloud log monitoring into 
 
 For detailed information on the Gemini SRE Agent, please refer to the following documentation sections:
 
+*   [**Quick Start Guide**](docs/QUICKSTART.md): Get the agent up and running in 15 minutes.
 *   [**Architecture Overview**](docs/ARCHITECTURE.md): Understand the core components and data flow of the agent.
+*   [**GCP Infrastructure Setup Guide**](docs/GCP_SETUP.md): Instructions for setting up necessary Google Cloud infrastructure.
 *   [**Setup and Installation**](docs/SETUP_INSTALLATION.md): A comprehensive guide to getting the project up and running.
 *   [**Configuration Guide**](docs/CONFIGURATION.md): Learn how to customize the agent's behavior via `config.yaml`.
 *   [**Deployment Guide**](docs/DEPLOYMENT.md): Instructions for deploying the agent to Google Cloud Run and other environments.
-*   [**Development Guide**](docs/DEVELOPMENT.md): Information for contributors, including testing, code style, and contribution guidelines.
+*   [**Multi-Environment Guide**](docs/ENVIRONMENTS.md): Strategies for managing the agent across different environments.
+*   [**Security Guide**](docs/SECURITY.md): Best practices and considerations for securing the agent.
+*   [**Performance Tuning Guide**](docs/PERFORMANCE.md): Recommendations for optimizing agent performance and cost.
+*   [**Operations Runbook**](docs/OPERATIONS.md): Guidelines for operating, monitoring, and maintaining the agent.
+*   [**Troubleshooting Guide**](docs/TROUBLESHOOTING.md): Solutions to common issues.
+*   [**Development Guide**](docs/DEVELOPMENT.md): Information for contributors, including testing, code style, and contributing.
 
 ## Getting Started (Quick Overview)
 

@@ -26,13 +26,21 @@ The agent's functionality is distributed across several key components, each wit
 *   **Role:** Automates the implementation of proposed remediation actions.
 *   **Functionality:** Receives `RemediationPlan`s. It interacts with GitHub to create new branches, commit the suggested code/IaC changes, and submit Pull Requests for review and approval. This component integrates the AI-driven insights directly into the development workflow, enabling a human-in-the-loop validation step.
 
+### 6. Quantitative Verification Agent (`QuantitativeAnalyzer`)
+*   **Role:** Provides empirical validation of analysis findings through automated code execution.
+*   **Implementation:** Uses Gemini API's Code Execution capability to:
+    *   Generate Python code for precise error rate calculations
+    *   Validate hypotheses with statistical analysis
+    *   Perform quantitative verification of findings
+*   **Integration:** Works in conjunction with AnalysisAgent to provide data-driven validation of AI analysis results.
+
 ## Data Flow and Interaction
 
 The agent operates in a continuous feedback loop:
 
 1.  **Logs to Pub/Sub:** Google Cloud Logging is configured to export relevant log streams to designated Pub/Sub topics.
 2.  **Subscriber Activation:** The `main.py` orchestrator launches an asynchronous task for each configured service. The `LogSubscriber` within each task listens to its respective Pub/Sub topic. Upon receiving a new log message, it triggers an asynchronous processing pipeline via a callback.
-3.  **Triage & Analysis Pipeline:** The received log data is first sent to the `TriageAgent`. If a significant issue is identified, the resulting `TriagePacket` is then passed to the `AnalysisAgent` for deeper investigation. Both agents incorporate retry logic for their Gemini model interactions.
+3.  **Triage & Analysis Pipeline:** The received log data is first sent to the `TriageAgent`. If a significant issue is identified, the resulting `TriagePacket` is then passed to the `AnalysisAgent` for deeper investigation. Both agents incorporate retry logic for their Gemini model interactions. The `AnalysisAgent` may also interact with the `QuantitativeAnalyzer` for empirical validation of its findings.
 4.  **Remediation Trigger:** Once the `AnalysisAgent` generates a `RemediationPlan`, it is forwarded to the `RemediationAgent`.
 5.  **GitHub Integration:** The `RemediationAgent` interacts with the configured GitHub repository to create a new branch, commit the proposed changes (code patches, IaC fixes), and open a Pull Request. This PR serves as a critical human-in-the-loop checkpoint for reviewing and approving automated remediation.
 
