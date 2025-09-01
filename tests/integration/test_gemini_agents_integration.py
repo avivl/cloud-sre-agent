@@ -104,7 +104,8 @@ async def test_analysis_agent_live_call(gcp_project_id, gcp_location, integratio
     configs = {"nginx.conf": "worker_processes auto;", "app.py": "import time; time.sleep(10)"}
 
     # Call the actual Gemini API
-    remediation_plan = await agent.analyze_issue(dummy_triage_packet, historical_logs, configs)
+    flow_id = "test-integration-flow-002"
+    remediation_plan = await agent.analyze_issue(dummy_triage_packet, historical_logs, configs, flow_id)
 
     # Assertions for a successful analysis (adjust expectations based on model behavior)
     assert isinstance(remediation_plan, RemediationPlan)
@@ -130,13 +131,14 @@ async def test_remediation_agent_live_github(github_token, github_repo_name, git
     remediation_plan = RemediationPlan(
         root_cause_analysis=f"Integration test: Simulated root cause for {branch_name}",
         proposed_fix=f"Integration test: Apply a dummy fix for {branch_name}",
-        code_patch=f"# FILE: {branch_name}/dummy_code.py\nprint(\"Hello from integration test {timestamp}\")",
-        iac_fix=f"# FILE: {branch_name}/dummy_iac.tf\nresource \"null_resource\" \"test_iac_{timestamp}\" {{}}"
+        code_patch=f"# FILE: {branch_name}/dummy_code.py\nprint(\"Hello from integration test {timestamp}\")"
     )
 
     pr_url = None
     try:
-        pr_url = await agent.create_pull_request(remediation_plan, branch_name, github_base_branch)
+        flow_id = "test-integration-flow-003"
+        issue_id = f"integration-test-issue-{timestamp}"
+        pr_url = await agent.create_pull_request(remediation_plan, branch_name, github_base_branch, flow_id, issue_id)
         assert pr_url is not None
         assert "https://github.com/" in pr_url
         print(f"Successfully created PR: {pr_url}")
