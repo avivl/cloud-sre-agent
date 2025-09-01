@@ -116,7 +116,7 @@ async def monitor_service(
                 # Wrap agent calls with resilience patterns
                 logger.info(f"[TRIAGE] Starting triage analysis: flow_id={flow_id}")
                 triage_packet = await resilient_client.execute(
-                    lambda: triage_agent.analyze_logs([json.dumps(log_data)])
+                    lambda: triage_agent.analyze_logs([json.dumps(log_data)], flow_id)
                 )
                 logger.info(
                     f"[TRIAGE] Triage completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
@@ -124,7 +124,7 @@ async def monitor_service(
 
                 logger.info(f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
                 remediation_plan = await resilient_client.execute(
-                    lambda: analysis_agent.analyze_issue(triage_packet, [], {})
+                    lambda: analysis_agent.analyze_issue(triage_packet, [], {}, flow_id)
                 )
                 logger.info(
                     f"[ANALYSIS] Analysis completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}, proposed_fix={remediation_plan.proposed_fix[:100]}..."
@@ -132,7 +132,7 @@ async def monitor_service(
 
                 logger.info(f"[REMEDIATION] Creating pull request: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
                 pr_url = await resilient_client.execute(
-                    lambda: remediation_agent.create_pull_request(remediation_plan, f"fix/{triage_packet.issue_id}", github_config.base_branch)
+                    lambda: remediation_agent.create_pull_request(remediation_plan, f"fix/{triage_packet.issue_id}", github_config.base_branch, flow_id, triage_packet.issue_id)
                 )
                 logger.info(f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={triage_packet.issue_id}, pr_url={pr_url}")
 

@@ -45,17 +45,18 @@ class TriageAgent:
         wait=wait_exponential(multiplier=1, min=4, max=10),
         retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError))
     )
-    async def analyze_logs(self, logs: List[str]) -> TriagePacket:
+    async def analyze_logs(self, logs: List[str], flow_id: str) -> TriagePacket:
         """
         Analyzes logs using the triage model and returns a TriagePacket.
 
         Args:
             logs (List[str]): A list of log entries to analyze.
+            flow_id (str): The flow ID for tracking this processing pipeline.
 
         Returns:
             TriagePacket: A structured packet containing triage information.
         """
-        logger.info(f"[TRIAGE] Analyzing {len(logs)} log entries for triage.")
+        logger.info(f"[TRIAGE] Analyzing {len(logs)} log entries for triage: flow_id={flow_id}")
         
         # Construct the prompt for the Gemini model
         prompt_template: str = """
@@ -77,7 +78,7 @@ class TriageAgent:
         Provide only the JSON response.
         """
         prompt: str = prompt_template.format(log_entries="\n".join(logs))
-        logger.debug(f"[TRIAGE] Prompt for triage model: {prompt[:500]}...")
+        logger.debug(f"[TRIAGE] Prompt for triage model: flow_id={flow_id}, prompt={prompt[:500]}...")
 
         json_response_str: str = "" # Initialize json_response_str
 
@@ -87,21 +88,21 @@ class TriageAgent:
             
             # Extract and parse the JSON response
             json_response_str = response.text.strip()
-            logger.debug(f"[TRIAGE] Raw model response: {json_response_str[:500]}...")
+            logger.debug(f"[TRIAGE] Raw model response: flow_id={flow_id}, response={json_response_str[:500]}...")
 
             # Attempt to parse the JSON response
             triage_data: Dict[str, Any] = json.loads(json_response_str)
             triage_packet: TriagePacket = TriagePacket(**triage_data)
             
-            logger.info(f"[TRIAGE] Triage analysis complete: issue_id={triage_packet.issue_id}, severity={triage_packet.preliminary_severity_score}")
+            logger.info(f"[TRIAGE] Triage analysis complete: flow_id={flow_id}, issue_id={triage_packet.issue_id}, severity={triage_packet.preliminary_severity_score}")
             return triage_packet
 
         except ValidationError as e:
-            logger.error(f"[ERROR_HANDLING] Failed to validate TriagePacket schema from model response: {e}")
+            logger.error(f"[ERROR_HANDLING] Failed to validate TriagePacket schema from model response: flow_id={flow_id}, error={e}")
             raise ValueError(f"Invalid model response schema: {e}") from e
         except json.JSONDecodeError as e:
-            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from model response: {e}. Response: {json_response_str}")
+            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from model response: flow_id={flow_id}, error={e}, response={json_response_str}")
             raise ValueError(f"Malformed JSON response from model: {e}") from e
         except Exception as e:
-            logger.error(f"[ERROR_HANDLING] Error calling Gemini Triage model: {e}")
+            logger.error(f"[ERROR_HANDLING] Error calling Gemini Triage model: flow_id={flow_id}, error={e}")
             raise RuntimeError(f"Gemini Triage model call failed: {e}") from e

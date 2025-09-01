@@ -74,7 +74,7 @@ class RemediationAgent:
         return True
 
     async def create_pull_request(
-        self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str
+        self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str, flow_id: str, issue_id: str
     ) -> str:  # Changed to async def
         """
         Creates a pull request on GitHub with the proposed service code fix.
@@ -83,25 +83,27 @@ class RemediationAgent:
             remediation_plan (RemediationPlan): The remediation plan containing the service code fix.
             branch_name (str): The name of the new branch to create for the pull request.
             base_branch (str): The name of the base branch to merge into (e.g., "main").
+            flow_id (str): The flow ID for tracking this processing pipeline.
+            issue_id (str): The issue ID from the triage analysis.
 
         Returns:
             str: The HTML URL of the created pull request.
         """
         logger.info(
-            f"[REMEDIATION] Attempting to create pull request for branch {branch_name} targeting {base_branch}..."
+            f"[REMEDIATION] Attempting to create pull request: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}, target={base_branch}"
         )
 
         try:
             # 1. Get the base branch
             base: Branch = self.repo.get_branch(base_branch)
             logger.debug(
-                f"[REMEDIATION] Base branch '{base_branch}' found with SHA: {base.commit.sha}"
+                f"[REMEDIATION] Base branch found: flow_id={flow_id}, issue_id={issue_id}, branch={base_branch}, sha={base.commit.sha}"
             )
 
             # 2. Create a new branch
             ref: str = f"refs/heads/{branch_name}"
             self.repo.create_git_ref(ref=ref, sha=base.commit.sha)
-            logger.info(f"[REMEDIATION] Branch '{branch_name}' created successfully.")
+            logger.info(f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}")
 
             # 3. Apply the service code fix
             if remediation_plan.code_patch:
@@ -110,7 +112,7 @@ class RemediationAgent:
                 )
                 if not file_path:
                     logger.warning(
-                        "[REMEDIATION] Service code patch provided but no target file path found in comment. Skipping patch."
+                        f"[REMEDIATION] Service code patch provided but no target file path found: flow_id={flow_id}, issue_id={issue_id}"
                     )
                 else:
                     # Extract code content (skip the first line with FILE: comment)
@@ -125,7 +127,7 @@ class RemediationAgent:
                             contents, list
                         ):  # Handle case where get_contents returns a list (i.e., it's a directory)
                             logger.error(
-                                f"[ERROR_HANDLING] Cannot update directory {file_path}. Expected a service code file."
+                                f"[ERROR_HANDLING] Cannot update directory: flow_id={flow_id}, issue_id={issue_id}, path={file_path}"
                             )
                             raise RuntimeError(
                                 f"Cannot update directory {file_path}. Expected a service code file."
@@ -137,7 +139,7 @@ class RemediationAgent:
                             contents.sha,
                             branch=branch_name,
                         )
-                        logger.info(f"[REMEDIATION] Updated service code file: {file_path}")
+                        logger.info(f"[REMEDIATION] Updated service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}")
                     except GithubException as e:
                         if e.status == 404:  # File does not exist, create it
                             self.repo.create_file(
@@ -146,11 +148,11 @@ class RemediationAgent:
                                 content_to_write,
                                 branch=branch_name,
                             )
-                            logger.info(f"[REMEDIATION] Created service code file: {file_path}")
+                            logger.info(f"[REMEDIATION] Created service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}")
                         else:
                             raise
             else:
-                logger.warning("[REMEDIATION] No service code patch provided in remediation plan.")
+                logger.warning(f"[REMEDIATION] No service code patch provided: flow_id={flow_id}, issue_id={issue_id}")
 
             # 4. Create a pull request
             pull_request: PullRequest = self.repo.create_pull(
@@ -159,14 +161,14 @@ class RemediationAgent:
                 head=branch_name,
                 base=base_branch,
             )
-            logger.info(f"[REMEDIATION] Pull request created successfully: {pull_request.html_url}")
+            logger.info(f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={issue_id}, pr_url={pull_request.html_url}")
             return pull_request.html_url
 
         except GithubException as e:
-            logger.error(f"[ERROR_HANDLING] GitHub API error during PR creation: {e.status} - {e.data}")
+            logger.error(f"[ERROR_HANDLING] GitHub API error during PR creation: flow_id={flow_id}, issue_id={issue_id}, status={e.status}, data={e.data}")
             raise RuntimeError(
                 f"Failed to create pull request due to GitHub API error: {e.data}"
             ) from e
         except Exception as e:
-            logger.error(f"[ERROR_HANDLING] An unexpected error occurred during PR creation: {e}")
+            logger.error(f"[ERROR_HANDLING] An unexpected error occurred during PR creation: flow_id={flow_id}, issue_id={issue_id}, error={e}")
             raise RuntimeError(f"Failed to create pull request: {e}") from e

@@ -45,7 +45,7 @@ class AnalysisAgent:
         retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError))
     )
     async def analyze_issue( # Changed to async def
-        self, triage_packet: TriagePacket, historical_logs: List[str], configs: Dict[str, str]
+        self, triage_packet: TriagePacket, historical_logs: List[str], configs: Dict[str, str], flow_id: str
     ) -> RemediationPlan:
         """
         Analyzes an issue based on a triage packet, historical logs, and configurations
@@ -55,11 +55,12 @@ class AnalysisAgent:
             triage_packet (TriagePacket): The triage information for the issue.
             historical_logs (List[str]): A list of relevant historical log entries.
             configs (Dict[str, str]): A dictionary of configuration files (e.g., IaC, service configs).
+            flow_id (str): The flow ID for tracking this processing pipeline.
 
         Returns:
             RemediationPlan: A structured plan for remediating the issue.
         """
-        logger.info(f"[ANALYSIS] Analyzing issue: issue_id={triage_packet.issue_id}, historical_logs={len(historical_logs)}, configs={len(configs)}")
+        logger.info(f"[ANALYSIS] Analyzing issue: flow_id={flow_id}, issue_id={triage_packet.issue_id}, historical_logs={len(historical_logs)}, configs={len(configs)}")
         
         # Construct the prompt for the Gemini model
         prompt_template: str = """
@@ -91,7 +92,7 @@ class AnalysisAgent:
             historical_logs_str=json.dumps(historical_logs, indent=2),
             configs_str=json.dumps(configs, indent=2)
         )
-        logger.debug(f"[ANALYSIS] Prompt for analysis model: {prompt[:500]}...")
+        logger.debug(f"[ANALYSIS] Prompt for analysis model: flow_id={flow_id}, issue_id={triage_packet.issue_id}, prompt={prompt[:500]}...")
 
         json_response_str: str = "" # Initialize json_response_str
 
@@ -101,20 +102,20 @@ class AnalysisAgent:
             
             # Extract and parse the JSON response
             json_response_str = response.text.strip()
-            logger.debug(f"[ANALYSIS] Raw model response: {json_response_str[:500]}...")
+            logger.debug(f"[ANALYSIS] Raw model response: flow_id={flow_id}, issue_id={triage_packet.issue_id}, response={json_response_str[:500]}...")
 
             remediation_data: Dict[str, Any] = json.loads(json_response_str)
             remediation_plan: RemediationPlan = RemediationPlan(**remediation_data)
             
-            logger.info(f"[ANALYSIS] Analysis complete for issue {triage_packet.issue_id}.")
+            logger.info(f"[ANALYSIS] Analysis complete: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
             return remediation_plan
 
         except ValidationError as e:
-            logger.error(f"[ERROR_HANDLING] Failed to validate RemediationPlan schema from model response: {e}")
+            logger.error(f"[ERROR_HANDLING] Failed to validate RemediationPlan schema from model response: flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}")
             raise ValueError(f"Invalid model response schema: {e}") from e
         except json.JSONDecodeError as e:
-            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from model response: {e}. Response: {json_response_str}")
+            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from model response: flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}, response={json_response_str}")
             raise ValueError(f"Malformed JSON response from model: {e}") from e
         except Exception as e:
-            logger.error(f"[ERROR_HANDLING] Error calling Gemini Analysis model: {e}")
+            logger.error(f"[ERROR_HANDLING] Error calling Gemini Analysis model: flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}")
             raise RuntimeError(f"Gemini Analysis model call failed: {e}") from e
