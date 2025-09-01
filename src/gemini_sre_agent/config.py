@@ -1,5 +1,6 @@
 import yaml
-from pydantic import BaseModel, Field, field_validator # Updated to field_validator
+from pydantic import BaseModel, Field, field_validator
+import re # Added for regex validation
 from typing import Dict, List, Optional
 
 class ModelSelection(BaseModel):
@@ -25,22 +26,36 @@ class LoggingConfig(BaseModel):
     json_format: bool = False
     log_file: Optional[str] = None
 
-class ServiceMonitorConfig(BaseModel): # Renamed from GeminiCloudLogMonitorConfig
+class ServiceMonitorConfig(BaseModel):
     """
     Configuration model for a single service to be monitored.
     """
-    service_name: str = Field(min_length=1, max_length=50) # Added validation
-    project_id: str = Field(pattern=r'^[a-z][a-z0-9-]*[a-z0-9]$') # Added validation
-    location: str = Field(pattern=r'^[a-z0-9-]+$') # Added validation
-    subscription_id: str = Field(min_length=1) # Added validation
+    service_name: str = Field(min_length=1, max_length=50)
+    project_id: str = Field(pattern=r'^[a-z][a-z0-9-]*[a-z0-9]$')
+    location: str = Field(pattern=r'^[a-z0-9-]+$')
+    subscription_id: str = Field(min_length=1)
     model_selection: Optional[ModelSelection] = None
     github: Optional[GitHubConfig] = None
 
-    @field_validator('project_id') # Updated to field_validator
+    @field_validator('project_id')
     @classmethod
     def validate_project_id(cls, v):
         if len(v) < 6 or len(v) > 30:
             raise ValueError('Project ID must be 6-30 characters')
+        return v
+
+    @field_validator('subscription_id') # Added validator for subscription_id
+    @classmethod
+    def validate_subscription_id(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Subscription ID cannot be empty')
+        return v.strip()
+
+    @field_validator('service_name') # Added validator for service_name
+    @classmethod
+    def validate_service_name(cls, v):
+        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError('Service name must contain only alphanumeric characters, hyphens, and underscores')
         return v
 
 class GlobalConfig(BaseModel):

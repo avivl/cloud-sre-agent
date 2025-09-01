@@ -1,10 +1,10 @@
 import logging
-import json # Added
-from concurrent.futures import TimeoutError
+import json
+from concurrent.futures import TimeoutError, ThreadPoolExecutor
 from google.cloud import pubsub_v1
 from google.cloud.pubsub_v1.subscriber.message import Message
-from typing import Callable, Awaitable, Any, Dict # Added for type hinting
-import asyncio # Added for asyncio.create_task
+from typing import Callable, Awaitable, Any, Dict
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -24,31 +24,45 @@ class LogSubscriber:
         """
         self.subscriber = pubsub_v1.SubscriberClient()
         self.subscription_path = self.subscriber.subscription_path(project_id, subscription_id)
-        self.triage_callback = triage_callback # Store the callback
+        self.triage_callback = triage_callback
+        self._executor = ThreadPoolExecutor(max_workers=4)
+        self._loop = None
         logger.info(f"LogSubscriber initialized for subscription: {self.subscription_path}")
 
-    def start(self):
+    async def start(self): # Changed to async def
         """
         Starts listening for messages on the Pub/Sub subscription.
         This method blocks until the subscription is cancelled or a timeout occurs.
         """
-        # The callback needs to be wrapped to handle async processing
+        self._loop = asyncio.get_event_loop()
+
         def _callback_wrapper(message: Message):
-            asyncio.create_task(self._process_message(message))
+            future = asyncio.run_coroutine_threadsafe(
+                self._process_message(message),
+                self._loop
+            )
+            try:
+                future.result(timeout=30)
+            except Exception as e:
+                logger.error(f"Failed to process message in callback wrapper: {e}")
+                message.nack()
 
         streaming_pull_future = self.subscriber.subscribe(
-            self.subscription_path, callback=_callback_wrapper # Use the wrapper
+            self.subscription_path, callback=_callback_wrapper
         )
         logger.info(f"Listening for messages on {self.subscription_path}..")
 
         try:
-            streaming_pull_future.result(timeout=60)
+            # Await the future to ensure it runs in the event loop
+            await streaming_pull_future # Removed blocking .result() call
         except TimeoutError:
             streaming_pull_future.cancel()
             logger.warning(f"Pub/Sub subscription timed out after 60 seconds.")
         except Exception as e:
             logger.error(f"An error occurred during Pub/Sub subscription: {e}")
             streaming_pull_future.cancel()
+        finally:
+            self._executor.shutdown(wait=True)
 
     async def _process_message(self, message: Message):
         """
@@ -56,16 +70,16 @@ class LogSubscriber:
         """
         try:
             log_data = json.loads(message.data.decode('utf-8'))
-            logger.info(f"Received message: {log_data.get('insertId', 'N/A')}") # Log with insertId if available
+            logger.info(f"Received message: {log_data.get('insertId', 'N/A')}")
 
             if self.triage_callback:
-                await self.triage_callback(log_data) # Call the async callback
+                await self.triage_callback(log_data)
 
             message.ack()
             logger.debug(f"Message {message.message_id} acknowledged.")
         except json.JSONDecodeError as e:
             logger.error(f"Failed to decode JSON from message {message.message_id}: {e}. Data: {message.data.decode('utf-8')}")
-            message.nack() # Negative acknowledgment
+            message.nack()
         except Exception as e:
             logger.error(f"Failed to process message {message.message_id}: {e}")
-            message.nack() # Negative acknowledgment
+            message.nack()

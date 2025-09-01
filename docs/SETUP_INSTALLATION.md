@@ -22,6 +22,10 @@ Before you begin, ensure you have the following installed and configured:
 *   **GitHub Personal Access Token (PAT):** A GitHub PAT with `repo` scope is required for the `RemediationAgent` to create branches, commit changes, and open pull requests in your repositories.
     *   [Create a GitHub PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
+## GCP Infrastructure Setup
+
+Before running the agent, you need to set up the necessary Google Cloud infrastructure, particularly for log ingestion via Pub/Sub. Refer to the [GCP Infrastructure Setup Guide](GCP_SETUP.md) for detailed instructions.
+
 ## Local Setup
 
 Follow these steps to set up the Gemini SRE Agent on your local machine:

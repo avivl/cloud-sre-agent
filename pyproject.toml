@@ -19,11 +19,15 @@ dependencies = [
     "aiofiles",
     "pytest",
     "pytest-asyncio",
-    "PyGithub",  # Added
-    "google-auth",  # Added
-    "google-auth-oauthlib",  # Added
-    "google-auth-httplib2",  # Added
+    "PyGithub",
+    "google-auth",
+    "google-auth-oauthlib",
+    "google-auth-httplib2",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]

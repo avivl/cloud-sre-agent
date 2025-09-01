@@ -4,8 +4,8 @@ from .analysis_agent import RemediationPlan
 from github.Repository import Repository
 from github.Branch import Branch
 from github.PullRequest import PullRequest
-import re # Added for regex parsing
-from typing import Optional # Added for Optional type hint
+import re
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +28,46 @@ class RemediationAgent:
     def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
         """
         Extracts the target file path from a special comment in the patch content.
-        Assumes the format: # FILE: path/to/file.ext
+        Supports multiple comment formats (e.g., # FILE:, // FILE:, /* FILE: */).
+        Includes basic validation for the extracted file path.
         """
-        match = re.match(r'#\s*FILE:\s*(.+)', patch_content.strip().split('\n')[0])
-        if match:
-            return match.group(1).strip()
+        if not patch_content.strip():
+            return None
+
+        lines = patch_content.strip().split('\n')
+        if not lines:
+            return None
+
+        first_line = lines[0].strip()
+
+        # Support multiple comment formats
+        patterns = [
+            r'#\s*FILE:\s*(.+)',           # # FILE: path/to/file
+            r'//\s*FILE:\s*(.+)',          # // FILE: path/to/file
+            r'/\*\s*FILE:\s*(.+)\s*\*/',   # /* FILE: path/to/file */
+        ]
+
+        for pattern in patterns:
+            match = re.match(pattern, first_line)
+            if match:
+                file_path = match.group(1).strip()
+                # Basic validation for file path
+                if self._is_valid_file_path(file_path):
+                    return file_path
+                else:
+                    logger.warning(f"Invalid file path extracted: {file_path}")
+                    return None
+
         return None
+
+    def _is_valid_file_path(self, path: str) -> bool:
+        """
+        Validates that the extracted file path is safe and reasonable.
+        Prevents directory traversal and absolute paths.
+        """
+        if not path or '..' in path or path.startswith('/') or path.startswith('\\'):
+            return False
+        return True
 
     def create_pull_request(self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str) -> str:
         """
