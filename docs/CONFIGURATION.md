@@ -12,9 +12,9 @@ graph TD
         ROOT[gemini_cloud_log_monitor]
         
         ROOT --> DMS[default_model_selection]
-        DMS --> |triage_model| TM[gemini-1.5-flash-001]
-        DMS --> |analysis_model| AM[gemini-1.5-pro-001]
-        DMS --> |classification_model| CM[gemini-2.5-flash-lite]
+        DMS --> |triage_model| TM[gemini-flash]
+        DMS --> |analysis_model| AM[gemini-pro]
+        DMS --> |classification_model| CM[gemini-flash-lite]
         
         ROOT --> DGC[default_github_config]
         DGC --> |repository| REPO[owner/repo]
@@ -60,9 +60,9 @@ The configuration follows a hierarchical structure where:
 ```yaml
 gemini_cloud_log_monitor:
   default_model_selection:
-    triage_model: "gemini-1.5-flash-001"
-    analysis_model: "gemini-1.5-pro-001"
-    classification_model: "gemini-2.5-flash-lite"
+    triage_model: "gemini-flash"
+    analysis_model: "gemini-pro"
+    classification_model: "gemini-flash-lite"
 
   default_github_config:
     repository: "owner/repo"
@@ -80,7 +80,7 @@ gemini_cloud_log_monitor:
       subscription_id: "billing-logs-subscription"
       # Optional: Override default model_selection or github for this service
       # model_selection:
-      #   triage_model: "gemini-1.5-flash-special"
+      #   triage_model: "gemini-flash-experimental"
       # github:
       #   repository: "owner/billing-repo" # Can be a different repo for this service
 
@@ -97,9 +97,9 @@ gemini_cloud_log_monitor:
 
 This section defines the global default Gemini models to be used by the Triage and Analysis agents. These models will be used for any service that does not specify its own `model_selection` override.
 
-*   **`triage_model`** (`str`): The name of the Gemini model to use for initial log triage (e.g., `gemini-1.5-flash-001`). This model should be optimized for speed and cost-efficiency.
-*   **`analysis_model`** (`str`): The name of the Gemini model to use for deep root cause analysis and remediation plan generation (e.g., `gemini-1.5-pro-001`). This model should be optimized for reasoning and complex problem-solving.
-*   **`classification_model`** (`str`): The name of the Gemini model to use for log classification (e.g., `gemini-2.5-flash-lite`).
+*   **`triage_model`** (`str`): The name of the Gemini model to use for initial log triage (e.g., `gemini-flash`). This model should be optimized for speed and cost-efficiency.
+*   **`analysis_model`** (`str`): The name of the Gemini model to use for deep root cause analysis and remediation plan generation (e.g., `gemini-pro`). This model should be optimized for reasoning and complex problem-solving.
+*   **`classification_model`** (`str`): The name of the Gemini model to use for log classification (e.g., `gemini-flash-lite`).
 
 ### `default_github_config`
 
@@ -184,9 +184,9 @@ services:
     location: "us-central1"
     subscription_id: "exp-logs-sub"
     model_selection:
-      triage_model: "gemini-1.5-flash-experimental"
-      analysis_model: "gemini-1.5-pro-experimental"
-      classification_model: "gemini-2.5-flash-experimental"
+      triage_model: "gemini-flash-experimental"
+      analysis_model: "gemini-pro-experimental"
+      classification_model: "gemini-flash-experimental"
 
   # ... other services
 ```

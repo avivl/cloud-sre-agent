@@ -25,8 +25,8 @@ graph TB
         end
         
         subgraph "Vertex AI"
-            FLASH[Gemini 1.5 Flash<br/>Triage Model]
-            PRO[Gemini 1.5 Pro<br/>Analysis Model]
+            FLASH[Gemini Flash<br/>Triage Model]
+            PRO[Gemini Pro<br/>Analysis Model]
             EXEC[Code Execution<br/>Quantitative Analysis]
         end
         

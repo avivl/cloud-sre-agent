@@ -27,8 +27,8 @@ graph TB
     
     subgraph "Gemini SRE Agent"
         SUB --> LS[Log Subscriber]
-        LS --> |Raw Logs| TA[Triage Agent<br/>Gemini 1.5 Flash]
-        TA --> |TriagePacket| AA[Analysis Agent<br/>Gemini 1.5 Pro]
+        LS --> |Raw Logs| TA[Triage Agent<br/>Gemini Flash]
+        TA --> |TriagePacket| AA[Analysis Agent<br/>Gemini Pro]
         AA --> |ValidationRequest| QA[Quantitative Analyzer<br/>Code Execution]
         QA --> |EmpiricalData| AA
         AA --> |RemediationPlan| RA[Remediation Agent]
@@ -60,8 +60,8 @@ graph TB
 ### Multi-Model AI Strategy
 
 The system leverages different Gemini models optimized for specific tasks:
-- **Gemini 1.5 Flash**: High-speed log triage and classification (cost-optimized)
-- **Gemini 1.5 Pro**: Deep analysis and code generation (accuracy-optimized)  
+- **Gemini Flash**: High-speed log triage and classification (cost-optimized)
+- **Gemini Pro**: Deep analysis and code generation (accuracy-optimized)  
 - **Code Execution**: Empirical validation and quantitative analysis
 
 ## Key Features
