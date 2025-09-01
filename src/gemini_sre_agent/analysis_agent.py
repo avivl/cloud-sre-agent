@@ -38,7 +38,7 @@ class AnalysisAgent:
         self.analysis_model: str = analysis_model
         aiplatform.init(project=project_id, location=location)
         self.model: GenerativeModel = GenerativeModel(analysis_model)
-        logger.info(f"AnalysisAgent initialized with model: {analysis_model} in {location} for project: {project_id}")
+        logger.info(f"[ANALYSIS] AnalysisAgent initialized with model: {analysis_model} in {location} for project: {project_id}")
 
     @retry(
         stop=stop_after_attempt(3),
@@ -60,7 +60,7 @@ class AnalysisAgent:
         Returns:
             RemediationPlan: A structured plan for remediating the issue.
         """
-        logger.info(f"Analyzing issue {triage_packet.issue_id} with {len(historical_logs)} historical logs and {len(configs)} configurations.")
+        logger.info(f"[ANALYSIS] Analyzing issue: issue_id={triage_packet.issue_id}, historical_logs={len(historical_logs)}, configs={len(configs)}")
         
         # Construct the prompt for the Gemini model
         prompt_template: str = """
@@ -93,7 +93,7 @@ class AnalysisAgent:
             historical_logs_str=json.dumps(historical_logs, indent=2),
             configs_str=json.dumps(configs, indent=2)
         )
-        logger.debug(f"Prompt for analysis model: {prompt[:500]}...")
+        logger.debug(f"[ANALYSIS] Prompt for analysis model: {prompt[:500]}...")
 
         json_response_str: str = "" # Initialize json_response_str
 
@@ -103,20 +103,20 @@ class AnalysisAgent:
             
             # Extract and parse the JSON response
             json_response_str = response.text.strip()
-            logger.debug(f"Raw model response: {json_response_str[:500]}...")
+            logger.debug(f"[ANALYSIS] Raw model response: {json_response_str[:500]}...")
 
             remediation_data: Dict[str, Any] = json.loads(json_response_str)
             remediation_plan: RemediationPlan = RemediationPlan(**remediation_data)
             
-            logger.info(f"Analysis complete for issue {triage_packet.issue_id}.")
+            logger.info(f"[ANALYSIS] Analysis complete for issue {triage_packet.issue_id}.")
             return remediation_plan
 
         except ValidationError as e:
-            logger.error(f"Failed to validate RemediationPlan schema from model response: {e}")
+            logger.error(f"[ERROR_HANDLING] Failed to validate RemediationPlan schema from model response: {e}")
             raise ValueError(f"Invalid model response schema: {e}") from e
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode JSON from model response: {e}. Response: {json_response_str}")
+            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from model response: {e}. Response: {json_response_str}")
             raise ValueError(f"Malformed JSON response from model: {e}") from e
         except Exception as e:
-            logger.error(f"Error calling Gemini Analysis model: {e}")
+            logger.error(f"[ERROR_HANDLING] Error calling Gemini Analysis model: {e}")
             raise RuntimeError(f"Gemini Analysis model call failed: {e}") from e

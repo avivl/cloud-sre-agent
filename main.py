@@ -21,15 +21,15 @@ def validate_environment():
 
     missing_required = [var for var in required_vars if not os.getenv(var)]
     if missing_required:
-        logger.error(f"Missing required environment variables: {missing_required}")
+        logger.error(f"[STARTUP] Missing required environment variables: {missing_required}")
         raise EnvironmentError(f"Missing required environment variables: {missing_required}")
 
     # Log optional variables status
     for var in optional_vars:
         if os.getenv(var):
-            logger.info(f"Using {var} from environment")
+            logger.info(f"[STARTUP] Using {var} from environment")
         else:
-            logger.info(f"{var} not set in environment.")
+            logger.info(f"[STARTUP] {var} not set in environment.")
 
 
 async def monitor_service(
@@ -41,7 +41,7 @@ async def monitor_service(
         json_format=global_config.logging.json_format,
         log_file=global_config.logging.log_file,
     )
-    logger.info(f"Setting up monitoring for service: {service_config.service_name}")
+    logger.info(f"[STARTUP] Setting up monitoring for service: {service_config.service_name}")
 
     try:
         # Determine model selection for this service (override global if specified)
@@ -104,35 +104,41 @@ async def monitor_service(
                 >>> # # }
                 >>> # # await process_log_data(log_data)
             """
+            # Generate flow ID for tracking this specific processing flow
+            flow_id = log_data.get('insertId', 'N/A')
+            
             # This is where the log data will be processed by the agents
             logger.info(
-                f"Processing log data for {service_config.service_name}: {log_data.get('insertId', 'N/A')}"
+                f"[LOG_INGESTION] Processing log data for {service_config.service_name}: flow_id={flow_id}"
             )
 
             try:
                 # Wrap agent calls with resilience patterns
+                logger.info(f"[TRIAGE] Starting triage analysis: flow_id={flow_id}")
                 triage_packet = await resilient_client.execute(
                     lambda: triage_agent.analyze_logs([json.dumps(log_data)])
                 )
                 logger.info(
-                    f"Triage result for {service_config.service_name}: Issue ID {triage_packet.issue_id}"
+                    f"[TRIAGE] Triage completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
                 )
 
+                logger.info(f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
                 remediation_plan = await resilient_client.execute(
                     lambda: analysis_agent.analyze_issue(triage_packet, [], {})
                 )
                 logger.info(
-                    f"Analysis result for {service_config.service_name}: Proposed fix {remediation_plan.proposed_fix}"
+                    f"[ANALYSIS] Analysis completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}, proposed_fix={remediation_plan.proposed_fix[:100]}..."
                 )
 
+                logger.info(f"[REMEDIATION] Creating pull request: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
                 pr_url = await resilient_client.execute(
                     lambda: remediation_agent.create_pull_request(remediation_plan, f"fix/{triage_packet.issue_id}", github_config.base_branch)
                 )
-                logger.info(f"Remediation PR triggered for {service_config.service_name}: {triage_packet.issue_id} - {pr_url}")
+                logger.info(f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={triage_packet.issue_id}, pr_url={pr_url}")
 
             except Exception as e:
                 logger.error(
-                    f"Error during log processing for {service_config.service_name}: {e}"
+                    f"[ERROR_HANDLING] Error during log processing: service={service_config.service_name}, flow_id={flow_id}, error={e}"
                 )
 
         log_subscriber = LogSubscriber(
@@ -142,12 +148,12 @@ async def monitor_service(
         )
 
         logger.info(
-            f"Starting log subscription for {service_config.service_name} on {service_config.subscription_id}"
+            f"[STARTUP] Starting log subscription for {service_config.service_name} on {service_config.subscription_id}"
         )
         return asyncio.create_task(log_subscriber.start())
 
     except Exception as e:
-        logger.error(f"Failed to initialize service {service_config.service_name}: {e}")
+        logger.error(f"[ERROR_HANDLING] Failed to initialize service {service_config.service_name}: {e}")
         return None
 
 
@@ -165,7 +171,7 @@ async def main():
         json_format=log_config.json_format,
         log_file=log_config.log_file,
     )
-    logger.info("Gemini SRE Agent started.")
+    logger.info("[STARTUP] Gemini SRE Agent started.")
 
     # Create tasks for each service
     tasks = []
@@ -178,12 +184,12 @@ async def main():
     try:
         await asyncio.gather(*tasks, return_exceptions=True)
     except KeyboardInterrupt:
-        logger.info("KeyboardInterrupt received. Cancelling tasks...")
+        logger.info("[STARTUP] KeyboardInterrupt received. Cancelling tasks...")
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
     finally:
-        logger.info("Gemini SRE Agent stopped.")
+        logger.info("[STARTUP] Gemini SRE Agent stopped.")
 
 
 if __name__ == "__main__":

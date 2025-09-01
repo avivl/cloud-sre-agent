@@ -27,7 +27,7 @@ class LogSubscriber:
         self.triage_callback = triage_callback
         self._executor = ThreadPoolExecutor(max_workers=4)
         self._loop = None
-        logger.info(f"LogSubscriber initialized for subscription: {self.subscription_path}")
+        logger.info(f"[LOG_INGESTION] LogSubscriber initialized for subscription: {self.subscription_path}")
 
     async def start(self):
         """
@@ -38,7 +38,7 @@ class LogSubscriber:
 
         def _callback_wrapper(message: Message):
             if self._loop is None:
-                logger.error("Event loop not initialized")
+                logger.error("[LOG_INGESTION] Event loop not initialized")
                 message.nack()
                 return
             future = asyncio.run_coroutine_threadsafe(
@@ -48,21 +48,21 @@ class LogSubscriber:
             try:
                 future.result(timeout=30)
             except Exception as e:
-                logger.error(f"Failed to process message in callback wrapper: {e}")
+                logger.error(f"[ERROR_HANDLING] Failed to process message in callback wrapper: {e}")
                 message.nack()
 
         streaming_pull_future = self.subscriber.subscribe(
             self.subscription_path, callback=_callback_wrapper
         )
-        logger.info(f"Listening for messages on {self.subscription_path}..\n")
+        logger.info(f"[LOG_INGESTION] Listening for messages on {self.subscription_path}..\n")
 
         try:
             streaming_pull_future.result(timeout=60)
         except TimeoutError:
             streaming_pull_future.cancel()
-            logger.warning(f"Pub/Sub subscription timed out after 60 seconds.")
+            logger.warning(f"[LOG_INGESTION] Pub/Sub subscription timed out after 60 seconds.")
         except Exception as e:
-            logger.error(f"An error occurred during Pub/Sub subscription: {e}")
+            logger.error(f"[ERROR_HANDLING] An error occurred during Pub/Sub subscription: {e}")
             streaming_pull_future.cancel()
         finally:
             self._executor.shutdown(wait=True)
@@ -73,16 +73,17 @@ class LogSubscriber:
         """
         try:
             log_data = json.loads(message.data.decode('utf-8'))
-            logger.info(f"Received message: {log_data.get('insertId', 'N/A')}")
+            flow_id = log_data.get('insertId', 'N/A')
+            logger.info(f"[LOG_INGESTION] Received message: flow_id={flow_id}")
 
             if self.triage_callback:
                 await self.triage_callback(log_data)
 
             message.ack()
-            logger.debug(f"Message {message.message_id} acknowledged.")
+            logger.debug(f"[LOG_INGESTION] Message acknowledged: flow_id={flow_id}, message_id={message.message_id}")
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode JSON from message {message.message_id}: {e}. Data: {message.data.decode('utf-8')}")
+            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from message {message.message_id}: {e}. Data: {message.data.decode('utf-8')}")
             message.nack()
         except Exception as e:
-            logger.error(f"Failed to process message {message.message_id}: {e}")
+            logger.error(f"[ERROR_HANDLING] Failed to process message {message.message_id}: {e}")
             message.nack()

@@ -38,7 +38,7 @@ class TriageAgent:
         self.triage_model: str = triage_model
         aiplatform.init(project=project_id, location=location)
         self.model: GenerativeModel = GenerativeModel(triage_model)
-        logger.info(f"TriageAgent initialized with model: {triage_model} in {location} for project: {project_id}")
+        logger.info(f"[TRIAGE] TriageAgent initialized with model: {triage_model} in {location} for project: {project_id}")
 
     @retry(
         stop=stop_after_attempt(3),
@@ -55,7 +55,7 @@ class TriageAgent:
         Returns:
             TriagePacket: A structured packet containing triage information.
         """
-        logger.info(f"Analyzing {len(logs)} log entries for triage.")
+        logger.info(f"[TRIAGE] Analyzing {len(logs)} log entries for triage.")
         
         # Construct the prompt for the Gemini model
         prompt_template: str = """
@@ -77,7 +77,7 @@ class TriageAgent:
         Provide only the JSON response.
         """
         prompt: str = prompt_template.format(log_entries="\n".join(logs))
-        logger.debug(f"Prompt for triage model: {prompt[:500]}...")
+        logger.debug(f"[TRIAGE] Prompt for triage model: {prompt[:500]}...")
 
         json_response_str: str = "" # Initialize json_response_str
 
@@ -87,21 +87,21 @@ class TriageAgent:
             
             # Extract and parse the JSON response
             json_response_str = response.text.strip()
-            logger.debug(f"Raw model response: {json_response_str[:500]}...")
+            logger.debug(f"[TRIAGE] Raw model response: {json_response_str[:500]}...")
 
             # Attempt to parse the JSON response
             triage_data: Dict[str, Any] = json.loads(json_response_str)
             triage_packet: TriagePacket = TriagePacket(**triage_data)
             
-            logger.info(f"Triage analysis complete. Issue ID: {triage_packet.issue_id}")
+            logger.info(f"[TRIAGE] Triage analysis complete: issue_id={triage_packet.issue_id}, severity={triage_packet.preliminary_severity_score}")
             return triage_packet
 
         except ValidationError as e:
-            logger.error(f"Failed to validate TriagePacket schema from model response: {e}")
+            logger.error(f"[ERROR_HANDLING] Failed to validate TriagePacket schema from model response: {e}")
             raise ValueError(f"Invalid model response schema: {e}") from e
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode JSON from model response: {e}. Response: {json_response_str}")
+            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from model response: {e}. Response: {json_response_str}")
             raise ValueError(f"Malformed JSON response from model: {e}") from e
         except Exception as e:
-            logger.error(f"Error calling Gemini Triage model: {e}")
+            logger.error(f"[ERROR_HANDLING] Error calling Gemini Triage model: {e}")
             raise RuntimeError(f"Gemini Triage model call failed: {e}") from e

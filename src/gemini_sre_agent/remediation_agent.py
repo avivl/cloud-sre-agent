@@ -26,7 +26,7 @@ class RemediationAgent:
         """
         self.github: Github = Github(github_token)
         self.repo: Repository = self.github.get_repo(repo_name)
-        logger.info(f"RemediationAgent initialized for repository: {repo_name}")
+        logger.info(f"[REMEDIATION] RemediationAgent initialized for repository: {repo_name}")
 
     def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
         """
@@ -58,7 +58,7 @@ class RemediationAgent:
                 if self._is_valid_file_path(file_path):
                     return file_path
                 else:
-                    logger.warning(f"Invalid file path extracted: {file_path}")
+                    logger.warning(f"[REMEDIATION] Invalid file path extracted: {file_path}")
                     return None
 
         return None
@@ -87,20 +87,20 @@ class RemediationAgent:
             str: The HTML URL of the created pull request.
         """
         logger.info(
-            f"Attempting to create pull request for branch {branch_name} targeting {base_branch}..."
+            f"[REMEDIATION] Attempting to create pull request for branch {branch_name} targeting {base_branch}..."
         )
 
         try:
             # 1. Get the base branch
             base: Branch = self.repo.get_branch(base_branch)
             logger.debug(
-                f"Base branch '{base_branch}' found with SHA: {base.commit.sha}"
+                f"[REMEDIATION] Base branch '{base_branch}' found with SHA: {base.commit.sha}"
             )
 
             # 2. Create a new branch
             ref: str = f"refs/heads/{branch_name}"
             self.repo.create_git_ref(ref=ref, sha=base.commit.sha)
-            logger.info(f"Branch '{branch_name}' created successfully.")
+            logger.info(f"[REMEDIATION] Branch '{branch_name}' created successfully.")
 
             # 3. Create/Update files with the proposed fix
             # Process code_patch
@@ -110,7 +110,7 @@ class RemediationAgent:
                 )
                 if not file_path_code:
                     logger.warning(
-                        "Code patch provided but no target file path found in comment. Skipping code patch."
+                        "[REMEDIATION] Code patch provided but no target file path found in comment. Skipping code patch."
                     )
                 else:
                     content_to_write = "\n".join(
@@ -124,7 +124,7 @@ class RemediationAgent:
                             contents, list
                         ):  # Handle case where get_contents returns a list (i.e., it's a directory)
                             logger.error(
-                                f"Cannot update directory {file_path_code}. Expected a file."
+                                f"[ERROR_HANDLING] Cannot update directory {file_path_code}. Expected a file."
                             )
                             raise RuntimeError(
                                 f"Cannot update directory {file_path_code}. Expected a file."
@@ -136,7 +136,7 @@ class RemediationAgent:
                             contents.sha,
                             branch=branch_name,
                         )
-                        logger.info(f"Updated code patch file: {file_path_code}")
+                        logger.info(f"[REMEDIATION] Updated code patch file: {file_path_code}")
                     except GithubException as e:
                         if e.status == 404:  # File does not exist, create it
                             self.repo.create_file(
@@ -145,7 +145,7 @@ class RemediationAgent:
                                 content_to_write,
                                 branch=branch_name,
                             )
-                            logger.info(f"Created code patch file: {file_path_code}")
+                            logger.info(f"[REMEDIATION] Created code patch file: {file_path_code}")
                         else:
                             raise
 
@@ -156,7 +156,7 @@ class RemediationAgent:
                 )
                 if not file_path_iac:
                     logger.warning(
-                        "IaC patch provided but no target file path found in comment. Skipping IaC patch."
+                        "[REMEDIATION] IaC patch provided but no target file path found in comment. Skipping IaC patch."
                     )
                 else:
                     content_to_write = "\n".join(
@@ -170,7 +170,7 @@ class RemediationAgent:
                             contents, list
                         ):  # Handle case where get_contents returns a list (i.e., it's a directory)
                             logger.error(
-                                f"Cannot update directory {file_path_iac}. Expected a file."
+                                f"[ERROR_HANDLING] Cannot update directory {file_path_iac}. Expected a file."
                             )
                             raise RuntimeError(
                                 f"Cannot update directory {file_path_iac}. Expected a file."
@@ -182,7 +182,7 @@ class RemediationAgent:
                             contents.sha,
                             branch=branch_name,
                         )
-                        logger.info(f"Updated IaC patch file: {file_path_iac}")
+                        logger.info(f"[REMEDIATION] Updated IaC patch file: {file_path_iac}")
                     except GithubException as e:
                         if e.status == 404:  # File does not exist, create it
                             self.repo.create_file(
@@ -191,7 +191,7 @@ class RemediationAgent:
                                 content_to_write,
                                 branch=branch_name,
                             )
-                            logger.info(f"Created IaC patch file: {file_path_iac}")
+                            logger.info(f"[REMEDIATION] Created IaC patch file: {file_path_iac}")
                         else:
                             raise
 
@@ -202,14 +202,14 @@ class RemediationAgent:
                 head=branch_name,
                 base=base_branch,
             )
-            logger.info(f"Pull request created successfully: {pull_request.html_url}")
+            logger.info(f"[REMEDIATION] Pull request created successfully: {pull_request.html_url}")
             return pull_request.html_url
 
         except GithubException as e:
-            logger.error(f"GitHub API error during PR creation: {e.status} - {e.data}")
+            logger.error(f"[ERROR_HANDLING] GitHub API error during PR creation: {e.status} - {e.data}")
             raise RuntimeError(
                 f"Failed to create pull request due to GitHub API error: {e.data}"
             ) from e
         except Exception as e:
-            logger.error(f"An unexpected error occurred during PR creation: {e}")
+            logger.error(f"[ERROR_HANDLING] An unexpected error occurred during PR creation: {e}")
             raise RuntimeError(f"Failed to create pull request: {e}") from e
