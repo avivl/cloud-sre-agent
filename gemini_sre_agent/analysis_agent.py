@@ -44,7 +44,7 @@ class AnalysisAgent:
         wait=wait_exponential(multiplier=1, min=4, max=10),
         retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError))
     )
-    async def analyze_issue( # Changed to async def
+    def analyze_issue(
         self, triage_packet: TriagePacket, historical_logs: List[str], configs: Dict[str, str], flow_id: str
     ) -> RemediationPlan:
         """

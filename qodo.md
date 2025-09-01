@@ -44,16 +44,15 @@
 
 ```
 gemini-sre-agent/
-├── src/                           # Main application source code
-│   └── gemini_sre_agent/         # Core agent modules
-│       ├── config.py             # Configuration management with Pydantic models
-│       ├── triage_agent.py       # Gemini Flash-based log triage
-│       ├── analysis_agent.py     # Gemini Pro-based deep analysis
-│       ├── remediation_agent.py  # GitHub PR creation and management
-│       ├── log_subscriber.py     # Google Cloud Pub/Sub integration
-│       ├── log_ingestion.py      # Direct Cloud Logging API access
-│       ├── resilience.py         # Hyx-based resilience patterns
-│       └── logger.py             # Structured logging with JSON support
+├── gemini_sre_agent/         # Core agent modules
+│   ├── config.py             # Configuration management with Pydantic models
+│   ├── triage_agent.py       # Gemini Flash-based log triage
+│   ├── analysis_agent.py     # Gemini Pro-based deep analysis
+│   ├── remediation_agent.py  # GitHub PR creation and management
+│   ├── log_subscriber.py     # Google Cloud Pub/Sub integration
+│   ├── log_ingestion.py      # Direct Cloud Logging API access
+│   ├── resilience.py         # Hyx-based resilience patterns
+│   └── logger.py             # Structured logging with JSON support
 ├── tests/                        # Comprehensive test suite
 ├── config/                       # Configuration files
 │   └── config.yaml              # Multi-service monitoring configuration
@@ -69,10 +68,10 @@ gemini-sre-agent/
 |------|---------|---------------------|
 | `main.py` | Application entry point and service orchestration | Adding new services to monitor |
 | `config/config.yaml` | Multi-service configuration with model selection | Configuring new services or changing AI models |
-| `src/gemini_sre_agent/config.py` | Pydantic configuration models | Modifying configuration schema |
-| `src/gemini_sre_agent/triage_agent.py` | Gemini Flash triage logic | Adjusting triage prompts or logic |
-| `src/gemini_sre_agent/analysis_agent.py` | Gemini Pro analysis logic | Modifying root cause analysis approach |
-| `src/gemini_sre_agent/resilience.py` | Hyx resilience patterns | Tuning circuit breakers or retry policies |
+| `gemini_sre_agent/config.py` | Pydantic configuration models | Modifying configuration schema |
+| `gemini_sre_agent/triage_agent.py` | Gemini Flash triage logic | Adjusting triage prompts or logic |
+| `gemini_sre_agent/analysis_agent.py` | Gemini Pro analysis logic | Modifying root cause analysis approach |
+| `gemini_sre_agent/resilience.py` | Hyx resilience patterns | Tuning circuit breakers or retry policies |
 | `pyproject.toml` | Dependencies and Python configuration | Adding new libraries or updating versions |
 
 ---

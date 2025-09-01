@@ -22,7 +22,9 @@ def test_get_logs(mock_logging_client):
     # Assert
     assert logs == ['log entry 1', 'log entry 2']
     mock_client_instance.list_log_entries.assert_called_once_with(
-        resource_names=['projects/test-project'],
-        filter_='severity>=ERROR',
-        page_size=2,
+        request={
+            "resource_names": ['projects/test-project'],
+            "filter": 'severity>=ERROR',
+            "page_size": 2,
+        }
     )

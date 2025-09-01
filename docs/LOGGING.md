@@ -81,7 +81,7 @@ All log messages follow this standardized format:
 ```
 [REMEDIATION] Attempting to create pull request: flow_id=abc-123, issue_id=issue-xyz-789, branch=fix/issue-xyz-789, target=main
 [REMEDIATION] Branch created successfully: flow_id=abc-123, issue_id=issue-xyz-789, branch=fix/issue-xyz-789
-[REMEDIATION] Updated service code file: flow_id=abc-123, issue_id=issue-xyz-789, file=src/service.py
+[REMEDIATION] Updated service code file: flow_id=abc-123, issue_id=issue-xyz-789, file=service.py
 [REMEDIATION] Pull request created successfully: flow_id=abc-123, issue_id=issue-xyz-789, pr_url=https://github.com/...
 ```
 
@@ -111,7 +111,7 @@ Here's a complete execution trace for a single log entry:
 2025-01-27T10:00:12Z [REMEDIATION] Creating pull request: flow_id=log-20250127-100000, issue_id=database-connection-failure-001
 2025-01-27T10:00:13Z [REMEDIATION] Attempting to create pull request: flow_id=log-20250127-100000, issue_id=database-connection-failure-001, branch=fix/database-connection-failure-001, target=main
 2025-01-27T10:00:14Z [REMEDIATION] Branch created successfully: flow_id=log-20250127-100000, issue_id=database-connection-failure-001, branch=fix/database-connection-failure-001
-2025-01-27T10:00:15Z [REMEDIATION] Updated service code file: flow_id=log-20250127-100000, issue_id=database-connection-failure-001, file=src/database.py
+2025-01-27T10:00:15Z [REMEDIATION] Updated service code file: flow_id=log-20250127-100000, issue_id=database-connection-failure-001, file=database.py
 2025-01-27T10:00:16Z [REMEDIATION] Pull request created successfully: flow_id=log-20250127-100000, issue_id=database-connection-failure-001, pr_url=https://github.com/myorg/myrepo/pull/123
 2025-01-27T10:00:16Z [REMEDIATION] Pull request created successfully: flow_id=log-20250127-100000, issue_id=database-connection-failure-001, pr_url=https://github.com/myorg/myrepo/pull/123
 2025-01-27T10:00:16Z [LOG_INGESTION] Message acknowledged: flow_id=log-20250127-100000, message_id=projects/my-project/subscriptions/my-sub-456

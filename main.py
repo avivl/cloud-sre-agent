@@ -2,19 +2,19 @@ import asyncio
 import os
 import json
 from datetime import datetime
-from src.gemini_sre_agent.config import load_config, ServiceMonitorConfig, GlobalConfig
-from src.gemini_sre_agent.logger import setup_logging
-from src.gemini_sre_agent.log_subscriber import LogSubscriber
-from src.gemini_sre_agent.triage_agent import TriageAgent
-from src.gemini_sre_agent.analysis_agent import AnalysisAgent
-from src.gemini_sre_agent.remediation_agent import RemediationAgent
-from src.gemini_sre_agent.resilience import HyxResilientClient, create_resilience_config
+from gemini_sre_agent.config import load_config, ServiceMonitorConfig, GlobalConfig
+from gemini_sre_agent.logger import setup_logging
+from gemini_sre_agent.log_subscriber import LogSubscriber
+from gemini_sre_agent.triage_agent import TriageAgent
+from gemini_sre_agent.analysis_agent import AnalysisAgent
+from gemini_sre_agent.remediation_agent import RemediationAgent
+from gemini_sre_agent.resilience import HyxResilientClient, create_resilience_config
 
 
 def validate_environment():
     """Validate required environment variables at startup"""
-    logger = setup_logging() # Get a basic logger for early validation
-    
+    logger = setup_logging()  # Get a basic logger for early validation
+
     required_vars = ["GITHUB_TOKEN"]
     # GOOGLE_APPLICATION_CREDENTIALS is typically handled by gcloud auth application-default login
     # LOG_LEVEL is handled by config.yaml
@@ -22,8 +22,12 @@ def validate_environment():
 
     missing_required = [var for var in required_vars if not os.getenv(var)]
     if missing_required:
-        logger.error(f"[STARTUP] Missing required environment variables: {missing_required}")
-        raise EnvironmentError(f"Missing required environment variables: {missing_required}")
+        logger.error(
+            f"[STARTUP] Missing required environment variables: {missing_required}"
+        )
+        raise EnvironmentError(
+            f"Missing required environment variables: {missing_required}"
+        )
 
     # Log optional variables status
     for var in optional_vars:
@@ -33,16 +37,16 @@ def validate_environment():
             logger.info(f"[STARTUP] {var} not set in environment.")
 
 
-async def monitor_service(
-    service_config: ServiceMonitorConfig, global_config: GlobalConfig
-):
+def monitor_service(service_config: ServiceMonitorConfig, global_config: GlobalConfig):
     """Monitor a single service"""
     logger = setup_logging(
         log_level=global_config.logging.log_level,
         json_format=global_config.logging.json_format,
         log_file=global_config.logging.log_file,
     )
-    logger.info(f"[STARTUP] Setting up monitoring for service: {service_config.service_name}")
+    logger.info(
+        f"[STARTUP] Setting up monitoring for service: {service_config.service_name}"
+    )
 
     try:
         # Determine model selection for this service (override global if specified)
@@ -67,8 +71,9 @@ async def monitor_service(
 
         # Get GitHub token from environment variable
         github_token = os.getenv("GITHUB_TOKEN")
-        # Assert that github_token is not None, as validate_environment() should have ensured it
-        assert github_token is not None, "GITHUB_TOKEN should be set by validate_environment()"
+        # Runtime check that github_token is not None, as validate_environment() should have ensured it
+        if github_token is None:
+            raise RuntimeError("GITHUB_TOKEN should be set by validate_environment()")
 
         remediation_agent = RemediationAgent(
             github_token=github_token, repo_name=github_config.repository
@@ -95,7 +100,7 @@ async def monitor_service(
 
             Example:
                 >>> # This function is called by LogSubscriber
-                >>> # Example log_data: 
+                >>> # Example log_data:
                 >>> # log_data = {
                 >>> # #     "insertId": "abc-123",
                 >>> # #     "timestamp": "2025-01-27T10:00:00Z",
@@ -106,8 +111,8 @@ async def monitor_service(
                 >>> # # await process_log_data(log_data)
             """
             # Generate flow ID for tracking this specific processing flow
-            flow_id = log_data.get('insertId', 'N/A')
-            
+            flow_id = log_data.get("insertId", "N/A")
+
             # This is where the log data will be processed by the agents
             logger.info(
                 f"[LOG_INGESTION] Processing log data for {service_config.service_name}: flow_id={flow_id}"
@@ -123,21 +128,34 @@ async def monitor_service(
                     f"[TRIAGE] Triage completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
                 )
 
-                logger.info(f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
+                logger.info(
+                    f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
+                )
                 # Provide current log as historical context for better analysis
                 current_log_context = [json.dumps(log_data, indent=2)]
-                remediation_plan = await resilient_client.execute(
-                    lambda: analysis_agent.analyze_issue(triage_packet, current_log_context, {}, flow_id)
+
+                remediation_plan = analysis_agent.analyze_issue(
+                    triage_packet, current_log_context, {}, flow_id
                 )
                 logger.info(
                     f"[ANALYSIS] Analysis completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}, proposed_fix={remediation_plan.proposed_fix[:100]}..."
                 )
 
-                logger.info(f"[REMEDIATION] Creating pull request: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
-                pr_url = await resilient_client.execute(
-                    lambda: remediation_agent.create_pull_request(remediation_plan, f"fix/{triage_packet.issue_id}", github_config.base_branch, flow_id, triage_packet.issue_id)
+                logger.info(
+                    f"[REMEDIATION] Creating pull request: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
                 )
-                logger.info(f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={triage_packet.issue_id}, pr_url={pr_url}")
+                pr_url = await resilient_client.execute(
+                    lambda: remediation_agent.create_pull_request(
+                        remediation_plan,
+                        f"fix/{triage_packet.issue_id}",
+                        github_config.base_branch,
+                        flow_id,
+                        triage_packet.issue_id,
+                    )
+                )
+                logger.info(
+                    f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={triage_packet.issue_id}, pr_url={pr_url}"
+                )
 
             except Exception as e:
                 logger.error(
@@ -156,13 +174,15 @@ async def monitor_service(
         return asyncio.create_task(log_subscriber.start())
 
     except Exception as e:
-        logger.error(f"[ERROR_HANDLING] Failed to initialize service {service_config.service_name}: {e}")
+        logger.error(
+            f"[ERROR_HANDLING] Failed to initialize service {service_config.service_name}: {e}"
+        )
         return None
 
 
 async def main():
     # Validate environment variables before proceeding
-    validate_environment() # Call validation function
+    validate_environment()  # Call validation function
 
     config = load_config()
     global_config = config.gemini_cloud_log_monitor
@@ -179,7 +199,7 @@ async def main():
     # Create tasks for each service
     tasks = []
     for service_config in global_config.services:
-        task = await monitor_service(service_config, global_config)
+        task = monitor_service(service_config, global_config)
         if task:
             tasks.append(task)
 

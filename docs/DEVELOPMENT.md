@@ -41,7 +41,7 @@ pytest
 
 ### Test Structure
 
-Tests are located in the `tests/` directory, mirroring the structure of the `src/` directory. Each core module (e.g., `triage_agent.py`, `analysis_agent.py`) has a corresponding test file (e.g., `test_triage_agent.py`, `test_analysis_agent.py`).
+Tests are located in the `tests/` directory, mirroring the structure of the `gemini_sre_agent/` package. Each core module (e.g., `triage_agent.py`, `analysis_agent.py`) has a corresponding test file (e.g., `test_triage_agent.py`, `test_analysis_agent.py`).
 
 *   **`pytest-asyncio`**: Used for testing asynchronous functions and methods.
 *   **Mocking:** `unittest.mock.patch` is used extensively to mock external dependencies (like GCP Vertex AI API calls or GitHub API calls) to ensure tests are isolated, fast, and do not require live credentials.
