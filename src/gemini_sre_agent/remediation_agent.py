@@ -100,10 +100,17 @@ class RemediationAgent:
                 f"[REMEDIATION] Base branch found: flow_id={flow_id}, issue_id={issue_id}, branch={base_branch}, sha={base.commit.sha}"
             )
 
-            # 2. Create a new branch
+            # 2. Create a new branch (idempotent)
             ref: str = f"refs/heads/{branch_name}"
-            self.repo.create_git_ref(ref=ref, sha=base.commit.sha)
-            logger.info(f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}")
+            try:
+                self.repo.create_git_ref(ref=ref, sha=base.commit.sha)
+                logger.info(f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}")
+            except GithubException as e:
+                if e.status == 422 and "Reference already exists" in str(e.data):
+                    # Branch already exists - this is fine for retry scenarios
+                    logger.info(f"[REMEDIATION] Branch already exists (idempotent): flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}")
+                else:
+                    raise
 
             # 3. Apply the service code fix
             if remediation_plan.code_patch:

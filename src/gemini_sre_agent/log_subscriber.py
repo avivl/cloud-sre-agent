@@ -57,13 +57,15 @@ class LogSubscriber:
         logger.info(f"[LOG_INGESTION] Listening for messages on {self.subscription_path}..\n")
 
         try:
-            streaming_pull_future.result(timeout=60)
-        except TimeoutError:
+            # Run continuously without timeout for production log ingestion
+            streaming_pull_future.result()
+        except KeyboardInterrupt:
+            logger.info(f"[LOG_INGESTION] Received KeyboardInterrupt, shutting down subscription gracefully.")
             streaming_pull_future.cancel()
-            logger.warning(f"[LOG_INGESTION] Pub/Sub subscription timed out after 60 seconds.")
         except Exception as e:
             logger.error(f"[ERROR_HANDLING] An error occurred during Pub/Sub subscription: {e}")
             streaming_pull_future.cancel()
+            raise  # Re-raise to let the calling code handle the error
         finally:
             self._executor.shutdown(wait=True)
 

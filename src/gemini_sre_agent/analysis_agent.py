@@ -53,8 +53,8 @@ class AnalysisAgent:
 
         Args:
             triage_packet (TriagePacket): The triage information for the issue.
-            historical_logs (List[str]): A list of relevant historical log entries.
-            configs (Dict[str, str]): A dictionary of configuration files (e.g., IaC, service configs).
+            historical_logs (List[str]): A list of relevant historical log entries (includes current log for context).
+            configs (Dict[str, str]): A dictionary of configuration files (e.g., service configs).
             flow_id (str): The flow ID for tracking this processing pipeline.
 
         Returns:
@@ -65,7 +65,7 @@ class AnalysisAgent:
         # Construct the prompt for the Gemini model
         prompt_template: str = """
         You are an expert SRE Analysis Agent. Your task is to perform a deep root cause analysis of the provided issue,
-        considering the triage information, historical logs, and relevant configurations.
+        considering the triage information, log context, and relevant configurations.
         Then, generate a comprehensive remediation plan focused on SERVICE CODE fixes in structured JSON format.
 
         The JSON object must conform to the following schema:
@@ -78,7 +78,7 @@ class AnalysisAgent:
         Triage Packet:
         {triage_packet_json}
 
-        Historical Logs:
+        Log Context (including current triggering log):
         {historical_logs_str}
 
         Configurations:

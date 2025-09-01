@@ -123,8 +123,10 @@ async def monitor_service(
                 )
 
                 logger.info(f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
+                # Provide current log as historical context for better analysis
+                current_log_context = [json.dumps(log_data, indent=2)]
                 remediation_plan = await resilient_client.execute(
-                    lambda: analysis_agent.analyze_issue(triage_packet, [], {}, flow_id)
+                    lambda: analysis_agent.analyze_issue(triage_packet, current_log_context, {}, flow_id)
                 )
                 logger.info(
                     f"[ANALYSIS] Analysis completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}, proposed_fix={remediation_plan.proposed_fix[:100]}..."
