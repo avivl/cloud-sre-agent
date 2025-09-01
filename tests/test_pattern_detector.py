@@ -19,7 +19,12 @@ from gemini_sre_agent.pattern_detector import (
     LogEntry,
     TimeWindow,
     LogAccumulator,
-    WindowManager
+    WindowManager,
+    ThresholdType,
+    ThresholdConfig,
+    ThresholdResult,
+    BaselineTracker,
+    ThresholdEvaluator
 )
 
 
@@ -628,3 +633,516 @@ class TestPatternDetectorIntegration:
         assert log_entry.severity == "ERROR"
         assert log_entry.error_message is not None
         assert "Database connection failed" in log_entry.error_message
+
+
+# ==========================================
+# Layer 2 Tests: Smart Thresholds
+# ==========================================
+
+
+class TestThresholdConfig:
+    """Test ThresholdConfig functionality."""
+    
+    def test_threshold_config_creation(self):
+        """Test basic ThresholdConfig creation."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.ERROR_FREQUENCY,
+            min_value=5.0,
+            min_error_count=3
+        )
+        
+        assert config.threshold_type == ThresholdType.ERROR_FREQUENCY
+        assert config.min_value == 5.0
+        assert config.min_error_count == 3
+        assert config.min_rate_increase == 10.0  # Default value
+    
+    def test_threshold_config_defaults(self):
+        """Test ThresholdConfig default values."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.ERROR_RATE,
+            min_value=15.0
+        )
+        
+        assert config.min_error_count == 3
+        assert config.min_rate_increase == 10.0
+        assert config.baseline_window_count == 12
+        assert config.min_affected_services == 2
+        assert "CRITICAL" in config.severity_weights
+        assert config.severity_weights["CRITICAL"] == 10.0
+
+
+class TestBaselineTracker:
+    """Test BaselineTracker functionality."""
+    
+    @pytest.fixture
+    def sample_windows(self):
+        """Create sample time windows for testing."""
+        base_time = datetime(2025, 1, 27, 10, 0, 0)
+        
+        windows = []
+        for i in range(5):
+            window = TimeWindow(
+                start_time=base_time + timedelta(minutes=i*5),
+                duration_minutes=5
+            )
+            
+            # Add logs with different error rates
+            for j in range(10):
+                severity = "ERROR" if j < i+1 else "INFO"  # Increasing error rate
+                log = LogEntry(
+                    insert_id=f"log-{i}-{j}",
+                    timestamp=window.start_time + timedelta(seconds=j*30),  # 30 second intervals within 5-minute window
+                    severity=severity,
+                    service_name=f"service-{j % 3}",
+                    raw_data={"severity": severity}
+                )
+                window.add_log(log)
+            
+            windows.append(window)
+        
+        return windows
+    
+    def test_baseline_tracker_initialization(self):
+        """Test BaselineTracker initialization."""
+        tracker = BaselineTracker(max_history=50)
+        
+        assert tracker.max_history == 50
+        assert len(tracker.global_baseline) == 0
+        assert len(tracker.service_baselines) == 0
+    
+    def test_baseline_tracker_update(self, sample_windows):
+        """Test updating baseline with window data."""
+        tracker = BaselineTracker()
+        
+        # Update with first window
+        tracker.update_baseline(sample_windows[0])
+        
+        assert len(tracker.global_baseline) == 1
+        assert tracker.global_baseline[0] == 10.0  # 1 error out of 10 logs
+        assert len(tracker.service_baselines) == 3  # 3 services
+    
+    def test_baseline_tracker_history_limit(self, sample_windows):
+        """Test baseline history limit enforcement."""
+        tracker = BaselineTracker(max_history=3)
+        
+        # Add more windows than limit
+        for window in sample_windows:
+            tracker.update_baseline(window)
+        
+        # Should only keep max_history windows
+        assert len(tracker.global_baseline) == 3
+        
+        # Should keep the most recent windows
+        expected_rates = [30.0, 40.0, 50.0]  # Error rates from last 3 windows
+        assert tracker.global_baseline == expected_rates
+    
+    def test_baseline_tracker_get_global_baseline(self, sample_windows):
+        """Test getting global baseline average."""
+        tracker = BaselineTracker()
+        
+        # Add sample windows
+        for window in sample_windows[:3]:
+            tracker.update_baseline(window)
+        
+        # Get baseline for last 2 windows
+        baseline = tracker.get_global_baseline(2)
+        expected = (20.0 + 30.0) / 2  # Average of last 2 rates
+        assert baseline == expected
+    
+    def test_baseline_tracker_get_service_baseline(self, sample_windows):
+        """Test getting service-specific baseline."""
+        tracker = BaselineTracker()
+        
+        # Add sample windows
+        for window in sample_windows[:3]:
+            tracker.update_baseline(window)
+        
+        # Get service baseline
+        service_baseline = tracker.get_service_baseline("service-0", 2)
+        assert service_baseline >= 0.0  # Should have some baseline
+
+
+class TestThresholdEvaluator:
+    """Test ThresholdEvaluator functionality."""
+    
+    @pytest.fixture
+    def sample_window_with_errors(self):
+        """Create a sample window with error logs."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 0, 0),
+            duration_minutes=5
+        )
+        
+        # Add logs: 5 errors, 5 info, across 2 services
+        for i in range(10):
+            severity = "ERROR" if i < 5 else "INFO"
+            # Distribute errors across both services: first 3 errors to service-a, next 2 to service-b
+            if i < 3:
+                service = "service-a"
+            elif i < 8:  # logs 3-7 (includes 2 more errors and 3 info)
+                service = "service-b" 
+            else:  # logs 8-9
+                service = "service-a"
+            
+            log = LogEntry(
+                insert_id=f"log-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*10),
+                severity=severity,
+                service_name=service,
+                raw_data={"severity": severity}
+            )
+            window.add_log(log)
+        
+        return window
+    
+    @pytest.fixture  
+    def sample_window_low_errors(self):
+        """Create a sample window with few errors."""
+        window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 10, 5, 0),
+            duration_minutes=5
+        )
+        
+        # Add logs: 1 error, 9 info, single service
+        for i in range(10):
+            severity = "ERROR" if i == 0 else "INFO"
+            
+            log = LogEntry(
+                insert_id=f"log-low-{i}",
+                timestamp=window.start_time + timedelta(seconds=i*10),
+                severity=severity,
+                service_name="service-a",
+                raw_data={"severity": severity}
+            )
+            window.add_log(log)
+        
+        return window
+    
+    def test_threshold_evaluator_initialization(self):
+        """Test ThresholdEvaluator initialization."""
+        configs = [
+            ThresholdConfig(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                min_value=5.0
+            )
+        ]
+        
+        evaluator = ThresholdEvaluator(configs)
+        
+        assert len(evaluator.threshold_configs) == 1
+        assert evaluator.baseline_tracker is not None
+    
+    def test_error_frequency_threshold_triggered(self, sample_window_with_errors):
+        """Test error frequency threshold when triggered."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.ERROR_FREQUENCY,
+            min_value=5.0,
+            min_error_count=3
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        results = evaluator.evaluate_window(sample_window_with_errors)
+        
+        assert len(results) == 1
+        result = results[0]
+        
+        assert result.threshold_type == ThresholdType.ERROR_FREQUENCY
+        assert result.triggered is True
+        assert result.score == 5.0  # 5 error logs
+        assert len(result.triggering_logs) == 5
+        assert len(result.affected_services) == 2
+        assert "service-a" in result.affected_services
+        assert "service-b" in result.affected_services
+    
+    def test_error_frequency_threshold_not_triggered(self, sample_window_low_errors):
+        """Test error frequency threshold when not triggered."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.ERROR_FREQUENCY,
+            min_value=5.0,
+            min_error_count=3
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        results = evaluator.evaluate_window(sample_window_low_errors)
+        
+        assert len(results) == 1
+        result = results[0]
+        
+        assert result.threshold_type == ThresholdType.ERROR_FREQUENCY
+        assert result.triggered is False
+        assert result.score == 1.0  # 1 error log
+        assert len(result.triggering_logs) == 1
+    
+    def test_error_rate_threshold_with_baseline(self, sample_window_with_errors):
+        """Test error rate threshold against baseline."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.ERROR_RATE,
+            min_value=15.0,
+            min_rate_increase=20.0  # Require 20% increase
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        
+        # First, establish a low baseline
+        baseline_window = TimeWindow(
+            start_time=datetime(2025, 1, 27, 9, 0, 0),
+            duration_minutes=5
+        )
+        for i in range(10):
+            log = LogEntry(
+                insert_id=f"baseline-{i}",
+                timestamp=baseline_window.start_time + timedelta(seconds=i*10),
+                severity="ERROR" if i == 0 else "INFO",  # 10% error rate
+                raw_data={"severity": "ERROR" if i == 0 else "INFO"}
+            )
+            baseline_window.add_log(log)
+        
+        # Update baseline
+        evaluator.baseline_tracker.update_baseline(baseline_window)
+        
+        # Now evaluate current window (50% error rate)
+        results = evaluator.evaluate_window(sample_window_with_errors)
+        
+        result = results[0]
+        assert result.threshold_type == ThresholdType.ERROR_RATE
+        assert result.triggered is True  # 50% vs 10% baseline is >20% increase
+        assert result.details["current_rate"] == 50.0
+        assert result.details["baseline_rate"] == 10.0
+    
+    def test_service_impact_threshold_triggered(self, sample_window_with_errors):
+        """Test service impact threshold when triggered."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.SERVICE_IMPACT,
+            min_value=2.0,
+            min_affected_services=2
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        results = evaluator.evaluate_window(sample_window_with_errors)
+        
+        result = results[0]
+        assert result.threshold_type == ThresholdType.SERVICE_IMPACT
+        assert result.triggered is True
+        assert result.score == 2.0  # 2 affected services
+        assert len(result.affected_services) == 2
+    
+    def test_service_impact_threshold_not_triggered(self, sample_window_low_errors):
+        """Test service impact threshold when not triggered."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.SERVICE_IMPACT,
+            min_value=2.0,
+            min_affected_services=2
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        results = evaluator.evaluate_window(sample_window_low_errors)
+        
+        result = results[0]
+        assert result.threshold_type == ThresholdType.SERVICE_IMPACT
+        assert result.triggered is False
+        assert result.score == 1.0  # Only 1 affected service
+        assert len(result.affected_services) == 1
+    
+    def test_severity_weighted_threshold(self, sample_window_with_errors):
+        """Test severity-weighted threshold."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.SEVERITY_WEIGHTED,
+            min_value=30.0,  # 5 errors * 5.0 weight + 5 info * 1.0 weight = 30.0
+            severity_weights={
+                "ERROR": 5.0,
+                "INFO": 1.0,
+                "CRITICAL": 10.0
+            }
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        results = evaluator.evaluate_window(sample_window_with_errors)
+        
+        result = results[0]
+        assert result.threshold_type == ThresholdType.SEVERITY_WEIGHTED
+        assert result.triggered is True
+        assert result.score == 30.0  # Weighted score
+        assert len(result.triggering_logs) == 5  # Only ERROR logs (weight >= 5.0)
+    
+    def test_cascade_failure_threshold_triggered(self, sample_window_with_errors):
+        """Test cascade failure threshold when triggered."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.CASCADE_FAILURE,
+            min_value=2.0,
+            cascade_min_services=2
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        results = evaluator.evaluate_window(sample_window_with_errors)
+        
+        result = results[0]
+        assert result.threshold_type == ThresholdType.CASCADE_FAILURE
+        assert result.triggered is True
+        assert result.score == 2.0  # 2 services with errors
+        assert len(result.affected_services) == 2
+    
+    def test_cascade_failure_threshold_not_triggered(self, sample_window_low_errors):
+        """Test cascade failure threshold when not triggered."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.CASCADE_FAILURE,
+            min_value=2.0,
+            cascade_min_services=2
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        results = evaluator.evaluate_window(sample_window_low_errors)
+        
+        result = results[0]
+        assert result.threshold_type == ThresholdType.CASCADE_FAILURE
+        assert result.triggered is False
+        assert result.score == 1.0  # Only 1 service with errors
+    
+    def test_multiple_thresholds_evaluation(self, sample_window_with_errors):
+        """Test evaluating multiple thresholds simultaneously."""
+        configs = [
+            ThresholdConfig(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                min_value=3.0,
+                min_error_count=3
+            ),
+            ThresholdConfig(
+                threshold_type=ThresholdType.SERVICE_IMPACT,
+                min_value=2.0,
+                min_affected_services=2
+            )
+        ]
+        
+        evaluator = ThresholdEvaluator(configs)
+        results = evaluator.evaluate_window(sample_window_with_errors)
+        
+        assert len(results) == 2
+        
+        # Both should be triggered
+        frequency_result = next(r for r in results if r.threshold_type == ThresholdType.ERROR_FREQUENCY)
+        impact_result = next(r for r in results if r.threshold_type == ThresholdType.SERVICE_IMPACT)
+        
+        assert frequency_result.triggered is True
+        assert impact_result.triggered is True
+    
+    def test_unknown_threshold_type_error(self, sample_window_with_errors):
+        """Test error handling for unknown threshold type."""
+        config = ThresholdConfig(
+            threshold_type="unknown_threshold",
+            min_value=5.0
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        
+        # Should handle the error gracefully and continue
+        results = evaluator.evaluate_window(sample_window_with_errors)
+        
+        # Should return empty results due to error
+        assert len(results) == 0
+
+
+@pytest.mark.integration
+class TestSmartThresholdsIntegration:
+    """Integration tests for smart thresholds with time windows."""
+    
+    def test_threshold_evaluation_with_window_manager(self):
+        """Test threshold evaluation integrated with window manager."""
+        threshold_configs = [
+            ThresholdConfig(
+                threshold_type=ThresholdType.ERROR_FREQUENCY,
+                min_value=3.0,
+                min_error_count=3
+            ),
+            ThresholdConfig(
+                threshold_type=ThresholdType.SERVICE_IMPACT,
+                min_value=2.0,
+                min_affected_services=2
+            )
+        ]
+        
+        evaluator = ThresholdEvaluator(threshold_configs)
+        triggered_results = []
+        
+        def pattern_callback(window):
+            """Callback that evaluates thresholds on completed windows."""
+            results = evaluator.evaluate_window(window)
+            triggered = [r for r in results if r.triggered]
+            if triggered:
+                triggered_results.extend(triggered)
+        
+        # Create window manager with callback
+        manager = WindowManager(
+            fast_window_minutes=5,
+            pattern_callback=pattern_callback
+        )
+        
+        # Add logs that should trigger thresholds
+        base_time = datetime.now(timezone.utc)
+        for i in range(8):  # 8 logs total
+            severity = "ERROR" if i < 4 else "INFO"  # 4 errors, 4 info
+            service = "service-a" if i < 6 else "service-b"  # 2 services affected
+            
+            log_data = {
+                "insertId": f"integration-{i}",
+                "timestamp": (base_time + timedelta(seconds=i*10)).isoformat() + "Z",
+                "severity": severity,
+                "textPayload": f"Test message {i}",
+                "resource": {
+                    "labels": {"service_name": service}
+                }
+            }
+            manager.add_log(log_data)
+        
+        # Verify logs were processed correctly
+        assert len(manager.fast_accumulator.windows) > 0
+        
+        # In a real scenario, we'd wait for window expiration
+        # For testing, manually trigger evaluation
+        window = list(manager.fast_accumulator.windows.values())[0]
+        results = evaluator.evaluate_window(window)
+        
+        # Should have triggered both thresholds
+        triggered = [r for r in results if r.triggered]
+        assert len(triggered) >= 1  # At least one threshold should trigger
+    
+    def test_baseline_tracking_over_time(self):
+        """Test baseline tracking across multiple windows."""
+        config = ThresholdConfig(
+            threshold_type=ThresholdType.ERROR_RATE,
+            min_value=15.0,
+            min_rate_increase=25.0  # 25% increase required
+        )
+        
+        evaluator = ThresholdEvaluator([config])
+        
+        # Create series of windows with increasing error rates
+        base_time = datetime(2025, 1, 27, 10, 0, 0)
+        error_rates = [0.1, 0.1, 0.2, 0.4, 0.6]  # Gradual increase
+        
+        for i, error_rate in enumerate(error_rates):
+            window = TimeWindow(
+                start_time=base_time + timedelta(minutes=i*5),
+                duration_minutes=5
+            )
+            
+            # Add logs with specific error rate
+            total_logs = 10
+            error_count = int(total_logs * error_rate)
+            
+            for j in range(total_logs):
+                severity = "ERROR" if j < error_count else "INFO"
+                log = LogEntry(
+                    insert_id=f"baseline-{i}-{j}",
+                    timestamp=window.start_time + timedelta(seconds=j*10),
+                    severity=severity,
+                    raw_data={"severity": severity}
+                )
+                window.add_log(log)
+            
+            results = evaluator.evaluate_window(window)
+            
+            # Later windows should trigger due to rate increase
+            if i >= 3:  # After establishing baseline
+                rate_result = results[0]
+                # Should trigger when error rate jumps significantly
+                if error_rate >= 0.4:  # 40% vs ~13% baseline
+                    assert rate_result.triggered is True
