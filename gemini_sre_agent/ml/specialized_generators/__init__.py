@@ -8,8 +8,12 @@ BaseCodeGenerator and provide specialized patterns and validation rules
 for different types of issues.
 """
 
+from .api_generator import APICodeGenerator
 from .database_generator import DatabaseCodeGenerator
+from .security_generator import SecurityCodeGenerator
 
 __all__ = [
     "DatabaseCodeGenerator",
+    "APICodeGenerator",
+    "SecurityCodeGenerator",
 ]
