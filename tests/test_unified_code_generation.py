@@ -7,8 +7,10 @@ This test verifies that the enhanced analysis agent properly integrates
 with specialized code generators to provide enhanced code generation.
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from gemini_sre_agent.ml.enhanced_analysis_agent import (
     EnhancedAnalysisAgent,
     EnhancedAnalysisConfig,
@@ -72,7 +74,7 @@ class TestUnifiedCodeGeneration:
     async def test_enhanced_analysis_agent_initialization(self, config):
         """Test that the enhanced analysis agent initializes correctly."""
         agent = EnhancedAnalysisAgent(config)
-        
+
         assert agent.config.enable_specialized_generators is True
         assert agent.config.enable_validation is True
         assert agent.code_generator_factory is not None
@@ -83,12 +85,12 @@ class TestUnifiedCodeGeneration:
     async def test_issue_classification(self, config):
         """Test that issue classification works correctly."""
         agent = EnhancedAnalysisAgent(config)
-        
+
         triage_packet = {
             "error_patterns": ["database connection failed"],
             "affected_files": ["src/database/connection.py"],
         }
-        
+
         issue_context = agent._extract_issue_context(triage_packet)
         assert issue_context.issue_type == IssueType.DATABASE_ERROR
         assert issue_context.complexity_score > 1
@@ -97,7 +99,7 @@ class TestUnifiedCodeGeneration:
     async def test_generator_type_determination(self, config):
         """Test that generator type is determined correctly."""
         agent = EnhancedAnalysisAgent(config)
-        
+
         issue_context = IssueContext(
             issue_type=IssueType.API_ERROR,
             affected_files=["src/api/endpoint.py"],
@@ -111,7 +113,7 @@ class TestUnifiedCodeGeneration:
             complexity_score=6,
             context_richness=0.8,
         )
-        
+
         generator_type = agent._determine_generator_type(issue_context)
         assert generator_type == "api_error"
 
@@ -119,7 +121,7 @@ class TestUnifiedCodeGeneration:
     async def test_context_building(self, config):
         """Test that context is built correctly."""
         agent = EnhancedAnalysisAgent(config)
-        
+
         triage_packet = {
             "affected_files": ["src/api/endpoint.py"],
             "error_patterns": ["authentication failed"],
@@ -130,14 +132,14 @@ class TestUnifiedCodeGeneration:
             "user_impact": "Authentication failing",
             "business_impact": "Users cannot access service",
         }
-        
+
         historical_logs = ['{"message": "Auth error"}']
         configs = {"technology_stack": {"framework": "fastapi"}}
-        
+
         context = await agent._build_analysis_context(
             triage_packet, historical_logs, configs, "test-flow"
         )
-        
+
         assert context.issue_context.issue_type == IssueType.AUTHENTICATION_ERROR
         assert context.generator_type == "authentication_error"
         assert context.repository_context.technology_stack["framework"] == "fastapi"
@@ -146,13 +148,13 @@ class TestUnifiedCodeGeneration:
     async def test_complexity_scoring(self, config):
         """Test that complexity scoring works correctly."""
         agent = EnhancedAnalysisAgent(config)
-        
+
         triage_packet = {
             "affected_files": ["file1.py", "file2.py", "file3.py"],
             "related_services": ["service1", "service2"],
             "severity_level": 9,
         }
-        
+
         complexity_score = agent._calculate_complexity_score(triage_packet)
         assert complexity_score == 6  # 1 + 3 + 2
 
@@ -160,7 +162,7 @@ class TestUnifiedCodeGeneration:
     async def test_context_richness_calculation(self, config):
         """Test that context richness is calculated correctly."""
         agent = EnhancedAnalysisAgent(config)
-        
+
         triage_packet = {
             "affected_files": ["file1.py"],
             "error_patterns": ["error1"],
@@ -168,7 +170,7 @@ class TestUnifiedCodeGeneration:
             "related_services": ["service1"],
             "temporal_context": {"time": "now"},
         }
-        
+
         richness = agent._calculate_context_richness(triage_packet)
         assert richness == 1.0  # All context elements present
 
@@ -180,7 +182,7 @@ class TestUnifiedCodeGeneration:
             location="us-central1",
             enable_specialized_generators=False,
         )
-        
+
         agent = EnhancedAnalysisAgent(config)
         assert agent.code_generator_factory is None
 
@@ -188,16 +190,17 @@ class TestUnifiedCodeGeneration:
     async def test_fallback_analysis(self, config):
         """Test that fallback analysis works when main analysis fails."""
         agent = EnhancedAnalysisAgent(config)
-        
+
         # Mock the main model to fail
-        with patch.object(agent.main_model, 'generate_content_async', side_effect=Exception("Model error")):
+        with patch.object(
+            agent.main_model,
+            "generate_content_async",
+            side_effect=Exception("Model error"),
+        ):
             result = await agent.analyze_issue(
-                {"error_patterns": ["test error"]},
-                ["test log"],
-                {},
-                "test-flow"
+                {"error_patterns": ["test error"]}, ["test log"], {}, "test-flow"
             )
-            
+
             assert result.get("fallback") is True
             assert result.get("success") is True
 

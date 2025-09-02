@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 from google.generativeai.generative_models import GenerativeModel
 
 from .adaptive_prompt_strategy import AdaptivePromptStrategy, StrategyConfig
+from .code_generator_factory import CodeGeneratorFactory
 from .meta_prompt_generator import MetaPromptConfig, MetaPromptGenerator
 from .prompt_context_models import (
     IssueContext,
@@ -22,8 +23,6 @@ from .prompt_context_models import (
     PromptContext,
     RepositoryContext,
 )
-from .code_generator_factory import CodeGeneratorFactory
-from .base_code_generator import BaseCodeGenerator
 
 
 @dataclass
@@ -121,8 +120,9 @@ class EnhancedAnalysisAgent:
             analysis_result = await self._execute_analysis(prompt, context)
 
             # 4. If specialized generators are enabled, enhance the code generation
-            if (self.config.enable_specialized_generators and 
-                analysis_result.get("success", False)):
+            if self.config.enable_specialized_generators and analysis_result.get(
+                "success", False
+            ):
                 enhanced_result = await self._enhance_with_specialized_generator(
                     analysis_result, context
                 )
@@ -142,17 +142,15 @@ class EnhancedAnalysisAgent:
             )
 
     async def _enhance_with_specialized_generator(
-        self, 
-        analysis_result: Dict[str, Any], 
-        context: PromptContext
+        self, analysis_result: Dict[str, Any], context: PromptContext
     ) -> Dict[str, Any]:
         """
         Enhance the analysis result using specialized code generators.
-        
+
         Args:
             analysis_result: The initial analysis result
             context: The prompt context
-            
+
         Returns:
             Enhanced analysis result with improved code generation
         """
@@ -162,12 +160,13 @@ class EnhancedAnalysisAgent:
 
             # Get the appropriate specialized generator
             generator = self.code_generator_factory.create_generator(
-                context.generator_type, 
-                context
+                context.generator_type, context
             )
 
             if not generator:
-                self.logger.warning(f"No specialized generator found for {context.generator_type}")
+                self.logger.warning(
+                    f"No specialized generator found for {context.generator_type}"
+                )
                 return analysis_result
 
             # Extract the current code patch
@@ -176,27 +175,25 @@ class EnhancedAnalysisAgent:
                 return analysis_result
 
             # Use the specialized generator to enhance the code
-            enhanced_code = await generator.enhance_code_patch(
-                current_code, 
-                context
-            )
+            enhanced_code = await generator.enhance_code_patch(current_code, context)
 
             if enhanced_code and enhanced_code != current_code:
                 # Update the analysis result with enhanced code
                 analysis_result["analysis"]["code_patch"] = enhanced_code
                 analysis_result["enhanced_by_specialized_generator"] = True
                 analysis_result["generator_type"] = context.generator_type
-                
+
                 self.logger.info(f"Code enhanced by {context.generator_type} generator")
-                
+
                 # Also enhance the proposed fix description if possible
-                if hasattr(generator, 'enhance_fix_description'):
+                if hasattr(generator, "enhance_fix_description"):
                     enhanced_description = await generator.enhance_fix_description(
-                        analysis_result["analysis"]["proposed_fix"],
-                        context
+                        analysis_result["analysis"]["proposed_fix"], context
                     )
                     if enhanced_description:
-                        analysis_result["analysis"]["proposed_fix"] = enhanced_description
+                        analysis_result["analysis"][
+                            "proposed_fix"
+                        ] = enhanced_description
 
             return analysis_result
 

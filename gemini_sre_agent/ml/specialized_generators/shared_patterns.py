@@ -31,7 +31,7 @@ def get_common_patterns() -> dict[str, CodePattern]:
         raise ValueError(f"Input validation failed: {e}")""",
             validation_rules=["validation_rule"],
             best_practices=["Always validate inputs", "Use clear error messages"],
-            examples=["Schema validation", "Type checking"]
+            examples=["Schema validation", "Type checking"],
         ),
         "error_handling": CodePattern(
             pattern_id="common_error_handling",
@@ -48,7 +48,7 @@ def get_common_patterns() -> dict[str, CodePattern]:
         return {"success": False, "error": str(e)}""",
             validation_rules=["error_handling_rule"],
             best_practices=["Use try-catch blocks", "Log errors appropriately"],
-            examples=["Error handling", "Logging"]
+            examples=["Error handling", "Logging"],
         ),
         "logging": CodePattern(
             pattern_id="common_logging",
@@ -65,8 +65,8 @@ def get_common_patterns() -> dict[str, CodePattern]:
     logger.info(f"Operation: {operation_name}", extra=log_data)""",
             validation_rules=["logging_rule"],
             best_practices=["Log all operations", "Include relevant context"],
-            examples=["Operation logging", "Context tracking"]
-        )
+            examples=["Operation logging", "Context tracking"],
+        ),
     }
 
 
@@ -81,7 +81,7 @@ def get_common_validation_rules() -> dict[str, ValidationRule]:
             rule_type="validation",
             severity=ValidationSeverity.HIGH,
             validation_function="validate_input",
-            parameters={"check_type": True, "check_schema": True}
+            parameters={"check_type": True, "check_schema": True},
         ),
         "error_handling": ValidationRule(
             rule_id="common_error_handling",
@@ -91,7 +91,7 @@ def get_common_validation_rules() -> dict[str, ValidationRule]:
             rule_type="error_handling",
             severity=ValidationSeverity.MEDIUM,
             validation_function="validate_error_handling",
-            parameters={"check_try_catch": True, "check_logging": True}
+            parameters={"check_try_catch": True, "check_logging": True},
         ),
         "logging": ValidationRule(
             rule_id="common_logging",
@@ -101,8 +101,8 @@ def get_common_validation_rules() -> dict[str, ValidationRule]:
             rule_type="logging",
             severity=ValidationSeverity.LOW,
             validation_function="validate_logging",
-            parameters={"check_operation_logging": True, "check_error_logging": True}
-        )
+            parameters={"check_operation_logging": True, "check_error_logging": True},
+        ),
     }
 
 
@@ -125,8 +125,11 @@ def get_api_patterns() -> list[CodePattern]:
             return func(*args, **kwargs)
     return wrapper""",
             validation_rules=["rate_limiting_rule"],
-            best_practices=["Use exponential backoff", "Implement proper error handling"],
-            examples=["Rate limiting decorator", "Backoff strategy"]
+            best_practices=[
+                "Use exponential backoff",
+                "Implement proper error handling",
+            ],
+            examples=["Rate limiting decorator", "Backoff strategy"],
         ),
         CodePattern(
             pattern_id="api_authentication",
@@ -147,8 +150,8 @@ def get_api_patterns() -> list[CodePattern]:
         raise AuthenticationError('Invalid authentication token')""",
             validation_rules=["authentication_rule"],
             best_practices=["Use secure JWT", "Implement proper error handling"],
-            examples=["JWT middleware", "Token validation"]
-        )
+            examples=["JWT middleware", "Token validation"],
+        ),
     ]
 
 
@@ -175,7 +178,7 @@ def get_security_patterns() -> list[CodePattern]:
     return sanitized""",
             validation_rules=["input_validation_rule"],
             best_practices=["Always validate inputs", "Use whitelist approach"],
-            examples=["Input sanitization", "Pattern validation"]
+            examples=["Input sanitization", "Pattern validation"],
         ),
         CodePattern(
             pattern_id="security_authentication",
@@ -202,6 +205,6 @@ def get_security_patterns() -> list[CodePattern]:
     return session_token, session_data""",
             validation_rules=["authentication_rule"],
             best_practices=["Use constant-time comparison", "Secure session tokens"],
-            examples=["Password hashing", "Session management"]
-        )
+            examples=["Password hashing", "Session management"],
+        ),
     ]

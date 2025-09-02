@@ -11,7 +11,7 @@ quality thresholds, and learning settings.
 
 class EnhancedCodeGenerationConfig:
     """Configuration for the enhanced code generation agent"""
-    
+
     def __init__(
         self,
         project_id: str,
@@ -21,11 +21,11 @@ class EnhancedCodeGenerationConfig:
         max_iterations: int = 3,
         quality_threshold: float = 8.0,
         enable_learning: bool = True,
-        human_review_threshold: float = 7.0
+        human_review_threshold: float = 7.0,
     ):
         """
         Initialize the configuration.
-        
+
         Args:
             project_id: Google Cloud project ID
             location: Google Cloud location/region
@@ -44,7 +44,7 @@ class EnhancedCodeGenerationConfig:
         self.quality_threshold = quality_threshold
         self.enable_learning = enable_learning
         self.human_review_threshold = human_review_threshold
-    
+
     def to_dict(self) -> dict:
         """Convert configuration to dictionary."""
         return {
@@ -55,14 +55,14 @@ class EnhancedCodeGenerationConfig:
             "max_iterations": self.max_iterations,
             "quality_threshold": self.quality_threshold,
             "enable_learning": self.enable_learning,
-            "human_review_threshold": self.human_review_threshold
+            "human_review_threshold": self.human_review_threshold,
         }
-    
+
     @classmethod
     def from_dict(cls, config_dict: dict) -> "EnhancedCodeGenerationConfig":
         """Create configuration from dictionary."""
         return cls(**config_dict)
-    
+
     def validate(self) -> bool:
         """Validate configuration values."""
         if not self.project_id:

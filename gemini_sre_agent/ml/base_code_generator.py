@@ -109,11 +109,7 @@ class BaseCodeGenerator(ABC):
                 success=False, error_message=str(e), generation_time_ms=generation_time
             )
 
-    async def enhance_code_patch(
-        self,
-        code_patch: str,
-        context: PromptContext
-    ) -> str:
+    async def enhance_code_patch(self, code_patch: str, context: PromptContext) -> str:
         """
         Enhance an existing code patch using domain-specific knowledge.
 
@@ -137,7 +133,9 @@ class BaseCodeGenerator(ABC):
 
             # If validation fails, return original code
             if not validation_result.is_valid:
-                self.logger.warning(f"Enhanced code validation failed: {validation_result.issues}")
+                self.logger.warning(
+                    f"Enhanced code validation failed: {validation_result.issues}"
+                )
                 return code_patch
 
             return enhanced_code
@@ -147,9 +145,7 @@ class BaseCodeGenerator(ABC):
             return code_patch
 
     async def enhance_fix_description(
-        self,
-        description: str,
-        context: PromptContext
+        self, description: str, context: PromptContext
     ) -> str:
         """
         Enhance the fix description using domain-specific knowledge.
@@ -178,6 +174,7 @@ class BaseCodeGenerator(ABC):
     def logger(self):
         """Get logger for this generator"""
         import logging
+
         return logging.getLogger(f"{self.__class__.__name__}")
 
     async def _generate_domain_specific_prompt(
