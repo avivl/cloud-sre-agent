@@ -234,3 +234,4 @@ node_modules/
 
 # Ignore config.yaml
 config/config.yaml
+ .working_docs/
