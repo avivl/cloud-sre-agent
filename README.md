@@ -1,4 +1,4 @@
-# Gemini SRE Agent for Cloud Log Monitoring
+#  Gemini SRE Agent: Autonomous Monitoring and Remediation
 
 [![GitHub Stars](https://img.shields.io/github/stars/avivl/gemini-sre-agent.svg?style=for-the-badge&logo=github&color=gold)](https://github.com/avivl/gemini-sre-agent/stargazers)
 [![Last Commit](https://img.shields.io/github/last-commit/avivl/gemini-sre-agent?style=for-the-badge&logo=github)](https://github.com/avivl/gemini-sre-agent)
