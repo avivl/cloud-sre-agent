@@ -27,13 +27,21 @@ graph TB
     
     subgraph "Gemini SRE Agent"
         SUB --> LS[Log Subscriber]
-        LS --> |Raw Logs| PD[Pattern Detection System<br/>Multi-Layer Analysis]
+        LS --> |Raw Logs| MLPR[ML Pattern Refinement<br/>AI Enhancement Layer]
+        MLPR --> |Enhanced Analysis| PD[Pattern Detection System<br/>Multi-Layer Analysis]
         PD --> |Pattern Match| TA[Triage Agent<br/>Gemini Flash]
         LS --> |Raw Logs| TA
         TA --> |TriagePacket| AA[Analysis Agent<br/>Gemini Pro]
         AA --> |ValidationRequest| QA[Quantitative Analyzer<br/>Code Execution]
         QA --> |EmpiricalData| AA
         AA --> |RemediationPlan| RA[Remediation Agent]
+    end
+    
+    subgraph "ML Pattern Refinement Layer"
+        MLPR --> LQV[Log Quality<br/>Validator]
+        MLPR --> LSan[Log Sanitizer<br/>PII Removal]
+        MLPR --> GEPD[Gemini Enhanced<br/>Pattern Detector]
+        MLPR --> GRC[Response Cache<br/>Cost Optimization]
     end
     
     subgraph "Pattern Detection Layers"
@@ -46,6 +54,7 @@ graph TB
     subgraph "External Services"
         RA --> |Create PR| GH[GitHub Repository]
         RA --> |Notifications| SLACK[Slack/PagerDuty]
+        MLPR --> |Code Context| GH
     end
     
     subgraph "Configuration & Resilience"
@@ -53,17 +62,20 @@ graph TB
         RESILIENCE[Hyx Resilience<br/>Circuit Breakers] --> TA
         RESILIENCE --> AA
         RESILIENCE --> RA
+        RESILIENCE --> MLPR
     end
     
     classDef aiComponent fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef gcpService fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     classDef external fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
     classDef config fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef mlComponent fill:#fce4ec,stroke:#c2185b,stroke-width:2px
     
     class TA,AA,QA aiComponent
     class CL,PS,SUB gcpService
     class GH,SLACK external
     class CONFIG,RESILIENCE config
+    class MLPR,LQV,LSan,GEPD,GRC mlComponent
 ```
 
 ### Multi-Model AI Strategy
@@ -75,14 +87,18 @@ The system leverages different Gemini models optimized for specific tasks:
 
 ## Key Features
 
-*   **Advanced Pattern Detection System:** Multi-layer analysis engine with time window management, smart thresholds, and sophisticated confidence scoring across 15+ quantitative factors.
-*   **Intelligent Log Analysis:** Leverages Gemini models for advanced pattern detection and root cause analysis in cloud logs.
-*   **Proactive Incident Detection:** Identifies 7 distinct failure patterns including cascade failures, service degradation, traffic spikes, configuration issues, dependency failures, resource exhaustion, and sporadic errors.
-*   **Automated Remediation:** Generates and submits GitHub Pull Requests for proposed fixes, integrating directly into your existing development workflows.
+*   **AI-Enhanced Pattern Detection:** Multi-layer analysis engine enhanced with Gemini AI models for intelligent pattern recognition, confidence scoring, and context-aware analysis.
+*   **Gemini ML Pattern Refinement:** Advanced AI pipeline with quality validation, PII sanitization, smart caching, and cost optimization for production-ready AI analysis.
+*   **Intelligent Log Analysis:** Leverages dual Gemini models (Flash for speed, Pro for accuracy) with structured prompting and few-shot learning capabilities.
+*   **Proactive Incident Detection:** Identifies 7+ distinct failure patterns with AI-powered classification and confidence scoring across 15+ quantitative factors.
+*   **Code-Context Integration:** Automated analysis incorporating recent commits, dependencies, and repository structure for more accurate remediation.
+*   **Cost-Optimized AI Operations:** Intelligent response caching with similarity matching, reducing API costs by up to 60% while maintaining accuracy.
+*   **Quality Assurance Pipeline:** Pre-processing validation, PII sanitization, and performance monitoring ensuring reliable AI analysis.
+*   **Automated Remediation:** Generates and submits GitHub Pull Requests with AI-enhanced context analysis and code repository integration.
 *   **Multi-Service & Multi-Repository Monitoring:** Designed to monitor logs from various services and manage remediation across different GitHub repositories.
-*   **Dynamic Baseline Tracking:** Maintains adaptive baselines for anomaly detection and accurate threshold evaluation.
-*   **Built-in Resilience:** Incorporates robust resilience patterns (circuit breakers, retries, bulkheads, rate limiting) to ensure stable operation.
-*   **Structured Observability:** Employs structured logging for easy integration with log aggregation and analysis systems.
+*   **Dynamic Baseline Tracking:** Maintains adaptive baselines for anomaly detection with AI-powered threshold evaluation.
+*   **Built-in Resilience:** Incorporates robust resilience patterns (circuit breakers, retries, bulkheads, rate limiting) with AI-aware error handling.
+*   **Structured Observability:** Employs structured logging with AI interaction tracking for comprehensive operational visibility.
 
 ## 4-Layer Pattern Detection System
 
@@ -151,12 +167,93 @@ A quantitative confidence assessment system evaluates pattern matches using 15+ 
 
 This multi-layer approach reduces false positives while maintaining high sensitivity to genuine incidents. The confidence scoring system provides transparency into classification decisions, enabling operators to understand and tune detection behavior based on their specific environment characteristics.
 
+## Gemini ML Pattern Refinement System
+
+The Gemini ML Pattern Refinement System enhances the 4-layer pattern detection with advanced AI capabilities, providing intelligent analysis of incident patterns and automated code-context integration for more accurate remediation.
+
+### Core Components
+
+**AI-Powered Analysis Pipeline:**
+- **GeminiPromptEngine**: Advanced prompt management with structured templates and few-shot learning capabilities
+- **GeminiEnhancedPatternDetector**: Ensemble pattern detection combining rule-based and AI-driven classification
+- **GeminiResponseCache**: Intelligent response caching with similarity-based matching to optimize API costs
+- **PatternContextExtractor**: Context extraction from incident data with code repository integration
+
+**Quality Assurance & Performance:**
+- **LogQualityValidator**: Pre-processing validation ensuring high-quality input data for AI analysis
+- **LogSanitizer**: Sensitive data sanitization removing PII, tokens, and credentials before AI processing
+- **ModelPerformanceMonitor**: Real-time monitoring of AI model performance and drift detection
+- **CostTracker**: API usage monitoring with budget controls and cost optimization
+
+**Resilience & Reliability:**
+- **AdaptiveRateLimiter**: Smart rate limiting with circuit breaker patterns for API stability
+- Structured output validation using Pydantic schemas for consistent AI responses
+- Comprehensive error handling and fallback mechanisms
+
+### Key Capabilities
+
+```mermaid
+graph TB
+    subgraph "ML Pattern Refinement Pipeline"
+        LS[Log Stream] --> LQV[Log Quality<br/>Validator]
+        LQV --> LSan[Log Sanitizer<br/>PII Removal]
+        LSan --> PCE[Pattern Context<br/>Extractor]
+        PCE --> |Context Data| GEPD[Gemini Enhanced<br/>Pattern Detector]
+        
+        subgraph "AI Processing Layer"
+            GEPD --> GPE[Gemini Prompt<br/>Engine]
+            GPE --> |Structured Prompts| GF[Gemini Flash<br/>Fast Classification]
+            GPE --> |Deep Analysis| GP[Gemini Pro<br/>Detailed Analysis]
+        end
+        
+        subgraph "Performance & Cost Management"
+            GF --> GRC[Response Cache<br/>Similarity Matching]
+            GP --> GRC
+            GRC --> CT[Cost Tracker<br/>Budget Control]
+            CT --> MPM[Performance<br/>Monitor]
+        end
+        
+        subgraph "Code Integration"
+            PCE --> |Repository Data| CCE[Code Context<br/>Extractor]
+            CCE --> |Static Analysis| GPE
+        end
+    end
+    
+    classDef aiComponent fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef qualityComponent fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef performanceComponent fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    
+    class GPE,GEPD,GF,GP,GRC aiComponent
+    class LQV,LSan,PCE,CCE qualityComponent
+    class CT,MPM performanceComponent
+```
+
+**Enhanced Pattern Analysis:**
+- Multi-model AI strategy leveraging both Gemini Flash (speed) and Gemini Pro (accuracy)
+- Similarity-based response caching reducing API costs by up to 60% while maintaining accuracy
+- Context-aware analysis incorporating recent code changes, dependencies, and repository structure
+- Structured output schemas ensuring consistent, validated AI responses
+
+**Quality & Cost Controls:**
+- Pre-processing validation filtering low-quality logs before expensive AI analysis
+- Intelligent caching system matching similar incident contexts to avoid redundant API calls
+- Real-time cost monitoring with configurable budget limits and alerts
+- Performance drift detection identifying model degradation over time
+
+**Security & Compliance:**
+- Comprehensive PII sanitization removing sensitive data (emails, IPs, tokens, API keys)
+- Pattern-based credential detection and replacement before AI processing
+- Audit logging for all AI interactions and data transformations
+
+This ML enhancement layer transforms raw log analysis into intelligent, context-aware incident detection with automated code repository integration, significantly improving remediation accuracy while optimizing operational costs.
+
 ## Documentation
 
 For detailed information on the Gemini SRE Agent, please refer to the following documentation sections:
 
 *   [**Quick Start Guide**](docs/QUICKSTART.md): Get the agent up and running in 15 minutes.
 *   [**Architecture Overview**](docs/ARCHITECTURE.md): Understand the core components and data flow of the agent.
+*   [**ML Pattern Refinement System**](docs/ML_PATTERN_REFINEMENT.md): Comprehensive guide to the Gemini AI enhancement layer.
 *   [**GCP Infrastructure Setup Guide**](docs/GCP_SETUP.md): Instructions for setting up necessary Google Cloud infrastructure.
 *   [**Setup and Installation**](docs/SETUP_INSTALLATION.md): A comprehensive guide to getting the project up and running.
 *   [**Configuration Guide**](docs/CONFIGURATION.md): Learn how to customize the agent's behavior via `config.yaml`.
