@@ -6,7 +6,7 @@ from gemini_sre_agent.config import load_config, ServiceMonitorConfig, GlobalCon
 from gemini_sre_agent.logger import setup_logging
 from gemini_sre_agent.log_subscriber import LogSubscriber
 from gemini_sre_agent.triage_agent import TriageAgent
-from gemini_sre_agent.analysis_agent import AnalysisAgent
+from gemini_sre_agent.ml.enhanced_analysis_agent import EnhancedAnalysisAgent, EnhancedAnalysisConfig
 from gemini_sre_agent.remediation_agent import RemediationAgent
 from gemini_sre_agent.resilience import HyxResilientClient, create_resilience_config
 
@@ -63,10 +63,13 @@ def monitor_service(service_config: ServiceMonitorConfig, global_config: GlobalC
             location=service_config.location,
             triage_model=model_selection.triage_model,
         )
-        analysis_agent = AnalysisAgent(
-            project_id=service_config.project_id,
-            location=service_config.location,
-            analysis_model=model_selection.analysis_model,
+        analysis_agent = EnhancedAnalysisAgent(
+            EnhancedAnalysisConfig(
+                project_id=service_config.project_id,
+                location=service_config.location,
+                main_model=model_selection.analysis_model,
+                meta_model="gemini-1.5-flash-001"
+            )
         )
 
         # Get GitHub token from environment variable
@@ -134,9 +137,22 @@ def monitor_service(service_config: ServiceMonitorConfig, global_config: GlobalC
                 # Provide current log as historical context for better analysis
                 current_log_context = [json.dumps(log_data, indent=2)]
 
-                remediation_plan = analysis_agent.analyze_issue(
-                    triage_packet, current_log_context, {}, flow_id
+                analysis_result = await analysis_agent.analyze_issue(
+                    triage_packet.model_dump(), current_log_context, {}, flow_id
                 )
+                
+                if not analysis_result.get("success", False):
+                    logger.error(f"[ANALYSIS] Analysis failed: {analysis_result.get('error', 'Unknown error')}")
+                    return
+                
+                # Convert enhanced agent response to RemediationPlan for compatibility
+                from gemini_sre_agent.analysis_agent import RemediationPlan
+                remediation_plan = RemediationPlan(
+                    root_cause_analysis=analysis_result["analysis"]["root_cause_analysis"],
+                    proposed_fix=analysis_result["analysis"]["proposed_fix"],
+                    code_patch=analysis_result["analysis"]["code_patch"]
+                )
+                
                 logger.info(
                     f"[ANALYSIS] Analysis completed for service={service_config.service_name}: flow_id={flow_id}, issue_id={triage_packet.issue_id}, proposed_fix={remediation_plan.proposed_fix[:100]}..."
                 )
