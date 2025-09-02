@@ -109,6 +109,77 @@ class BaseCodeGenerator(ABC):
                 success=False, error_message=str(e), generation_time_ms=generation_time
             )
 
+    async def enhance_code_patch(
+        self,
+        code_patch: str,
+        context: PromptContext
+    ) -> str:
+        """
+        Enhance an existing code patch using domain-specific knowledge.
+
+        Args:
+            code_patch: The existing code patch to enhance
+            context: The prompt context for enhancement
+
+        Returns:
+            Enhanced code patch
+        """
+        try:
+            # Set context if not already set
+            if not self.context:
+                self.set_context(context)
+
+            # Apply domain-specific enhancements
+            enhanced_code = self._apply_domain_patterns(code_patch)
+
+            # Validate the enhanced code
+            validation_result = await self._validate_domain_rules(enhanced_code)
+
+            # If validation fails, return original code
+            if not validation_result.is_valid:
+                self.logger.warning(f"Enhanced code validation failed: {validation_result.issues}")
+                return code_patch
+
+            return enhanced_code
+
+        except Exception as e:
+            self.logger.error(f"Code enhancement failed: {e}")
+            return code_patch
+
+    async def enhance_fix_description(
+        self,
+        description: str,
+        context: PromptContext
+    ) -> str:
+        """
+        Enhance the fix description using domain-specific knowledge.
+
+        Args:
+            description: The existing fix description
+            context: The prompt context for enhancement
+
+        Returns:
+            Enhanced fix description
+        """
+        try:
+            # Set context if not already set
+            if not self.context:
+                self.set_context(context)
+
+            # For now, return the original description
+            # This can be enhanced later with domain-specific improvements
+            return description
+
+        except Exception as e:
+            self.logger.error(f"Description enhancement failed: {e}")
+            return description
+
+    @property
+    def logger(self):
+        """Get logger for this generator"""
+        import logging
+        return logging.getLogger(f"{self.__class__.__name__}")
+
     async def _generate_domain_specific_prompt(
         self, issue_context: IssueContext
     ) -> str:

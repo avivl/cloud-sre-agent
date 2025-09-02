@@ -68,7 +68,9 @@ def monitor_service(service_config: ServiceMonitorConfig, global_config: GlobalC
                 project_id=service_config.project_id,
                 location=service_config.location,
                 main_model=model_selection.analysis_model,
-                meta_model="gemini-1.5-flash-001"
+                meta_model="gemini-1.5-flash-001",
+                enable_specialized_generators=True,
+                enable_validation=True
             )
         )
 
