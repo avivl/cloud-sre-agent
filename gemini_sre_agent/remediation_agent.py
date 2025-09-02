@@ -1,3 +1,5 @@
+import asyncio
+import functools
 import logging
 import re
 from typing import List, Optional, Union
@@ -86,7 +88,7 @@ class RemediationAgent:
         base_branch: str,
         flow_id: str,
         issue_id: str,
-    ) -> str:  # Changed to async def
+    ) -> str:
         """
         Creates a pull request on GitHub with the proposed service code fix.
 
@@ -105,16 +107,22 @@ class RemediationAgent:
         )
 
         try:
-            # 1. Get the base branch
-            base: Branch = self.repo.get_branch(base_branch)
+            # Get event loop for async operations
+            loop = asyncio.get_event_loop()
+            
+            # 1. Get the base branch (non-blocking)
+            base: Branch = await loop.run_in_executor(None, self.repo.get_branch, base_branch)
             logger.debug(
                 f"[REMEDIATION] Base branch found: flow_id={flow_id}, issue_id={issue_id}, branch={base_branch}, sha={base.commit.sha}"
             )
 
-            # 2. Create a new branch (idempotent)
+            # 2. Create a new branch (idempotent, non-blocking)
             ref: str = f"refs/heads/{branch_name}"
             try:
-                self.repo.create_git_ref(ref=ref, sha=base.commit.sha)
+                await loop.run_in_executor(
+                    None,
+                    functools.partial(self.repo.create_git_ref, ref=ref, sha=base.commit.sha)
+                )
                 logger.info(
                     f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}"
                 )
@@ -127,7 +135,7 @@ class RemediationAgent:
                 else:
                     raise
 
-            # 3. Apply the service code fix
+            # 3. Apply the service code fix (non-blocking operations)
             if remediation_plan.code_patch:
                 file_path = self._extract_file_path_from_patch(
                     remediation_plan.code_patch
@@ -142,8 +150,8 @@ class RemediationAgent:
                         remediation_plan.code_patch.strip().split("\n")[1:]
                     )
                     try:
-                        contents: Union[ContentFile, List[ContentFile]] = (
-                            self.repo.get_contents(file_path, ref=branch_name)
+                        contents: Union[ContentFile, List[ContentFile]] = await loop.run_in_executor(
+                            None, functools.partial(self.repo.get_contents, file_path, ref=branch_name)
                         )
                         if isinstance(
                             contents, list
@@ -154,23 +162,32 @@ class RemediationAgent:
                             raise RuntimeError(
                                 f"Cannot update directory {file_path}. Expected a service code file."
                             )
-                        self.repo.update_file(
-                            contents.path,
-                            f"Fix service issue in {file_path}",
-                            content_to_write,
-                            contents.sha,
-                            branch=branch_name,
+                        
+                        await loop.run_in_executor(
+                            None,
+                            functools.partial(
+                                self.repo.update_file,
+                                contents.path,
+                                f"Fix service issue in {file_path}",
+                                content_to_write,
+                                contents.sha,
+                                branch=branch_name
+                            )
                         )
                         logger.info(
                             f"[REMEDIATION] Updated service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
                         )
                     except GithubException as e:
                         if e.status == 404:  # File does not exist, create it
-                            self.repo.create_file(
-                                file_path,
-                                f"Add service code fix in {file_path}",
-                                content_to_write,
-                                branch=branch_name,
+                            await loop.run_in_executor(
+                                None,
+                                functools.partial(
+                                    self.repo.create_file,
+                                    file_path,
+                                    f"Add service code fix in {file_path}",
+                                    content_to_write,
+                                    branch=branch_name
+                                )
                             )
                             logger.info(
                                 f"[REMEDIATION] Created service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
@@ -182,12 +199,18 @@ class RemediationAgent:
                     f"[REMEDIATION] No service code patch provided: flow_id={flow_id}, issue_id={issue_id}"
                 )
 
-            # 4. Create a pull request
-            pull_request: PullRequest = self.repo.create_pull(
-                title=f"Fix: {remediation_plan.proposed_fix[:50]}...",  # Truncate title if too long
-                body=f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}",
-                head=branch_name,
-                base=base_branch,
+            # 4. Create a pull request (non-blocking)
+            title = f"Fix: {remediation_plan.proposed_fix[:50]}..."
+            body = f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}"
+            pull_request: PullRequest = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    self.repo.create_pull,
+                    title=title,
+                    body=body,
+                    head=branch_name,
+                    base=base_branch
+                )
             )
             logger.info(
                 f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={issue_id}, pr_url={pull_request.html_url}"

@@ -138,7 +138,7 @@ class TestSmartThresholdsIntegration:
             service = "service-a" if i < 6 else "service-b"
             log_data = {
                 "insertId": f"integration-{i}",
-                "timestamp": (base_time + timedelta(seconds=i * 10)).isoformat() + "Z",
+                "timestamp": (base_time + timedelta(seconds=i * 10)).replace(tzinfo=None).isoformat() + "Z",
                 "severity": severity,
                 "textPayload": f"Test message {i}",
                 "resource": {"labels": {"service_name": service}},

@@ -6,7 +6,7 @@ import math
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ..logger import setup_logging
+import logging
 from .models import (
     ConfidenceFactors,
     ConfidenceRule,
@@ -23,7 +23,7 @@ class ConfidenceScorer:
     def __init__(
         self, confidence_rules: Optional[Dict[str, List[ConfidenceRule]]] = None
     ):
-        self.logger = setup_logging()
+        self.logger = logging.getLogger(__name__)
         self.confidence_rules = confidence_rules or self._get_default_confidence_rules()
         self.logger.info("[CONFIDENCE_SCORING] ConfidenceScorer initialized")
 
