@@ -1,12 +1,14 @@
 import logging
-from github import Github, GithubException
-from .analysis_agent import RemediationPlan
-from github.Repository import Repository
-from github.Branch import Branch
-from github.PullRequest import PullRequest
-from github.ContentFile import ContentFile
 import re
-from typing import Optional, Union, List
+from typing import List, Optional, Union
+
+from github import Github, GithubException
+from github.Branch import Branch
+from github.ContentFile import ContentFile
+from github.PullRequest import PullRequest
+from github.Repository import Repository
+
+from .analysis_agent import RemediationPlan
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,9 @@ class RemediationAgent:
         """
         self.github: Github = Github(github_token)
         self.repo: Repository = self.github.get_repo(repo_name)
-        logger.info(f"[REMEDIATION] RemediationAgent initialized for repository: {repo_name}")
+        logger.info(
+            f"[REMEDIATION] RemediationAgent initialized for repository: {repo_name}"
+        )
 
     def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
         """
@@ -59,7 +63,9 @@ class RemediationAgent:
                 if self._is_valid_file_path(file_path):
                     return file_path
                 else:
-                    logger.warning(f"[REMEDIATION] Invalid file path extracted: {file_path}")
+                    logger.warning(
+                        f"[REMEDIATION] Invalid file path extracted: {file_path}"
+                    )
                     return None
 
         return None
@@ -74,7 +80,12 @@ class RemediationAgent:
         return True
 
     async def create_pull_request(
-        self, remediation_plan: RemediationPlan, branch_name: str, base_branch: str, flow_id: str, issue_id: str
+        self,
+        remediation_plan: RemediationPlan,
+        branch_name: str,
+        base_branch: str,
+        flow_id: str,
+        issue_id: str,
     ) -> str:  # Changed to async def
         """
         Creates a pull request on GitHub with the proposed service code fix.
@@ -104,11 +115,15 @@ class RemediationAgent:
             ref: str = f"refs/heads/{branch_name}"
             try:
                 self.repo.create_git_ref(ref=ref, sha=base.commit.sha)
-                logger.info(f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}")
+                logger.info(
+                    f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}"
+                )
             except GithubException as e:
                 if e.status == 422 and "Reference already exists" in str(e.data):
                     # Branch already exists - this is fine for retry scenarios
-                    logger.info(f"[REMEDIATION] Branch already exists (idempotent): flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}")
+                    logger.info(
+                        f"[REMEDIATION] Branch already exists (idempotent): flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}"
+                    )
                 else:
                     raise
 
@@ -146,7 +161,9 @@ class RemediationAgent:
                             contents.sha,
                             branch=branch_name,
                         )
-                        logger.info(f"[REMEDIATION] Updated service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}")
+                        logger.info(
+                            f"[REMEDIATION] Updated service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
+                        )
                     except GithubException as e:
                         if e.status == 404:  # File does not exist, create it
                             self.repo.create_file(
@@ -155,11 +172,15 @@ class RemediationAgent:
                                 content_to_write,
                                 branch=branch_name,
                             )
-                            logger.info(f"[REMEDIATION] Created service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}")
+                            logger.info(
+                                f"[REMEDIATION] Created service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
+                            )
                         else:
                             raise
             else:
-                logger.warning(f"[REMEDIATION] No service code patch provided: flow_id={flow_id}, issue_id={issue_id}")
+                logger.warning(
+                    f"[REMEDIATION] No service code patch provided: flow_id={flow_id}, issue_id={issue_id}"
+                )
 
             # 4. Create a pull request
             pull_request: PullRequest = self.repo.create_pull(
@@ -168,14 +189,20 @@ class RemediationAgent:
                 head=branch_name,
                 base=base_branch,
             )
-            logger.info(f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={issue_id}, pr_url={pull_request.html_url}")
+            logger.info(
+                f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={issue_id}, pr_url={pull_request.html_url}"
+            )
             return pull_request.html_url
 
         except GithubException as e:
-            logger.error(f"[ERROR_HANDLING] GitHub API error during PR creation: flow_id={flow_id}, issue_id={issue_id}, status={e.status}, data={e.data}")
+            logger.error(
+                f"[ERROR_HANDLING] GitHub API error during PR creation: flow_id={flow_id}, issue_id={issue_id}, status={e.status}, data={e.data}"
+            )
             raise RuntimeError(
                 f"Failed to create pull request due to GitHub API error: {e.data}"
             ) from e
         except Exception as e:
-            logger.error(f"[ERROR_HANDLING] An unexpected error occurred during PR creation: flow_id={flow_id}, issue_id={issue_id}, error={e}")
+            logger.error(
+                f"[ERROR_HANDLING] An unexpected error occurred during PR creation: flow_id={flow_id}, issue_id={issue_id}, error={e}"
+            )
             raise RuntimeError(f"Failed to create pull request: {e}") from e

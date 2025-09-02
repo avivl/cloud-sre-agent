@@ -1,13 +1,16 @@
 import logging
-from google.cloud.logging_v2.services.logging_service_v2 import LoggingServiceV2Client
 from typing import List
 
+from google.cloud.logging_v2.services.logging_service_v2 import LoggingServiceV2Client
+
 logger = logging.getLogger(__name__)
+
 
 class LogIngestor:
     """
     A class responsible for ingesting logs from Google Cloud Logging.
     """
+
     def __init__(self, project_id: str):
         """
         Initializes the LogIngestor with a GCP project ID.
@@ -43,6 +46,7 @@ class LogIngestor:
         logs = [entry.payload for entry in pager]
         logger.info(f"Fetched {len(logs)} logs.")
         return logs
+
 
 # Removed start_monitoring method
 # def start_monitoring(self):
