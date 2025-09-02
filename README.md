@@ -16,7 +16,7 @@ Dive in to discover how this agent can transform your cloud log monitoring into 
 
 ## System Architecture
 
-The Gemini SRE Agent employs a sophisticated multi-model AI architecture with advanced pattern detection for intelligent log monitoring and automated remediation:
+The Gemini SRE Agent employs a sophisticated multi-model AI architecture with **enhanced dynamic prompt generation** and advanced pattern detection for intelligent log monitoring and automated remediation:
 
 ```mermaid
 graph TB
@@ -31,7 +31,7 @@ graph TB
         MLPR --> |Enhanced Analysis| PD[Pattern Detection System<br/>Multi-Layer Analysis]
         PD --> |Pattern Match| TA[Triage Agent<br/>Gemini Flash]
         LS --> |Raw Logs| TA
-        TA --> |TriagePacket| AA[Analysis Agent<br/>Gemini Pro]
+        TA --> |TriagePacket| AA[Enhanced Analysis Agent<br/>Dynamic Prompt Generation]
         AA --> |ValidationRequest| QA[Quantitative Analyzer<br/>Code Execution]
         QA --> |EmpiricalData| AA
         AA --> |RemediationPlan| RA[Remediation Agent]
@@ -85,11 +85,61 @@ The system leverages different Gemini models optimized for specific tasks:
 - **Gemini Pro**: Deep analysis and code generation (accuracy-optimized)  
 - **Code Execution**: Empirical validation and quantitative analysis
 
+### Enhanced Dynamic Prompt Generation System
+
+The Gemini SRE Agent now features a **revolutionary dynamic prompt generation system** that automatically creates context-aware, specialized prompts for optimal code generation:
+
+```mermaid
+graph TB
+    subgraph "Enhanced Prompt Generation Pipeline"
+        TC[Task Context] --> APS[Adaptive Prompt Strategy]
+        IC[Issue Context] --> APS
+        RC[Repository Context] --> APS
+        
+        APS --> |Complex Issues| MPG[Meta-Prompt Generator<br/>Gemini Flash]
+        APS --> |Specialized Issues| SPT[Specialized Templates<br/>Database/API/Security]
+        APS --> |Simple Issues| GPT[Generic Prompt Template]
+        
+        MPG --> |Optimized Prompt| MPG2[Meta-Prompt Generator<br/>Gemini Pro]
+        MPG2 --> |Final Prompt| EAA[Enhanced Analysis Agent]
+        SPT --> |Specialized Prompt| EAA
+        GPT --> |Generic Prompt| EAA
+        
+        EAA --> |Analysis Result| VAL[Validation & Refinement]
+        VAL --> |Validated Code| OUT[Code Fix Output]
+    end
+    
+    classDef metaPrompt fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef specialized fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef generic fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    
+    class MPG,MPG2 metaPrompt
+    class SPT specialized
+    class GPT generic
+```
+
+**Key Capabilities:**
+
+- **Meta-Prompt Generation**: Uses Gemini Flash to generate optimized prompts for Gemini Pro, creating a "AI teaching AI" approach
+- **Context-Aware Templates**: Automatically selects specialized prompt templates based on issue type (database errors, API failures, security issues, etc.)
+- **Adaptive Strategy Selection**: Intelligently chooses between meta-prompt, specialized, or generic approaches based on issue complexity
+- **Multi-Stage Validation**: Implements iterative refinement with validation feedback loops
+- **Fallback Mechanisms**: Gracefully degrades to simpler approaches if advanced features fail
+- **Performance Optimization**: Caching and similarity matching for cost-effective prompt generation
+
+**Issue Type Specialization:**
+- **Database Errors**: Specialized prompts for connection issues, query optimization, deadlocks
+- **API Errors**: Authentication, rate limiting, endpoint failures, response validation
+- **Security Issues**: Vulnerability assessment, access control, encryption problems
+- **Service Errors**: Microservice communication, dependency failures, resource exhaustion
+- **Infrastructure Issues**: Deployment problems, configuration errors, scaling issues
+
 ## Key Features
 
 *   **AI-Enhanced Pattern Detection:** Multi-layer analysis engine enhanced with Gemini AI models for intelligent pattern recognition, confidence scoring, and context-aware analysis.
 *   **Gemini ML Pattern Refinement:** Advanced AI pipeline with quality validation, PII sanitization, smart caching, and cost optimization for production-ready AI analysis.
-*   **Intelligent Log Analysis:** Leverages dual Gemini models (Flash for speed, Pro for accuracy) with structured prompting and few-shot learning capabilities.
+*   **Enhanced Dynamic Prompt Generation:** Revolutionary AI-powered prompt generation system with meta-prompt optimization, context-aware templates, and adaptive strategy selection for superior code generation.
+*   **Intelligent Log Analysis:** Leverages dual Gemini models (Flash for speed, Pro for accuracy) with enhanced dynamic prompting and few-shot learning capabilities.
 *   **Proactive Incident Detection:** Identifies 7+ distinct failure patterns with AI-powered classification and confidence scoring across 15+ quantitative factors.
 *   **Code-Context Integration:** Automated analysis incorporating recent commits, dependencies, and repository structure for more accurate remediation.
 *   **Cost-Optimized AI Operations:** Intelligent response caching with similarity matching, reducing API costs by up to 60% while maintaining accuracy.
@@ -254,6 +304,7 @@ For detailed information on the Gemini SRE Agent, please refer to the following 
 *   [**Quick Start Guide**](docs/QUICKSTART.md): Get the agent up and running in 15 minutes.
 *   [**Architecture Overview**](docs/ARCHITECTURE.md): Understand the core components and data flow of the agent.
 *   [**ML Pattern Refinement System**](docs/ML_PATTERN_REFINEMENT.md): Comprehensive guide to the Gemini AI enhancement layer.
+*   [**Enhanced Prompt Generation System**](docs/ENHANCED_PROMPT_GENERATION.md): Deep dive into the revolutionary dynamic prompt generation capabilities.
 *   [**GCP Infrastructure Setup Guide**](docs/GCP_SETUP.md): Instructions for setting up necessary Google Cloud infrastructure.
 *   [**Setup and Installation**](docs/SETUP_INSTALLATION.md): A comprehensive guide to getting the project up and running.
 *   [**Configuration Guide**](docs/CONFIGURATION.md): Learn how to customize the agent's behavior via `config.yaml`.

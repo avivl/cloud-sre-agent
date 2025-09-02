@@ -18,9 +18,14 @@ The agent's functionality is distributed across several key components, each wit
 *   **Role:** Performs rapid, preliminary analysis of incoming log data.
 *   **Functionality:** Utilizes a **Gemini Flash model** for quick assessment. It identifies potential issues, assigns a preliminary severity score, and summarizes the findings into a structured `TriagePacket`. This acts as a crucial filtering step to prioritize critical events. Includes built-in retry mechanisms for model calls to enhance robustness. All operations include `flow_id` tracking for complete traceability.
 
-### 4. Analysis Agent (`AnalysisAgent`)
-*   **Role:** Conducts in-depth root cause analysis and generates comprehensive remediation plans focused on service code fixes.
-*   **Functionality:** Receives `TriagePacket`s from the `TriageAgent`. It employs a more powerful **Gemini Pro model** to perform detailed analysis, incorporating the current log as context along with historical data and relevant configuration. The output is a `RemediationPlan` detailing root cause, proposed service code fix, and code patches with file path instructions. Includes built-in retry mechanisms and comprehensive flow tracking with both `flow_id` and `issue_id`.
+### 4. Enhanced Analysis Agent (`EnhancedAnalysisAgent`)
+*   **Role:** Conducts in-depth root cause analysis and generates comprehensive remediation plans using **revolutionary dynamic prompt generation**.
+*   **Functionality:** Receives `TriagePacket`s from the `TriageAgent`. It employs an **enhanced multi-model approach** with **Gemini Pro for analysis** and **Gemini Flash for meta-prompt generation**. The system automatically selects the optimal prompting strategy:
+    *   **Meta-Prompt Generation**: Uses Gemini Flash to create optimized prompts for Gemini Pro (AI teaching AI)
+    *   **Specialized Templates**: Domain-specific prompts for database, API, security, and service errors
+    *   **Adaptive Strategy Selection**: Automatically chooses the best approach based on issue complexity
+    *   **Context-Aware Generation**: Incorporates repository structure, technology stack, and historical patterns
+*   **Output:** A `RemediationPlan` with superior code quality, detailed root cause analysis, and production-ready fixes. Includes built-in retry mechanisms, comprehensive flow tracking, and multiple fallback layers for reliability.
 
 ### 5. Remediation Agent (`RemediationAgent`)
 *   **Role:** Automates the implementation of proposed service code remediation actions.
@@ -44,6 +49,21 @@ The agent's functionality is distributed across several key components, each wit
     *   **Baseline Tracker:** Maintains dynamic baselines for anomaly detection
 *   **Integration:** Enhances TriageAgent with proactive pattern detection capabilities, enabling early warning systems and more accurate incident classification.
 
+### 8. Enhanced Prompt Generation System
+*   **Role:** Revolutionary AI-powered prompt generation that automatically creates context-aware, specialized prompts for optimal code generation.
+*   **Components:**
+    *   **Adaptive Prompt Strategy**: Intelligently selects between meta-prompt, specialized, or generic approaches based on issue complexity
+    *   **Meta-Prompt Generator**: Uses Gemini Flash to generate optimized prompts for Gemini Pro (AI teaching AI approach)
+    *   **Specialized Templates**: Domain-specific prompts for database errors, API failures, security issues, and service problems
+    *   **Context Builder**: Constructs comprehensive context from issue details, repository structure, and historical patterns
+    *   **Validation & Refinement**: Implements iterative refinement with feedback loops and fallback mechanisms
+*   **Benefits:**
+    *   **Superior Code Quality**: Context-aware generation with domain expertise
+    *   **Adaptive Intelligence**: Automatic strategy selection without manual intervention
+    *   **Cost Optimization**: Smart caching and similarity matching reduce API costs
+    *   **Reliability**: Multiple fallback layers ensure system stability
+*   **Integration:** Seamlessly integrated with the Enhanced Analysis Agent, providing the foundation for all code generation operations.
+
 ## Flow Tracking System
 
 The system implements comprehensive end-to-end traceability using standardized identifiers:
@@ -64,7 +84,7 @@ sequenceDiagram
     participant LS as LogSubscriber
     participant PD as Pattern Detector
     participant TA as TriageAgent<br/>(Flash)
-    participant AA as AnalysisAgent<br/>(Pro)
+    participant AA as EnhancedAnalysisAgent<br/>(Dynamic Prompt Generation)
     participant QA as QuantitativeAnalyzer<br/>(Code Execution)
     participant RA as RemediationAgent
     participant GH as GitHub
@@ -88,7 +108,7 @@ sequenceDiagram
     alt Issue Severity >= HIGH
         TA->>AA: analyze_issue(triage_packet)
         
-        Note over AA: Deep root cause analysis<br/>Gemini Pro
+        Note over AA: Enhanced analysis with<br/>dynamic prompt generation
         AA->>AA: Analyze historical logs<br/>+ configuration context
         
         AA->>QA: validate_hypothesis(analysis_result)
