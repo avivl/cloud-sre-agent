@@ -34,6 +34,16 @@ The agent's functionality is distributed across several key components, each wit
     *   Perform quantitative verification of findings
 *   **Integration:** Works in conjunction with AnalysisAgent to provide data-driven validation of AI analysis results.
 
+### 7. Pattern Detection System (`pattern_detector`)
+*   **Role:** Advanced pattern recognition system for proactive incident detection and analysis.
+*   **Components:**
+    *   **TimeWindow Management:** Accumulates logs into sliding time windows for temporal analysis
+    *   **Threshold Evaluator:** Applies smart thresholds (frequency, rate, service impact, cascade detection)
+    *   **Pattern Classifier:** Identifies specific failure patterns (cascade failures, service degradation, traffic spikes, configuration issues, dependency failures, resource exhaustion, sporadic errors)
+    *   **Confidence Scorer:** Provides sophisticated confidence scoring with 15+ factors including temporal patterns, service correlation, error consistency, and baseline deviations
+    *   **Baseline Tracker:** Maintains dynamic baselines for anomaly detection
+*   **Integration:** Enhances TriageAgent with proactive pattern detection capabilities, enabling early warning systems and more accurate incident classification.
+
 ## Flow Tracking System
 
 The system implements comprehensive end-to-end traceability using standardized identifiers:
@@ -52,6 +62,7 @@ sequenceDiagram
     participant CL as Cloud Logging
     participant PS as Pub/Sub
     participant LS as LogSubscriber
+    participant PD as Pattern Detector
     participant TA as TriageAgent<br/>(Flash)
     participant AA as AnalysisAgent<br/>(Pro)
     participant QA as QuantitativeAnalyzer<br/>(Code Execution)
@@ -60,9 +71,18 @@ sequenceDiagram
 
     CL->>PS: Export logs (severity>=ERROR)
     PS->>LS: Push log message
-    LS->>TA: process_log_data(log_entry)
     
-    Note over TA: Quick classification<br/>Gemini Flash
+    LS->>PD: accumulate_log(log_entry)
+    Note over PD: Time window management<br/>Pattern analysis
+    
+    alt Pattern Detected
+        PD->>TA: process_pattern(pattern_match)
+        Note over TA: Enhanced classification<br/>with pattern context
+    else No Pattern
+        LS->>TA: process_log_data(log_entry)
+        Note over TA: Standard triage<br/>classification
+    end
+    
     TA->>TA: Generate TriagePacket
     
     alt Issue Severity >= HIGH
@@ -97,6 +117,70 @@ sequenceDiagram
 ## Multi-Service and Multi-Repository Design
 
 The agent is designed to monitor multiple services concurrently. This is achieved through a flexible configuration (`config.yaml`) that allows defining a list of services, each with its own GCP project, location, and Pub/Sub subscription. Furthermore, each service can optionally override the default GitHub repository settings, enabling remediation actions to be directed to different repositories as needed. This modularity ensures scalability and adaptability across diverse microservice architectures.
+
+## Pattern Detection Architecture
+
+The Pattern Detection System operates as a sophisticated multi-layer analysis engine with the following architecture:
+
+```mermaid
+graph TD
+    A[Log Entry] --> B[Time Window Accumulator]
+    B --> C{Window Full?}
+    C -->|Yes| D[Threshold Evaluator]
+    C -->|No| B
+    
+    D --> E[Error Frequency Check]
+    D --> F[Service Impact Check]
+    D --> G[Cascade Failure Check]
+    D --> H[Rate Change Check]
+    
+    E --> I{Threshold Triggered?}
+    F --> I
+    G --> I
+    H --> I
+    
+    I -->|Yes| J[Pattern Classifier]
+    I -->|No| K[Store Baseline Data]
+    
+    J --> L[Confidence Scorer]
+    L --> M[Pattern Match Result]
+    
+    K --> N[Continue Monitoring]
+    M --> O[Enhanced Triage]
+```
+
+### Pattern Detection Layers
+
+1. **Time Window Management**
+   - Sliding time windows (configurable duration)
+   - Log accumulation and temporal organization
+   - Window expiration and processing triggers
+
+2. **Smart Threshold Evaluation**
+   - **Error Frequency:** Absolute count thresholds with service grouping
+   - **Error Rate:** Percentage increase from dynamic baselines
+   - **Service Impact:** Multi-service failure detection
+   - **Cascade Failure:** Cross-service correlation analysis
+   - **Severity Weighted:** Weighted scoring by log severity levels
+
+3. **Pattern Classification**
+   - **Sporadic Errors:** Random distributed failures
+   - **Service Degradation:** Single service performance issues
+   - **Cascade Failure:** Multi-service dependency chains
+   - **Traffic Spike:** Volume-induced system stress
+   - **Configuration Issue:** Deployment-related problems
+   - **Dependency Failure:** External service problems
+   - **Resource Exhaustion:** Memory/CPU/storage limits
+
+4. **Advanced Confidence Scoring**
+   - 15+ quantitative factors including:
+     - Temporal concentration and correlation
+     - Service distribution and cross-correlation
+     - Error consistency and message similarity
+     - Baseline deviation and trend analysis
+     - Resource utilization and deployment correlation
+   - Configurable weighting and decay functions
+   - Multi-level confidence assessment (VERY_LOW to VERY_HIGH)
 
 ## Resilience and Observability
 
