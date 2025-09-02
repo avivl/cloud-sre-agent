@@ -159,9 +159,18 @@ class EnhancedAnalysisAgent:
                 return analysis_result
 
             # Get the appropriate specialized generator
-            generator = self.code_generator_factory.create_generator(
-                context.generator_type, context
-            )
+            # Convert string generator_type back to IssueType for the factory
+            try:
+                issue_type = IssueType(context.generator_type)
+                generator = self.code_generator_factory.create_generator(issue_type)
+                # Set the context for the generator
+                generator.set_context(context)
+            except ValueError:
+                # If conversion fails, use UNKNOWN type
+                generator = self.code_generator_factory.create_generator(
+                    IssueType.UNKNOWN
+                )
+                generator.set_context(context)
 
             if not generator:
                 self.logger.warning(

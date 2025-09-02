@@ -7,13 +7,13 @@ This module provides performance optimizations for the enhanced code generation
 system, including caching, async processing, and parallel analysis.
 """
 
-from .repository_analyzer import PerformanceRepositoryAnalyzer
 from .performance_config import (
-    PerformanceConfig,
-    CacheConfig,
     AnalysisConfig,
+    CacheConfig,
     ModelPerformanceConfig,
+    PerformanceConfig,
 )
+from .repository_analyzer import PerformanceRepositoryAnalyzer
 
 __all__ = [
     "PerformanceRepositoryAnalyzer",

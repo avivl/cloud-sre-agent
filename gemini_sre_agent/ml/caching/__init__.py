@@ -8,15 +8,15 @@ and other frequently accessed data to improve response times.
 """
 
 from .context_cache import (
-    ContextCache,
-    RepositoryContextCache,
-    IssuePatternCache,
     CacheEntry,
+    ContextCache,
+    IssuePatternCache,
+    RepositoryContextCache,
 )
 
 __all__ = [
     "ContextCache",
-    "RepositoryContextCache", 
+    "RepositoryContextCache",
     "IssuePatternCache",
     "CacheEntry",
 ]
