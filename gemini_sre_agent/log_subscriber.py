@@ -1,18 +1,26 @@
-import logging
+import asyncio
 import json
-from concurrent.futures import TimeoutError, ThreadPoolExecutor
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Awaitable, Callable, Dict, Optional
+
 from google.cloud import pubsub_v1
 from google.cloud.pubsub_v1.subscriber.message import Message
-from typing import Callable, Awaitable, Any, Dict, Optional
-import asyncio
 
 logger = logging.getLogger(__name__)
+
 
 class LogSubscriber:
     """
     A class responsible for subscribing to Google Cloud Pub/Sub for real-time log ingestion.
     """
-    def __init__(self, project_id: str, subscription_id: str, triage_callback: Optional[Callable[[Dict], Awaitable[Any]]] = None):
+
+    def __init__(
+        self,
+        project_id: str,
+        subscription_id: str,
+        triage_callback: Optional[Callable[[Dict], Awaitable[Any]]] = None,
+    ):
         """
         Initializes the LogSubscriber with GCP project and Pub/Sub subscription details.
 
@@ -23,11 +31,15 @@ class LogSubscriber:
                                                                  to process received log data.
         """
         self.subscriber = pubsub_v1.SubscriberClient()
-        self.subscription_path = self.subscriber.subscription_path(project_id, subscription_id)
+        self.subscription_path = self.subscriber.subscription_path(
+            project_id, subscription_id
+        )
         self.triage_callback = triage_callback
         self._executor = ThreadPoolExecutor(max_workers=4)
         self._loop = None
-        logger.info(f"[LOG_INGESTION] LogSubscriber initialized for subscription: {self.subscription_path}")
+        logger.info(
+            f"[LOG_INGESTION] LogSubscriber initialized for subscription: {self.subscription_path}"
+        )
 
     async def start(self):
         """
@@ -42,28 +54,35 @@ class LogSubscriber:
                 message.nack()
                 return
             future = asyncio.run_coroutine_threadsafe(
-                self._process_message(message),
-                self._loop
+                self._process_message(message), self._loop
             )
             try:
                 future.result(timeout=30)
             except Exception as e:
-                logger.error(f"[ERROR_HANDLING] Failed to process message in callback wrapper: {e}")
+                logger.error(
+                    f"[ERROR_HANDLING] Failed to process message in callback wrapper: {e}"
+                )
                 message.nack()
 
         streaming_pull_future = self.subscriber.subscribe(
             self.subscription_path, callback=_callback_wrapper
         )
-        logger.info(f"[LOG_INGESTION] Listening for messages on {self.subscription_path}..\n")
+        logger.info(
+            f"[LOG_INGESTION] Listening for messages on {self.subscription_path}..\n"
+        )
 
         try:
             # Run continuously without timeout for production log ingestion
             streaming_pull_future.result()
         except KeyboardInterrupt:
-            logger.info(f"[LOG_INGESTION] Received KeyboardInterrupt, shutting down subscription gracefully.")
+            logger.info(
+                "[LOG_INGESTION] Received KeyboardInterrupt, shutting down subscription gracefully."
+            )
             streaming_pull_future.cancel()
         except Exception as e:
-            logger.error(f"[ERROR_HANDLING] An error occurred during Pub/Sub subscription: {e}")
+            logger.error(
+                f"[ERROR_HANDLING] An error occurred during Pub/Sub subscription: {e}"
+            )
             streaming_pull_future.cancel()
             raise  # Re-raise to let the calling code handle the error
         finally:
@@ -74,18 +93,24 @@ class LogSubscriber:
         Internal async method to process received Pub/Sub messages.
         """
         try:
-            log_data = json.loads(message.data.decode('utf-8'))
-            flow_id = log_data.get('insertId', 'N/A')
+            log_data = json.loads(message.data.decode("utf-8"))
+            flow_id = log_data.get("insertId", "N/A")
             logger.info(f"[LOG_INGESTION] Received message: flow_id={flow_id}")
 
             if self.triage_callback:
                 await self.triage_callback(log_data)
 
             message.ack()
-            logger.debug(f"[LOG_INGESTION] Message acknowledged: flow_id={flow_id}, message_id={message.message_id}")
+            logger.debug(
+                f"[LOG_INGESTION] Message acknowledged: flow_id={flow_id}, message_id={message.message_id}"
+            )
         except json.JSONDecodeError as e:
-            logger.error(f"[ERROR_HANDLING] Failed to decode JSON from message {message.message_id}: {e}. Data: {message.data.decode('utf-8')}")
+            logger.error(
+                f"[ERROR_HANDLING] Failed to decode JSON from message {message.message_id}: {e}. Data: {message.data.decode('utf-8')}"
+            )
             message.nack()
         except Exception as e:
-            logger.error(f"[ERROR_HANDLING] Failed to process message {message.message_id}: {e}")
+            logger.error(
+                f"[ERROR_HANDLING] Failed to process message {message.message_id}: {e}"
+            )
             message.nack()

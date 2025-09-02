@@ -1,14 +1,16 @@
-import logging
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Optional
+
 
 class JsonFormatter(logging.Formatter):
     """
     A custom logging formatter that outputs log records as JSON strings.
     Includes standard log record attributes and any extra attributes passed.
     """
+
     def format(self, record):
         log_record = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
@@ -26,7 +28,7 @@ class JsonFormatter(logging.Formatter):
 
         # Add extra attributes from the log record
         for key, value in record.__dict__.items():
-            if key not in log_record and not key.startswith('_'):
+            if key not in log_record and not key.startswith("_"):
                 log_record[key] = value
 
         if record.exc_info:
@@ -36,7 +38,10 @@ class JsonFormatter(logging.Formatter):
 
         return json.dumps(log_record)
 
-def setup_logging(log_level: str = "INFO", json_format: bool = False, log_file: Optional[str] = None):
+
+def setup_logging(
+    log_level: str = "INFO", json_format: bool = False, log_file: Optional[str] = None
+):
     """
     Sets up the logging configuration for the application.
 
