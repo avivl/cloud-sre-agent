@@ -8,7 +8,7 @@ manage budgets, and provide cost-related insights and alerts.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from .cost_config import BudgetConfig, BudgetStatus, CostSummary, UsageRecord
@@ -22,7 +22,9 @@ class CostTracker:
     and cost-related analytics for API usage monitoring.
     """
 
-    def __init__(self, budget_config: BudgetConfig, max_records: int = 10000):
+    def __init__(
+        self, budget_config: Optional[BudgetConfig] = None, max_records: int = 10000
+    ):
         """
         Initialize the cost tracker.
 
@@ -30,8 +32,8 @@ class CostTracker:
             budget_config: Budget configuration for cost tracking
             max_records: Maximum number of usage records to keep
         """
-        self.config = budget_config
-        self.budget_config = budget_config  # Alias for compatibility
+        self.budget_config = budget_config or BudgetConfig()
+        self.config = self.budget_config  # Alias for compatibility
         self.max_records = max_records
         self.logger = logging.getLogger(__name__)
 
@@ -49,6 +51,10 @@ class CostTracker:
         # Cost tracking by model and operation
         self.cost_by_model: Dict[str, float] = {}
         self.cost_by_operation: Dict[str, float] = {}
+
+        # Current date for testing
+        self.current_date: Optional[date] = None
+        self.current_month: Optional[tuple] = None
 
         # Model pricing (simplified)
         self.model_pricing = {
@@ -76,6 +82,31 @@ class CostTracker:
         input_cost = (input_tokens / 1000) * pricing["input"]
         output_cost = (output_tokens / 1000) * pricing["output"]
         return input_cost + output_cost
+
+    async def record_actual_cost(
+        self,
+        model_name: str,
+        input_tokens: int,
+        output_tokens: int,
+        request_id: str = "",
+        operation_type: str = "unknown",
+    ) -> float:
+        """Record actual cost with detailed parameters."""
+        # Calculate cost
+        cost_usd = self.estimate_cost(model_name, input_tokens, output_tokens)
+
+        # Record usage
+        await self.record_usage(
+            operation=operation_type,
+            model=model_name,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost_usd=cost_usd,
+            success=True,
+            metadata={"request_id": request_id} if request_id else None,
+        )
+
+        return cost_usd
 
     async def record_usage(
         self,
@@ -296,6 +327,17 @@ class CostTracker:
 
         return records
 
+    async def reset_usage(
+        self, reset_daily: bool = True, reset_monthly: bool = True
+    ) -> None:
+        """Reset usage tracking with specific options."""
+        if reset_daily and reset_monthly:
+            await self.reset_budget("all")
+        elif reset_daily:
+            await self.reset_budget("daily")
+        elif reset_monthly:
+            await self.reset_budget("monthly")
+
     async def reset_budget(self, reset_type: str = "daily"):
         """
         Reset budget tracking.
@@ -337,6 +379,50 @@ class CostTracker:
         self.cost_by_operation[record.operation] = (
             self.cost_by_operation.get(record.operation, 0.0) + record.cost_usd
         )
+
+    async def _reset_usage_if_needed(self):
+        """Reset usage if needed (alias for _reset_periodic_costs)."""
+        await self._reset_periodic_costs()
+
+    def get_usage_stats(self) -> Dict[str, Any]:
+        """Get usage statistics."""
+        return {
+            "daily_usage": self.daily_usage,
+            "monthly_usage": self.monthly_usage,
+            "daily_cost": self.daily_cost,
+            "monthly_cost": self.monthly_cost,
+            "total_records": len(self.usage_records),
+            "cost_by_model": self.cost_by_model.copy(),
+            "cost_by_operation": self.cost_by_operation.copy(),
+        }
+
+    def get_cost_breakdown(self, days: Optional[int] = None) -> Dict[str, Any]:
+        """Get cost breakdown by category."""
+        result = {
+            "by_model": self.cost_by_model.copy(),
+            "by_operation": self.cost_by_operation.copy(),
+            "daily_total": self.daily_cost,
+            "monthly_total": self.monthly_cost,
+        }
+
+        if days is not None:
+            # Filter records by days
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            period_records = [
+                r for r in self.usage_records if r.timestamp >= cutoff_date
+            ]
+
+            # Calculate period totals
+            total_cost = sum(r.cost_usd for r in period_records)
+            result.update(
+                {
+                    "period_days": days,
+                    "total_records": len(period_records),
+                    "total_cost_usd": total_cost,
+                }
+            )
+
+        return result
 
     async def _reset_periodic_costs(self):
         """Reset daily/monthly costs if needed."""

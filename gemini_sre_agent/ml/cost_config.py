@@ -27,6 +27,7 @@ class BudgetConfig:
     enable_daily_reset: bool = True
     enable_monthly_reset: bool = True
     currency: str = "USD"
+    model_costs: Dict[str, Dict[str, float]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
@@ -60,7 +61,6 @@ class BudgetConfig:
         return True
 
 
-@dataclass
 class UsageRecord:
     """
     Record of API usage and associated costs.
@@ -68,15 +68,50 @@ class UsageRecord:
     This class represents a single usage record with timing and cost information.
     """
 
-    timestamp: datetime
-    operation: str
-    model: str
-    input_tokens: int
-    output_tokens: int
-    cost_usd: float
-    success: bool = True
-    error_message: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    def __init__(
+        self,
+        timestamp: datetime,
+        input_tokens: int,
+        output_tokens: int,
+        cost_usd: float,
+        operation: str = "unknown",
+        model: str = "unknown",
+        success: bool = True,
+        error_message: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        # Aliases for backward compatibility
+        model_name: Optional[str] = None,
+        operation_type: Optional[str] = None,
+        request_id: Optional[str] = None,
+    ):
+        self.timestamp = timestamp
+        self.operation = operation_type or operation
+        self.model = model_name or model
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+        self.cost_usd = cost_usd
+        self.success = success
+        self.error_message = error_message
+        self.metadata = metadata or {}
+
+        # Add request_id to metadata if provided
+        if request_id:
+            self.metadata["request_id"] = request_id
+
+    @property
+    def model_name(self) -> str:
+        """Alias for model attribute."""
+        return self.model
+
+    @property
+    def operation_type(self) -> str:
+        """Alias for operation attribute."""
+        return self.operation
+
+    @property
+    def request_id(self) -> str:
+        """Get request ID from metadata."""
+        return self.metadata.get("request_id", "")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert usage record to dictionary."""
