@@ -72,14 +72,14 @@ Maintaining high code quality is crucial for the project's long-term maintainabi
 
 The codebase extensively uses [Python type hints](https://docs.python.org/3/library/typing.html) to improve code readability, enable static analysis, and reduce runtime errors. Developers are expected to adhere to existing type hinting conventions when contributing new code or modifying existing sections. Pydantic models are also used for robust data validation and clear data structures, further enhancing type safety and code quality.
 
-### Enhanced Configuration System
+### Configuration System
 
-The project now uses a modern, type-safe configuration system built on Pydantic and `pydantic-settings`. This system provides:
+The project uses a modern, type-safe configuration system built on Pydantic and `pydantic-settings`. This system provides:
 
 - **Type-safe configuration** with comprehensive validation
 - **Environment variable integration** for sensitive data
 - **Hot reloading** capabilities for development
-- **CLI tools** for validation, migration, and management
+- **CLI tools** for validation and management
 - **Schema versioning** for compatibility tracking
 
 #### Using the Configuration System

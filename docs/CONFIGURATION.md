@@ -1,10 +1,10 @@
 # Configuration Guide
 
-The Gemini SRE Agent's behavior is highly configurable through the enhanced configuration management system. This guide details the new type-safe configuration structure and options available to tailor the agent to your specific monitoring and remediation needs.
+The Gemini SRE Agent's behavior is highly configurable through the configuration management system. This guide details the type-safe configuration structure and options available to tailor the agent to your specific monitoring and remediation needs.
 
-## Enhanced Configuration System
+## Configuration System
 
-The new configuration system provides:
+The configuration system provides:
 
 - **Type-safe configuration** with Pydantic models and comprehensive validation
 - **Environment variable integration** with `pydantic-settings`
