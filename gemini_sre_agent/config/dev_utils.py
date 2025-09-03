@@ -5,9 +5,11 @@ Development utilities for configuration management.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Type, TypeVar
 
 from .base import BaseConfig
+
+T = TypeVar("T", bound=BaseConfig)
 
 
 class ConfigDevUtils:
@@ -149,7 +151,7 @@ monitoring:
         return template
 
     @staticmethod
-    def validate_config_file(file_path: str, config_class: Type) -> bool:
+    def validate_config_file(file_path: str, config_class: Type[T]) -> bool:
         """Validate configuration file against schema."""
         try:
             from .manager import ConfigManager

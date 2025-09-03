@@ -3,6 +3,7 @@ Tests for the enhanced configuration management system.
 """
 
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -90,6 +91,7 @@ class TestSecretsConfig:
             secrets.gemini_api_key.get_secret_value()
             == "AIzaSyTest123456789012345678901234567890"
         )
+        assert secrets.github_token is not None
         assert (
             secrets.github_token.get_secret_value()
             == "ghp_test123456789012345678901234567890"
@@ -110,6 +112,7 @@ class TestSecretsConfig:
                 secrets.gemini_api_key.get_secret_value()
                 == "AIzaSyEnv123456789012345678901234567890"
             )
+            assert secrets.github_token is not None
             assert (
                 secrets.github_token.get_secret_value()
                 == "ghp_env123456789012345678901234567890"
@@ -148,7 +151,7 @@ class TestMLConfig:
 
     def test_ml_config_creation(self):
         """Test basic MLConfig creation."""
-        model_config = ModelConfig(
+        triage_model = ModelConfig(
             name="gemini-pro",
             type=ModelType.TRIAGE,
             max_tokens=1000,
@@ -156,11 +159,27 @@ class TestMLConfig:
             cost_per_1k_tokens=0.001,
         )
 
+        analysis_model = ModelConfig(
+            name="gemini-pro",
+            type=ModelType.ANALYSIS,
+            max_tokens=1000,
+            temperature=0.7,
+            cost_per_1k_tokens=0.001,
+        )
+
+        classification_model = ModelConfig(
+            name="gemini-pro",
+            type=ModelType.CLASSIFICATION,
+            max_tokens=1000,
+            temperature=0.7,
+            cost_per_1k_tokens=0.001,
+        )
+
         ml_config = MLConfig(
             models={
-                ModelType.TRIAGE: model_config,
-                ModelType.ANALYSIS: model_config,
-                ModelType.CLASSIFICATION: model_config,
+                ModelType.TRIAGE: triage_model,
+                ModelType.ANALYSIS: analysis_model,
+                ModelType.CLASSIFICATION: classification_model,
             }
         )
 
@@ -334,10 +353,9 @@ class TestConfigManager:
             f.write(yaml_content)
             temp_file = f.name
 
+        config_dir = None
         try:
             # Create a minimal config directory structure
-            import shutil
-
             config_dir = tempfile.mkdtemp()
             config_file_path = Path(config_dir) / "config.yaml"
             shutil.copy2(temp_file, config_file_path)
@@ -353,7 +371,8 @@ class TestConfigManager:
             assert config.app_version == "1.0.0"
         finally:
             os.unlink(temp_file)
-            shutil.rmtree(config_dir)
+            if config_dir:
+                shutil.rmtree(config_dir)
 
     def test_get_config_before_load(self):
         """Test getting config before loading."""
@@ -411,10 +430,9 @@ class TestConfigManager:
             f.write(yaml_content)
             temp_file = f.name
 
+        config_dir = None
         try:
             # Create a minimal config directory structure
-            import shutil
-
             config_dir = tempfile.mkdtemp()
             config_file_path = Path(config_dir) / "config.yaml"
             shutil.copy2(temp_file, config_file_path)
@@ -434,7 +452,8 @@ class TestConfigManager:
             assert config.debug is False
         finally:
             os.unlink(temp_file)
-            shutil.rmtree(config_dir)
+            if config_dir:
+                shutil.rmtree(config_dir)
 
 
 class TestAppConfig:
