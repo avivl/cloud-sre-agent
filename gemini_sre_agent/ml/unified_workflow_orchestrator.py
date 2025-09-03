@@ -22,6 +22,7 @@ from .prompt_context_models import (
     PromptContext,
     RepositoryContext,
 )
+from .validation import CodeValidationPipeline
 
 
 @dataclass
@@ -88,6 +89,9 @@ class UnifiedWorkflowOrchestrator:
 
         # Initialize performance analyzer
         self.repo_analyzer = PerformanceRepositoryAnalyzer(self.repo_cache, repo_path)
+
+        # Initialize validation pipeline
+        self.validation_pipeline = CodeValidationPipeline()
 
         self.logger = logging.getLogger(__name__)
 
@@ -168,7 +172,7 @@ class UnifiedWorkflowOrchestrator:
             if enable_validation and generated_code:
                 validation_start = time.time()
                 validation_result = await self._validate_generated_code(
-                    generated_code, prompt_context
+                    analysis_result, prompt_context
                 )
                 validation_duration = time.time() - validation_start
 
@@ -544,60 +548,81 @@ class UnifiedWorkflowOrchestrator:
             return base_code
 
     async def _validate_generated_code(
-        self, generated_code: str, prompt_context: PromptContext
+        self, analysis_result: Dict[str, Any], prompt_context: PromptContext
     ) -> Dict[str, Any]:
         """
-        Validate generated code for quality and correctness.
+        Validate generated code for quality and correctness using the validation pipeline.
 
         Args:
-            generated_code: Generated code to validate
+            analysis_result: Analysis result containing generated code
             prompt_context: Context for validation
 
         Returns:
             Validation result
         """
         try:
-            validation_result = {
-                "is_valid": True,
-                "issues": [],
-                "warnings": [],
-                "suggestions": [],
+            # Prepare code result for validation pipeline
+            code_result = {
+                "code_patch": analysis_result.get("analysis", {}).get("code_patch", ""),
+                "file_path": analysis_result.get("analysis", {}).get(
+                    "file_path", "unknown"
+                ),
+                "generator_type": prompt_context.generator_type,
+                "issue_type": prompt_context.issue_context.issue_type.value,
             }
 
-            # Basic validation checks
-            if not generated_code.strip():
-                validation_result["is_valid"] = False
-                validation_result["issues"].append("Generated code is empty")
+            # Use the validation pipeline
+            validation_result = await self.validation_pipeline.validate_code(
+                code_result,
+                {
+                    "repository_context": prompt_context.repository_context,
+                    "issue_context": prompt_context.issue_context,
+                },
+            )
 
-            # Check for common issues
-            if "TODO" in generated_code or "FIXME" in generated_code:
-                validation_result["warnings"].append(
-                    "Code contains TODO/FIXME comments"
-                )
-
-            if "print(" in generated_code and "logging" not in generated_code:
-                validation_result["suggestions"].append(
-                    "Consider using logging instead of print statements"
-                )
-
-            # Language-specific validation
-            if (
-                prompt_context.repository_context.technology_stack.get("language")
-                == "python"
-            ):
-                validation_result.update(
-                    await self._validate_python_code(generated_code)
-                )
-
-            return validation_result
+            # Convert to legacy format for compatibility
+            return {
+                "is_valid": validation_result.is_valid,
+                "overall_score": validation_result.overall_score,
+                "issues": [
+                    {
+                        "id": issue.issue_id,
+                        "type": issue.validation_type.value,
+                        "level": issue.level.value,
+                        "message": issue.message,
+                        "description": issue.description,
+                        "line_number": issue.line_number,
+                        "suggested_fix": issue.suggested_fix,
+                    }
+                    for issue in validation_result.issues
+                ],
+                "warnings": [
+                    issue
+                    for issue in validation_result.issues
+                    if issue.level.value == "warning"
+                ],
+                "suggestions": [
+                    {
+                        "id": feedback.feedback_id,
+                        "category": feedback.category,
+                        "message": feedback.message,
+                        "suggestion": feedback.suggestion,
+                        "priority": feedback.priority,
+                    }
+                    for feedback in validation_result.feedback
+                ],
+                "validation_summary": validation_result.get_validation_summary(),
+            }
 
         except Exception as e:
             self.logger.error(f"[VALIDATION] Code validation failed: {e}")
             return {
                 "is_valid": False,
+                "overall_score": 0.0,
                 "issues": [f"Validation error: {e}"],
                 "warnings": [],
                 "suggestions": [],
+                "validation_summary": {"error": str(e)},
             }
 
     async def _validate_python_code(self, code: str) -> Dict[str, Any]:

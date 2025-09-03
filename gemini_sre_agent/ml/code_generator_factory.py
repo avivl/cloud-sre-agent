@@ -18,27 +18,49 @@ class CodeGeneratorFactory:
         # Import generators here to avoid circular imports
         try:
             from .specialized_generators.api_generator import APICodeGenerator
-            from .specialized_generators.configuration_generator import (
-                ConfigurationCodeGenerator,
-            )
             from .specialized_generators.database_generator import DatabaseCodeGenerator
-            from .specialized_generators.performance_generator import (
-                PerformanceCodeGenerator,
-            )
             from .specialized_generators.security_generator import SecurityCodeGenerator
-            from .specialized_generators.service_generator import ServiceCodeGenerator
 
             self.generators = {
                 IssueType.DATABASE_ERROR: DatabaseCodeGenerator(),
                 IssueType.API_ERROR: APICodeGenerator(),
                 IssueType.SECURITY_ERROR: SecurityCodeGenerator(),
-                IssueType.PERFORMANCE_ERROR: PerformanceCodeGenerator(),
-                IssueType.CONFIGURATION_ERROR: ConfigurationCodeGenerator(),
-                IssueType.SERVICE_ERROR: ServiceCodeGenerator(),
             }
+
+            # For now, use placeholders for missing generators
+            self._create_placeholder_generators_for_missing_types()
+
         except ImportError:
             # If specialized generators aren't available yet, use placeholders
             self._create_placeholder_generators()
+
+    def _create_placeholder_generators_for_missing_types(self):
+        """Create placeholder generators for missing specialized types"""
+        from .base_code_generator import BaseCodeGenerator
+
+        class PlaceholderGenerator(BaseCodeGenerator):
+            def _get_domain(self) -> str:
+                return "general"
+
+            def _get_generator_type(self) -> str:
+                return "placeholder_generator"
+
+            def _load_domain_specific_patterns(self):
+                pass
+
+            def _load_domain_specific_rules(self):
+                pass
+
+        # Create placeholder generators for missing issue types
+        missing_types = [
+            IssueType.PERFORMANCE_ERROR,
+            IssueType.CONFIGURATION_ERROR,
+            IssueType.SERVICE_ERROR,
+        ]
+
+        for issue_type in missing_types:
+            if issue_type not in self.generators:
+                self.generators[issue_type] = PlaceholderGenerator()
 
     def _create_placeholder_generators(self):
         """Create placeholder generators when specialized ones aren't available"""

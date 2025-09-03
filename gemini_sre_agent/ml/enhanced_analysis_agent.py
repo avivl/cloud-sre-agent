@@ -20,8 +20,10 @@ from .meta_prompt_generator import MetaPromptConfig, MetaPromptGenerator
 from .prompt_context_models import (
     IssueContext,
     IssueType,
+    MetaPromptContext,
     PromptContext,
     RepositoryContext,
+    TaskContext,
 )
 
 
@@ -379,19 +381,39 @@ class EnhancedAnalysisAgent:
             try:
                 # Use meta-prompt generation for complex cases
                 if context.issue_context.complexity_score >= 7:
+                    # Create MetaPromptContext for meta-prompt generation
+                    meta_context = MetaPromptContext(
+                        issue_context=context.issue_context.to_dict(),
+                        repository_context=context.repository_context.to_dict(),
+                        triage_packet={},  # Empty for now, would be populated from triage
+                        historical_logs=[],  # Empty for now, would be populated from logs
+                        configs={},  # Empty for now, would be populated from configs
+                        flow_id="unknown",  # Would be populated from flow
+                    )
                     return await self.meta_prompt_generator.generate_optimized_prompt(
-                        context.issue_context.to_dict(),
-                        context.repository_context.to_dict(),
-                        context.generator_type,
+                        meta_context
                     )
             except Exception as e:
                 self.logger.warning(f"Meta-prompt generation failed: {e}")
 
         # Fallback to adaptive strategy
-        return await self.adaptive_strategy.generate_adaptive_prompt(
+        # Create a TaskContext for the adaptive strategy
+        task_context = TaskContext(
+            task_type="issue_analysis",
+            complexity_score=context.issue_context.complexity_score,
+            context_variability=0.5,  # Default value
+            business_impact=context.issue_context.severity_level,
+            accuracy_requirement=0.9,  # High accuracy for issue analysis
+            latency_requirement=5000,  # 5 seconds
+            context_richness=context.issue_context.context_richness,
+            frequency="medium",  # Default value
+            cost_sensitivity=0.3,  # Low cost sensitivity
+        )
+
+        return await self.adaptive_strategy.get_optimal_prompt(
+            task_context,
             context.issue_context.to_dict(),
             context.repository_context.to_dict(),
-            context.generator_type,
         )
 
     async def _execute_analysis(
