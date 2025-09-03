@@ -352,6 +352,63 @@ class AdaptivePromptStrategy:
 
         return ", ".join(elements)
 
+    def select_model(
+        self,
+        context: TaskContext,
+        strategy: str,
+        issue_context: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """
+        Select optimal model based on strategy and context.
+
+        Args:
+            context: Task context for model selection
+            strategy: Selected generation strategy
+            issue_context: Optional issue context for additional context
+
+        Returns:
+            Optimal model identifier
+        """
+        # High complexity tasks get more powerful models
+        if context.complexity_score >= 8:
+            if strategy == "meta_prompt":
+                return "gemini-1.5-pro-001"  # Most powerful for complex meta-prompt generation
+            else:
+                return "gemini-1.5-pro-001"  # Pro for complex code generation
+
+        # Medium complexity tasks get balanced models
+        elif context.complexity_score >= 5:
+            if strategy == "meta_prompt":
+                return "gemini-1.5-flash-001"  # Fast for prompt generation
+            else:
+                return "gemini-1.5-pro-001"  # Balanced for quality
+
+        # Low complexity tasks get fast models
+        else:
+            if strategy == "meta_prompt":
+                return "gemini-1.5-flash-001"  # Fast for simple prompt generation
+            else:
+                return "gemini-1.5-flash-001"  # Fast for simple code generation
+
+        # Fallback to flash for any edge cases
+        return "gemini-1.5-flash-001"
+
+    def get_model_selection_stats(self) -> Dict[str, Any]:
+        """Get statistics about model selection decisions."""
+        return {
+            "model_selection_enabled": True,
+            "available_models": [
+                "gemini-1.5-flash-001",  # Fast, cost-effective
+                "gemini-1.5-pro-001",  # Balanced, high-quality
+            ],
+            "selection_criteria": {
+                "complexity_threshold_high": 8,
+                "complexity_threshold_medium": 5,
+                "strategy_consideration": True,
+                "context_awareness": True,
+            },
+        }
+
     def get_strategy_stats(self) -> Dict[str, Any]:
         """Get statistics about strategy usage."""
         return {

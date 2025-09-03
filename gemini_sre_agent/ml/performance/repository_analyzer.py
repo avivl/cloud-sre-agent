@@ -89,7 +89,8 @@ class PerformanceRepositoryAnalyzer:
                     self.logger.info(
                         f"Using cached repository context for {self.repo_path}"
                     )
-                    return cached_context
+                    # Convert cached dict back to RepositoryContext
+                    return RepositoryContext(**cached_context)
 
             # Perform analysis
             self.logger.info(
@@ -156,7 +157,7 @@ class PerformanceRepositoryAnalyzer:
 
             # Cache the result
             await self.cache.set_repository_context(
-                str(self.repo_path), context, analysis_depth
+                str(self.repo_path), analysis_depth, context.to_dict()
             )
 
             analysis_time = time.time() - start_time
