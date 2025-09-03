@@ -177,24 +177,28 @@ class TestCostTracker:
         assert cost_tracker.usage_records[0].request_id == "test-2"
         assert cost_tracker.usage_records[-1].request_id == "test-4"
 
-    def test_reset_usage_counters(self, cost_tracker: CostTracker):
+    @pytest.mark.asyncio
+    async def test_reset_usage_counters(self, cost_tracker: CostTracker):
         """Test manual reset of usage counters."""
         # Set some usage
         cost_tracker.daily_usage = 5.0
         cost_tracker.monthly_usage = 20.0
 
         # Reset daily only
-        cost_tracker.reset_usage(reset_daily=True, reset_monthly=False)
+        await cost_tracker.reset_usage(reset_daily=True, reset_monthly=False)
         assert cost_tracker.daily_usage == 0.0
         assert cost_tracker.monthly_usage == 20.0
 
         # Reset monthly
-        cost_tracker.reset_usage(reset_daily=False, reset_monthly=True)
+        await cost_tracker.reset_usage(reset_daily=False, reset_monthly=True)
         assert cost_tracker.daily_usage == 0.0
         assert cost_tracker.monthly_usage == 0.0
 
     @patch("gemini_sre_agent.ml.cost_tracker.date")
-    def test_daily_usage_reset_new_day(self, mock_date, cost_tracker: CostTracker):
+    @pytest.mark.asyncio
+    async def test_daily_usage_reset_new_day(
+        self, mock_date, cost_tracker: CostTracker
+    ):
         """Test automatic daily usage reset on new day."""
         from datetime import date
 
@@ -209,14 +213,17 @@ class TestCostTracker:
         mock_date.today.return_value = new_date
 
         # Trigger reset check
-        cost_tracker._reset_usage_if_needed()
+        await cost_tracker._reset_usage_if_needed()
 
         # Daily usage should reset, monthly should not
         assert cost_tracker.daily_usage == 0.0
         assert cost_tracker.current_date == new_date
 
     @patch("gemini_sre_agent.ml.cost_tracker.date")
-    def test_monthly_usage_reset_new_month(self, mock_date, cost_tracker: CostTracker):
+    @pytest.mark.asyncio
+    async def test_monthly_usage_reset_new_month(
+        self, mock_date, cost_tracker: CostTracker
+    ):
         """Test automatic monthly usage reset on new month."""
         from datetime import date
 
@@ -233,7 +240,7 @@ class TestCostTracker:
         mock_date.today.return_value = new_date
 
         # Trigger reset check
-        cost_tracker._reset_usage_if_needed()
+        await cost_tracker._reset_usage_if_needed()
 
         # Both should reset for new month
         assert cost_tracker.daily_usage == 0.0

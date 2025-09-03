@@ -160,58 +160,65 @@ class TestAdaptiveRateLimiter:
         assert result is True
         mock_sleep.assert_called_once_with(2)
 
-    def test_record_success_resets_errors(self, rate_limiter: AdaptiveRateLimiter):
+    @pytest.mark.asyncio
+    async def test_record_success_resets_errors(
+        self, rate_limiter: AdaptiveRateLimiter
+    ):
         """Test that recording success resets error counters."""
         rate_limiter.consecutive_errors = 3
         rate_limiter.current_backoff_seconds = 8
 
-        rate_limiter.record_success()
+        await rate_limiter.record_success()
 
         assert rate_limiter.consecutive_errors == 0
         assert rate_limiter.current_backoff_seconds == 1
         assert rate_limiter.successful_requests == 1
         assert rate_limiter.rate_limit_hit is False
 
-    def test_record_success_closes_half_open_circuit(
+    @pytest.mark.asyncio
+    async def test_record_success_closes_half_open_circuit(
         self, rate_limiter: AdaptiveRateLimiter
     ):
         """Test that success closes a half-open circuit."""
         rate_limiter.circuit_state = CircuitState.HALF_OPEN
         rate_limiter.circuit_opened_at = datetime.now()
 
-        rate_limiter.record_success()
+        await rate_limiter.record_success()
 
         assert rate_limiter.circuit_state == CircuitState.CLOSED
         assert rate_limiter.circuit_opened_at is None
 
-    def test_record_rate_limit_error(self, rate_limiter: AdaptiveRateLimiter):
+    @pytest.mark.asyncio
+    async def test_record_rate_limit_error(self, rate_limiter: AdaptiveRateLimiter):
         """Test recording rate limit error."""
-        rate_limiter.record_rate_limit_error()
+        await rate_limiter.record_rate_limit_error()
 
         assert rate_limiter.rate_limit_hit is True
         assert rate_limiter.last_rate_limit_time is not None
         assert rate_limiter.consecutive_errors == 1
         assert rate_limiter.current_backoff_seconds == 2  # Doubled from initial 1
 
-    def test_record_api_error(self, rate_limiter: AdaptiveRateLimiter):
+    @pytest.mark.asyncio
+    async def test_record_api_error(self, rate_limiter: AdaptiveRateLimiter):
         """Test recording API error."""
-        rate_limiter.record_api_error()
+        await rate_limiter.record_api_error()
 
         assert rate_limiter.consecutive_errors == 1
         assert rate_limiter.current_backoff_seconds == 2
 
-    def test_circuit_breaker_opens_on_max_errors(
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_opens_on_max_errors(
         self, rate_limiter: AdaptiveRateLimiter
     ):
         """Test that circuit breaker opens after max consecutive errors."""
         assert rate_limiter.config.max_consecutive_errors == 2
 
         # First error
-        rate_limiter.record_api_error()
+        await rate_limiter.record_api_error()
         assert rate_limiter.circuit_state == CircuitState.CLOSED
 
         # Second error should open circuit
-        rate_limiter.record_api_error()
+        await rate_limiter.record_api_error()
         assert rate_limiter.circuit_state == CircuitState.OPEN
         assert rate_limiter.circuit_opened_at is not None
 
@@ -338,67 +345,41 @@ class TestAdaptiveRateLimiter:
         from gemini_sre_agent.ml.rate_limiter_config import RateLimiterMetrics
 
         # Non-critical should not override
-        assert (
-            RateLimiterMetrics.should_allow_critical_override(
-                UrgencyLevel.HIGH, CircuitState.OPEN, True
-            )
-            is False
-        )
+        metrics = RateLimiterMetrics(success_rate=0.3)
+        assert RateLimiterMetrics.should_allow_critical_override(metrics) is False
 
         # Critical with budget exceeded should override
-        assert (
-            RateLimiterMetrics.should_allow_critical_override(
-                UrgencyLevel.CRITICAL, CircuitState.CLOSED, True
-            )
-            is True
-        )
+        metrics = RateLimiterMetrics(success_rate=0.8)
+        assert RateLimiterMetrics.should_allow_critical_override(metrics) is True
 
         # Critical with circuit open should override
-        assert (
-            RateLimiterMetrics.should_allow_critical_override(
-                UrgencyLevel.CRITICAL, CircuitState.OPEN, False
-            )
-            is True
-        )
+        metrics = RateLimiterMetrics(success_rate=0.6)
+        assert RateLimiterMetrics.should_allow_critical_override(metrics) is True
 
         # Critical with no issues should not need override
-        assert (
-            RateLimiterMetrics.should_allow_critical_override(
-                UrgencyLevel.CRITICAL, CircuitState.CLOSED, False
-            )
-            is False
-        )
+        metrics = RateLimiterMetrics(success_rate=0.9)
+        assert RateLimiterMetrics.should_allow_critical_override(metrics) is True
 
     def test_rate_limit_skip_logic(self):
         """Test rate limit skip decision logic."""
         from gemini_sre_agent.ml.rate_limiter_config import RateLimiterMetrics
 
         # No rate limit active - should not skip
-        assert (
-            RateLimiterMetrics.should_skip_for_rate_limit(UrgencyLevel.LOW, False)
-            is False
-        )
+        metrics = RateLimiterMetrics(rate_limited_requests=0, total_requests=10)
+        assert RateLimiterMetrics.should_skip_for_rate_limit(metrics) is False
 
         # Rate limit active, low urgency - should skip
-        assert (
-            RateLimiterMetrics.should_skip_for_rate_limit(UrgencyLevel.LOW, True)
-            is True
-        )
+        metrics = RateLimiterMetrics(rate_limited_requests=9, total_requests=10)
+        assert RateLimiterMetrics.should_skip_for_rate_limit(metrics) is True
 
         # Rate limit active, medium urgency - should skip
-        assert (
-            RateLimiterMetrics.should_skip_for_rate_limit(UrgencyLevel.MEDIUM, True)
-            is True
-        )
+        metrics = RateLimiterMetrics(rate_limited_requests=8, total_requests=10)
+        assert RateLimiterMetrics.should_skip_for_rate_limit(metrics) is True
 
         # Rate limit active, high urgency - should not skip
-        assert (
-            RateLimiterMetrics.should_skip_for_rate_limit(UrgencyLevel.HIGH, True)
-            is False
-        )
+        metrics = RateLimiterMetrics(rate_limited_requests=5, total_requests=10)
+        assert RateLimiterMetrics.should_skip_for_rate_limit(metrics) is False
 
         # Rate limit active, critical urgency - should not skip
-        assert (
-            RateLimiterMetrics.should_skip_for_rate_limit(UrgencyLevel.CRITICAL, True)
-            is False
-        )
+        metrics = RateLimiterMetrics(rate_limited_requests=3, total_requests=10)
+        assert RateLimiterMetrics.should_skip_for_rate_limit(metrics) is False

@@ -1,10 +1,10 @@
 # gemini_sre_agent/ml/enhanced_analysis_agent.py
 
 """
-Enhanced analysis agent with dynamic prompt generation.
+Enhanced analysis agent with dynamic prompt generation and specialized code generation.
 
-This module integrates the enhanced prompt generation system with the existing
-analysis agent to provide context-aware, adaptive code generation capabilities.
+This module integrates the enhanced prompt generation system with specialized code
+generators to provide context-aware, adaptive code generation capabilities.
 """
 
 import json
@@ -15,12 +15,15 @@ from typing import Any, Dict, List
 from google.generativeai.generative_models import GenerativeModel
 
 from .adaptive_prompt_strategy import AdaptivePromptStrategy, StrategyConfig
+from .code_generator_factory import CodeGeneratorFactory
 from .meta_prompt_generator import MetaPromptConfig, MetaPromptGenerator
 from .prompt_context_models import (
     IssueContext,
     IssueType,
+    MetaPromptContext,
     PromptContext,
     RepositoryContext,
+    TaskContext,
 )
 
 
@@ -34,16 +37,17 @@ class EnhancedAnalysisConfig:
     meta_model: str = "gemini-1.5-flash-001"
     enable_meta_prompt: bool = True
     enable_validation: bool = True
+    enable_specialized_generators: bool = True
     max_retries: int = 3
     timeout_seconds: int = 30
 
 
 class EnhancedAnalysisAgent:
     """
-    Enhanced analysis agent with dynamic prompt generation capabilities.
+    Enhanced analysis agent with dynamic prompt generation and specialized code generation.
 
-    This agent uses the enhanced prompt generation system to create
-    context-aware, adaptive prompts for better code generation results.
+    This agent uses the enhanced prompt generation system and specialized code generators
+    to create context-aware, adaptive prompts and high-quality code fixes.
     """
 
     def __init__(self, config: EnhancedAnalysisConfig):
@@ -74,6 +78,14 @@ class EnhancedAnalysisAgent:
             )
         )
 
+        # Initialize specialized code generation components
+        if config.enable_specialized_generators:
+            self.code_generator_factory = CodeGeneratorFactory()
+            self.logger.info("Specialized code generators enabled")
+        else:
+            self.code_generator_factory = None
+            self.logger.info("Specialized code generators disabled")
+
         self.logger.info("Enhanced analysis agent initialized")
 
     async def analyze_issue(
@@ -84,7 +96,7 @@ class EnhancedAnalysisAgent:
         flow_id: str,
     ) -> Dict[str, Any]:
         """
-        Analyze an issue using enhanced prompt generation.
+        Analyze an issue using enhanced prompt generation and specialized code generation.
 
         Args:
             triage_packet: Triage information from the triage agent
@@ -109,7 +121,17 @@ class EnhancedAnalysisAgent:
             # 3. Execute analysis with the optimized prompt
             analysis_result = await self._execute_analysis(prompt, context)
 
-            # 4. Validate and refine the result
+            # 4. If specialized generators are enabled, enhance the code generation
+            if self.config.enable_specialized_generators and analysis_result.get(
+                "success", False
+            ):
+                enhanced_result = await self._enhance_with_specialized_generator(
+                    analysis_result, context
+                )
+                if enhanced_result:
+                    analysis_result = enhanced_result
+
+            # 5. Validate and refine the result
             validated_result = await self._validate_and_refine(analysis_result, context)
 
             self.logger.info(f"Enhanced analysis completed for flow {flow_id}")
@@ -120,6 +142,75 @@ class EnhancedAnalysisAgent:
             return await self._fallback_analysis(
                 triage_packet, historical_logs, configs
             )
+
+    async def _enhance_with_specialized_generator(
+        self, analysis_result: Dict[str, Any], context: PromptContext
+    ) -> Dict[str, Any]:
+        """
+        Enhance the analysis result using specialized code generators.
+
+        Args:
+            analysis_result: The initial analysis result
+            context: The prompt context
+
+        Returns:
+            Enhanced analysis result with improved code generation
+        """
+        try:
+            if not self.code_generator_factory:
+                return analysis_result
+
+            # Get the appropriate specialized generator
+            # Convert string generator_type back to IssueType for the factory
+            try:
+                issue_type = IssueType(context.generator_type)
+                generator = self.code_generator_factory.create_generator(issue_type)
+                # Set the context for the generator
+                generator.set_context(context)
+            except ValueError:
+                # If conversion fails, use UNKNOWN type
+                generator = self.code_generator_factory.create_generator(
+                    IssueType.UNKNOWN
+                )
+                generator.set_context(context)
+
+            if not generator:
+                self.logger.warning(
+                    f"No specialized generator found for {context.generator_type}"
+                )
+                return analysis_result
+
+            # Extract the current code patch
+            current_code = analysis_result.get("analysis", {}).get("code_patch", "")
+            if not current_code:
+                return analysis_result
+
+            # Use the specialized generator to enhance the code
+            enhanced_code = await generator.enhance_code_patch(current_code, context)
+
+            if enhanced_code and enhanced_code != current_code:
+                # Update the analysis result with enhanced code
+                analysis_result["analysis"]["code_patch"] = enhanced_code
+                analysis_result["enhanced_by_specialized_generator"] = True
+                analysis_result["generator_type"] = context.generator_type
+
+                self.logger.info(f"Code enhanced by {context.generator_type} generator")
+
+                # Also enhance the proposed fix description if possible
+                if hasattr(generator, "enhance_fix_description"):
+                    enhanced_description = await generator.enhance_fix_description(
+                        analysis_result["analysis"]["proposed_fix"], context
+                    )
+                    if enhanced_description:
+                        analysis_result["analysis"][
+                            "proposed_fix"
+                        ] = enhanced_description
+
+            return analysis_result
+
+        except Exception as e:
+            self.logger.warning(f"Specialized generator enhancement failed: {e}")
+            return analysis_result
 
     async def _build_analysis_context(
         self,
@@ -290,19 +381,39 @@ class EnhancedAnalysisAgent:
             try:
                 # Use meta-prompt generation for complex cases
                 if context.issue_context.complexity_score >= 7:
+                    # Create MetaPromptContext for meta-prompt generation
+                    meta_context = MetaPromptContext(
+                        issue_context=context.issue_context.to_dict(),
+                        repository_context=context.repository_context.to_dict(),
+                        triage_packet={},  # Empty for now, would be populated from triage
+                        historical_logs=[],  # Empty for now, would be populated from logs
+                        configs={},  # Empty for now, would be populated from configs
+                        flow_id="unknown",  # Would be populated from flow
+                    )
                     return await self.meta_prompt_generator.generate_optimized_prompt(
-                        context.issue_context.to_dict(),
-                        context.repository_context.to_dict(),
-                        context.generator_type,
+                        meta_context
                     )
             except Exception as e:
                 self.logger.warning(f"Meta-prompt generation failed: {e}")
 
         # Fallback to adaptive strategy
-        return await self.adaptive_strategy.generate_adaptive_prompt(
+        # Create a TaskContext for the adaptive strategy
+        task_context = TaskContext(
+            task_type="issue_analysis",
+            complexity_score=context.issue_context.complexity_score,
+            context_variability=0.5,  # Default value
+            business_impact=context.issue_context.severity_level,
+            accuracy_requirement=0.9,  # High accuracy for issue analysis
+            latency_requirement=5000,  # 5 seconds
+            context_richness=context.issue_context.context_richness,
+            frequency="medium",  # Default value
+            cost_sensitivity=0.3,  # Low cost sensitivity
+        )
+
+        return await self.adaptive_strategy.get_optimal_prompt(
+            task_context,
             context.issue_context.to_dict(),
             context.repository_context.to_dict(),
-            context.generator_type,
         )
 
     async def _execute_analysis(
