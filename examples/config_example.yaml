@@ -2,47 +2,46 @@
 # This file demonstrates the structure and options available
 
 # Schema version for compatibility checking
-schema_version: "1.0.0"
+schema_version: 1.0.0
 
 # Environment settings
-environment: "development"  # development, staging, production
+environment: development # development, staging, production
 debug: true
-log_level: "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_level: DEBUG # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 # Application metadata
-app_name: "gemini-sre-agent"
-app_version: "1.0.0"
+app_name: gemini-sre-agent
+app_version: 1.0.0
 
 # Services configuration
 services:
-  - name: "main-service"
-    project_id: "your-gcp-project"
-    location: "us-central1"
-    subscription_id: "your-pubsub-subscription"
+  - name: main-service
+    project_id: your-gcp-project
+    location: us-central1
+    subscription_id: your-pubsub-subscription
 
 # ML/AI configuration
 ml:
   # Model configurations
   models:
     triage:
-      name: "gemini-1.5-pro-001"
-      type: "triage"
+      name: gemini-1.5-pro-001
+      type: triage
       max_tokens: 8192
       temperature: 0.7
       cost_per_1k_tokens: 0.001
     analysis:
-      name: "gemini-1.5-pro-001"
-      type: "analysis"
+      name: gemini-1.5-pro-001
+      type: analysis
       max_tokens: 8192
       temperature: 0.7
       cost_per_1k_tokens: 0.001
     classification:
-      name: "gemini-1.5-pro-001"
-      type: "classification"
+      name: gemini-1.5-pro-001
+      type: classification
       max_tokens: 8192
       temperature: 0.7
       cost_per_1k_tokens: 0.001
-
 # Secrets configuration (use environment variables)
 # GEMINI_API_KEY=your-gemini-api-key
 # GITHUB_TOKEN=your-github-token

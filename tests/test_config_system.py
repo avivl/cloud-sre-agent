@@ -4,11 +4,12 @@ Tests for the enhanced configuration management system.
 
 import os
 import tempfile
-import yaml
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 import pytest
+import yaml
+from pydantic import SecretStr
 
 from gemini_sre_agent.config import (
     AppConfig,
@@ -16,7 +17,6 @@ from gemini_sre_agent.config import (
     ConfigError,
     ConfigLoader,
     ConfigManager,
-    ConfigValidationError,
     Environment,
     MLConfig,
     ModelConfig,
@@ -37,7 +37,7 @@ class TestBaseConfig:
             app_name="test-app",
             app_version="1.0.0",
         )
-        
+
         assert config.environment == Environment.DEVELOPMENT
         assert config.debug is True
         assert config.log_level == "DEBUG"
@@ -60,17 +60,17 @@ class TestBaseConfig:
         """Test checksum calculation and validation."""
         config = BaseConfig()
         checksum = config.calculate_checksum()
-        
+
         assert isinstance(checksum, str)
         assert len(checksum) > 0
-        
+
         # Should validate correctly (no checksum set initially)
         assert config.validate_checksum() is True
-        
+
         # Set a checksum and validate
         config.validation_checksum = checksum
         assert config.validate_checksum() is True
-        
+
         # Should fail with wrong checksum
         config.validation_checksum = "wrong_checksum"
         assert config.validate_checksum() is False
@@ -82,45 +82,65 @@ class TestSecretsConfig:
     def test_secrets_config_creation(self):
         """Test basic SecretsConfig creation."""
         secrets = SecretsConfig(
-            gemini_api_key="AIzaSyTest123456789012345678901234567890",
-            github_token="ghp_test123456789012345678901234567890",
+            gemini_api_key=SecretStr("AIzaSyTest123456789012345678901234567890"),
+            github_token=SecretStr("ghp_test123456789012345678901234567890"),
         )
-        
-        assert secrets.gemini_api_key.get_secret_value() == "AIzaSyTest123456789012345678901234567890"
-        assert secrets.github_token.get_secret_value() == "ghp_test123456789012345678901234567890"
+
+        assert (
+            secrets.gemini_api_key.get_secret_value()
+            == "AIzaSyTest123456789012345678901234567890"
+        )
+        assert (
+            secrets.github_token.get_secret_value()
+            == "ghp_test123456789012345678901234567890"
+        )
 
     def test_secrets_from_env(self):
         """Test loading secrets from environment variables."""
-        with patch.dict(os.environ, {
-            "GEMINI_API_KEY": "AIzaSyEnv123456789012345678901234567890",
-            "GITHUB_TOKEN": "ghp_env123456789012345678901234567890",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "GEMINI_API_KEY": "AIzaSyEnv123456789012345678901234567890",
+                "GITHUB_TOKEN": "ghp_env123456789012345678901234567890",
+            },
+        ):
             secrets = SecretsConfig.from_env()
-            
-            assert secrets.gemini_api_key.get_secret_value() == "AIzaSyEnv123456789012345678901234567890"
-            assert secrets.github_token.get_secret_value() == "ghp_env123456789012345678901234567890"
+
+            assert (
+                secrets.gemini_api_key.get_secret_value()
+                == "AIzaSyEnv123456789012345678901234567890"
+            )
+            assert (
+                secrets.github_token.get_secret_value()
+                == "ghp_env123456789012345678901234567890"
+            )
 
     def test_secrets_masking(self):
         """Test secrets masking for logging."""
         secrets = SecretsConfig(
-            gemini_api_key="AIzaSyTest123456789012345678901234567890",
-            github_token="ghp_test123456789012345678901234567890",
+            gemini_api_key=SecretStr("AIzaSyTest123456789012345678901234567890"),
+            github_token=SecretStr("ghp_test123456789012345678901234567890"),
         )
-        
+
         masked = secrets.mask_for_logging()
-        
+
         assert masked["gemini_api_key"] == "AIzaSyTe..."
         assert masked["github_token"] == "ghp_test..."
 
     def test_gemini_api_key_validation(self):
         """Test Gemini API key format validation."""
         # Valid key format
-        secrets = SecretsConfig(gemini_api_key="AIzaSyTest123456789012345678901234567890")
-        assert secrets.gemini_api_key.get_secret_value() == "AIzaSyTest123456789012345678901234567890"
-        
+        secrets = SecretsConfig(
+            gemini_api_key=SecretStr("AIzaSyTest123456789012345678901234567890")
+        )
+        assert (
+            secrets.gemini_api_key.get_secret_value()
+            == "AIzaSyTest123456789012345678901234567890"
+        )
+
         # Invalid key format should raise validation error
         with pytest.raises(ValueError):
-            SecretsConfig(gemini_api_key="invalid-key")
+            SecretsConfig(gemini_api_key=SecretStr("invalid-key"))
 
 
 class TestMLConfig:
@@ -135,7 +155,7 @@ class TestMLConfig:
             temperature=0.7,
             cost_per_1k_tokens=0.001,
         )
-        
+
         ml_config = MLConfig(
             models={
                 ModelType.TRIAGE: model_config,
@@ -143,7 +163,7 @@ class TestMLConfig:
                 ModelType.CLASSIFICATION: model_config,
             }
         )
-        
+
         assert ml_config.models[ModelType.TRIAGE].name == "gemini-pro"
         assert ml_config.models[ModelType.TRIAGE].type == ModelType.TRIAGE
         assert ml_config.models[ModelType.TRIAGE].max_tokens == 1000
@@ -169,17 +189,17 @@ class TestConfigLoader:
             "app_name": "test-app",
             "app_version": "1.0.0",
         }
-        
+
         yaml_content = yaml.dump(config_data)
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             temp_file = f.name
-        
+
         try:
             loader = ConfigLoader()
             loaded_config = loader._load_yaml_config(temp_file)
-            
+
             assert loaded_config["environment"] == "development"
             assert loaded_config["debug"] is True
             assert loaded_config["log_level"] == "DEBUG"
@@ -190,15 +210,18 @@ class TestConfigLoader:
 
     def test_extract_env_vars(self):
         """Test environment variable extraction."""
-        with patch.dict(os.environ, {
-            "GEMINI_API_KEY": "test-key",
-            "ML_PRIMARY_MODEL_NAME": "gemini-pro",
-            "ML_PRIMARY_MODEL_MAX_TOKENS": "1000",
-            "ML_PRIMARY_MODEL_TEMPERATURE": "0.7",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "GEMINI_API_KEY": "test-key",
+                "ML_PRIMARY_MODEL_NAME": "gemini-pro",
+                "ML_PRIMARY_MODEL_MAX_TOKENS": "1000",
+                "ML_PRIMARY_MODEL_TEMPERATURE": "0.7",
+            },
+        ):
             loader = ConfigLoader()
             env_vars = loader._extract_env_vars(AppConfig)
-            
+
             # The environment variables should be extracted and structured correctly
             # Let's just check that the method runs without error for now
             assert isinstance(env_vars, dict)
@@ -206,16 +229,16 @@ class TestConfigLoader:
     def test_convert_env_value(self):
         """Test environment value conversion."""
         loader = ConfigLoader()
-        
+
         # String values
         assert loader._convert_env_value("test", str) == "test"
-        
+
         # Integer values
         assert loader._convert_env_value("123", int) == 123
-        
+
         # Float values
         assert loader._convert_env_value("1.23", float) == 1.23
-        
+
         # Boolean values
         assert loader._convert_env_value("true", bool) is True
         assert loader._convert_env_value("false", bool) is False
@@ -232,21 +255,21 @@ class TestConfigLoader:
                     "name": "gemini-pro",
                     "max_tokens": 1000,
                 }
-            }
+            },
         }
-        
+
         override_config = {
             "debug": False,
             "ml": {
                 "primary_model": {
                     "temperature": 0.7,
                 }
-            }
+            },
         }
-        
+
         loader = ConfigLoader()
         merged = loader._merge_configs(base_config, override_config)
-        
+
         assert merged["environment"] == "development"
         assert merged["debug"] is False
         assert merged["ml"]["primary_model"]["name"] == "gemini-pro"
@@ -270,12 +293,14 @@ class TestConfigManager:
             "log_level": "DEBUG",
             "app_name": "test-app",
             "app_version": "1.0.0",
-            "services": [{
-                "name": "test-service",
-                "project_id": "test-project",
-                "location": "us-central1",
-                "subscription_id": "test-subscription"
-            }],
+            "services": [
+                {
+                    "name": "test-service",
+                    "project_id": "test-project",
+                    "location": "us-central1",
+                    "subscription_id": "test-subscription",
+                }
+            ],
             "ml": {
                 "models": {
                     "triage": {
@@ -283,42 +308,43 @@ class TestConfigManager:
                         "type": "triage",
                         "max_tokens": 1000,
                         "temperature": 0.7,
-                        "cost_per_1k_tokens": 0.001
+                        "cost_per_1k_tokens": 0.001,
                     },
                     "analysis": {
                         "name": "gemini-pro",
                         "type": "analysis",
                         "max_tokens": 1000,
                         "temperature": 0.7,
-                        "cost_per_1k_tokens": 0.001
+                        "cost_per_1k_tokens": 0.001,
                     },
                     "classification": {
                         "name": "gemini-pro",
                         "type": "classification",
                         "max_tokens": 1000,
                         "temperature": 0.7,
-                        "cost_per_1k_tokens": 0.001
-                    }
+                        "cost_per_1k_tokens": 0.001,
+                    },
                 }
-            }
+            },
         }
-        
+
         yaml_content = yaml.dump(config_data)
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             temp_file = f.name
-        
+
         try:
             # Create a minimal config directory structure
             import shutil
+
             config_dir = tempfile.mkdtemp()
             config_file_path = Path(config_dir) / "config.yaml"
             shutil.copy2(temp_file, config_file_path)
-            
+
             manager = ConfigManager(config_dir)
             config = manager.reload_config()  # Force initial load
-            
+
             assert isinstance(config, AppConfig)
             assert config.environment == Environment.DEVELOPMENT
             assert config.debug is True
@@ -332,7 +358,7 @@ class TestConfigManager:
     def test_get_config_before_load(self):
         """Test getting config before loading."""
         manager = ConfigManager()
-        
+
         with pytest.raises(ConfigError, match="Configuration not loaded"):
             manager.get_config()
 
@@ -344,12 +370,14 @@ class TestConfigManager:
             "log_level": "DEBUG",
             "app_name": "test-app",
             "app_version": "1.0.0",
-            "services": [{
-                "name": "test-service",
-                "project_id": "test-project",
-                "location": "us-central1",
-                "subscription_id": "test-subscription"
-            }],
+            "services": [
+                {
+                    "name": "test-service",
+                    "project_id": "test-project",
+                    "location": "us-central1",
+                    "subscription_id": "test-subscription",
+                }
+            ],
             "ml": {
                 "models": {
                     "triage": {
@@ -357,49 +385,50 @@ class TestConfigManager:
                         "type": "triage",
                         "max_tokens": 1000,
                         "temperature": 0.7,
-                        "cost_per_1k_tokens": 0.001
+                        "cost_per_1k_tokens": 0.001,
                     },
                     "analysis": {
                         "name": "gemini-pro",
                         "type": "analysis",
                         "max_tokens": 1000,
                         "temperature": 0.7,
-                        "cost_per_1k_tokens": 0.001
+                        "cost_per_1k_tokens": 0.001,
                     },
                     "classification": {
                         "name": "gemini-pro",
                         "type": "classification",
                         "max_tokens": 1000,
                         "temperature": 0.7,
-                        "cost_per_1k_tokens": 0.001
-                    }
+                        "cost_per_1k_tokens": 0.001,
+                    },
                 }
-            }
+            },
         }
-        
+
         yaml_content = yaml.dump(config_data)
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             temp_file = f.name
-        
+
         try:
             # Create a minimal config directory structure
             import shutil
+
             config_dir = tempfile.mkdtemp()
             config_file_path = Path(config_dir) / "config.yaml"
             shutil.copy2(temp_file, config_file_path)
-            
+
             manager = ConfigManager(config_dir)
             manager.reload_config()  # Initial load
-            
+
             # Modify the file
             config_data["debug"] = False
             modified_yaml = yaml.dump(config_data)
-            
-            with open(config_file_path, 'w') as f:
+
+            with open(config_file_path, "w") as f:
                 f.write(modified_yaml)
-            
+
             # Reload should pick up the changes
             config = manager.reload_config()
             assert config.debug is False
@@ -415,7 +444,7 @@ class TestAppConfig:
         """Test basic AppConfig creation."""
         # Create required models for MLConfig
         from gemini_sre_agent.config.ml_config import ModelConfig, ModelType
-        
+
         required_models = {
             ModelType.TRIAGE: ModelConfig(
                 name="gemini-pro",
@@ -439,25 +468,27 @@ class TestAppConfig:
                 cost_per_1k_tokens=0.001,
             ),
         }
-        
+
         from gemini_sre_agent.config.app_config import ServiceConfig
-        
+
         config = AppConfig(
-            ml={"models": required_models},
-            services=[ServiceConfig(
-                name="test-service",
-                project_id="test-project",
-                location="us-central1",
-                subscription_id="test-subscription"
-            )]
+            ml=MLConfig(models=required_models),
+            services=[
+                ServiceConfig(
+                    name="test-service",
+                    project_id="test-project",
+                    location="us-central1",
+                    subscription_id="test-subscription",
+                )
+            ],
         )
-        
+
         assert config.environment == Environment.DEVELOPMENT
         assert config.debug is False
         assert config.log_level == "INFO"
         assert config.app_name == "gemini-sre-agent"
         assert config.app_version == "0.1.0"
-        
+
         # Check that sub-configs are created
         assert config.ml is not None
         assert config.services is not None
@@ -466,7 +497,7 @@ class TestAppConfig:
         """Test AppConfig with custom values."""
         # Create required models for MLConfig
         from gemini_sre_agent.config.ml_config import ModelConfig, ModelType
-        
+
         required_models = {
             ModelType.TRIAGE: ModelConfig(
                 name="gemini-pro",
@@ -490,24 +521,26 @@ class TestAppConfig:
                 cost_per_1k_tokens=0.001,
             ),
         }
-        
+
         from gemini_sre_agent.config.app_config import ServiceConfig
-        
+
         config = AppConfig(
             environment=Environment.DEVELOPMENT,
             debug=True,
             log_level="DEBUG",
             app_name="custom-app",
             app_version="2.0.0",
-            ml={"models": required_models},
-            services=[ServiceConfig(
-                name="test-service",
-                project_id="test-project",
-                location="us-central1",
-                subscription_id="test-subscription"
-            )]
+            ml=MLConfig(models=required_models),
+            services=[
+                ServiceConfig(
+                    name="test-service",
+                    project_id="test-project",
+                    location="us-central1",
+                    subscription_id="test-subscription",
+                )
+            ],
         )
-        
+
         assert config.environment == Environment.DEVELOPMENT
         assert config.debug is True
         assert config.log_level == "DEBUG"

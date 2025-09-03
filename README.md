@@ -297,6 +297,7 @@ This unified system represents a significant advancement in AI-powered incident 
 - **AI-Enhanced Pattern Detection:** Multi-layer analysis engine enhanced with Gemini AI models for intelligent pattern recognition, confidence scoring, and context-aware analysis.
 - **Gemini ML Pattern Refinement:** Advanced AI pipeline with quality validation, PII sanitization, smart caching, and cost optimization for production-ready AI analysis.
 - **Enhanced Dynamic Prompt Generation:** Revolutionary AI-powered prompt generation system with meta-prompt optimization, context-aware templates, and adaptive strategy selection for superior code generation.
+- **Enhanced Configuration Management:** Modern, type-safe configuration system with Pydantic validation, environment variable integration, hot reloading, and comprehensive CLI tools for validation and migration.
 - **Intelligent Log Analysis:** Leverages dual Gemini models (Flash for speed, Pro for accuracy) with enhanced dynamic prompting and few-shot learning capabilities.
 - **Proactive Incident Detection:** Identifies 7+ distinct failure patterns with AI-powered classification and confidence scoring across 15+ quantitative factors.
 - **Code-Context Integration:** Automated analysis incorporating recent commits, dependencies, and repository structure for more accurate remediation.
@@ -479,7 +480,8 @@ For detailed information on the Gemini SRE Agent, please refer to the following 
 - [**Enhanced Prompt Generation System**](docs/ENHANCED_PROMPT_GENERATION.md): Deep dive into the revolutionary dynamic prompt generation capabilities.
 - [**GCP Infrastructure Setup Guide**](docs/GCP_SETUP.md): Instructions for setting up necessary Google Cloud infrastructure.
 - [**Setup and Installation**](docs/SETUP_INSTALLATION.md): A comprehensive guide to getting the project up and running.
-- [**Configuration Guide**](docs/CONFIGURATION.md): Learn how to customize the agent's behavior via `config.yaml`.
+- [**Configuration Guide**](docs/CONFIGURATION.md): Learn how to customize the agent's behavior with the enhanced type-safe configuration system.
+- [**Configuration Migration Guide**](docs/CONFIG_MIGRATION_GUIDE.md): Step-by-step guide for migrating from the legacy configuration system.
 - [**Deployment Guide**](docs/DEPLOYMENT.md): Instructions for deploying the agent to Google Cloud Run and other environments.
 - [**Multi-Environment Guide**](docs/ENVIRONMENTS.md): Strategies for managing the agent across different environments.
 - [**Security Guide**](docs/SECURITY.md): Best practices and considerations for securing the agent.
