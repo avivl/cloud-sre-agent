@@ -124,15 +124,33 @@ def generate_template(environment: str, output: str):
 def diff(config_file1: str, config_file2: str, output_format: str):
     """Compare two configuration files and show differences."""
     try:
+        # Load and validate first configuration file
         with open(config_file1, "r") as f:
-            config1 = yaml.safe_load(f)
+            config1_data = yaml.safe_load(f)
+            if config1_data is None:
+                config1_data = {}
+            if not isinstance(config1_data, dict):
+                raise click.ClickException(
+                    f"Configuration file {config_file1} must contain a YAML mapping (dict), got {type(config1_data).__name__}"
+                )
 
+        # Load and validate second configuration file
         with open(config_file2, "r") as f:
-            config2 = yaml.safe_load(f)
+            config2_data = yaml.safe_load(f)
+            if config2_data is None:
+                config2_data = {}
+            if not isinstance(config2_data, dict):
+                raise click.ClickException(
+                    f"Configuration file {config_file2} must contain a YAML mapping (dict), got {type(config2_data).__name__}"
+                )
 
-        diff_result = ConfigDevUtils.diff_configs(config1, config2, output_format)
+        diff_result = ConfigDevUtils.diff_configs(
+            config1_data, config2_data, output_format
+        )
         click.echo(diff_result)
 
+    except click.ClickException:
+        raise
     except Exception as e:
         click.echo(f"❌ Configuration diff failed: {e}")
         raise click.Abort() from e

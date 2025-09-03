@@ -2,7 +2,7 @@
 # This file demonstrates the structure and options available
 
 # Schema version for compatibility checking
-schema_version: 1.0.0
+schema_version: "1.0.0"
 
 # Environment settings
 environment: development # development, staging, production

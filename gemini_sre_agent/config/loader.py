@@ -79,7 +79,15 @@ class ConfigLoader:
 
         try:
             with open(config_path, "r") as f:
-                return yaml.safe_load(f) or {}
+                data = yaml.safe_load(f)
+                if data is None:
+                    return {}
+                if not isinstance(data, dict):
+                    raise ConfigFileError(
+                        f"Top-level YAML structure must be a mapping (dict), got {type(data).__name__}",
+                        str(config_path),
+                    )
+                return data
         except Exception as e:
             raise ConfigFileError(
                 f"Failed to load YAML file {filename}: {e}", str(config_path), e
@@ -183,6 +191,21 @@ class ConfigLoader:
             return float(value)
         elif target_type is str:
             return value
+        elif hasattr(target_type, "__bases__") and any(
+            base.__name__ == "Enum" for base in target_type.__bases__
+        ):
+            # Handle Enum types
+            try:
+                return target_type(value)
+            except ValueError:
+                # Try case-insensitive matching
+                if hasattr(target_type, "__members__"):
+                    for enum_member in target_type.__members__.values():
+                        if enum_member.value.lower() == value.lower():
+                            return enum_member
+                raise ValueError(
+                    f"Invalid enum value '{value}' for {target_type.__name__}"
+                ) from None
         else:
             return value
 
