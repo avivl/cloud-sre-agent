@@ -37,12 +37,12 @@ class AdaptiveRateLimiter:
         self.consecutive_errors = 0
         self.current_backoff_seconds = self.config.base_backoff_seconds
         self.circuit_state = CircuitState.CLOSED
-        self.circuit_opened_at: Optional[float] = None
+        self._circuit_opened_at: Optional[float] = None
         self.last_recovery_test: Optional[float] = None
 
         # Rate limiting state
         self.rate_limit_hit = False
-        self.last_rate_limit_time: Optional[float] = None
+        self._last_rate_limit_time: Optional[float] = None
         self.request_count = 0
         self.window_start_time = time.time()
 
@@ -59,6 +59,23 @@ class AdaptiveRateLimiter:
         # Adaptive parameters
         self.adaptive_delay = 0.0
         self.success_rate = 1.0
+
+    async def should_allow_request(
+        self,
+        urgency: UrgencyLevel = UrgencyLevel.MEDIUM,
+        cost_tracker: Optional[Any] = None,
+    ) -> bool:
+        """
+        Check if a request should be allowed (alias for can_make_request).
+
+        Args:
+            urgency: Urgency level of the request
+            cost_tracker: Optional cost tracker instance
+
+        Returns:
+            True if request should be allowed, False otherwise
+        """
+        return await self.can_make_request(urgency, None, cost_tracker)
 
     async def can_make_request(
         self,
@@ -95,6 +112,10 @@ class AdaptiveRateLimiter:
 
         return True
 
+    async def record_success(self, actual_cost: Optional[float] = None):
+        """Alias for record_request_success."""
+        await self.record_request_success(actual_cost)
+
     async def record_request_success(self, actual_cost: Optional[float] = None):
         """
         Record a successful request.
@@ -121,6 +142,14 @@ class AdaptiveRateLimiter:
 
         # Adapt delay based on success rate
         self._adapt_delay()
+
+    async def record_rate_limit_error(self, actual_cost: Optional[float] = None):
+        """Record a rate limit error."""
+        await self.record_request_error("rate_limit", actual_cost)
+
+    async def record_api_error(self, actual_cost: Optional[float] = None):
+        """Record an API error."""
+        await self.record_request_error("api_error", actual_cost)
 
     async def record_request_error(
         self, error_type: str = "unknown", actual_cost: Optional[float] = None
@@ -158,7 +187,7 @@ class AdaptiveRateLimiter:
     async def record_rate_limit_hit(self):
         """Record that a rate limit was hit."""
         self.rate_limit_hit = True
-        self.last_rate_limit_time = time.time()
+        self._last_rate_limit_time = time.time()
         self.logger.warning("Rate limit hit, requests will be throttled")
 
     async def get_delay_seconds(
@@ -193,6 +222,10 @@ class AdaptiveRateLimiter:
             delay += self._get_rate_limit_delay()
 
         return max(0.0, delay)
+
+    def get_status(self) -> Dict[str, Any]:
+        """Get current rate limiter status (alias for get_stats)."""
+        return self.get_stats()
 
     def get_stats(self) -> Dict[str, Any]:
         """Get current rate limiter statistics."""
@@ -234,8 +267,8 @@ class AdaptiveRateLimiter:
         if self.circuit_state == CircuitState.OPEN:
             # Check if enough time has passed to try recovery
             if (
-                self.circuit_opened_at
-                and time.time() - self.circuit_opened_at
+                self._circuit_opened_at
+                and time.time() - self._circuit_opened_at
                 >= self.config.circuit_open_duration_seconds
             ):
                 self.circuit_state = CircuitState.HALF_OPEN
@@ -300,7 +333,7 @@ class AdaptiveRateLimiter:
     def _open_circuit(self):
         """Open the circuit breaker."""
         self.circuit_state = CircuitState.OPEN
-        self.circuit_opened_at = time.time()
+        self._circuit_opened_at = time.time()
         self.logger.error("Circuit breaker opened due to consecutive errors")
 
     def _increase_backoff(self):
@@ -325,11 +358,11 @@ class AdaptiveRateLimiter:
 
     def _get_rate_limit_delay(self) -> float:
         """Get delay due to rate limiting."""
-        if not self.last_rate_limit_time:
+        if not self._last_rate_limit_time:
             return 0.0
 
         # Calculate time until rate limit resets
-        time_since_limit = time.time() - self.last_rate_limit_time
+        time_since_limit = time.time() - self._last_rate_limit_time
         reset_interval = self.config.rate_limit_reset_minutes * 60
 
         if time_since_limit >= reset_interval:
@@ -337,3 +370,66 @@ class AdaptiveRateLimiter:
             return 0.0
 
         return reset_interval - time_since_limit
+
+    def _update_circuit_state(self):
+        """Update circuit breaker state."""
+        if self.circuit_state == CircuitState.OPEN:
+            if (
+                self._circuit_opened_at
+                and time.time() - self._circuit_opened_at
+                >= self.config.circuit_open_duration_seconds
+            ):
+                self.circuit_state = CircuitState.HALF_OPEN
+                self.last_recovery_attempt = time.time()
+
+    def _update_backoff(self):
+        """Update backoff delay."""
+        self._increase_backoff()
+
+    def _is_rate_limit_active(self) -> bool:
+        """Check if rate limit is currently active."""
+        return self.rate_limit_hit
+
+    def _get_rate_limit_reset_seconds(self) -> float:
+        """Get seconds until rate limit resets."""
+        return self._get_rate_limit_delay()
+
+    @property
+    def last_recovery_attempt(self) -> Optional[float]:
+        """Get last recovery attempt time."""
+        return getattr(self, "_last_recovery_attempt", None)
+
+    @last_recovery_attempt.setter
+    def last_recovery_attempt(self, value: Optional[float]):
+        """Set last recovery attempt time."""
+        self._last_recovery_attempt = value
+
+    @property
+    def last_rate_limit_time(self) -> Optional[float]:
+        """Get last rate limit time as float."""
+        return self._last_rate_limit_time
+
+    @last_rate_limit_time.setter
+    def last_rate_limit_time(self, value):
+        """Set last rate limit time, accepting datetime or float."""
+        if value is None:
+            self._last_rate_limit_time = None
+        elif hasattr(value, "timestamp"):  # datetime object
+            self._last_rate_limit_time = value.timestamp()
+        else:  # float or int
+            self._last_rate_limit_time = float(value)
+
+    @property
+    def circuit_opened_at(self) -> Optional[float]:
+        """Get circuit opened time as float."""
+        return self._circuit_opened_at
+
+    @circuit_opened_at.setter
+    def circuit_opened_at(self, value):
+        """Set circuit opened time, accepting datetime or float."""
+        if value is None:
+            self._circuit_opened_at = None
+        elif hasattr(value, "timestamp"):  # datetime object
+            self._circuit_opened_at = value.timestamp()
+        else:  # float or int
+            self._circuit_opened_at = float(value)

@@ -9,7 +9,7 @@ adaptive rate limiter for managing API request rates and circuit breaker pattern
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class CircuitState(Enum):
@@ -113,3 +113,28 @@ class RateLimiterConfig:
         if not 0 < self.adaptation_factor <= 1:
             return False
         return True
+
+
+@dataclass
+class RateLimiterMetrics:
+    """Metrics for rate limiter performance."""
+
+    total_requests: int = 0
+    successful_requests: int = 0
+    failed_requests: int = 0
+    rate_limited_requests: int = 0
+    circuit_open_count: int = 0
+    average_response_time: float = 0.0
+    success_rate: float = 0.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert metrics to dictionary."""
+        return {
+            "total_requests": self.total_requests,
+            "successful_requests": self.successful_requests,
+            "failed_requests": self.failed_requests,
+            "rate_limited_requests": self.rate_limited_requests,
+            "circuit_open_count": self.circuit_open_count,
+            "average_response_time": self.average_response_time,
+            "success_rate": self.success_rate,
+        }
