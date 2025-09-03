@@ -1,0 +1,109 @@
+# Example configuration file for Gemini SRE Agent
+# This file demonstrates the structure and options available
+
+# Schema version for compatibility checking
+schema_version: 1.0.0
+
+# Environment settings
+environment: development # development, staging, production
+debug: true
+log_level: DEBUG # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# Application metadata
+app_name: gemini-sre-agent
+app_version: 1.0.0
+
+# Services configuration
+services:
+  - name: billing-service
+    project_id: your-gcp-project
+    location: us-central1
+    subscription_id: billing-logs-subscription
+
+  - name: auth-service
+    project_id: your-gcp-project
+    location: us-central1
+    subscription_id: auth-logs-subscription
+
+# ML/AI configuration
+ml:
+  # Model configurations
+  models:
+    triage:
+      name: gemini-1.5-flash-001
+      type: triage
+      max_tokens: 8192
+      temperature: 0.1
+      cost_per_1k_tokens: 0.000075
+    analysis:
+      name: gemini-1.5-pro-001
+      type: analysis
+      max_tokens: 32768
+      temperature: 0.3
+      cost_per_1k_tokens: 0.0005
+    classification:
+      name: gemini-1.5-flash-lite-001
+      type: classification
+      max_tokens: 4096
+      temperature: 0.1
+      cost_per_1k_tokens: 0.0000375
+
+  # Code generation settings
+  code_generation:
+    enable_validation: true
+    enable_specialized_generators: true
+    max_iterations: 3
+    quality_threshold: 8.0
+    human_review_threshold: 7.0
+    enable_learning: true
+
+  # Adaptive prompt settings
+  adaptive_prompt:
+    enable_adaptive_strategy: true
+    cache_ttl_seconds: 3600
+    max_cache_size: 1000
+    enable_fallback: true
+    strategy_switch_threshold: 0.7
+
+# Performance configuration
+performance:
+  cache_max_size_mb: 100
+  cache_ttl_seconds: 3600
+  max_concurrent_requests: 10
+  request_timeout_seconds: 30
+
+# Security configuration
+security:
+  enable_secrets_validation: true
+  secrets_rotation_interval_days: 90
+  enable_audit_logging: true
+  max_failed_attempts: 5
+  lockout_duration_minutes: 30
+
+# Monitoring configuration
+monitoring:
+  enable_metrics: true
+  metrics_endpoint: null
+  enable_health_checks: true
+  health_check_interval_seconds: 60
+  enable_alerting: true
+  alert_webhook_url: null
+
+# GitHub configuration
+github:
+  repository: owner/main-repo
+  base_branch: main
+
+# Logging configuration
+logging:
+  level: INFO
+  format: json
+  file: null
+  max_size_mb: 100
+  backup_count: 5
+# Secrets configuration (use environment variables)
+# GEMINI_API_KEY=your-gemini-api-key
+# GITHUB_TOKEN=your-github-token
+# GCP_SERVICE_ACCOUNT_KEY=your-service-account-key
+# DATABASE_PASSWORD=your-database-password
+# EXTERNAL_API_KEYS={"service1": "key1", "service2": "key2"}

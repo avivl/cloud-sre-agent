@@ -1,9 +1,12 @@
 import asyncio
 import json
 import os
-from datetime import datetime
 
-from gemini_sre_agent.config import GlobalConfig, ServiceMonitorConfig, load_config
+from gemini_sre_agent.legacy_config import (
+    GlobalConfig,
+    ServiceMonitorConfig,
+    load_config
+)
 from gemini_sre_agent.log_subscriber import LogSubscriber
 from gemini_sre_agent.logger import setup_logging
 from gemini_sre_agent.ml.enhanced_analysis_agent import (
