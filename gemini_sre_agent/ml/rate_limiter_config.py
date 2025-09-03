@@ -138,3 +138,22 @@ class RateLimiterMetrics:
             "average_response_time": self.average_response_time,
             "success_rate": self.success_rate,
         }
+
+    @classmethod
+    def calculate_success_rate(cls, successful: int, total: int) -> float:
+        """Calculate success rate from counts."""
+        if total == 0:
+            return 0.0
+        return successful / total
+
+    @classmethod
+    def should_allow_critical_override(cls, metrics: "RateLimiterMetrics") -> bool:
+        """Check if critical requests should be allowed despite issues."""
+        # Allow critical requests if success rate is above 50%
+        return metrics.success_rate > 0.5
+
+    @classmethod
+    def should_skip_for_rate_limit(cls, metrics: "RateLimiterMetrics") -> bool:
+        """Check if requests should be skipped due to rate limiting."""
+        # Skip if we've hit rate limits too frequently
+        return metrics.rate_limited_requests > metrics.total_requests * 0.8
