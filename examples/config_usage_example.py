@@ -81,7 +81,7 @@ def main():
 
     # Example 2: Load configuration from file
     print("\n2. Loading configuration from file...")
-    config_file = Path(__file__).parent / "config_example.yaml"
+    config_file = Path(__file__).parent / "config.yaml"
 
     if config_file.exists():
         try:
