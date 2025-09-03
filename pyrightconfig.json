@@ -3,12 +3,14 @@
   "venv": ".venv",
   "include": [
     "gemini_sre_agent",
-    "main.py",
-    "tests"
+    "main.py"
   ],
   "exclude": [
     "**/__pycache__",
-    "**/.pytest_cache"
+    "**/.pytest_cache",
+    "**/tests",
+    "**/test_*.py",
+    "tests/**/*"
   ],
   "extraPaths": [
     "gemini_sre_agent"

@@ -1,0 +1,78 @@
+schema_version: 1.0.0
+
+global_config:
+  max_throughput: 3000
+  buffer_strategy: memory
+  error_threshold: 0.01
+  retry_attempts: 3
+  retry_delay: 1.5
+  circuit_breaker_threshold: 20
+  circuit_breaker_timeout: 60
+  memory_buffer_size: 50000
+  memory_buffer_timeout: 2.0
+
+sources:
+  - name: aws-cloudwatch-logs
+    type: aws_cloudwatch
+    enabled: true
+    region: us-west-2
+    log_group: /aws/lambda/my-function
+    log_stream: 2023/09/03/[$LATEST]abc123
+    credentials:
+      access_key_id: AKIAIOSFODNN7EXAMPLE
+      secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    start_time: 2023-09-03T00:00:00Z
+    end_time: 2023-09-03T23:59:59Z
+    limit: 1000
+    filters:
+      - field: level
+        operator: >=
+        value: ERROR
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: aws-cloudwatch
+
+  - name: kubernetes-pods
+    type: kubernetes
+    enabled: true
+    kubeconfig_path: /path/to/kubeconfig
+    namespace: default
+    label_selector: app=my-app
+    container_name: main
+    follow: true
+    tail_lines: 100
+    since_seconds: 3600
+    filters:
+      - field: level
+        operator: in
+        value: [ERROR, WARN]
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: kubernetes
+      - type: add_metadata
+        fields:
+          namespace: default
+          pod_name: {{pod_name}}
+
+  - name: syslog-server
+    type: syslog
+    enabled: true
+    host: 0.0.0.0
+    port: 514
+    protocol: udp
+    facility: local0
+    severity: info
+    max_connections: 100
+    buffer_size: 8192
+    timeout: 30
+    filters:
+      - field: severity
+        operator: >=
+        value: WARNING
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: syslog
+      - type: parse_syslog

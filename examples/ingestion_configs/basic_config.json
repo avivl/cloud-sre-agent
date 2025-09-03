@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0.0",
+  "global_config": {
+    "max_throughput": 500,
+    "error_threshold": 0.05,
+    "enable_metrics": true,
+    "enable_health_checks": true,
+    "health_check_interval": 30,
+    "max_message_length": 10000,
+    "enable_pii_detection": true,
+    "enable_flow_tracking": true,
+    "default_buffer_size": 1000,
+    "max_memory_mb": 500,
+    "backpressure_threshold": 0.8,
+    "drop_oldest_on_full": true,
+    "buffer_strategy": "memory"
+  },
+  "sources": [
+    {
+      "name": "gcp-pubsub-logs",
+      "type": "gcp_pubsub",
+      "enabled": true,
+      "priority": 10,
+      "config": {
+        "project_id": "my-gcp-project",
+        "subscription_id": "log-ingestion-sub",
+        "credentials_path": "/path/to/service-account.json",
+        "max_messages": 100,
+        "ack_deadline_seconds": 60,
+        "flow_control_max_messages": 1000,
+        "flow_control_max_bytes": 10485760
+      },
+      "max_retries": 3,
+      "retry_delay": 1.0,
+      "timeout": 30.0,
+      "circuit_breaker_enabled": true,
+      "rate_limit_per_second": 100
+    },
+    {
+      "name": "file-system-logs",
+      "type": "file_system",
+      "enabled": true,
+      "priority": 20,
+      "config": {
+        "file_path": "/var/log/applications",
+        "file_pattern": "*.log",
+        "watch_mode": true,
+        "encoding": "utf-8",
+        "buffer_size": 1000,
+        "max_memory_mb": 100
+      },
+      "max_retries": 3,
+      "retry_delay": 1.0,
+      "timeout": 30.0,
+      "circuit_breaker_enabled": true,
+      "rate_limit_per_second": 50
+    }
+  ]
+}

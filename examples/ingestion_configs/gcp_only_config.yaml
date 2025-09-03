@@ -1,0 +1,52 @@
+schema_version: 1.0.0
+
+global_config:
+  max_throughput: 1000
+  buffer_strategy: memory
+  error_threshold: 0.03
+  retry_attempts: 3
+  retry_delay: 1.0
+  circuit_breaker_threshold: 10
+  circuit_breaker_timeout: 30
+  memory_buffer_size: 10000
+  memory_buffer_timeout: 5.0
+
+sources:
+  - name: gcp-pubsub-logs
+    type: gcp_pubsub
+    enabled: true
+    project_id: my-gcp-project
+    subscription: log-subscription
+    credentials_path: /path/to/service-account.json
+    max_messages: 100
+    ack_deadline: 60
+    flow_control:
+      max_messages: 1000
+      max_bytes: 10000000
+    filters:
+      - field: severity
+        operator: >=
+        value: WARNING
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: gcp-pubsub
+
+  - name: gcp-logging-api
+    type: gcp_logging
+    enabled: true
+    project_id: my-gcp-project
+    credentials_path: /path/to/service-account.json
+    log_filter: 'resource.type=gce_instance AND severity>=WARNING'
+    page_size: 1000
+    max_results: 10000
+    order_by: timestamp desc
+    interval_seconds: 30
+    filters:
+      - field: resource.labels.instance_name
+        operator: contains
+        value: web-server
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: gcp-logging

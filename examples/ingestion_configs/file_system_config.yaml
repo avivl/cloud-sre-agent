@@ -1,0 +1,74 @@
+schema_version: 1.0.0
+
+global_config:
+  max_throughput: 2000
+  buffer_strategy: memory
+  error_threshold: 0.02
+  retry_attempts: 5
+  retry_delay: 2.0
+  circuit_breaker_threshold: 15
+  circuit_breaker_timeout: 45
+  memory_buffer_size: 20000
+  memory_buffer_timeout: 3.0
+
+sources:
+  - name: nginx-access-logs
+    type: file_system
+    enabled: true
+    path: /var/log/nginx/access.log
+    follow: true
+    encoding: utf-8
+    buffer_size: 8192
+    poll_interval: 1.0
+    max_file_size: 104857600 # 100MB
+    rotation_pattern: *.log.*
+    filters:
+      - field: status
+        operator: >=
+        value: 400
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: nginx-access
+      - type: parse_json
+        field: message
+
+  - name: application-logs
+    type: file_system
+    enabled: true
+    path: /var/log/app/*.log
+    follow: true
+    encoding: utf-8
+    buffer_size: 4096
+    poll_interval: 0.5
+    max_file_size: 52428800 # 50MB
+    rotation_pattern: *.log.*
+    filters:
+      - field: level
+        operator: in
+        value: [ERROR, FATAL]
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: application
+      - type: parse_json
+        field: message
+
+  - name: system-logs
+    type: file_system
+    enabled: true
+    path: /var/log/syslog
+    follow: true
+    encoding: utf-8
+    buffer_size: 16384
+    poll_interval: 2.0
+    max_file_size: 209715200 # 200MB
+    rotation_pattern: syslog.*
+    filters:
+      - field: facility
+        operator: in
+        value: [kern, daemon, auth]
+    transformations:
+      - type: add_timestamp
+      - type: add_source
+        value: system
