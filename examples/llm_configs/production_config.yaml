@@ -1,0 +1,304 @@
+# Production LLM Configuration Example
+# This configuration is optimized for production environments with high reliability,
+# performance, and comprehensive monitoring. Cost is secondary to reliability.
+
+# Main configuration
+default_provider: "gemini"
+default_model_type: "SMART"
+enable_fallback: true
+enable_monitoring: true
+
+# Provider configurations
+providers:
+  # Google Gemini Provider (Primary)
+  gemini:
+    provider: "gemini"
+    api_key: "${GEMINI_API_KEY}"
+    base_url: "https://generativelanguage.googleapis.com/v1"
+    timeout: 30
+    max_retries: 5 # More retries for production
+    rate_limit: 100 # Higher rate limit
+    models:
+      gemini-1.5-flash:
+        name: "gemini-1.5-flash"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.000075
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis"]
+      gemini-1.5-pro:
+        name: "gemini-1.5-pro"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.0005
+        max_tokens: 32768
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis", "vision"]
+    provider_specific:
+      project_id: "${GEMINI_PROJECT_ID}"
+
+  # OpenAI Provider (Primary fallback)
+  openai:
+    provider: "openai"
+    api_key: "${OPENAI_API_KEY}"
+    base_url: "https://api.openai.com/v1"
+    timeout: 30
+    max_retries: 5 # More retries for production
+    rate_limit: 100 # Higher rate limit
+    models:
+      gpt-4o:
+        name: "gpt-4o"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.005
+        max_tokens: 128000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis", "vision"]
+      gpt-4o-mini:
+        name: "gpt-4o-mini"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.00015
+        max_tokens: 128000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation"]
+      gpt-4-turbo:
+        name: "gpt-4-turbo"
+        model_type: "POWERFUL"
+        cost_per_1k_tokens: 0.01
+        max_tokens: 128000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis", "vision"]
+    provider_specific:
+      organization: "${OPENAI_ORG_ID}"
+      project: "${OPENAI_PROJECT_ID}"
+
+  # Anthropic Provider (Primary fallback)
+  anthropic:
+    provider: "anthropic"
+    api_key: "${ANTHROPIC_API_KEY}"
+    base_url: "https://api.anthropic.com"
+    timeout: 30
+    max_retries: 5
+    rate_limit: 100
+    models:
+      claude-3-5-sonnet-20241022:
+        name: "claude-3-5-sonnet-20241022"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.003
+        max_tokens: 200000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis", "vision"]
+      claude-3-5-haiku-20241022:
+        name: "claude-3-5-haiku-20241022"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.00025
+        max_tokens: 200000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation"]
+      claude-3-opus-20240229:
+        name: "claude-3-opus-20240229"
+        model_type: "POWERFUL"
+        cost_per_1k_tokens: 0.015
+        max_tokens: 200000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis", "vision"]
+    provider_specific:
+      version: "2023-06-01"
+
+  # xAI (Grok) Provider (Secondary fallback)
+  grok:
+    provider: "grok"
+    api_key: "${XAI_API_KEY}"
+    base_url: "https://api.x.ai/v1"
+    timeout: 30
+    max_retries: 5
+    rate_limit: 100
+    models:
+      grok-beta:
+        name: "grok-beta"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.002
+        max_tokens: 32768
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis"]
+      grok-2-1212:
+        name: "grok-2-1212"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.002
+        max_tokens: 32768
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis"]
+    provider_specific:
+      version: "2024-12-12"
+
+  # Amazon Bedrock Provider (Enterprise fallback)
+  bedrock:
+    provider: "bedrock"
+    api_key: "${AWS_ACCESS_KEY_ID}"
+    base_url: "https://bedrock-runtime.us-east-1.amazonaws.com"
+    region: "us-east-1"
+    timeout: 30
+    max_retries: 5
+    rate_limit: 100
+    models:
+      anthropic.claude-3-5-sonnet-20241022-v2:0:
+        name: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.003
+        max_tokens: 200000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis"]
+      anthropic.claude-3-5-haiku-20241022-v1:0:
+        name: "anthropic.claude-3-5-haiku-20241022-v1:0"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.00025
+        max_tokens: 200000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation"]
+      meta.llama-3-1-405b-instruct-v1:0:
+        name: "meta.llama-3-1-405b-instruct-v1:0"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.00265
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      aws_region: "us-east-1"
+      aws_profile: "production"
+
+# Agent configurations (Production-optimized)
+agents:
+  analysis_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["openai", "anthropic", "grok", "bedrock"]
+    model_selection_strategy: "quality_optimized" # Quality over cost in production
+    max_tokens: 64000 # Higher token limit for complex analysis
+    temperature: 0.3
+    timeout: 120 # Longer timeout for complex tasks
+    retry_attempts: 5 # More retries for reliability
+    enable_streaming: true
+    enable_tools: true
+    model_preferences:
+      - "gemini-1.5-pro"
+      - "gpt-4o"
+      - "claude-3-5-sonnet-20241022"
+      - "grok-beta"
+      - "anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+  triage_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["openai", "anthropic", "grok"]
+    model_selection_strategy: "balanced" # Balanced approach for triage
+    max_tokens: 16000 # Higher token limit for better triage
+    temperature: 0.1
+    timeout: 60 # Longer timeout for reliability
+    retry_attempts: 3
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash"
+      - "gpt-4o-mini"
+      - "claude-3-5-haiku-20241022"
+      - "grok-beta"
+
+  remediation_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["anthropic", "openai", "grok", "bedrock"]
+    model_selection_strategy: "quality_optimized"
+    max_tokens: 128000 # Very high token limit for complex remediation
+    temperature: 0.2
+    timeout: 180 # Very long timeout for complex tasks
+    retry_attempts: 5
+    enable_streaming: true
+    enable_tools: true
+    model_preferences:
+      - "gemini-1.5-pro"
+      - "claude-3-5-sonnet-20241022"
+      - "gpt-4o"
+      - "grok-beta"
+      - "anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+  code_generation_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["anthropic", "openai", "grok"]
+    model_selection_strategy: "quality_optimized"
+    max_tokens: 32000 # High token limit for complex code generation
+    temperature: 0.1
+    timeout: 120
+    retry_attempts: 5
+    enable_streaming: true
+    enable_tools: true
+    model_preferences:
+      - "gemini-1.5-pro"
+      - "claude-3-5-sonnet-20241022"
+      - "gpt-4o"
+      - "grok-beta"
+
+  monitoring_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["openai", "anthropic", "grok"]
+    model_selection_strategy: "speed_optimized" # Speed for monitoring
+    max_tokens: 8000
+    temperature: 0.1
+    timeout: 30
+    retry_attempts: 3
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash"
+      - "gpt-4o-mini"
+      - "claude-3-5-haiku-20241022"
+      - "grok-beta"
+
+# Cost management configuration (Production monitoring)
+cost_config:
+  monthly_budget: 5000.0 # Higher budget for production
+  alert_threshold: 0.8
+  enable_tracking: true
+  cost_optimization: false # Disabled for production reliability
+  optimization_strategy: "conservative" # Conservative approach
+  cost_breakdown:
+    by_provider: true
+    by_model: true
+    by_agent: true
+    by_hour: true # Hourly breakdown for production monitoring
+    by_day: true # Daily breakdown
+  alerts:
+    email: "ops@company.com"
+    webhook: "https://hooks.slack.com/services/..."
+    threshold_percentages: [25, 50, 75, 90, 95, 100]
+  daily_limit: 200.0 # Higher daily limit
+  weekly_limit: 1000.0 # Higher weekly limit
+  cost_anomaly_detection: true # Enable anomaly detection
+  cost_forecasting: true # Enable cost forecasting
+
+# Resilience configuration (Production-grade)
+resilience_config:
+  circuit_breaker_threshold: 10 # Higher threshold for production
+  circuit_breaker_timeout: 120 # Longer timeout
+  retry_attempts: 5 # More retries
+  retry_delay: 1.0
+  retry_backoff: 2.0
+  fallback_enabled: true
+  health_check_interval: 15 # More frequent health checks
+  timeout_multiplier: 1.5
+  jitter_enabled: true
+  max_concurrent_requests: 20 # Higher concurrency
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100 # Higher rate limit
+    burst_size: 20 # Larger burst size
+  graceful_degradation: true # Enable graceful degradation
+  load_balancing: true # Enable load balancing
+  failover_strategy: "immediate" # Immediate failover

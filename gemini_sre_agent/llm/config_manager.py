@@ -18,7 +18,7 @@ from .config import (
     AgentLLMConfig,
     LLMConfig,
     LLMProviderConfig,
-ModelType,
+    ModelType,
 )
 
 logger = logging.getLogger(__name__)

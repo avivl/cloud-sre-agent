@@ -1,0 +1,217 @@
+# Cost-Optimized LLM Configuration Example
+# This configuration prioritizes cost efficiency while maintaining reasonable performance.
+# Ideal for development environments or budget-conscious deployments.
+
+# Main configuration
+default_provider: "gemini"
+default_model_type: "FAST"
+enable_fallback: true
+enable_monitoring: true
+
+# Provider configurations
+providers:
+  # Google Gemini Provider (Primary - Cost-effective models)
+  gemini:
+    provider: "gemini"
+    api_key: "${GEMINI_API_KEY}"
+    base_url: "https://generativelanguage.googleapis.com/v1"
+    timeout: 30
+    max_retries: 3
+    rate_limit: 60
+    models:
+      gemini-1.5-flash:
+        name: "gemini-1.5-flash"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.000075
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis"]
+      gemini-1.5-flash-lite:
+        name: "gemini-1.5-flash-lite"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0000375
+        max_tokens: 4096
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      project_id: "${GEMINI_PROJECT_ID}"
+
+  # OpenAI Provider (Fallback - Cost-effective models)
+  openai:
+    provider: "openai"
+    api_key: "${OPENAI_API_KEY}"
+    base_url: "https://api.openai.com/v1"
+    timeout: 30
+    max_retries: 3
+    rate_limit: 60
+    models:
+      gpt-4o-mini:
+        name: "gpt-4o-mini"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.00015
+        max_tokens: 128000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation"]
+      gpt-3.5-turbo:
+        name: "gpt-3.5-turbo"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0005
+        max_tokens: 16384
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      organization: "${OPENAI_ORG_ID}"
+
+  # Anthropic Provider (Fallback - Cost-effective models)
+  anthropic:
+    provider: "anthropic"
+    api_key: "${ANTHROPIC_API_KEY}"
+    base_url: "https://api.anthropic.com"
+    timeout: 30
+    max_retries: 3
+    rate_limit: 50
+    models:
+      claude-3-5-haiku-20241022:
+        name: "claude-3-5-haiku-20241022"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.00025
+        max_tokens: 200000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      version: "2023-06-01"
+
+  # Ollama Provider (Free local models)
+  ollama:
+    provider: "ollama"
+    base_url: "http://localhost:11434"
+    timeout: 120
+    max_retries: 2
+    rate_limit: null
+    models:
+      llama3.1:8b:
+        name: "llama3.1:8b"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+      codellama:7b:
+        name: "codellama:7b"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 16384
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["code_generation", "code_analysis"]
+    provider_specific:
+      host: "localhost"
+      port: 11434
+      tls: false
+
+# Agent configurations (Cost-optimized)
+agents:
+  analysis_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["openai", "anthropic", "ollama"]
+    model_selection_strategy: "cost_optimized"
+    max_tokens: 16000 # Reduced from 32000
+    temperature: 0.3
+    timeout: 45 # Reduced from 60
+    retry_attempts: 2 # Reduced from 3
+    enable_streaming: false # Disabled to reduce complexity
+    enable_tools: false # Disabled to reduce costs
+    model_preferences:
+      - "gemini-1.5-flash"
+      - "gpt-4o-mini"
+      - "claude-3-5-haiku-20241022"
+      - "llama3.1:8b"
+
+  triage_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["openai", "anthropic", "ollama"]
+    model_selection_strategy: "cost_optimized"
+    max_tokens: 4000 # Reduced from 8000
+    temperature: 0.1
+    timeout: 20 # Reduced from 30
+    retry_attempts: 1 # Reduced from 2
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash-lite"
+      - "gpt-3.5-turbo"
+      - "claude-3-5-haiku-20241022"
+      - "llama3.1:8b"
+
+  remediation_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["openai", "anthropic", "ollama"]
+    model_selection_strategy: "cost_optimized"
+    max_tokens: 32000 # Reduced from 64000
+    temperature: 0.2
+    timeout: 60 # Reduced from 90
+    retry_attempts: 2 # Reduced from 3
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash"
+      - "gpt-4o-mini"
+      - "claude-3-5-haiku-20241022"
+      - "llama3.1:8b"
+
+  code_generation_agent:
+    primary_provider: "ollama" # Use free local model first
+    fallback_providers: ["gemini", "openai", "anthropic"]
+    model_selection_strategy: "cost_optimized"
+    max_tokens: 8000 # Reduced from 16000
+    temperature: 0.1
+    timeout: 60
+    retry_attempts: 2
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "codellama:7b"
+      - "gemini-1.5-flash"
+      - "gpt-3.5-turbo"
+      - "claude-3-5-haiku-20241022"
+
+# Cost management configuration (Aggressive cost control)
+cost_config:
+  monthly_budget: 100.0 # Low budget
+  alert_threshold: 0.5 # Alert at 50% of budget
+  enable_tracking: true
+  cost_optimization: true
+  optimization_strategy: "aggressive" # Aggressive cost optimization
+  cost_breakdown:
+    by_provider: true
+    by_model: true
+    by_agent: true
+  alerts:
+    email: "admin@company.com"
+    webhook: "https://hooks.slack.com/services/..."
+    threshold_percentages: [25, 50, 75, 90, 100] # More frequent alerts
+  daily_limit: 5.0 # Daily spending limit
+  weekly_limit: 25.0 # Weekly spending limit
+
+# Resilience configuration (Simplified for cost)
+resilience_config:
+  circuit_breaker_threshold: 3 # Lower threshold
+  circuit_breaker_timeout: 30 # Shorter timeout
+  retry_attempts: 2 # Fewer retries
+  retry_delay: 0.5 # Shorter delay
+  retry_backoff: 1.5 # Less aggressive backoff
+  fallback_enabled: true
+  health_check_interval: 60 # Less frequent health checks
+  timeout_multiplier: 1.2 # Less aggressive timeout multiplier
+  jitter_enabled: false # Disabled to reduce complexity
+  max_concurrent_requests: 5 # Reduced concurrency
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 30 # Lower rate limit
+    burst_size: 5 # Smaller burst size

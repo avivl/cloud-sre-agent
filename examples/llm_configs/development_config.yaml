@@ -1,0 +1,248 @@
+# Development LLM Configuration Example
+# This configuration is optimized for development environments with local models
+# and minimal external API usage to reduce costs and improve development speed.
+
+# Main configuration
+default_provider: "ollama" # Use local models by default
+default_model_type: "FAST"
+enable_fallback: true
+enable_monitoring: true
+
+# Provider configurations
+providers:
+  # Google Gemini Provider (Primary for development - cost-effective)
+  gemini:
+    provider: "gemini"
+    api_key: "${GEMINI_API_KEY}"
+    base_url: "https://generativelanguage.googleapis.com/v1"
+    timeout: 30
+    max_retries: 3
+    rate_limit: 60
+    models:
+      gemini-1.5-flash:
+        name: "gemini-1.5-flash"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.000075
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation", "analysis"]
+      gemini-1.5-flash-lite:
+        name: "gemini-1.5-flash-lite"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0000375
+        max_tokens: 4096
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      project_id: "${GEMINI_PROJECT_ID}"
+
+  # Ollama Provider (Secondary for development)
+  ollama:
+    provider: "ollama"
+    base_url: "http://localhost:11434"
+    timeout: 120
+    max_retries: 2
+    rate_limit: null
+    models:
+      llama3.1:8b:
+        name: "llama3.1:8b"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+      llama3.1:70b:
+        name: "llama3.1:70b"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation", "analysis"]
+      codellama:7b:
+        name: "codellama:7b"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 16384
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["code_generation", "code_analysis"]
+      codellama:13b:
+        name: "codellama:13b"
+        model_type: "SMART"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 16384
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["code_generation", "code_analysis"]
+      mistral:7b:
+        name: "mistral:7b"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 8192
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      host: "localhost"
+      port: 11434
+      tls: false
+
+  # OpenAI Provider (Fallback for testing)
+  openai:
+    provider: "openai"
+    api_key: "${OPENAI_API_KEY}"
+    base_url: "https://api.openai.com/v1"
+    timeout: 30
+    max_retries: 2
+    rate_limit: 20 # Lower rate limit for development
+    models:
+      gpt-4o-mini:
+        name: "gpt-4o-mini"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.00015
+        max_tokens: 128000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      organization: "${OPENAI_ORG_ID}"
+
+  # Anthropic Provider (Fallback for testing)
+  anthropic:
+    provider: "anthropic"
+    api_key: "${ANTHROPIC_API_KEY}"
+    base_url: "https://api.anthropic.com"
+    timeout: 30
+    max_retries: 2
+    rate_limit: 20 # Lower rate limit for development
+    models:
+      claude-3-5-haiku-20241022:
+        name: "claude-3-5-haiku-20241022"
+        model_type: "FAST"
+        cost_per_1k_tokens: 0.00025
+        max_tokens: 200000
+        supports_streaming: true
+        supports_tools: true
+        capabilities: ["reasoning", "code_generation"]
+    provider_specific:
+      version: "2023-06-01"
+
+# Agent configurations (Development-optimized)
+agents:
+  analysis_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["ollama", "openai", "anthropic"]
+    model_selection_strategy: "speed_optimized" # Speed over cost in development
+    max_tokens: 8000
+    temperature: 0.3
+    timeout: 60
+    retry_attempts: 2
+    enable_streaming: true # Enable for development feedback
+    enable_tools: false # Disabled for simplicity
+    model_preferences:
+      - "gemini-1.5-flash"
+      - "llama3.1:8b"
+      - "mistral:7b"
+      - "gpt-4o-mini"
+
+  triage_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["ollama", "openai", "anthropic"]
+    model_selection_strategy: "speed_optimized"
+    max_tokens: 4000
+    temperature: 0.1
+    timeout: 30
+    retry_attempts: 1
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash-lite"
+      - "llama3.1:8b"
+      - "mistral:7b"
+      - "gpt-4o-mini"
+
+  remediation_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["ollama", "openai", "anthropic"]
+    model_selection_strategy: "quality_optimized" # Quality for remediation
+    max_tokens: 16000
+    temperature: 0.2
+    timeout: 90
+    retry_attempts: 2
+    enable_streaming: true
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash"
+      - "llama3.1:70b"
+      - "codellama:13b"
+      - "gpt-4o-mini"
+
+  code_generation_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["ollama", "openai", "anthropic"]
+    model_selection_strategy: "quality_optimized"
+    max_tokens: 8000
+    temperature: 0.1
+    timeout: 60
+    retry_attempts: 2
+    enable_streaming: true
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash"
+      - "codellama:7b"
+      - "codellama:13b"
+      - "gpt-4o-mini"
+
+  testing_agent:
+    primary_provider: "gemini"
+    fallback_providers: ["ollama", "openai"]
+    model_selection_strategy: "speed_optimized"
+    max_tokens: 2000
+    temperature: 0.1
+    timeout: 20
+    retry_attempts: 1
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "gemini-1.5-flash-lite"
+      - "llama3.1:8b"
+      - "mistral:7b"
+
+# Cost management configuration (Development-friendly)
+cost_config:
+  monthly_budget: 50.0 # Low budget for development
+  alert_threshold: 0.8
+  enable_tracking: true
+  cost_optimization: true
+  optimization_strategy: "balanced"
+  cost_breakdown:
+    by_provider: true
+    by_model: true
+    by_agent: true
+  alerts:
+    email: "dev@company.com"
+    webhook: "https://hooks.slack.com/services/..."
+    threshold_percentages: [50, 75, 90, 100]
+  daily_limit: 2.0 # Very low daily limit
+  weekly_limit: 10.0 # Low weekly limit
+
+# Resilience configuration (Development-optimized)
+resilience_config:
+  circuit_breaker_threshold: 3
+  circuit_breaker_timeout: 30
+  retry_attempts: 2
+  retry_delay: 0.5
+  retry_backoff: 1.5
+  fallback_enabled: true
+  health_check_interval: 30
+  timeout_multiplier: 1.2
+  jitter_enabled: true
+  max_concurrent_requests: 3 # Lower concurrency for development
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 20 # Lower rate limit
+    burst_size: 3 # Smaller burst size
