@@ -18,6 +18,8 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
+    - osv-scanner@2.2.2
+    - tflint@0.59.1
     - pyright@1.1.405
     - bandit@1.8.6
     - black@25.1.0
