@@ -7,9 +7,10 @@ This module contains the concrete implementation of the LLMProvider interface
 for Anthropic's Claude models.
 """
 
-import asyncio
 import logging
 from typing import Any, Dict, List
+
+import anthropic
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
@@ -23,42 +24,111 @@ class AnthropicProvider(LLMProvider):
     def __init__(self, config: LLMProviderConfig):
         super().__init__(config)
         self.api_key = config.api_key
-        self.base_url = config.base_url or "https://api.anthropic.com"
+        self.base_url = str(config.base_url) if config.base_url else "https://api.anthropic.com"
+
+        # Initialize Anthropic client
+        self.client = anthropic.AsyncAnthropic(
+            api_key=self.api_key,
+            base_url=self.base_url
+        )
+
+        # Get model from provider_specific config
+        provider_specific = config.provider_specific or {}
+        self.model = provider_specific.get("model", "claude-3-5-sonnet-20241022")
 
     async def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using Anthropic API."""
-        # TODO: Implement actual Anthropic API call
-        logger.info(f"Generating response with Anthropic model: {self.model}")
+        try:
+            logger.info(f"Generating response with Anthropic model: {self.model}")
 
-        # Mock implementation for now
-        return LLMResponse(
-            content="Mock Anthropic response",
-            model=self.model,
-            provider=self.provider_name,
-            usage={"input_tokens": 10, "output_tokens": 5},
-        )
+            # Convert messages to Anthropic format
+            messages = self._convert_messages_to_anthropic_format(request.messages or [])
+
+            # Get generation parameters
+            provider_specific = self.config.provider_specific or {}
+
+            # Make the API call
+            response = await self.client.messages.create(  # type: ignore
+                model=self.model,
+                messages=messages,  # type: ignore
+                max_tokens=provider_specific.get("max_tokens", 1000),
+                temperature=provider_specific.get("temperature", 0.7),
+                top_p=provider_specific.get("top_p", 1.0),
+            )
+
+            # Extract usage information
+            usage = self._extract_usage(response)
+
+            # Extract text content from response
+            content = ""
+            if response.content and len(response.content) > 0:
+                if hasattr(response.content[0], 'text'):
+                    content = response.content[0].text  # type: ignore
+                else:
+                    content = str(response.content[0])
+
+            return LLMResponse(
+                content=content,
+                model=self.model,
+                provider=self.provider_name,
+                usage=usage,
+            )
+
+        except Exception as e:
+            logger.error(f"Error generating response: {e}")
+            raise
 
     async def generate_stream(self, request: LLMRequest):  # type: ignore
         """Generate streaming response using Anthropic API."""
-        # TODO: Implement actual Anthropic streaming API call
-        logger.info(f"Generating streaming response with Anthropic model: {self.model}")
+        try:
+            logger.info(f"Generating streaming response with Anthropic model: {self.model}")
 
-        # Mock implementation for now
-        chunks = ["Mock", " Anthropic", " streaming", " response"]
-        for i, chunk in enumerate(chunks):
-            yield LLMResponse(
-                content=chunk,
+            # Convert messages to Anthropic format
+            messages = self._convert_messages_to_anthropic_format(request.messages or [])
+
+            # Get generation parameters
+            provider_specific = self.config.provider_specific or {}
+
+            # Make the streaming API call
+            stream = await self.client.messages.create(  # type: ignore
                 model=self.model,
-                provider=self.provider_name,
-                usage={"input_tokens": 10, "output_tokens": i + 1},
+                messages=messages,  # type: ignore
+                max_tokens=provider_specific.get("max_tokens", 1000),
+                temperature=provider_specific.get("temperature", 0.7),
+                top_p=provider_specific.get("top_p", 1.0),
+                stream=True
             )
-            await asyncio.sleep(0.1)  # Simulate streaming delay
+
+            # Process streaming response
+            async for chunk in stream:
+                if hasattr(chunk, 'type') and chunk.type == "content_block_delta":
+                    if hasattr(chunk, 'delta') and hasattr(chunk.delta, 'text'):
+                        usage = self._extract_usage(chunk) if hasattr(chunk, 'usage') else {"input_tokens": 0, "output_tokens": 0}
+                        yield LLMResponse(
+                            content=chunk.delta.text,
+                            model=self.model,
+                            provider=self.provider_name,
+                            usage=usage,
+                        )
+
+        except Exception as e:
+            logger.error(f"Error generating streaming response: {e}")
+            raise
 
     async def health_check(self) -> bool:
         """Check if Anthropic API is accessible."""
-        # TODO: Implement actual health check
-        logger.debug("Performing Anthropic health check")
-        return True  # Mock implementation
+        try:
+            logger.debug("Performing Anthropic health check")
+            # Make a simple API call to test connectivity
+            await self.client.messages.create(  # type: ignore
+                model=self.model,
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=1
+            )
+            return True
+        except Exception as e:
+            logger.warning(f"Anthropic health check failed: {e}")
+            return False
 
     def supports_streaming(self) -> bool:
         """Check if Anthropic supports streaming."""
@@ -85,17 +155,24 @@ class AnthropicProvider(LLMProvider):
 
     async def embeddings(self, text: str) -> List[float]:
         """Generate embeddings using Anthropic API."""
-        # TODO: Implement actual Anthropic embeddings API call
-        logger.info(f"Generating embeddings for text of length: {len(text)}")
+        try:
+            logger.info(f"Generating embeddings for text of length: {len(text)}")
 
-        # Mock implementation - return a vector of zeros
-        return [0.0] * 1024  # Anthropic embedding dimension
+            # Anthropic doesn't have a direct embeddings API
+            # For now, return a mock embedding since Anthropic doesn't provide embeddings
+            # In a real implementation, you might use a different service for embeddings
+            return [0.0] * 1024  # Anthropic doesn't provide embeddings
+
+        except Exception as e:
+            logger.error(f"Error generating embeddings: {e}")
+            # Fallback to mock implementation
+            return [0.0] * 1024
 
     def token_count(self, text: str) -> int:
         """Count tokens in the given text."""
-        # TODO: Implement actual token counting
-        # For now, use a rough approximation
-        return int(len(text.split()) * 1.3)  # Rough approximation
+        # Anthropic doesn't provide a direct token counting function
+        # Use a rough approximation based on word count
+        return int(len(text.split()) * 1.3)
 
     def cost_estimate(self, input_tokens: int, output_tokens: int) -> float:
         """Estimate cost for the given token usage."""
@@ -107,6 +184,37 @@ class AnthropicProvider(LLMProvider):
         output_cost = (output_tokens / 1000) * output_cost_per_1k
 
         return input_cost + output_cost
+
+    def _convert_messages_to_anthropic_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        """Convert messages to Anthropic format."""
+        anthropic_messages = []
+        for message in messages:
+            role = message.get("role", "user")
+            content = message.get("content", "")
+
+            # Anthropic uses "user" and "assistant" roles
+            if role in ["user", "assistant"]:
+                anthropic_messages.append({"role": role, "content": content})
+            elif role == "system":
+                # Anthropic handles system messages differently
+                # For now, we'll prepend to the first user message
+                if anthropic_messages and anthropic_messages[0]["role"] == "user":
+                    anthropic_messages[0]["content"] = f"System: {content}\n\n{anthropic_messages[0]['content']}"
+                else:
+                    # If no user message yet, create one
+                    anthropic_messages.append({"role": "user", "content": f"System: {content}"})
+
+        return anthropic_messages
+
+    def _extract_usage(self, response: Any) -> Dict[str, int]:
+        """Extract usage information from Anthropic response."""
+        usage = {"input_tokens": 0, "output_tokens": 0}
+
+        if hasattr(response, "usage"):
+            usage["input_tokens"] = getattr(response.usage, "input_tokens", 0)
+            usage["output_tokens"] = getattr(response.usage, "output_tokens", 0)
+
+        return usage
 
     @classmethod
     def validate_config(cls, config: Any) -> None:
