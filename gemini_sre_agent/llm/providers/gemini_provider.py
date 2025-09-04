@@ -5,10 +5,9 @@ Google Gemini provider implementation using the official google-generativeai SDK
 """
 
 import logging
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, Dict, List
 
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from google import genai
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
@@ -35,11 +34,9 @@ class GeminiProvider(LLMProvider):
         provider_specific = config.provider_specific or {}
         self.model = provider_specific.get("model", "gemini-1.5-flash")
 
-        # Configure the Gemini client
-        genai.configure(api_key=self.api_key)
-
-        # Initialize the model
-        self._model: Optional[genai.GenerativeModel] = None
+        # Initialize the Gemini client
+        self._client = genai.Client(api_key=self.api_key)
+        self._model = None
         self._initialize_model()
 
     def _initialize_model(self) -> None:
@@ -48,30 +45,16 @@ class GeminiProvider(LLMProvider):
             # Get model name from config or use default
             model_name = self.model or "gemini-1.5-flash"
 
-            # Get generation parameters from provider_specific or use defaults
+            # Store generation parameters for use in requests
             provider_specific = self.config.provider_specific or {}
-            generation_config = genai.types.GenerationConfig(
-temperature=provider_specific.get("temperature", 0.7),
-top_p=provider_specific.get("top_p", 0.95),
-top_k=provider_specific.get("top_k", 40),
-max_output_tokens=provider_specific.get("max_tokens", 8192),
-            )
-
-            # Configure safety settings
-            safety_settings = {
-HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            self.generation_config = {
+                "temperature": provider_specific.get("temperature", 0.7),
+                "top_p": provider_specific.get("top_p", 0.95),
+                "top_k": provider_specific.get("top_k", 40),
+                "max_output_tokens": provider_specific.get("max_tokens", 8192),
             }
 
-            # Create the model
-            self._model = genai.GenerativeModel(
-model_name=model_name,
-generation_config=generation_config,
-safety_settings=safety_settings,
-            )
-
+            self._model = model_name
             logger.info(f"Initialized Gemini model: {model_name}")
 
         except Exception as e:
@@ -87,26 +70,26 @@ safety_settings=safety_settings,
             # Convert messages to Gemini prompt format
             prompt = self._convert_messages_to_prompt(request.messages or [])
 
-            # Generate content
-            response = self._model.generate_content(prompt)
+            # Generate content using new SDK
+            response = self._client.models.generate_content(
+                model=self._model, contents=prompt
+            )
 
             # Extract usage information
             usage = self._extract_usage(response)
 
             return LLMResponse(
-content=response.text or "",
-model=self.model,
-provider=self.provider_name,
-usage=usage,
+                content=response.text or "",
+                model=self.model,
+                provider=self.provider_name,
+                usage=usage,
             )
 
         except Exception as e:
             logger.error(f"Error generating response: {e}")
             raise
 
-    async def generate_stream(
-        self, request: LLMRequest
-    ) -> AsyncGenerator[LLMResponse, None]:
+    async def generate_stream(self, request: LLMRequest):  # type: ignore
         """Generate streaming response using Gemini API."""
         try:
             if self._model is None:
@@ -115,13 +98,13 @@ usage=usage,
             # Convert messages to Gemini prompt format
             prompt = self._convert_messages_to_prompt(request.messages or [])
 
-            # Generate content with streaming
-            response_stream = self._model.generate_content(prompt, stream=True)
+            # Generate content with streaming using new SDK
+            response_stream = self._client.models.generate_content_stream(
+                model=self._model, contents=prompt
+            )
 
-            full_content = ""
             for chunk in response_stream:
                 if chunk.text:
-                    full_content += chunk.text
                     usage = self._extract_usage(chunk)
 
                     yield LLMResponse(
@@ -142,7 +125,9 @@ usage=usage,
                 return False
 
             # Perform a simple test generation
-            test_response = self._model.generate_content("Hello")
+            test_response = self._client.models.generate_content(
+                model=self._model, contents="Hello"
+            )
             return test_response is not None
         except Exception as e:
             logger.warning(f"Health check failed: {e}")
@@ -175,13 +160,14 @@ usage=usage,
     async def embeddings(self, text: str) -> List[float]:
         """Generate embeddings using Gemini API."""
         try:
-            # Use the embedding model
-            result = genai.embed_content(
-model="models/embedding-001",
-content=text,
-task_type="retrieval_document",
+            # Use the embedding model with new SDK
+            result = self._client.models.embed_content(
+                model="models/embedding-001",
+                contents=text,
             )
-            return result["embedding"]
+            if result.embeddings and len(result.embeddings) > 0 and result.embeddings[0].values:
+                return result.embeddings[0].values
+            return []
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
             raise
@@ -193,8 +179,9 @@ task_type="retrieval_document",
                 # Fallback to rough approximation if model not initialized
                 return int(len(text.split()) * 1.3)
 
-            # Use the model's count_tokens method
-            return self._model.count_tokens(text).total_tokens
+            # Use the client's count_tokens method
+            result = self._client.models.count_tokens(model=self._model, contents=text)
+            return result.total_tokens or 0
         except Exception as e:
             logger.warning(f"Token counting failed, using approximation: {e}")
             # Fallback to rough approximation
@@ -237,10 +224,15 @@ task_type="retrieval_document",
 
         if hasattr(response, "usage_metadata") and response.usage_metadata:
             usage["input_tokens"] = getattr(
-response.usage_metadata, "prompt_token_count", 0
+                response.usage_metadata, "prompt_token_count", 0
             )
             usage["output_tokens"] = getattr(
-response.usage_metadata, "candidates_token_count", 0
+                response.usage_metadata, "candidates_token_count", 0
+            )
+        elif hasattr(response, "usage") and response.usage:
+            usage["input_tokens"] = getattr(response.usage, "prompt_token_count", 0)
+            usage["output_tokens"] = getattr(
+                response.usage, "candidates_token_count", 0
             )
 
         return usage
@@ -257,10 +249,10 @@ response.usage_metadata, "candidates_token_count", 0
         # Validate model name if provided
         if hasattr(config, "model") and config.model:
             valid_models = [
-"gemini-1.5-flash",
-"gemini-1.5-pro",
-"gemini-1.0-pro",
-"gemini-1.0-ultra",
+                "gemini-1.5-flash",
+                "gemini-1.5-pro",
+                "gemini-1.0-pro",
+                "gemini-1.0-ultra",
             ]
             if config.model not in valid_models:
                 logger.warning(f"Model {config.model} may not be supported by Gemini")
