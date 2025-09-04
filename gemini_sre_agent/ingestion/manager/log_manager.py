@@ -60,7 +60,6 @@ class LogManager:
 
         del self.sources[source_name]
         del self.source_configs[source_name]
-        del self.circuit_breakers[source_name]
 
         logger.info(f"Removed source '{source_name}'")
 
@@ -126,12 +125,11 @@ class LogManager:
     async def _process_source_logs(self, source_name: str) -> None:
         """Process logs from a specific source."""
         source = self.sources[source_name]
-        circuit_breaker = self.circuit_breakers[source_name]
 
         while self.running:
             try:
-                # Use circuit breaker for log processing
-                log_iterator = await circuit_breaker.call(source.get_logs)
+                # Get logs directly from source (resilience handled by source)
+                log_iterator = await source.get_logs()
                 async for log_entry in log_iterator:
                     # Check backpressure
                     if not await self.backpressure_manager.can_accept():
@@ -226,9 +224,8 @@ class LogManager:
             except Exception as e:
                 metrics["sources"][source_name] = {"error": str(e)}
 
-        # Get circuit breaker states
-        for source_name, cb in self.circuit_breakers.items():
-            metrics["circuit_breakers"][source_name] = cb.get_state()
+        # Circuit breaker states are now handled by individual sources
+        # and can be accessed through their health metrics
 
         return metrics
 
