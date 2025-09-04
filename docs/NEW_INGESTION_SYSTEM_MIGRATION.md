@@ -7,18 +7,21 @@ The Gemini SRE Agent has been enhanced with a new, comprehensive log ingestion s
 ## New Features
 
 ### 🚀 Enhanced Architecture
+
 - **Pluggable Adapters**: Support for multiple log sources (GCP Pub/Sub, Kubernetes, File System, AWS CloudWatch, etc.)
 - **Comprehensive Monitoring**: Built-in metrics collection, health checks, performance monitoring, and alerting
 - **Resilience Patterns**: Circuit breakers, backpressure management, automatic retries, and failover
 - **Production Ready**: Enterprise-grade observability and error handling
 
 ### 📊 Monitoring System
+
 - **MetricsCollector**: Real-time metrics with counters, gauges, histograms, and custom metrics
 - **HealthChecker**: Component health monitoring with automated status checks
 - **PerformanceMonitor**: Processing time tracking, throughput analysis, and resource utilization
 - **AlertManager**: Configurable alerts with multiple notification channels and escalation
 
 ### 🔧 Configuration Management
+
 - **Unified Configuration**: Single configuration system for all ingestion sources
 - **Runtime Updates**: Dynamic configuration changes without restarts
 - **Validation**: Comprehensive configuration validation and error reporting
@@ -46,27 +49,30 @@ Update your startup configuration to use the new system by default.
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `USE_NEW_INGESTION_SYSTEM` | `false` | Enable the new log ingestion system |
-| `ENABLE_MONITORING` | `true` | Enable comprehensive monitoring features |
-| `ENABLE_LEGACY_FALLBACK` | `true` | Fall back to legacy system if new system fails |
+| Variable                   | Default | Description                                    |
+| -------------------------- | ------- | ---------------------------------------------- |
+| `USE_NEW_INGESTION_SYSTEM` | `false` | Enable the new log ingestion system            |
+| `ENABLE_MONITORING`        | `true`  | Enable comprehensive monitoring features       |
+| `ENABLE_LEGACY_FALLBACK`   | `true`  | Fall back to legacy system if new system fails |
 
 ## Key Benefits
 
 ### 🛡️ Improved Reliability
+
 - **Circuit Breakers**: Prevent cascade failures
 - **Backpressure Management**: Handle high-volume log streams
 - **Automatic Retries**: Resilient error handling
 - **Health Monitoring**: Proactive issue detection
 
 ### 📈 Enhanced Observability
+
 - **Real-time Metrics**: Processing rates, error counts, latencies
 - **Performance Tracking**: Resource utilization and bottleneck identification
 - **Alert Management**: Configurable alerting with escalation policies
 - **Health Dashboards**: Component status and system health overview
 
 ### 🔌 Extensibility
+
 - **Multiple Sources**: Easy addition of new log sources
 - **Adapter Pattern**: Clean separation of concerns
 - **Configuration Driven**: No code changes for new sources
@@ -127,18 +133,21 @@ If issues occur during migration:
 ## Testing Recommendations
 
 ### 1. Development Environment
+
 - Test with `USE_NEW_INGESTION_SYSTEM=true`
 - Verify all log sources are properly ingested
 - Confirm monitoring metrics are collected
 - Test failure scenarios and recovery
 
 ### 2. Staging Environment
+
 - Run both systems in parallel with feature flags
 - Compare processing results and performance
 - Validate monitoring and alerting functionality
 - Test configuration changes and updates
 
 ### 3. Production Rollout
+
 - Start with non-critical services
 - Monitor health metrics and error rates
 - Gradually expand to more services
@@ -147,6 +156,7 @@ If issues occur during migration:
 ## Monitoring During Migration
 
 ### Key Metrics to Watch
+
 - **Log Processing Rate**: Ensure consistent throughput
 - **Error Rates**: Monitor for increased failures
 - **Latency**: Check processing times remain acceptable
@@ -154,6 +164,7 @@ If issues occur during migration:
 - **Health Status**: Monitor all component health checks
 
 ### Alert Configurations
+
 ```python
 # Example alert for high error rate
 await monitoring_manager.create_alert(
@@ -194,24 +205,28 @@ await monitoring_manager.create_alert(
 ## Best Practices
 
 ### 1. Gradual Migration
+
 - Start with low-volume services
 - Use feature flags for controlled rollout
 - Monitor metrics during transition
 - Keep fallback options available
 
 ### 2. Monitoring Setup
+
 - Configure comprehensive health checks
 - Set up appropriate alert thresholds
 - Monitor both technical and business metrics
 - Create operational dashboards
 
 ### 3. Configuration Management
+
 - Use version control for configurations
 - Test configuration changes in staging
 - Implement configuration validation
 - Document configuration changes
 
 ### 4. Operational Readiness
+
 - Train team on new monitoring tools
 - Update runbooks and procedures
 - Establish escalation procedures
@@ -220,6 +235,7 @@ await monitoring_manager.create_alert(
 ## Next Steps
 
 After successful migration:
+
 1. **Performance Optimization**: Tune configuration based on monitoring data
 2. **Additional Sources**: Add new log sources as needed
 3. **Advanced Features**: Implement custom adapters or processors

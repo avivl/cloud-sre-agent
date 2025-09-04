@@ -25,7 +25,12 @@ logger = logging.getLogger(__name__)
 class LogManager:
     """Orchestrates multiple log sources with health monitoring and failover."""
 
-    def __init__(self, callback: Optional[Union[Callable[[LogEntry], None], Callable[[LogEntry], Awaitable[None]]]] = None):
+    def __init__(
+        self,
+        callback: Optional[
+            Union[Callable[[LogEntry], None], Callable[[LogEntry], Awaitable[None]]]
+        ] = None,
+    ):
         self.sources: Dict[str, LogIngestionInterface] = {}
         self.source_configs: Dict[str, SourceConfig] = {}
         self.backpressure_manager = BackpressureManager()
