@@ -6,7 +6,7 @@ LogManager orchestrates multiple log sources with health monitoring and failover
 
 import asyncio
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 from ..interfaces import (
     BackpressureManager,
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class LogManager:
     """Orchestrates multiple log sources with health monitoring and failover."""
 
-    def __init__(self, callback: Optional[Callable[[LogEntry], None]] = None):
+    def __init__(self, callback: Optional[Union[Callable[[LogEntry], None], Callable[[LogEntry], Awaitable[None]]]] = None):
         self.sources: Dict[str, LogIngestionInterface] = {}
         self.source_configs: Dict[str, SourceConfig] = {}
         self.backpressure_manager = BackpressureManager()
@@ -47,7 +47,7 @@ class LogManager:
         # Circuit breaker functionality moved to individual adapters
         pass
 
-        logger.info(f"Added source '{source_name}' of type {config.type.value}")
+        logger.info(f"Added source '{source_name}' of type {config.source_type.value}")
 
     async def remove_source(self, source_name: str) -> None:
         """Remove a log source from the manager."""

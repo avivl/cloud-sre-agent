@@ -189,7 +189,7 @@ async def demonstrate_with_ingestion_config():
                 },
             )
 
-            print("\n🔧 Derived Resilience Config:"g:")
+            print("\n🔧 Derived Resilience Config:")
             print(f"   Max throughput: {global_cfg.max_throughput} logs/sec")
             print(f"   Buffer strategy: {global_cfg.buffer_strategy}")
             print(f"   Error threshold: {global_cfg.error_threshold}")

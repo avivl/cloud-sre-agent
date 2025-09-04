@@ -6,19 +6,26 @@ Tests for the LogManager.
 
 import asyncio
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from gemini_sre_agent.config.ingestion_config import FileSystemConfig, SourceType
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity, SourceHealth
-from gemini_sre_agent.ingestion.interfaces.errors import SourceNotFoundError, SourceAlreadyRunningError
+from gemini_sre_agent.ingestion.interfaces.core import (
+    LogEntry,
+    LogSeverity,
+    SourceHealth,
+)
+from gemini_sre_agent.ingestion.interfaces.errors import (
+    SourceAlreadyRunningError,
+    SourceNotFoundError,
+)
 from gemini_sre_agent.ingestion.manager.log_manager import LogManager
 
 
 class MockAdapter:
     """Mock adapter for testing."""
-    
+
     def __init__(self, name: str, running: bool = False):
         self.name = name
         self.running = running
@@ -28,31 +35,31 @@ class MockAdapter:
             last_success=datetime.now(timezone.utc).isoformat(),
             error_count=0,
             last_error=None,
-            metrics={}
+            metrics={},
         )
-    
+
     async def start(self):
         self.running = True
-    
+
     async def stop(self):
         self.running = False
-    
+
     async def get_logs(self):
         for log in self.logs:
             yield log
-    
+
     async def health_check(self) -> SourceHealth:
         return self.health
-    
+
     async def update_config(self, config):
         pass
-    
+
     async def handle_error(self, error, context):
         return True
-    
+
     async def get_health_metrics(self):
         return {"status": "healthy"}
-    
+
     def get_config(self):
         return FileSystemConfig(
             name=self.name,
@@ -86,7 +93,7 @@ class TestLogManager:
     async def test_add_source(self, log_manager, mock_adapter):
         """Test adding a source."""
         await log_manager.add_source(mock_adapter)
-        
+
         assert "test_adapter" in log_manager.sources
         assert log_manager.sources["test_adapter"] == mock_adapter
 
@@ -94,7 +101,7 @@ class TestLogManager:
     async def test_add_source_duplicate(self, log_manager, mock_adapter):
         """Test adding a duplicate source."""
         await log_manager.add_source(mock_adapter)
-        
+
         with pytest.raises(SourceAlreadyRunningError):
             await log_manager.add_source(mock_adapter)
 
@@ -102,9 +109,9 @@ class TestLogManager:
     async def test_remove_source(self, log_manager, mock_adapter):
         """Test removing a source."""
         await log_manager.add_source(mock_adapter)
-        
+
         await log_manager.remove_source("test_source")
-        
+
         assert "test_source" not in log_manager.sources
 
     @pytest.mark.asyncio
@@ -119,12 +126,12 @@ class TestLogManager:
         # Create multiple mock adapters
         adapter1 = MockAdapter("adapter1")
         adapter2 = MockAdapter("adapter2")
-        
+
         await log_manager.add_source(adapter1)
         await log_manager.add_source(adapter2)
-        
+
         await log_manager.start_all_sources()
-        
+
         assert adapter1.running
         assert adapter2.running
         assert log_manager.running
@@ -135,13 +142,13 @@ class TestLogManager:
         # Create and start mock adapters
         adapter1 = MockAdapter("adapter1", running=True)
         adapter2 = MockAdapter("adapter2", running=True)
-        
+
         await log_manager.add_source(adapter1)
         await log_manager.add_source(adapter2)
         log_manager.running = True
-        
+
         await log_manager.stop_all_sources()
-        
+
         assert not adapter1.running
         assert not adapter2.running
         assert not log_manager.running
@@ -158,10 +165,10 @@ class TestLogManager:
                 message="Log from adapter1",
                 source="adapter1",
                 severity=LogSeverity.INFO,
-                metadata={}
+                metadata={},
             )
         ]
-        
+
         adapter2 = MockAdapter("adapter2")
         adapter2.logs = [
             LogEntry(
@@ -170,20 +177,20 @@ class TestLogManager:
                 message="Log from adapter2",
                 source="adapter2",
                 severity=LogSeverity.ERROR,
-                metadata={}
+                metadata={},
             )
         ]
-        
+
         await log_manager.add_source(adapter1)
         await log_manager.add_source(adapter2)
-        
+
         # Collect logs
         all_logs = []
         async for log in log_manager.get_all_logs():
             all_logs.append(log)
             if len(all_logs) >= 2:  # Limit to prevent infinite loop
                 break
-        
+
         assert len(all_logs) >= 1
         for log in all_logs:
             assert isinstance(log, LogEntry)
@@ -192,9 +199,9 @@ class TestLogManager:
     async def test_get_source_health(self, log_manager, mock_adapter):
         """Test getting health status for a source."""
         await log_manager.add_source(mock_adapter)
-        
+
         health = await log_manager.get_source_health("test_source")
-        
+
         assert isinstance(health, SourceHealth)
         assert health.is_healthy
 
@@ -209,12 +216,12 @@ class TestLogManager:
         """Test getting health status for all sources."""
         adapter1 = MockAdapter("adapter1")
         adapter2 = MockAdapter("adapter2")
-        
+
         await log_manager.add_source(adapter1)
         await log_manager.add_source(adapter2)
-        
+
         health_status = await log_manager.get_all_health_status()
-        
+
         assert "source1" in health_status
         assert "source2" in health_status
         assert isinstance(health_status["source1"], SourceHealth)
@@ -224,7 +231,7 @@ class TestLogManager:
     async def test_update_source_config(self, log_manager, mock_adapter):
         """Test updating source configuration."""
         await log_manager.add_source(mock_adapter)
-        
+
         new_config = FileSystemConfig(
             name="updated_adapter",
             type=SourceType.FILE_SYSTEM,
@@ -232,9 +239,9 @@ class TestLogManager:
             file_pattern="*.txt",
             watch_mode=False,
         )
-        
+
         await log_manager.update_source_config("test_source", new_config)
-        
+
         # Verify the adapter's update_config was called
         # (In a real test, we'd mock this method)
 
@@ -248,7 +255,7 @@ class TestLogManager:
             file_pattern="*.txt",
             watch_mode=False,
         )
-        
+
         with pytest.raises(SourceNotFoundError):
             await log_manager.update_source_config("nonexistent_source", new_config)
 
@@ -256,12 +263,12 @@ class TestLogManager:
     async def test_handle_source_error(self, log_manager, mock_adapter):
         """Test handling errors from sources."""
         await log_manager.add_source(mock_adapter)
-        
+
         error = Exception("Test error")
         context = {"operation": "test"}
-        
+
         result = await log_manager.handle_source_error("test_source", error, context)
-        
+
         # Should return True (error was handled)
         assert result is True
 
@@ -270,7 +277,7 @@ class TestLogManager:
         """Test handling error for non-existent source."""
         error = Exception("Test error")
         context = {"operation": "test"}
-        
+
         with pytest.raises(SourceNotFoundError):
             await log_manager.handle_source_error("nonexistent_source", error, context)
 
@@ -278,9 +285,9 @@ class TestLogManager:
     async def test_get_source_metrics(self, log_manager, mock_adapter):
         """Test getting metrics for a source."""
         await log_manager.add_source(mock_adapter)
-        
+
         metrics = await log_manager.get_source_metrics("test_source")
-        
+
         assert isinstance(metrics, dict)
         assert "status" in metrics
 
@@ -295,12 +302,12 @@ class TestLogManager:
         """Test getting metrics for all sources."""
         adapter1 = MockAdapter("adapter1")
         adapter2 = MockAdapter("adapter2")
-        
+
         await log_manager.add_source(adapter1)
         await log_manager.add_source(adapter2)
-        
+
         all_metrics = await log_manager.get_all_metrics()
-        
+
         assert "source1" in all_metrics
         assert "source2" in all_metrics
         assert isinstance(all_metrics["source1"], dict)
@@ -311,12 +318,12 @@ class TestLogManager:
         """Test listing all sources."""
         adapter1 = MockAdapter("adapter1")
         adapter2 = MockAdapter("adapter2")
-        
+
         await log_manager.add_source(adapter1)
         await log_manager.add_source(adapter2)
-        
+
         sources = log_manager.list_sources()
-        
+
         assert "source1" in sources
         assert "source2" in sources
         assert len(sources) == 2
@@ -326,11 +333,11 @@ class TestLogManager:
         """Test using LogManager as async context manager."""
         adapter = MockAdapter("test_adapter")
         log_manager.add_source("test_source", adapter)
-        
+
         async with log_manager:
             assert log_manager.running
             assert adapter.running
-        
+
         assert not log_manager.running
         assert not adapter.running
 
@@ -339,23 +346,21 @@ class TestLogManager:
         """Test concurrent operations on LogManager."""
         # Create multiple adapters
         adapters = [MockAdapter(f"adapter{i}") for i in range(5)]
-        
+
         # Add all adapters concurrently
         tasks = []
-        for i, adapter in enumerate(adapters):
-            task = asyncio.create_task(
-                await log_manager.add_source(adapter)
-            )
+        for _i, adapter in enumerate(adapters):
+            task = asyncio.create_task(await log_manager.add_source(adapter))
             tasks.append(task)
-        
+
         await asyncio.gather(*tasks)
-        
+
         # Verify all sources were added
         assert len(log_manager.sources) == 5
-        
+
         # Start all sources concurrently
         await log_manager.start_all_sources()
-        
+
         # Verify all are running
         for adapter in adapters:
             assert adapter.running
@@ -366,16 +371,16 @@ class TestLogManager:
         # Create adapter that raises an error
         error_adapter = MockAdapter("error_adapter")
         error_adapter.get_logs = AsyncMock(side_effect=Exception("Source error"))
-        
+
         await log_manager.add_source(error_adapter)
-        
+
         # Should handle errors gracefully
         logs = []
         async for log in log_manager.get_all_logs():
             logs.append(log)
             if len(logs) >= 1:  # Limit to prevent infinite loop
                 break
-        
+
         # Should not crash, even with source errors
         assert isinstance(logs, list)
 
@@ -384,13 +389,13 @@ class TestLogManager:
         """Test shutdown handling."""
         adapter = MockAdapter("test_adapter")
         log_manager.add_source("test_source", adapter)
-        
+
         await log_manager.start_all_sources()
         assert log_manager.running
-        
+
         # Simulate shutdown
         log_manager._shutdown = True
         await log_manager.stop_all_sources()
-        
+
         assert not log_manager.running
         assert not adapter.running

@@ -4,18 +4,17 @@
 Tests for the file system adapter.
 """
 
-import asyncio
-import os
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from gemini_sre_agent.config.ingestion_config import FileSystemConfig, SourceType
 from gemini_sre_agent.ingestion.adapters.file_system import FileSystemAdapter
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity, SourceHealth
+from gemini_sre_agent.ingestion.interfaces.core import (
+    LogEntry,
+    SourceHealth,
+)
 from gemini_sre_agent.ingestion.interfaces.errors import SourceConnectionError
 
 
@@ -61,9 +60,9 @@ class TestFileSystemAdapter:
         # Create a test log file
         test_file = Path(temp_dir) / "test.log"
         test_file.write_text("test log line\n")
-        
+
         await adapter.start()
-        
+
         assert adapter._is_running
         assert adapter._last_check_time is not None
 
@@ -77,7 +76,7 @@ class TestFileSystemAdapter:
             file_pattern="*.log",
         )
         adapter = FileSystemAdapter(config)
-        
+
         with pytest.raises(SourceConnectionError):
             await adapter.start()
 
@@ -86,7 +85,7 @@ class TestFileSystemAdapter:
         """Test adapter stop."""
         await adapter.start()
         assert adapter._is_running
-        
+
         await adapter.stop()
         assert not adapter._is_running
 
@@ -94,13 +93,13 @@ class TestFileSystemAdapter:
     async def test_get_logs_empty(self, adapter, temp_dir):
         """Test getting logs when no files exist."""
         await adapter.start()
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 1:  # Limit to prevent infinite loop
                 break
-        
+
         # Should not raise an error even with no logs
         assert isinstance(logs, list)
 
@@ -109,20 +108,20 @@ class TestFileSystemAdapter:
         """Test getting logs from files with content."""
         # Start adapter first
         await adapter.start()
-        
+
         # Create test log files after starting (so they're detected as new content)
         test_file1 = Path(temp_dir) / "app1.log"
         test_file2 = Path(temp_dir) / "app2.log"
-        
+
         test_file1.write_text("2024-01-01 10:00:00 INFO Application started\n")
         test_file2.write_text("2024-01-01 10:01:00 ERROR Database connection failed\n")
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 2:  # Limit to prevent infinite loop
                 break
-        
+
         assert len(logs) >= 1
         for log in logs:
             assert isinstance(log, LogEntry)
@@ -133,9 +132,9 @@ class TestFileSystemAdapter:
     async def test_health_check_healthy(self, adapter, temp_dir):
         """Test health check when adapter is healthy."""
         await adapter.start()
-        
+
         health = await adapter.health_check()
-        
+
         assert isinstance(health, SourceHealth)
         assert health.is_healthy
         assert health.error_count == 0
@@ -145,7 +144,7 @@ class TestFileSystemAdapter:
     async def test_health_check_stopped(self, adapter):
         """Test health check when adapter is stopped."""
         health = await adapter.health_check()
-        
+
         assert isinstance(health, SourceHealth)
         assert not health.is_healthy
         assert "unhealthy" in health.last_error.lower()
@@ -163,22 +162,22 @@ class TestFileSystemAdapter:
             buffer_size=2000,
             max_memory_mb=200,
         )
-        
+
         await adapter.update_config(new_config)
-        
+
         assert adapter.config == new_config
         assert adapter.file_path == "/new/path"
         assert adapter.file_pattern == "*.txt"
-        assert adapter.watch_mode == False
+        assert not adapter.watch_mode
 
     @pytest.mark.asyncio
     async def test_handle_error(self, adapter):
         """Test error handling."""
         error = Exception("Test error")
         context = {"operation": "test"}
-        
+
         result = await adapter.handle_error(error, context)
-        
+
         # File system errors are generally recoverable
         assert isinstance(result, bool)
 
@@ -186,9 +185,9 @@ class TestFileSystemAdapter:
     async def test_get_health_metrics(self, adapter, temp_dir):
         """Test getting health metrics."""
         await adapter.start()
-        
+
         metrics = await adapter.get_health_metrics()
-        
+
         assert isinstance(metrics, dict)
         assert "total_logs_processed" in metrics
         assert "total_logs_failed" in metrics
@@ -212,18 +211,18 @@ class TestFileSystemAdapter:
             watch_mode=True,
         )
         adapter = FileSystemAdapter(config)
-        
+
         # Create files with different patterns
         Path(temp_dir).joinpath("app1.log").write_text("log1\n")
         Path(temp_dir).joinpath("app2.log").write_text("log2\n")
         Path(temp_dir).joinpath("other.txt").write_text("not a log\n")
-        
+
         await adapter.start()
-        
+
         # Should only process files matching the pattern
         files = adapter._get_files_to_process()
         file_names = [Path(f).name for f in files]
-        
+
         assert "app1.log" in file_names
         assert "app2.log" in file_names
         assert "other.txt" not in file_names
@@ -239,14 +238,14 @@ class TestFileSystemAdapter:
             max_memory_mb=1,  # 1MB limit
         )
         adapter = FileSystemAdapter(config)
-        
+
         # Create a large file (simulate with a smaller test)
         large_file = Path(temp_dir) / "large.log"
         large_content = "test log line\n" * 1000  # Create substantial content
         large_file.write_text(large_content)
-        
+
         await adapter.start()
-        
+
         # Should handle large files gracefully
         health = await adapter.health_check()
         assert health.is_healthy

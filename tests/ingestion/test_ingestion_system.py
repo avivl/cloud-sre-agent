@@ -15,7 +15,11 @@ import pytest
 from gemini_sre_agent.config.ingestion_config import FileSystemConfig, SourceType
 from gemini_sre_agent.ingestion import LogManager
 from gemini_sre_agent.ingestion.adapters import FileSystemAdapter
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity, SourceHealth
+from gemini_sre_agent.ingestion.interfaces.core import (
+    LogEntry,
+    LogSeverity,
+    SourceHealth,
+)
 
 
 class TestLogEntry:

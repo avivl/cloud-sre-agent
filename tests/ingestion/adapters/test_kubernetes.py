@@ -4,15 +4,17 @@
 Tests for the Kubernetes adapter.
 """
 
-import asyncio
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from gemini_sre_agent.config.ingestion_config import KubernetesConfig, SourceType
 from gemini_sre_agent.ingestion.adapters.kubernetes import KubernetesAdapter
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity, SourceHealth
+from gemini_sre_agent.ingestion.interfaces.core import (
+    LogEntry,
+    LogSeverity,
+    SourceHealth,
+)
 from gemini_sre_agent.ingestion.interfaces.errors import SourceConnectionError
 
 
@@ -53,14 +55,14 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock successful namespace validation
         mock_client.list_namespace.return_value = MagicMock(
             items=[MagicMock(metadata=MagicMock(name="default"))]
         )
-        
+
         await adapter.start()
-        
+
         assert adapter.running
         assert adapter.client is not None
 
@@ -71,10 +73,10 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock namespace not found
         mock_client.list_namespace.return_value = MagicMock(items=[])
-        
+
         with pytest.raises(SourceConnectionError):
             await adapter.start()
 
@@ -83,7 +85,7 @@ class TestKubernetesAdapter:
         """Test adapter stop."""
         await adapter.start()
         assert adapter.running
-        
+
         await adapter.stop()
         assert not adapter.running
 
@@ -94,18 +96,18 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock empty pod list
         mock_client.list_namespaced_pod.return_value = MagicMock(items=[])
-        
+
         await adapter.start()
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 1:  # Limit to prevent infinite loop
                 break
-        
+
         # Should not raise an error even with no logs
         assert isinstance(logs, list)
 
@@ -116,23 +118,25 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock pod with logs
         mock_pod = MagicMock()
         mock_pod.metadata.name = "app-123"
         mock_pod.spec.containers = [MagicMock(name="main")]
-        
+
         mock_client.list_namespaced_pod.return_value = MagicMock(items=[mock_pod])
-        mock_client.read_namespaced_pod_log.return_value = "2024-01-01T10:00:00Z INFO Application started\n"
-        
+        mock_client.read_namespaced_pod_log.return_value = (
+            "2024-01-01T10:00:00Z INFO Application started\n"
+        )
+
         await adapter.start()
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 1:  # Limit to prevent infinite loop
                 break
-        
+
         assert len(logs) >= 1
         for log in logs:
             assert isinstance(log, LogEntry)
@@ -143,9 +147,9 @@ class TestKubernetesAdapter:
     async def test_health_check_healthy(self, adapter):
         """Test health check when adapter is healthy."""
         await adapter.start()
-        
+
         health = await adapter.health_check()
-        
+
         assert isinstance(health, SourceHealth)
         assert health.is_healthy
         assert health.error_count == 0
@@ -155,7 +159,7 @@ class TestKubernetesAdapter:
     async def test_health_check_stopped(self, adapter):
         """Test health check when adapter is stopped."""
         health = await adapter.health_check()
-        
+
         assert isinstance(health, SourceHealth)
         assert not health.is_healthy
         assert "not running" in health.last_error.lower()
@@ -171,9 +175,9 @@ class TestKubernetesAdapter:
             container_name_pattern="app",
             max_pods=20,
         )
-        
+
         await adapter.update_config(new_config)
-        
+
         assert adapter.config == new_config
         assert adapter.namespace == "production"
         assert adapter.pod_name_pattern == "prod-*"
@@ -184,9 +188,9 @@ class TestKubernetesAdapter:
         """Test error handling."""
         error = Exception("Test error")
         context = {"operation": "test"}
-        
+
         result = await adapter.handle_error(error, context)
-        
+
         # Kubernetes API errors are generally recoverable
         assert isinstance(result, bool)
 
@@ -194,9 +198,9 @@ class TestKubernetesAdapter:
     async def test_get_health_metrics(self, adapter):
         """Test getting health metrics."""
         await adapter.start()
-        
+
         metrics = await adapter.get_health_metrics()
-        
+
         assert isinstance(metrics, dict)
         assert "total_logs_processed" in metrics
         assert "total_logs_failed" in metrics
@@ -217,30 +221,30 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock pods matching the pattern
         mock_pod1 = MagicMock()
         mock_pod1.metadata.name = "app-123"
         mock_pod1.spec.containers = [MagicMock(name="main")]
-        
+
         mock_pod2 = MagicMock()
         mock_pod2.metadata.name = "app-456"
         mock_pod2.spec.containers = [MagicMock(name="main")]
-        
+
         mock_pod3 = MagicMock()
         mock_pod3.metadata.name = "other-pod"
         mock_pod3.spec.containers = [MagicMock(name="main")]
-        
+
         mock_client.list_namespaced_pod.return_value = MagicMock(
             items=[mock_pod1, mock_pod2, mock_pod3]
         )
-        
+
         await adapter.start()
-        
+
         # Should only discover pods matching the pattern
         pods = await adapter._discover_pods()
         pod_names = [pod.metadata.name for pod in pods]
-        
+
         assert "app-123" in pod_names
         assert "app-456" in pod_names
         assert "other-pod" not in pod_names
@@ -252,7 +256,7 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock pod with multiple containers
         mock_pod = MagicMock()
         mock_pod.metadata.name = "app-123"
@@ -261,15 +265,15 @@ class TestKubernetesAdapter:
             MagicMock(name="sidecar"),
             MagicMock(name="init"),
         ]
-        
+
         mock_client.list_namespaced_pod.return_value = MagicMock(items=[mock_pod])
-        
+
         await adapter.start()
-        
+
         # Should only process containers matching the pattern
         containers = await adapter._get_containers_for_pod(mock_pod)
         container_names = [container.name for container in containers]
-        
+
         assert "main" in container_names
         assert "sidecar" not in container_names
         assert "init" not in container_names
@@ -281,13 +285,14 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock Kubernetes API error
         from kubernetes.client.rest import ApiException
+
         mock_client.list_namespace.side_effect = ApiException(
             status=403, reason="Forbidden"
         )
-        
+
         with pytest.raises(SourceConnectionError):
             await adapter.start()
 
@@ -298,29 +303,33 @@ class TestKubernetesAdapter:
         # Mock kubernetes client
         mock_client = MagicMock()
         mock_kubernetes.client.CoreV1Api.return_value = mock_client
-        
+
         # Mock pod with logs
         mock_pod = MagicMock()
         mock_pod.metadata.name = "app-123"
         mock_pod.spec.containers = [MagicMock(name="main")]
-        
+
         mock_client.list_namespaced_pod.return_value = MagicMock(items=[mock_pod])
         mock_client.read_namespaced_pod_log.return_value = (
             "2024-01-01T10:00:00Z INFO Application started\n"
             "2024-01-01T10:01:00Z ERROR Database connection failed\n"
             "2024-01-01T10:02:00Z WARN High memory usage detected\n"
         )
-        
+
         await adapter.start()
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 3:  # Limit to prevent infinite loop
                 break
-        
+
         assert len(logs) >= 1
         # Should parse different log levels correctly
         for log in logs:
             assert isinstance(log, LogEntry)
-            assert log.severity in [LogSeverity.INFO, LogSeverity.ERROR, LogSeverity.WARN]
+            assert log.severity in [
+                LogSeverity.INFO,
+                LogSeverity.ERROR,
+                LogSeverity.WARN,
+            ]

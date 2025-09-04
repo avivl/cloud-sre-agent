@@ -4,15 +4,16 @@
 Tests for the AWS CloudWatch adapter.
 """
 
-import asyncio
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from gemini_sre_agent.config.ingestion_config import AWSCloudWatchConfig, SourceType
 from gemini_sre_agent.ingestion.adapters.aws_cloudwatch import AWSCloudWatchAdapter
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity, SourceHealth
+from gemini_sre_agent.ingestion.interfaces.core import (
+    LogEntry,
+    SourceHealth,
+)
 from gemini_sre_agent.ingestion.interfaces.errors import SourceConnectionError
 
 
@@ -54,14 +55,14 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock successful log group validation
         mock_client.describe_log_groups.return_value = {
             "logGroups": [{"logGroupName": "/aws/lambda/test-function"}]
         }
-        
+
         await adapter.start()
-        
+
         assert adapter.running
         assert adapter.client is not None
 
@@ -74,10 +75,10 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock log group not found
         mock_client.describe_log_groups.return_value = {"logGroups": []}
-        
+
         with pytest.raises(SourceConnectionError):
             await adapter.start()
 
@@ -86,7 +87,7 @@ class TestAWSCloudWatchAdapter:
         """Test adapter stop."""
         await adapter.start()
         assert adapter.running
-        
+
         await adapter.stop()
         assert not adapter.running
 
@@ -99,18 +100,18 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock empty log events
         mock_client.get_log_events.return_value = {"events": []}
-        
+
         await adapter.start()
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 1:  # Limit to prevent infinite loop
                 break
-        
+
         # Should not raise an error even with no logs
         assert isinstance(logs, list)
 
@@ -123,7 +124,7 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock log events
         mock_events = [
             {
@@ -138,15 +139,15 @@ class TestAWSCloudWatchAdapter:
             },
         ]
         mock_client.get_log_events.return_value = {"events": mock_events}
-        
+
         await adapter.start()
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 2:  # Limit to prevent infinite loop
                 break
-        
+
         assert len(logs) >= 1
         for log in logs:
             assert isinstance(log, LogEntry)
@@ -157,9 +158,9 @@ class TestAWSCloudWatchAdapter:
     async def test_health_check_healthy(self, adapter):
         """Test health check when adapter is healthy."""
         await adapter.start()
-        
+
         health = await adapter.health_check()
-        
+
         assert isinstance(health, SourceHealth)
         assert health.is_healthy
         assert health.error_count == 0
@@ -169,7 +170,7 @@ class TestAWSCloudWatchAdapter:
     async def test_health_check_stopped(self, adapter):
         """Test health check when adapter is stopped."""
         health = await adapter.health_check()
-        
+
         assert isinstance(health, SourceHealth)
         assert not health.is_healthy
         assert "not running" in health.last_error.lower()
@@ -184,9 +185,9 @@ class TestAWSCloudWatchAdapter:
             log_group_name="/aws/lambda/updated-function",
             log_stream_name="updated-stream",
         )
-        
+
         await adapter.update_config(new_config)
-        
+
         assert adapter.config == new_config
         assert adapter.region == "us-west-2"
         assert adapter.log_group_name == "/aws/lambda/updated-function"
@@ -197,9 +198,9 @@ class TestAWSCloudWatchAdapter:
         """Test error handling."""
         error = Exception("Test error")
         context = {"operation": "test"}
-        
+
         result = await adapter.handle_error(error, context)
-        
+
         # AWS API errors are generally recoverable
         assert isinstance(result, bool)
 
@@ -207,9 +208,9 @@ class TestAWSCloudWatchAdapter:
     async def test_get_health_metrics(self, adapter):
         """Test getting health metrics."""
         await adapter.start()
-        
+
         metrics = await adapter.get_health_metrics()
-        
+
         assert isinstance(metrics, dict)
         assert "total_logs_processed" in metrics
         assert "total_logs_failed" in metrics
@@ -232,14 +233,14 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock successful log group validation
         mock_client.describe_log_groups.return_value = {
             "logGroups": [{"logGroupName": "/aws/lambda/test-function"}]
         }
-        
+
         await adapter.start()
-        
+
         # Should not raise an exception
         assert adapter.running
 
@@ -252,7 +253,7 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock successful log group and stream validation
         mock_client.describe_log_groups.return_value = {
             "logGroups": [{"logGroupName": "/aws/lambda/test-function"}]
@@ -260,9 +261,9 @@ class TestAWSCloudWatchAdapter:
         mock_client.describe_log_streams.return_value = {
             "logStreams": [{"logStreamName": "test-stream"}]
         }
-        
+
         await adapter.start()
-        
+
         # Should not raise an exception
         assert adapter.running
 
@@ -275,14 +276,15 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock AWS API error
         from botocore.exceptions import ClientError
+
         mock_client.describe_log_groups.side_effect = ClientError(
             {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
-            "DescribeLogGroups"
+            "DescribeLogGroups",
         )
-        
+
         with pytest.raises(SourceConnectionError):
             await adapter.start()
 
@@ -295,7 +297,7 @@ class TestAWSCloudWatchAdapter:
         mock_client = MagicMock()
         mock_boto3.Session.return_value = mock_session
         mock_session.client.return_value = mock_client
-        
+
         # Mock paginated response
         mock_client.get_log_events.return_value = {
             "events": [
@@ -307,14 +309,14 @@ class TestAWSCloudWatchAdapter:
             ],
             "nextForwardToken": "next-token",
         }
-        
+
         await adapter.start()
-        
+
         logs = []
         async for log in adapter.get_logs():
             logs.append(log)
             if len(logs) >= 1:  # Limit to prevent infinite loop
                 break
-        
+
         assert len(logs) >= 1
         assert logs[0].message == "INFO Page 1 event"

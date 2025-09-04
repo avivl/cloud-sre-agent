@@ -53,8 +53,10 @@ class AsyncCircuitBreaker:
         if self.circuit_breaker:
             # For async functions, we need to handle them differently
             if asyncio.iscoroutinefunction(func):
+
                 async def async_wrapper(*args, **kwargs):
                     return self.circuit_breaker(func)(*args, **kwargs)
+
                 return async_wrapper
             else:
                 return self.circuit_breaker(func)
@@ -249,7 +251,9 @@ class HyxResilientClient:
             async with self.rate_limiter:
                 async with self.bulkhead:
                     # Simple timeout implementation
-                    result = await asyncio.wait_for(operation(), timeout=self.timeout.timeout)
+                    result = await asyncio.wait_for(
+                        operation(), timeout=self.timeout.timeout
+                    )
 
             self._stats["successful_operations"] += 1
             return result
