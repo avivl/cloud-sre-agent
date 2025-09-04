@@ -111,10 +111,12 @@ class GCPLoggingAdapter(LogIngestionInterface):
 
             # Fetch logs with resilience
             async def _fetch_logs():
+                if self._logging_client is None:
+                    raise RuntimeError("GCP Logging client not initialized")
                 entries = self._logging_client.list_entries(
                     filter_=full_filter,
                     max_results=self.max_results,
-                    order_by=logging_v2.DESCENDING,
+                    order_by="timestamp desc",  # Use string instead of logging_v2 constant
                 )
                 return list(entries)
 
@@ -171,11 +173,9 @@ class GCPLoggingAdapter(LogIngestionInterface):
 
             # Create log entry
             return LogEntry(
-                id=entry.insert_id or f"gcp-log-{timestamp.isoformat()}",
-                message=message,
-                timestamp=timestamp,
-                severity=severity_enum,
-                source=source,
+                entry.insert_id or f"gcp-log-{timestamp.isoformat()}",
+                timestamp,
+                message,
                 metadata={
                     "log_name": entry.log_name,
                     "insert_id": entry.insert_id,
@@ -199,6 +199,8 @@ class GCPLoggingAdapter(LogIngestionInterface):
                     ),
                     "raw_payload": str(entry.payload),
                 },
+                severity=severity_enum,
+                source=source,
             )
 
         except Exception as e:
@@ -270,7 +272,7 @@ class GCPLoggingAdapter(LogIngestionInterface):
         self._consecutive_failures += 1
 
         # Consider GCP API errors as potentially recoverable
-        if hasattr(error, "code") and error.code in [429, 500, 502, 503, 504]:
+        if hasattr(error, "code") and getattr(error, "code", None) in [429, 500, 502, 503, 504]:
             return True
         return False
 

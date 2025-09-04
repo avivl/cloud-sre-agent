@@ -104,20 +104,15 @@ class GCPPubSubAdapter(LogIngestionInterface):
             raise SourceConnectionError("Pub/Sub client not initialized")
 
         try:
-            # Configure flow control
-            flow_control = pubsub_v1.types.FlowControl(
-                max_messages=self.flow_control_max_messages,
-                max_bytes=self.flow_control_max_bytes,
-            )
-
             # Pull messages with resilience
             async def _pull_messages():
+                if self._subscriber_client is None:
+                    raise RuntimeError("GCP Pub/Sub client not initialized")
                 response = self._subscriber_client.pull(
                     request={
                         "subscription": self._subscription_path,
                         "max_messages": self.max_messages,
                     },
-                    flow_control=flow_control,
                     timeout=self.ack_deadline_seconds,
                 )
                 return response.received_messages
@@ -297,7 +292,7 @@ class GCPPubSubAdapter(LogIngestionInterface):
         self._consecutive_failures += 1
 
         # Consider GCP API errors as potentially recoverable
-        if hasattr(error, "code") and error.code in [429, 500, 502, 503, 504]:
+        if hasattr(error, "code") and getattr(error, "code", None) in [429, 500, 502, 503, 504]:
             return True
         return False
 

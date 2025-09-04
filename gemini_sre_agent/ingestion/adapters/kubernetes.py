@@ -208,9 +208,10 @@ class KubernetesAdapter(LogIngestionInterface):
 
         # Return True if error should be retried
         if isinstance(error, ApiException):
-            if hasattr(error, "status") and error.status == 404:
+            status = getattr(error, "status", None)
+            if status == 404:
                 return False  # Don't retry not found errors
-            elif hasattr(error, "status") and error.status >= 500:
+            elif status is not None and status >= 500:
                 return True  # Retry server errors
         return True
 
@@ -239,7 +240,8 @@ class KubernetesAdapter(LogIngestionInterface):
             # Try to list namespaces
             self.v1.list_namespace(limit=1)
         except ApiException as e:
-            if hasattr(e, "status") and e.status == 403:
+            status = getattr(e, "status", None)
+            if status == 403:
                 # Forbidden, but connection is working
                 pass
             else:

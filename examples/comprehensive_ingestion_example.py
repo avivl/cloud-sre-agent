@@ -19,6 +19,7 @@ from gemini_sre_agent.config.ingestion_config import (
     AWSCloudWatchConfig,
     FileSystemConfig,
     KubernetesConfig,
+    SourceType,
 )
 from gemini_sre_agent.ingestion import (
     AWSCloudWatchAdapter,
@@ -29,7 +30,6 @@ from gemini_sre_agent.ingestion import (
     MemoryQueue,
     QueueConfig,
     QueuedFileSystemAdapter,
-    SourceType,
     create_resilience_config,
 )
 

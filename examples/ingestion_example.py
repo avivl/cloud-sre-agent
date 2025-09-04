@@ -34,7 +34,7 @@ from gemini_sre_agent.ingestion.interfaces.resilience import (
     HyxResilientClient,
     create_resilience_config,
 )
-from gemini_sre_agent.ingestion.models import LogEntry
+from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity
 
 # Set up logging
 logging.basicConfig(
@@ -76,7 +76,8 @@ class LogProcessor:
         )
 
         # Check for PII (example)
-        if log_entry.pii_detected:
+        pii_detected = log_entry.get_field("pii_detected", False)
+        if pii_detected:
             self.pii_detected_count += 1
             logger.warning(f"PII detected in log from {log_entry.source}")
 
@@ -85,7 +86,8 @@ class LogProcessor:
             logger.info(f"Billing-related log detected: {log_entry.flow_id}")
 
         # Example: Check for errors
-        if log_entry.level in ["ERROR", "CRITICAL"]:
+        severity = log_entry.severity.value if log_entry.severity else "INFO"
+        if severity in ["ERROR", "CRITICAL"]:
             logger.error(f"Error log from {log_entry.source}: {log_entry.message}")
 
         # Simulate some processing time
@@ -121,6 +123,7 @@ async def example_basic_usage():
     # Create a file system source manually
     fs_config = FileSystemConfig(
         name="example-logs",
+        type=SourceType.FILE_SYSTEM,
         file_path="/tmp/example-logs",
         file_pattern="*.log",
         watch_mode=False,  # Don't watch for changes in this example
@@ -208,13 +211,13 @@ async def example_config_based():
 
             if source_config.type == SourceType.FILE_SYSTEM:
                 # Create file system adapter
-                adapter = FileSystemAdapter(source_config)
+                adapter = FileSystemAdapter(source_config)  # type: ignore
                 await manager.add_source(adapter)
 
             elif source_config.type == SourceType.GCP_PUBSUB:
                 # Create GCP Pub/Sub adapter (if credentials are available)
                 try:
-                    adapter = GCPPubSubAdapter(source_config)
+                    adapter = GCPPubSubAdapter(source_config)  # type: ignore
                     await manager.add_source(adapter)
                 except Exception as e:
                     logger.warning(f"Could not create GCP Pub/Sub adapter: {e}")
@@ -261,6 +264,7 @@ async def example_health_monitoring():
     # Create a file system source
     fs_config = FileSystemConfig(
         name="health-test-logs",
+        type=SourceType.FILE_SYSTEM,
         file_path="/tmp/health-test-logs",
         file_pattern="*.log",
         watch_mode=False,
@@ -323,6 +327,7 @@ async def example_error_handling():
     # Create a file system source
     fs_config = FileSystemConfig(
         name="error-test-logs",
+        type=SourceType.FILE_SYSTEM,
         file_path="/tmp/error-test-logs",
         file_pattern="*.log",
         watch_mode=False,
@@ -376,23 +381,31 @@ async def example_hyx_resilience():
     logger.info(f"Resilience stats: {json.dumps(resilience_stats, indent=2)}")
 
     # Create some test log entries
+    from datetime import datetime, timezone
     test_logs = [
         LogEntry(
+            id="test-1",
             message="User login successful",
-            level="INFO",
+            timestamp=datetime.fromtimestamp(1234567890.0, tz=timezone.utc),
             source="auth-service",
-            timestamp=1234567890.0,
+            severity=LogSeverity.INFO,
             flow_id="flow-1",
         ),
         LogEntry(
-            "Database connection failed", "ERROR", "db-service", 1234567891.0, "flow-2"
+            id="test-2",
+            message="Database connection failed",
+            timestamp=datetime.fromtimestamp(1234567891.0, tz=timezone.utc),
+            source="db-service",
+            severity=LogSeverity.ERROR,
+            flow_id="flow-2"
         ),
         LogEntry(
-            "Billing transaction processed",
-            "INFO",
-            "billing-service",
-            1234567892.0,
-            "flow-3",
+            id="test-3",
+            message="Billing transaction processed",
+            timestamp=datetime.fromtimestamp(1234567892.0, tz=timezone.utc),
+            source="billing-service",
+            severity=LogSeverity.INFO,
+            flow_id="flow-3",
         ),
     ]
 

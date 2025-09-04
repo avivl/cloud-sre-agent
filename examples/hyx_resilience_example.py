@@ -172,14 +172,14 @@ async def demonstrate_with_ingestion_config():
             global_cfg = config.global_config
             ResilienceConfig(
                 retry={
-                    "max_attempts": global_cfg.retry_attempts,
-                    "initial_delay": global_cfg.retry_delay,
-                    "max_delay": global_cfg.retry_delay * 10,
+                    "max_attempts": 3,  # Default retry attempts
+                    "initial_delay": 1.0,  # Default retry delay
+                    "max_delay": 10.0,  # Default max delay
                     "randomize": True,
                 },
                 circuit_breaker={
-                    "failure_threshold": global_cfg.circuit_breaker_threshold,
-                    "recovery_timeout": global_cfg.circuit_breaker_timeout,
+                    "failure_threshold": 5,  # Default failure threshold
+                    "recovery_timeout": 30,  # Default recovery timeout
                 },
                 timeout=30,
                 bulkhead={"limit": 10, "queue": 5},
@@ -193,10 +193,8 @@ async def demonstrate_with_ingestion_config():
             print(f"   Max throughput: {global_cfg.max_throughput} logs/sec")
             print(f"   Buffer strategy: {global_cfg.buffer_strategy}")
             print(f"   Error threshold: {global_cfg.error_threshold}")
-            print(f"   Retry attempts: {global_cfg.retry_attempts}")
-            print(
-                f"   Circuit breaker threshold: {global_cfg.circuit_breaker_threshold}"
-            )
+            print(f"   Retry attempts: 3 (default)")
+            print(f"   Circuit breaker threshold: 5 (default)")
 
         else:
             print(f"❌ Configuration file not found: {config_path}")

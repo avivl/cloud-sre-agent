@@ -5,13 +5,13 @@ from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, TypeVar
 
 # from hyx.timeout.api import timeout # Removed due to unclear API
-from hyx.bulkhead import bulkhead
-from hyx.circuitbreaker import consecutive_breaker as circuitbreaker
-from hyx.circuitbreaker.exceptions import BreakerFailing
-from hyx.ratelimit.api import tokenbucket as ratelimiter
-from hyx.ratelimit.exceptions import RateLimitExceeded
-from hyx.retry import backoffs, retry
-from hyx.retry.exceptions import MaxAttemptsExceeded
+from hyx.bulkhead import bulkhead  # type: ignore
+from hyx.circuitbreaker import consecutive_breaker as circuitbreaker  # type: ignore
+from hyx.circuitbreaker.exceptions import BreakerFailing  # type: ignore
+from hyx.ratelimit.api import tokenbucket as ratelimiter  # type: ignore
+from hyx.ratelimit.exceptions import RateLimitExceeded  # type: ignore
+from hyx.retry import backoffs, retry  # type: ignore
+from hyx.retry.exceptions import MaxAttemptsExceeded  # type: ignore
 
 logger = logging.getLogger(__name__)
 
