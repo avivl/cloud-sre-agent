@@ -66,9 +66,9 @@ class GCPLoggingAdapter(LogIngestionInterface):
 
             # Initialize logging client
             if self.credentials_path:
-                self._logging_client = logging_v2.Client.from_service_account_file(
-                    self.credentials_path
-                )
+                import os
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.credentials_path
+                self._logging_client = logging_v2.Client()
             else:
                 self._logging_client = logging_v2.Client()
 

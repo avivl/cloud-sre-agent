@@ -54,6 +54,8 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
             if self.config.credentials_profile:
                 session_kwargs["profile_name"] = self.config.credentials_profile
 
+            if boto3 is None:
+                raise SourceConnectionError("boto3 not available")
             session = boto3.Session(**session_kwargs)
             self.client = session.client("logs", region_name=self.config.region)
 
@@ -156,9 +158,9 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
                 metrics={"status": "error"},
             )
 
-    def get_config(self) -> SourceConfig:  # type: ignore
+    def get_config(self) -> SourceConfig:
         """Get the current configuration."""
-        return self.config
+        return self.config  # type: ignore
 
     async def update_config(self, config: SourceConfig) -> None:
         """Update the configuration."""
@@ -201,13 +203,16 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
 
     async def _test_connection(self) -> None:
         """Test the AWS CloudWatch connection."""
+        if self.client is None:
+            raise SourceConnectionError("AWS client not initialized")
+            
         try:
             # Try to describe log groups
             self.client.describe_log_groups(
                 logGroupNamePrefix=self.config.log_group_name, limit=1
             )
         except ClientError as e:
-            if e.response["Error"]["Code"] == "ResourceNotFoundException":
+            if hasattr(e, "response") and getattr(e, "response", {}).get("Error", {}).get("Code") == "ResourceNotFoundException":
                 # Log group doesn't exist, but connection is working
                 pass
             else:
@@ -228,6 +233,8 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
             if self.config.log_stream_name:
                 kwargs["logStreamNamePrefix"] = self.config.log_stream_name
 
+            if self.client is None:
+                return []
             response = self.client.describe_log_streams(**kwargs)
             return [
                 stream["logStreamName"] for stream in response.get("logStreams", [])
@@ -250,6 +257,8 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
             if self._last_check_time:
                 kwargs["startTime"] = int(self._last_check_time.timestamp() * 1000)
 
+            if self.client is None:
+                return []
             response = self.client.get_log_events(**kwargs)
             return response.get("events", [])
 

@@ -200,9 +200,9 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                 metrics={"status": "error"},
             )
 
-    def get_config(self) -> SourceConfig:  # type: ignore
+    def get_config(self) -> SourceConfig:
         """Get the current configuration."""
-        return self.config
+        return self.config  # type: ignore
 
     async def update_config(self, config: SourceConfig) -> None:
         """Update the configuration."""
