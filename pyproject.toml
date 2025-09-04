@@ -29,6 +29,8 @@ dependencies = [
   "limits>=3.5.0",
   "boto3>=1.34.0",
   "kubernetes>=28.1.0",
+  "aiohttp>=3.9.0",
+  "psutil>=5.9.0",
 ]
 
 [tool.pytest.ini_options]
