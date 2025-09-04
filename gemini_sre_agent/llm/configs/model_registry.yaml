@@ -1,0 +1,195 @@
+# Model Registry Configuration
+# This file defines semantic model mappings and their properties
+
+models:
+  # Fast models - quick responses, lower cost
+  gpt-3.5-turbo:
+    provider: openai
+    semantic_type: fast
+    capabilities:
+      - streaming
+      - tools
+    cost_per_1k_tokens: 0.002
+    max_tokens: 4096
+    context_window: 4096
+    performance_score: 0.7
+    reliability_score: 0.9
+    fallback_models:
+      - claude-3-haiku
+      - gemini-1.5-flash
+
+  claude-3-haiku:
+    provider: claude
+    semantic_type: fast
+    capabilities:
+      - streaming
+    cost_per_1k_tokens: 0.00025
+    max_tokens: 4096
+    context_window: 200000
+    performance_score: 0.8
+    reliability_score: 0.9
+    fallback_models:
+      - gpt-3.5-turbo
+      - gemini-1.5-flash
+
+  gemini-1.5-flash:
+    provider: gemini
+    semantic_type: fast
+    capabilities:
+      - streaming
+      - vision
+    cost_per_1k_tokens: 0.00075
+    max_tokens: 8192
+    context_window: 1000000
+    performance_score: 0.8
+    reliability_score: 0.8
+    fallback_models:
+      - gpt-3.5-turbo
+      - claude-3-haiku
+
+  # Smart models - balanced performance and quality
+  gpt-4o:
+    provider: openai
+    semantic_type: smart
+    capabilities:
+      - streaming
+      - tools
+      - vision
+    cost_per_1k_tokens: 0.005
+    max_tokens: 4096
+    context_window: 128000
+    performance_score: 0.9
+    reliability_score: 0.95
+    fallback_models:
+      - claude-3-sonnet
+      - gemini-1.5-pro
+
+  claude-3-sonnet:
+    provider: claude
+    semantic_type: smart
+    capabilities:
+      - streaming
+      - tools
+    cost_per_1k_tokens: 0.003
+    max_tokens: 4096
+    context_window: 200000
+    performance_score: 0.9
+    reliability_score: 0.95
+    fallback_models:
+      - gpt-4o
+      - gemini-1.5-pro
+
+  gemini-1.5-pro:
+    provider: gemini
+    semantic_type: smart
+    capabilities:
+      - streaming
+      - vision
+    cost_per_1k_tokens: 0.00125
+    max_tokens: 8192
+    context_window: 1000000
+    performance_score: 0.9
+    reliability_score: 0.9
+    fallback_models:
+      - gpt-4o
+      - claude-3-sonnet
+
+  # Deep thinking models - highest quality, slower responses
+  gpt-4o-mini:
+    provider: openai
+    semantic_type: deep
+    capabilities:
+      - streaming
+      - tools
+      - reasoning
+    cost_per_1k_tokens: 0.00015
+    max_tokens: 16384
+    context_window: 128000
+    performance_score: 0.95
+    reliability_score: 0.9
+    fallback_models:
+      - claude-3-opus
+      - gemini-1.5-pro
+
+  claude-3-opus:
+    provider: claude
+    semantic_type: deep
+    capabilities:
+      - streaming
+      - tools
+      - reasoning
+      - analysis
+    cost_per_1k_tokens: 0.015
+    max_tokens: 4096
+    context_window: 200000
+    performance_score: 0.95
+    reliability_score: 0.95
+    fallback_models:
+      - gpt-4o-mini
+      - gemini-1.5-pro
+
+  # Code generation models
+  gpt-4o-code:
+    provider: openai
+    semantic_type: code
+    capabilities:
+      - streaming
+      - tools
+      - code_generation
+    cost_per_1k_tokens: 0.01
+    max_tokens: 4096
+    context_window: 128000
+    performance_score: 0.9
+    reliability_score: 0.9
+    fallback_models:
+      - claude-3-sonnet
+      - gpt-4o
+
+  claude-3-sonnet-code:
+    provider: claude
+    semantic_type: code
+    capabilities:
+      - streaming
+      - code_generation
+    cost_per_1k_tokens: 0.003
+    max_tokens: 4096
+    context_window: 200000
+    performance_score: 0.9
+    reliability_score: 0.9
+    fallback_models:
+      - gpt-4o-code
+      - claude-3-sonnet
+
+  # Analysis models
+  gpt-4o-analysis:
+    provider: openai
+    semantic_type: analysis
+    capabilities:
+      - streaming
+      - tools
+      - analysis
+      - reasoning
+    cost_per_1k_tokens: 0.005
+    max_tokens: 4096
+    context_window: 128000
+    performance_score: 0.9
+    reliability_score: 0.9
+    fallback_models:
+      - claude-3-opus
+      - gpt-4o
+
+  claude-3-opus-analysis:
+    provider: claude
+    semantic_type: analysis
+    capabilities:
+      - streaming
+      - analysis
+      - reasoning
+    cost_per_1k_tokens: 0.015
+    max_tokens: 4096
+    context_window: 200000
+    performance_score: 0.95
+    reliability_score: 0.95
+    fallback_models:
+      - gpt-4o-analysis
+      - claude-3-opus
