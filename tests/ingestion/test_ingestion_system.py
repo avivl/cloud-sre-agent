@@ -6,15 +6,16 @@ LogManager, adapters, and processing components.
 """
 
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from gemini_sre_agent.config.ingestion_config import FileSystemConfig
+from gemini_sre_agent.config.ingestion_config import FileSystemConfig, SourceType
 from gemini_sre_agent.ingestion import LogManager
 from gemini_sre_agent.ingestion.adapters import FileSystemAdapter
-from gemini_sre_agent.ingestion.models import LogEntry, LogLevel, SourceHealth
+from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity, SourceHealth
 
 
 class TestLogEntry:
@@ -23,38 +24,38 @@ class TestLogEntry:
     def test_log_entry_creation(self):
         """Test creating a LogEntry."""
         log_entry = LogEntry(
+            id="test-123",
             message="Test log message",
-            level=LogLevel.INFO,
+            timestamp=datetime.fromisoformat("2024-01-01T10:00:00Z"),
+            severity=LogSeverity.INFO,
             source="test-source",
-            timestamp="2024-01-01T10:00:00Z",
             flow_id="flow-123",
             metadata={"key": "value"},
-            pii_detected=False,
         )
 
         assert log_entry.message == "Test log message"
-        assert log_entry.level == LogLevel.INFO
+        assert log_entry.severity == LogSeverity.INFO
         assert log_entry.source == "test-source"
-        assert log_entry.timestamp == "2024-01-01T10:00:00Z"
+        assert log_entry.timestamp == datetime.fromisoformat("2024-01-01T10:00:00Z")
         assert log_entry.flow_id == "flow-123"
         assert log_entry.metadata == {"key": "value"}
-        assert log_entry.pii_detected is False
 
     def test_log_entry_defaults(self):
         """Test LogEntry with default values."""
         log_entry = LogEntry(
+            id="test-456",
             message="Test message",
-            level=LogLevel.INFO,
+            timestamp=datetime.now(),
+            severity=LogSeverity.INFO,
             source="test-source",
         )
 
         assert log_entry.message == "Test message"
-        assert log_entry.level == LogLevel.INFO
+        assert log_entry.severity == LogSeverity.INFO
         assert log_entry.source == "test-source"
         assert log_entry.timestamp is not None
-        assert log_entry.flow_id is not None
+        assert log_entry.flow_id is None
         assert log_entry.metadata == {}
-        assert log_entry.pii_detected is False
 
 
 class TestSourceHealth:
@@ -64,30 +65,22 @@ class TestSourceHealth:
         """Test creating a SourceHealth."""
         health = SourceHealth(
             is_healthy=True,
-            status="healthy",
-            message="All systems operational",
-            last_check="2024-01-01T10:00:00Z",
+            last_success="2024-01-01T10:00:00Z",
             error_count=0,
-            success_count=100,
+            metrics={"success_count": 100},
         )
 
         assert health.is_healthy is True
-        assert health.status == "healthy"
-        assert health.message == "All systems operational"
-        assert health.last_check == "2024-01-01T10:00:00Z"
+        assert health.last_success == "2024-01-01T10:00:00Z"
         assert health.error_count == 0
-        assert health.success_count == 100
+        assert health.metrics["success_count"] == 100
 
     def test_source_health_defaults(self):
         """Test SourceHealth with default values."""
         health = SourceHealth(is_healthy=False)
 
         assert health.is_healthy is False
-        assert health.status == "unhealthy"
-        assert health.message == "Source is unhealthy"
-        assert health.last_check is not None
         assert health.error_count == 0
-        assert health.success_count == 0
 
 
 class TestLogManager:
@@ -109,7 +102,7 @@ class TestLogManager:
 
         assert manager.callback == mock_callback
         assert manager.sources == {}
-        assert manager.is_running is False
+        assert manager.running is False
 
     def test_log_manager_creation_without_callback(self):
         """Test creating a LogManager without callback."""
@@ -117,13 +110,14 @@ class TestLogManager:
 
         assert manager.callback is None
         assert manager.sources == {}
-        assert manager.is_running is False
+        assert manager.running is False
 
     @pytest.mark.asyncio
     async def test_add_source(self, log_manager):
         """Test adding a source to the manager."""
         config = FileSystemConfig(
             name="test-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs",
         )
 
@@ -139,10 +133,12 @@ class TestLogManager:
         """Test adding a duplicate source name."""
         config1 = FileSystemConfig(
             name="duplicate-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs1",
         )
         config2 = FileSystemConfig(
             name="duplicate-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs2",
         )
 
@@ -160,6 +156,7 @@ class TestLogManager:
         """Test removing a source from the manager."""
         config = FileSystemConfig(
             name="test-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs",
         )
 
@@ -182,6 +179,7 @@ class TestLogManager:
         """Test starting the manager."""
         config = FileSystemConfig(
             name="test-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs",
         )
 
@@ -201,6 +199,7 @@ class TestLogManager:
         """Test stopping the manager."""
         config = FileSystemConfig(
             name="test-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs",
         )
 
@@ -221,6 +220,7 @@ class TestLogManager:
         """Test getting health status of all sources."""
         config = FileSystemConfig(
             name="test-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs",
         )
 
@@ -243,6 +243,7 @@ class TestLogManager:
         """Test getting metrics from all sources."""
         config = FileSystemConfig(
             name="test-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/tmp/test-logs",
         )
 
@@ -266,7 +267,7 @@ class TestLogManager:
         """Test processing a log entry through the callback."""
         log_entry = LogEntry(
             message="Test message",
-            level=LogLevel.INFO,
+            severity=LogSeverity.INFO,
             source="test-source",
         )
 
@@ -281,7 +282,7 @@ class TestLogManager:
 
         log_entry = LogEntry(
             message="Test message",
-            level=LogLevel.INFO,
+            severity=LogSeverity.INFO,
             source="test-source",
         )
 
@@ -298,7 +299,7 @@ class TestLogManager:
 
         log_entry = LogEntry(
             message="Test message",
-            level=LogLevel.INFO,
+            severity=LogSeverity.INFO,
             source="test-source",
         )
 
@@ -396,11 +397,11 @@ class TestFileSystemAdapter:
         # Check the log entries
         calls = mock_callback.call_args_list
         assert calls[0][0][0].message == "Test message 1"
-        assert calls[0][0][0].level == LogLevel.INFO
+        assert calls[0][0][0].level == LogSeverity.INFO
         assert calls[1][0][0].message == "Test error message"
-        assert calls[1][0][0].level == LogLevel.ERROR
+        assert calls[1][0][0].level == LogSeverity.ERROR
         assert calls[2][0][0].message == "Test warning message"
-        assert calls[2][0][0].level == LogLevel.WARNING
+        assert calls[2][0][0].level == LogSeverity.WARNING
 
     @pytest.mark.asyncio
     async def test_fs_adapter_process_files_with_callback_error(
@@ -486,6 +487,7 @@ class TestIntegration:
         # Create configuration
         config = FileSystemConfig(
             name="integration-test",
+            type=SourceType.FILE_SYSTEM,
             file_path=str(temp_log_dir),
             file_pattern="*.log",
             watch_mode=False,
@@ -517,16 +519,16 @@ class TestIntegration:
 
         # Check first log entry
         assert processed_logs[0].message == "Application started"
-        assert processed_logs[0].level == LogLevel.INFO
+        assert processed_logs[0].level == LogSeverity.INFO
         assert processed_logs[0].source == "integration-test"
 
         # Check second log entry
         assert processed_logs[1].message == "Database connection failed"
-        assert processed_logs[1].level == LogLevel.ERROR
+        assert processed_logs[1].level == LogSeverity.ERROR
 
         # Check third log entry
         assert processed_logs[2].message == "User login successful"
-        assert processed_logs[2].level == LogLevel.INFO
+        assert processed_logs[2].level == LogSeverity.INFO
 
         # Verify all entries have flow IDs
         for log_entry in processed_logs:
@@ -549,6 +551,7 @@ class TestIntegration:
         # Create configurations for different sources
         app_config = FileSystemConfig(
             name="app-logs",
+            type=SourceType.FILE_SYSTEM,
             file_path=str(temp_log_dir),
             file_pattern="app.log",
             watch_mode=False,
@@ -556,6 +559,7 @@ class TestIntegration:
 
         error_config = FileSystemConfig(
             name="error-logs",
+            type=SourceType.FILE_SYSTEM,
             file_path=str(temp_log_dir),
             file_pattern="error.log",
             watch_mode=False,

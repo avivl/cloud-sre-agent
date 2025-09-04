@@ -265,7 +265,7 @@ class FileSystemAdapter(LogIngestionInterface):
                 message=message,
                 timestamp=timestamp,
                 severity=severity,
-                source=file_path,
+                source=self.config.name,
                 metadata={
                     "file_path": file_path,
                     "line_number": line_num,

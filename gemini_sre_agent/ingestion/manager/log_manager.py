@@ -47,7 +47,7 @@ class LogManager:
         # Circuit breaker functionality moved to individual adapters
         pass
 
-        logger.info(f"Added source '{source_name}' of type {config.source_type.value}")
+        logger.info(f"Added source '{source_name}' of type {config.type.value}")
 
     async def remove_source(self, source_name: str) -> None:
         """Remove a log source from the manager."""
