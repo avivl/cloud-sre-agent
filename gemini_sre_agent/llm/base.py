@@ -7,19 +7,19 @@ This module defines the abstract base classes, data models, and core
 functionality that all LLM providers must implement.
 """
 
+import asyncio
+import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, AsyncGenerator
 from dataclasses import dataclass, field
 from enum import Enum
-import asyncio
-import time
-import logging
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class ProviderType(str, Enum):
     """Supported LLM provider types."""
+
     GEMINI = "gemini"
     OLLAMA = "ollama"
     CLAUDE = "claude"
@@ -30,15 +30,17 @@ class ProviderType(str, Enum):
 
 class ModelType(str, Enum):
     """Semantic model types for easy configuration."""
-    FAST = "fast"           # Quick responses, lower cost
-    SMART = "smart"         # Balanced performance and quality
+
+    FAST = "fast"  # Quick responses, lower cost
+    SMART = "smart"  # Balanced performance and quality
     DEEP_THINKING = "deep"  # Highest quality, slower responses
-    CODE = "code"           # Specialized for code generation
-    ANALYSIS = "analysis"   # Specialized for analysis tasks
+    CODE = "code"  # Specialized for code generation
+    ANALYSIS = "analysis"  # Specialized for analysis tasks
 
 
 class ErrorSeverity(Enum):
     """Error severity levels for proper handling."""
+
     TRANSIENT = "transient"  # Retry-able errors
     RATE_LIMIT = "rate_limit"  # Back off and retry
     AUTH = "auth"  # Non-retryable
@@ -47,9 +49,13 @@ class ErrorSeverity(Enum):
 
 class LLMProviderError(Exception):
     """Base exception for LLM provider errors."""
-    
-    def __init__(self, message: str, severity: ErrorSeverity = ErrorSeverity.TRANSIENT, 
-                 retry_after: Optional[int] = None):
+
+    def __init__(
+        self,
+        message: str,
+        severity: ErrorSeverity = ErrorSeverity.TRANSIENT,
+        retry_after: Optional[int] = None,
+    ):
         super().__init__(message)
         self.severity = severity
         self.retry_after = retry_after
@@ -58,6 +64,7 @@ class LLMProviderError(Exception):
 @dataclass
 class LLMRequest:
     """Request model for LLM generation."""
+
     prompt: Optional[str] = None
     messages: Optional[List[Dict[str, str]]] = None
     temperature: float = 0.7
@@ -72,6 +79,7 @@ class LLMRequest:
 @dataclass
 class LLMResponse:
     """Response model for LLM generation."""
+
     content: str
     usage: Optional[Dict[str, int]] = None
     finish_reason: Optional[str] = None
@@ -86,19 +94,19 @@ class LLMResponse:
 
 class CircuitBreaker:
     """Circuit breaker pattern for provider resilience."""
-    
+
     def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "closed"  # closed, open, half-open
-    
+
     def call_succeeded(self):
         """Record a successful call."""
         self.failure_count = 0
         self.state = "closed"
-    
+
     def call_failed(self):
         """Record a failed call."""
         self.failure_count += 1
@@ -109,8 +117,9 @@ class CircuitBreaker:
             except RuntimeError:
                 # No event loop running, use time.time() as fallback
                 import time
+
                 self.last_failure_time = time.time()
-    
+
     def is_available(self) -> bool:
         """Check if the circuit breaker allows calls."""
         if self.state == "closed":
@@ -122,8 +131,9 @@ class CircuitBreaker:
                 except RuntimeError:
                     # No event loop running, use time.time() as fallback
                     import time
+
                     current_time = time.time()
-                
+
                 if current_time - self.last_failure_time >= self.recovery_timeout:
                     self.state = "half-open"
                     return True
@@ -132,52 +142,53 @@ class CircuitBreaker:
 
 class LLMProvider(ABC):
     """Abstract base class for all LLM providers."""
-    
+
     def __init__(self, config: Any):
         self.config = config
         self.provider_type = config.provider
         self.model = config.model
         self.circuit_breaker = CircuitBreaker(
-            failure_threshold=config.max_retries,
-            recovery_timeout=60
+            failure_threshold=config.max_retries, recovery_timeout=60
         )
-    
+
     @abstractmethod
     async def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response."""
         pass
-    
+
     @abstractmethod
-    async def generate_stream(self, request: LLMRequest) -> AsyncGenerator[LLMResponse, None]:
+    async def generate_stream(
+        self, request: LLMRequest
+    ) -> AsyncGenerator[LLMResponse, None]:
         """Generate streaming response."""
         pass
-    
+
     @abstractmethod
     async def health_check(self) -> bool:
         """Check if the provider is healthy and accessible."""
         pass
-    
+
     @abstractmethod
     def supports_streaming(self) -> bool:
         """Check if provider supports streaming."""
         pass
-    
+
     @abstractmethod
     def supports_tools(self) -> bool:
         """Check if provider supports tool calling."""
         pass
-    
+
     @abstractmethod
     def get_available_models(self) -> Dict[ModelType, str]:
         """Get available models mapped to semantic types."""
         pass
-    
+
     @classmethod
     @abstractmethod
     def validate_config(cls, config: Any) -> None:
         """Validate provider-specific configuration."""
         pass
-    
+
     @property
     def provider_name(self) -> str:
         """Get the provider name."""

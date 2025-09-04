@@ -9,20 +9,20 @@ model mixing capabilities, cost optimization, and enterprise-grade resilience.
 """
 
 from .base import (
+    CircuitBreaker,
+    ErrorSeverity,
     LLMProvider,
+    LLMProviderError,
     LLMRequest,
     LLMResponse,
     ModelType,
     ProviderType,
-    ErrorSeverity,
-    LLMProviderError,
-    CircuitBreaker,
 )
 from .factory import LLMProviderFactory
 
 __all__ = [
     "LLMProvider",
-    "LLMRequest", 
+    "LLMRequest",
     "LLMResponse",
     "ModelType",
     "ProviderType",
