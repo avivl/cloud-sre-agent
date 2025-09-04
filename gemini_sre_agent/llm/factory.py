@@ -11,14 +11,14 @@ import logging
 from typing import Any, Dict, List, Optional, Type
 
 from .base import ErrorSeverity, LLMProvider, LLMProviderError
-from .concrete_providers import (
+from .providers import (
     AnthropicProvider,
     BedrockProvider,
+    GeminiProvider,
     GrokProvider,
     OllamaProvider,
     OpenAIProvider,
 )
-from .providers import GeminiProvider
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ from .base import (
     ModelType,
     ProviderType,
 )
-from .concrete_providers import (
+from .providers import (
     AnthropicProvider,
     BedrockProvider,
     GeminiProvider,
