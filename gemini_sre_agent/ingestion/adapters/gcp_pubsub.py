@@ -10,9 +10,7 @@ from Google Cloud Pub/Sub subscriptions.
 import json
 import logging
 from datetime import datetime
-from typing import AsyncGenerator, Dict, Any, Optional
-
-logger = logging.getLogger(__name__)
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from ...config.ingestion_config import GCPPubSubConfig
 from ..interfaces.core import (
@@ -28,6 +26,8 @@ from ..interfaces.errors import (
     SourceNotRunningError,
 )
 from ..interfaces.resilience import HyxResilientClient, create_resilience_config
+
+logger = logging.getLogger(__name__)
 
 
 class GCPPubSubAdapter(LogIngestionInterface):
@@ -295,9 +295,9 @@ class GCPPubSubAdapter(LogIngestionInterface):
         """Handle errors with context. Return True if recoverable."""
         logger.error(f"GCP Pub/Sub adapter error: {error} in context: {context}")
         self._consecutive_failures += 1
-        
+
         # Consider GCP API errors as potentially recoverable
-        if hasattr(error, 'code') and error.code in [429, 500, 502, 503, 504]:
+        if hasattr(error, "code") and error.code in [429, 500, 502, 503, 504]:
             return True
         return False
 
@@ -310,5 +310,5 @@ class GCPPubSubAdapter(LogIngestionInterface):
             "total_messages_failed": self._total_messages_failed,
             "subscription": self.subscription_id,
             "project_id": self.project_id,
-            "resilience_stats": self.resilient_client.get_health_stats()
+            "resilience_stats": self.resilient_client.get_health_stats(),
         }

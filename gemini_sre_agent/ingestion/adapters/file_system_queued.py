@@ -12,8 +12,7 @@ import glob
 import logging
 import os
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import AsyncGenerator, Dict, List, Optional, Set, Any
+from typing import Any, AsyncGenerator, Dict, List, Optional, Set
 
 from ...config.ingestion_config import FileSystemConfig
 from ..interfaces.core import (
@@ -56,7 +55,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
             max_memory_mb=config.max_memory_mb,
             batch_size=100,
             flush_interval_seconds=1.0,
-            enable_metrics=True
+            enable_metrics=True,
         )
         self.memory_queue = MemoryQueue(queue_config)
 
@@ -66,7 +65,9 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
         self._last_check_time = datetime.now(timezone.utc)
         self._error_count = 0
         self._last_error = None
-        self._file_positions: Dict[str, int] = {}  # Track file positions for incremental reading
+        self._file_positions: Dict[str, int] = (
+            {}
+        )  # Track file positions for incremental reading
 
         # Background tasks
         self._file_watcher_task: Optional[asyncio.Task] = None
@@ -77,14 +78,18 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
         try:
             # Validate file path
             if not os.path.exists(self.file_path):
-                raise SourceConnectionError(f"File path does not exist: {self.file_path}")
+                raise SourceConnectionError(
+                    f"File path does not exist: {self.file_path}"
+                )
 
             # Start memory queue
             await self.memory_queue.start()
 
             # Start background tasks
             self._file_watcher_task = asyncio.create_task(self._file_watcher_loop())
-            self._queue_processor_task = asyncio.create_task(self._queue_processor_loop())
+            self._queue_processor_task = asyncio.create_task(
+                self._queue_processor_loop()
+            )
 
             self.running = True
             self._last_check_time = datetime.now(timezone.utc)
@@ -92,7 +97,9 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
 
         except Exception as e:
             logger.error(f"Failed to start queued file system adapter: {e}")
-            raise SourceConnectionError(f"Failed to start file system adapter: {e}") from e
+            raise SourceConnectionError(
+                f"Failed to start file system adapter: {e}"
+            ) from e
 
     async def stop(self) -> None:
         """Stop the file system adapter and memory queue."""
@@ -127,7 +134,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
             try:
                 # Get logs from memory queue
                 log_entries = await self.memory_queue.dequeue()
-                
+
                 if not log_entries:
                     # No logs available, wait a bit
                     await asyncio.sleep(0.1)
@@ -151,7 +158,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                     last_success=None,
                     error_count=self._error_count,
                     last_error="Adapter not running",
-                    metrics={"status": "stopped"}
+                    metrics={"status": "stopped"},
                 )
 
             # Check if file path still exists
@@ -161,7 +168,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                     last_success=None,
                     error_count=self._error_count,
                     last_error=f"File path does not exist: {self.file_path}",
-                    metrics={"status": "error"}
+                    metrics={"status": "error"},
                 )
 
             # Get queue stats
@@ -178,8 +185,8 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                     "queue_size": queue_stats.current_size,
                     "queue_dropped": queue_stats.dropped_count,
                     "processed_files": len(self._processed_files),
-                    "last_check": self._last_check_time.isoformat()
-                }
+                    "last_check": self._last_check_time.isoformat(),
+                },
             )
 
         except Exception as e:
@@ -190,7 +197,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                 last_success=None,
                 error_count=self._error_count,
                 last_error=str(e),
-                metrics={"status": "error"}
+                metrics={"status": "error"},
             )
 
     def get_config(self) -> SourceConfig:  # type: ignore
@@ -210,10 +217,12 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
 
     async def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
         """Handle errors from the adapter."""
-        logger.error(f"File system error in {context.get('operation', 'unknown')}: {error}")
+        logger.error(
+            f"File system error in {context.get('operation', 'unknown')}: {error}"
+        )
         self._error_count += 1
         self._last_error = str(error)
-        
+
         # Return True if error should be retried
         if isinstance(error, (OSError, IOError)):
             return True  # Retry file system errors
@@ -222,7 +231,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
     async def get_health_metrics(self) -> Dict[str, Any]:
         """Get detailed health metrics."""
         queue_stats = self.memory_queue.get_stats()
-        
+
         return {
             "file_path": self.file_path,
             "file_pattern": self.file_pattern,
@@ -238,8 +247,8 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                 "total_enqueued": queue_stats.total_enqueued,
                 "total_dequeued": queue_stats.total_dequeued,
                 "dropped_count": queue_stats.dropped_count,
-                "memory_usage_mb": queue_stats.memory_usage_mb
-            }
+                "memory_usage_mb": queue_stats.memory_usage_mb,
+            },
         }
 
     async def _file_watcher_loop(self) -> None:
@@ -248,27 +257,27 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
             try:
                 # Get files to process
                 files_to_process = await self._get_files_to_process()
-                
+
                 for file_path in files_to_process:
                     if not self.running:
                         break
-                    
+
                     try:
                         # Process file and enqueue logs
                         await self._process_file(file_path)
-                        
+
                     except Exception as e:
                         logger.error(f"Error processing file {file_path}: {e}")
                         self._error_count += 1
                         self._last_error = str(e)
                         continue
-                
+
                 # Update last check time
                 self._last_check_time = datetime.now(timezone.utc)
-                
+
                 # Wait before next check
                 await asyncio.sleep(1.0)
-                
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -281,13 +290,13 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
             try:
                 # This loop is mainly for monitoring and cleanup
                 # The actual log processing happens in get_logs()
-                
+
                 # Check queue health
                 if self.memory_queue.is_full():
                     logger.warning("Memory queue is full, logs may be dropped")
-                
+
                 await asyncio.sleep(10.0)  # Check every 10 seconds
-                
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -297,7 +306,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
     async def _get_files_to_process(self) -> List[str]:
         """Get list of files to process."""
         files = []
-        
+
         try:
             if os.path.isfile(self.file_path):
                 # Single file
@@ -309,13 +318,13 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
             else:
                 # Pattern-based search
                 files = glob.glob(self.file_path)
-            
+
             # Filter out already processed files (for non-watch mode)
             if not self.watch_mode:
                 files = [f for f in files if f not in self._processed_files]
-            
+
             return files
-            
+
         except Exception as e:
             logger.error(f"Error getting files to process: {e}")
             return []
@@ -325,46 +334,50 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
         try:
             # Get current position in file
             current_position = self._file_positions.get(file_path, 0)
-            
-            with open(file_path, 'r', encoding=self.encoding) as f:
+
+            with open(file_path, "r", encoding=self.encoding) as f:
                 # Seek to last known position
                 f.seek(current_position)
-                
+
                 # Read new content
                 new_content = f.read()
                 current_position = f.tell()
-                
+
                 if not new_content:
                     return  # No new content
-                
+
                 # Parse log lines
-                log_lines = new_content.strip().split('\n')
-                
+                log_lines = new_content.strip().split("\n")
+
                 for line_num, line in enumerate(log_lines):
                     if not line.strip():
                         continue
-                    
+
                     try:
                         # Parse log entry
                         log_entry = self._parse_log_line(line, file_path, line_num)
-                        
+
                         # Enqueue to memory queue
                         success = await self.memory_queue.enqueue(log_entry)
-                        
+
                         if not success:
-                            logger.warning(f"Failed to enqueue log entry from {file_path}:{line_num}")
-                        
+                            logger.warning(
+                                f"Failed to enqueue log entry from {file_path}:{line_num}"
+                            )
+
                     except LogParsingError as e:
-                        logger.warning(f"Failed to parse log line {file_path}:{line_num}: {e}")
+                        logger.warning(
+                            f"Failed to parse log line {file_path}:{line_num}: {e}"
+                        )
                         continue
-                
+
                 # Update file position
                 self._file_positions[file_path] = current_position
-                
+
                 # Mark as processed if not in watch mode
                 if not self.watch_mode:
                     self._processed_files.add(file_path)
-                    
+
         except Exception as e:
             logger.error(f"Error processing file {file_path}: {e}")
             raise
@@ -376,9 +389,9 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
             timestamp = datetime.now(timezone.utc)
             message = line.strip()
             severity = LogSeverity.INFO
-            
+
             # Try to extract timestamp and severity from common log formats
-            parts = line.split(' ', 3)
+            parts = line.split(" ", 3)
             if len(parts) >= 3:
                 try:
                     # Try to parse timestamp (common formats)
@@ -388,7 +401,7 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                     message = parts[3] if len(parts) > 3 else message
                 except ValueError:
                     pass
-                
+
                 # Try to extract severity
                 if len(parts) >= 3:
                     severity_str = parts[2].upper()
@@ -402,10 +415,10 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                         severity = LogSeverity.CRITICAL
                     elif severity_str in ["INFO"]:
                         severity = LogSeverity.INFO
-            
+
             # Generate unique ID
             log_id = f"fs-{os.path.basename(file_path)}-{line_num}-{hash(line) % 10000}"
-            
+
             return LogEntry(
                 id=log_id,
                 timestamp=timestamp,
@@ -415,9 +428,11 @@ class QueuedFileSystemAdapter(LogIngestionInterface):
                 metadata={
                     "file_path": file_path,
                     "line_number": line_num,
-                    "file_size": os.path.getsize(file_path) if os.path.exists(file_path) else 0
-                }
+                    "file_size": (
+                        os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                    ),
+                },
             )
-            
+
         except Exception as e:
             raise LogParsingError(f"Failed to parse log line: {e}") from e

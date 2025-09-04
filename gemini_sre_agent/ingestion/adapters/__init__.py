@@ -10,18 +10,18 @@ This module provides adapters for different log sources including:
 - Syslog
 """
 
+from .aws_cloudwatch import AWSCloudWatchAdapter
 from .file_system import FileSystemAdapter
 from .file_system_queued import QueuedFileSystemAdapter
 from .gcp_logging import GCPLoggingAdapter
 from .gcp_pubsub import GCPPubSubAdapter
-from .aws_cloudwatch import AWSCloudWatchAdapter
 from .kubernetes import KubernetesAdapter
 
 __all__ = [
     "FileSystemAdapter",
     "QueuedFileSystemAdapter",
-    "GCPLoggingAdapter", 
+    "GCPLoggingAdapter",
     "GCPPubSubAdapter",
     "AWSCloudWatchAdapter",
-    "KubernetesAdapter"
+    "KubernetesAdapter",
 ]

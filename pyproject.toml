@@ -9,7 +9,6 @@ dependencies = [
   "pydantic>=2.7.0",
   "pydantic-settings>=2.0.0",
   "click>=8.0.0",
-
   "tenacity>=8.2.3",
   "slowapi>=0.1.9",
   "fastapi>=0.111.0",

@@ -12,7 +12,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncGenerator, AsyncIterator, Dict, List, Optional, Set, Any
+from typing import Any, AsyncGenerator, AsyncIterator, Dict, List, Optional, Set
 
 from ...config.ingestion_config import FileSystemConfig
 from ..interfaces.core import (
@@ -360,7 +360,7 @@ class FileSystemAdapter(LogIngestionInterface):
         """Handle errors with context. Return True if recoverable."""
         logger.error(f"File system adapter error: {error} in context: {context}")
         self._consecutive_failures += 1
-        
+
         # Consider file system errors as potentially recoverable
         if isinstance(error, (OSError, IOError)):
             return True
@@ -373,7 +373,9 @@ class FileSystemAdapter(LogIngestionInterface):
             "consecutive_failures": self._consecutive_failures,
             "total_logs_processed": self._total_logs_processed,
             "total_logs_failed": self._total_logs_failed,
-            "last_check_time": self._last_check_time.isoformat() if self._last_check_time else None,
+            "last_check_time": (
+                self._last_check_time.isoformat() if self._last_check_time else None
+            ),
             "watched_files_count": len(self._watched_files),
-            "resilience_stats": self.resilient_client.get_health_stats()
+            "resilience_stats": self.resilient_client.get_health_stats(),
         }

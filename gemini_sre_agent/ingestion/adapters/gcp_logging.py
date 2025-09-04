@@ -9,9 +9,7 @@ from Google Cloud Logging API.
 
 import logging
 from datetime import datetime, timedelta
-from typing import AsyncGenerator, Dict, Any, Optional
-
-logger = logging.getLogger(__name__)
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from ...config.ingestion_config import GCPLoggingConfig
 from ..interfaces.core import (
@@ -27,6 +25,8 @@ from ..interfaces.errors import (
     SourceNotRunningError,
 )
 from ..interfaces.resilience import HyxResilientClient, create_resilience_config
+
+logger = logging.getLogger(__name__)
 
 
 class GCPLoggingAdapter(LogIngestionInterface):
@@ -268,9 +268,9 @@ class GCPLoggingAdapter(LogIngestionInterface):
         """Handle errors with context. Return True if recoverable."""
         logger.error(f"GCP Logging adapter error: {error} in context: {context}")
         self._consecutive_failures += 1
-        
+
         # Consider GCP API errors as potentially recoverable
-        if hasattr(error, 'code') and error.code in [429, 500, 502, 503, 504]:
+        if hasattr(error, "code") and error.code in [429, 500, 502, 503, 504]:
             return True
         return False
 
@@ -281,8 +281,10 @@ class GCPLoggingAdapter(LogIngestionInterface):
             "consecutive_failures": self._consecutive_failures,
             "total_logs_processed": self._total_logs_processed,
             "total_logs_failed": self._total_logs_failed,
-            "last_poll_time": self._last_poll_time.isoformat() if self._last_poll_time else None,
+            "last_poll_time": (
+                self._last_poll_time.isoformat() if self._last_poll_time else None
+            ),
             "project_id": self.project_id,
             "log_filter": self.log_filter,
-            "resilience_stats": self.resilient_client.get_health_stats()
+            "resilience_stats": self.resilient_client.get_health_stats(),
         }

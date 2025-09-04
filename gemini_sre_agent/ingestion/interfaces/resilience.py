@@ -6,14 +6,15 @@ Resilience patterns for log ingestion system using working libraries.
 
 import asyncio
 import time
-from typing import Any, Awaitable, Callable, Dict, TypeVar
 from dataclasses import dataclass
+from typing import Any, Awaitable, Callable, Dict, TypeVar
 
 # Try to import resilience libraries
 HYX_AVAILABLE = False  # Not using Hyx anymore
 
 try:
     import circuitbreaker
+
     CIRCUITBREAKER_AVAILABLE = True
 except ImportError:
     CIRCUITBREAKER_AVAILABLE = False
@@ -21,25 +22,33 @@ except ImportError:
 
 try:
     import tenacity
+
     TENACITY_AVAILABLE = True
 except ImportError:
     TENACITY_AVAILABLE = False
     tenacity = None
 
+
 # Define resilience classes at module level
 class AsyncCircuitBreaker:
     """Circuit breaker implementation using the circuitbreaker library."""
-    
-    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0, expected_exception: type = Exception, **kwargs):
+
+    def __init__(
+        self,
+        failure_threshold: int = 5,
+        recovery_timeout: float = 60.0,
+        expected_exception: type = Exception,
+        **kwargs
+    ):
         if CIRCUITBREAKER_AVAILABLE and circuitbreaker:
             self.circuit_breaker = circuitbreaker.CircuitBreaker(
                 failure_threshold=failure_threshold,
                 recovery_timeout=recovery_timeout,
-                expected_exception=expected_exception
+                expected_exception=expected_exception,
             )
         else:
             self.circuit_breaker = None
-    
+
     def __call__(self, func):
         if self.circuit_breaker:
             return self.circuit_breaker(func)
@@ -57,39 +66,48 @@ class AsyncCircuitBreaker:
             return self.circuit_breaker.failure_count
         return 0
 
+
 class AsyncRetry:
     """Retry implementation using the tenacity library."""
-    
-    def __init__(self, attempts: int = 3, backoff=None, expected_exception: type = Exception, **kwargs):
+
+    def __init__(
+        self,
+        attempts: int = 3,
+        backoff=None,
+        expected_exception: type = Exception,
+        **kwargs
+    ):
         if TENACITY_AVAILABLE and tenacity:
             self.retry = tenacity.retry(
                 stop=tenacity.stop_after_attempt(attempts),
                 wait=backoff or tenacity.wait_exponential(multiplier=1, min=4, max=10),
-                retry=tenacity.retry_if_exception_type(expected_exception)
+                retry=tenacity.retry_if_exception_type(expected_exception),
             )
         else:
             self.retry = None
-    
+
     def __call__(self, func):
         if self.retry:
             return self.retry(func)
         return func
 
+
 class AsyncTimeout:
     """Timeout implementation using asyncio."""
-    
+
     def __init__(self, timeout: int):
         self.timeout = timeout
-    
+
     async def __call__(self, func):
         if asyncio.iscoroutinefunction(func):
             return await asyncio.wait_for(func(), timeout=self.timeout)
         else:
             return func()
 
+
 class AsyncBulkhead:
     """Simple bulkhead implementation."""
-    
+
     def __init__(self, capacity: int = 10, queue_size: int = 5, **kwargs):
         self.capacity = capacity
         self.queue_size = queue_size
@@ -105,9 +123,10 @@ class AsyncBulkhead:
         self.active_count -= 1
         self.semaphore.release()
 
+
 class AsyncRateLimit:
     """Simple rate limiting implementation."""
-    
+
     def __init__(self, rate: int = 10, burst: int = 20, **kwargs):
         self.rate = rate
         self.burst = burst
@@ -121,10 +140,10 @@ class AsyncRateLimit:
             time_passed = now - self.last_update
             self.tokens = min(self.burst, self.tokens + time_passed * self.rate)
             self.last_update = now
-            
+
             if self.tokens < 1:
                 await asyncio.sleep(1.0 / self.rate)
-            
+
             self.tokens -= 1
             return self
 
@@ -155,6 +174,7 @@ class HyxResilientClient:
     def __init__(self, config: ResilienceConfig):
         if not HYX_AVAILABLE:
             import warnings
+
             warnings.warn(
                 "Hyx library not available. Using fallback implementation. "
                 "Install with: pip install hyx>=0.4.0",
@@ -224,7 +244,7 @@ class HyxResilientClient:
                 async with self.bulkhead:
                     # Create a wrapped operation with all resilience patterns
                     wrapped_op = self.retry_policy(self.timeout(operation))
-                    result = await self.circuit_breaker(wrapped_op)()
+                    result = await self.circuit_breaker(wrapped_op)
 
             self._stats["successful_operations"] += 1
             return result

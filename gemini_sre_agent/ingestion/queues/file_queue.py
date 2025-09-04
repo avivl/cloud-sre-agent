@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class FileQueueConfig(QueueConfig):
     """Configuration for file-based queue."""
 
-    queue_dir: str = "/tmp/log_queue"
+    queue_dir: str = "log_queue"  # Use relative path instead of /tmp
     max_file_size_mb: int = 10
     max_files: int = 100
     compression_enabled: bool = False
@@ -113,10 +113,11 @@ class FileSystemQueue:
                 }
 
                 # Write to file
-                with open(self.current_file, "a") as f:
+                with open(str(self.current_file), "a") as f:
                     f.write(json.dumps(entry_data) + "\n")
 
-                self.current_file_size = self.current_file.stat().st_size
+                if self.current_file:
+                    self.current_file_size = self.current_file.stat().st_size
                 self._stats.total_enqueued += 1
                 self._stats.last_enqueue_time = datetime.now(timezone.utc)
 
