@@ -8,8 +8,11 @@ for AWS Bedrock models.
 """
 
 import asyncio
+import json
 import logging
 from typing import Any, Dict, List
+
+import boto3
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
@@ -22,7 +25,6 @@ class BedrockProvider(LLMProvider):
 
     def __init__(self, config: LLMProviderConfig):
         super().__init__(config)
-        self.api_key = config.api_key
         self.region = (
             config.provider_specific.get("aws_region", "us-east-1")
             if config.provider_specific
@@ -34,40 +36,110 @@ class BedrockProvider(LLMProvider):
             else None
         )
 
+        # Initialize boto3 clients
+        try:
+            session_kwargs = {"region_name": self.region}
+            if self.profile:
+                session_kwargs["profile_name"] = self.profile
+
+            session = boto3.Session(**session_kwargs)
+            self.runtime_client = session.client("bedrock-runtime")
+            self.bedrock_client = session.client("bedrock")
+        except Exception as e:
+            logger.error(f"Failed to initialize Bedrock clients: {e}")
+            raise
+
     async def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using Bedrock API."""
-        # TODO: Implement actual Bedrock API call
         logger.info(f"Generating response with Bedrock model: {self.model}")
 
-        # Mock implementation for now
-        return LLMResponse(
-            content="Mock Bedrock response",
-            model=self.model,
-            provider=self.provider_name,
-            usage={"input_tokens": 10, "output_tokens": 5},
-        )
+        try:
+            messages = self._convert_messages_to_bedrock_format(request.messages or [])
+            temperature = self.config.provider_specific.get("temperature", 0.7)
+            max_tokens = self.config.provider_specific.get("max_tokens", 1000)
+            top_p = self.config.provider_specific.get("top_p", 1.0)
+
+            body = {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "top_p": top_p,
+            }
+
+            response = await asyncio.to_thread(
+                self.runtime_client.invoke_model,
+                modelId=self.model,
+                body=json.dumps(body),
+                contentType="application/json",
+            )
+
+            response_body = json.loads(response["body"].read())
+            content = self._extract_content_from_response(response_body)
+            usage = self._extract_usage_from_response(response_body)
+
+            return LLMResponse(
+                content=content,
+                model=self.model,
+                provider=self.provider_name,
+                usage=usage,
+            )
+
+        except Exception as e:
+            logger.error(f"Bedrock generation error: {e}")
+            raise
 
     async def generate_stream(self, request: LLMRequest):  # type: ignore
         """Generate streaming response using Bedrock API."""
-        # TODO: Implement actual Bedrock streaming API call
         logger.info(f"Generating streaming response with Bedrock model: {self.model}")
 
-        # Mock implementation for now
-        chunks = ["Mock", " Bedrock", " streaming", " response"]
-        for i, chunk in enumerate(chunks):
-            yield LLMResponse(
-                content=chunk,
-                model=self.model,
-                provider=self.provider_name,
-                usage={"input_tokens": 10, "output_tokens": i + 1},
+        try:
+            messages = self._convert_messages_to_bedrock_format(request.messages or [])
+            temperature = self.config.provider_specific.get("temperature", 0.7)
+            max_tokens = self.config.provider_specific.get("max_tokens", 1000)
+            top_p = self.config.provider_specific.get("top_p", 1.0)
+
+            body = {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "top_p": top_p,
+                "stream": True,
+            }
+
+            response = await asyncio.to_thread(
+                self.runtime_client.invoke_model_with_response_stream,
+                modelId=self.model,
+                body=json.dumps(body),
+                contentType="application/json",
             )
-            await asyncio.sleep(0.1)  # Simulate streaming delay
+
+            # Process streaming response
+            for event in response["body"]:
+                if "chunk" in event:
+                    chunk_data = json.loads(event["chunk"]["bytes"])
+                    if "delta" in chunk_data and "text" in chunk_data["delta"]:
+                        yield LLMResponse(
+                            content=chunk_data["delta"]["text"],
+                            model=self.model,
+                            provider=self.provider_name,
+                            usage=None,
+                        )
+
+        except Exception as e:
+            logger.error(f"Bedrock streaming error: {e}")
+            raise
 
     async def health_check(self) -> bool:
         """Check if Bedrock API is accessible."""
-        # TODO: Implement actual health check
         logger.debug("Performing Bedrock health check")
-        return True  # Mock implementation
+
+        try:
+            # Use bedrock client (not runtime) for listing models
+            await asyncio.to_thread(self.bedrock_client.list_foundation_models)
+            return True
+        except Exception as e:
+            logger.error(f"Bedrock health check failed: {e}")
+            return False
 
     def supports_streaming(self) -> bool:
         """Check if Bedrock supports streaming."""
@@ -79,14 +151,14 @@ class BedrockProvider(LLMProvider):
 
     def get_available_models(self) -> Dict[ModelType, str]:
         """Get available Bedrock models mapped to semantic types."""
-        # Default mappings
         default_mappings = {
             ModelType.FAST: "anthropic.claude-3-5-haiku-20241022-v1:0",
             ModelType.SMART: "anthropic.claude-3-5-sonnet-20241022-v1:0",
             ModelType.DEEP_THINKING: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+            ModelType.CODE: "anthropic.claude-3-5-sonnet-20241022-v1:0",
+            ModelType.ANALYSIS: "anthropic.claude-3-5-sonnet-20241022-v1:0",
         }
 
-        # Merge custom mappings with defaults
         if self.config.model_type_mappings:
             default_mappings.update(self.config.model_type_mappings)
 
@@ -94,38 +166,76 @@ class BedrockProvider(LLMProvider):
 
     async def embeddings(self, text: str) -> List[float]:
         """Generate embeddings using Bedrock API."""
-        # TODO: Implement actual Bedrock embeddings API call
         logger.info(f"Generating embeddings for text of length: {len(text)}")
 
-        # Mock implementation - return a vector of zeros
-        return [0.0] * 1024  # Bedrock embedding dimension
+        try:
+            body = {"inputText": text}
+
+            response = await asyncio.to_thread(
+                self.runtime_client.invoke_model,
+                modelId="amazon.titan-embed-text-v1",
+                body=json.dumps(body),
+                contentType="application/json",
+            )
+
+            response_body = json.loads(response["body"].read())
+            return response_body["embedding"]
+
+        except Exception as e:
+            logger.error(f"Bedrock embeddings error: {e}")
+            raise
 
     def token_count(self, text: str) -> int:
         """Count tokens in the given text."""
-        # TODO: Implement actual token counting
-        # For now, use a rough approximation
-        return int(len(text.split()) * 1.3)  # Rough approximation
+        return int(len(text.split()) * 1.3)
 
     def cost_estimate(self, input_tokens: int, output_tokens: int) -> float:
         """Estimate cost for the given token usage."""
-        # Bedrock pricing (as of 2024) - varies by model
-        input_cost_per_1k = 0.003  # $3.00 per 1M input tokens
-        output_cost_per_1k = 0.015  # $15.00 per 1M output tokens
+        if "claude-3-5-sonnet" in self.model:
+            input_cost_per_1k = 0.003
+            output_cost_per_1k = 0.015
+        elif "claude-3-5-haiku" in self.model:
+            input_cost_per_1k = 0.0008
+            output_cost_per_1k = 0.004
+        else:
+            input_cost_per_1k = 0.003
+            output_cost_per_1k = 0.015
 
         input_cost = (input_tokens / 1000) * input_cost_per_1k
         output_cost = (output_tokens / 1000) * output_cost_per_1k
-
         return input_cost + output_cost
+
+    def _convert_messages_to_bedrock_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        """Convert generic message format to Bedrock format."""
+        bedrock_messages = []
+        for message in messages:
+            role = message.get("role", "user")
+            content = message.get("content", "")
+
+            if role not in ["user", "assistant"]:
+                role = "user"
+
+            bedrock_messages.append({"role": role, "content": content})
+
+        return bedrock_messages
+
+    def _extract_content_from_response(self, response_body: Dict[str, Any]) -> str:
+        """Extract content from Bedrock response."""
+        if "content" in response_body and response_body["content"]:
+            return response_body["content"][0]["text"]
+        return ""
+
+    def _extract_usage_from_response(self, response_body: Dict[str, Any]) -> Dict[str, int]:
+        """Extract usage information from Bedrock response."""
+        usage = response_body.get("usage", {})
+        return {
+            "input_tokens": usage.get("input_tokens", 0),
+            "output_tokens": usage.get("output_tokens", 0),
+        }
 
     @classmethod
     def validate_config(cls, config: Any) -> None:
         """Validate Bedrock-specific configuration."""
-        if not hasattr(config, "api_key") or not config.api_key:
-            raise ValueError("AWS access key is required for Bedrock")
-
-        if len(config.api_key) != 20:
-            raise ValueError("AWS access key must be 20 characters long")
-
         provider_specific = (
             config.provider_specific if hasattr(config, "provider_specific") else {}
         )
