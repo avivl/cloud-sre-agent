@@ -55,7 +55,9 @@ class AsyncCircuitBreaker:
             if asyncio.iscoroutinefunction(func):
 
                 async def async_wrapper(*args, **kwargs):
-                    return self.circuit_breaker(func)(*args, **kwargs)
+                    if self.circuit_breaker:
+                        return self.circuit_breaker(func)(*args, **kwargs)
+                    return await func(*args, **kwargs)
 
                 return async_wrapper
             else:

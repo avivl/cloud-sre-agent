@@ -226,12 +226,13 @@ node_modules/
 # OS specific
 .DS_Store
 
-# Task files
-# tasks.json
-# tasks/
 .cursor
 .taskmaster
 
 # Ignore config.yaml
 config/config.yaml
 .working_docs/
+
+# Task files
+# tasks.json
+# tasks/ 
