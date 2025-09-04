@@ -468,7 +468,7 @@ async def main():
                 if log_manager:
                     log_managers.append(log_manager)
                     # Create a task that keeps the log manager running
-                    task = asyncio.create_task(log_manager._health_monitor())
+                    task = asyncio.create_task(log_manager.start())
                     tasks.append(task)
             else:
                 logger.info(

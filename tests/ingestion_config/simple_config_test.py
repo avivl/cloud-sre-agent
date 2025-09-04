@@ -200,6 +200,7 @@ def test_source_configs():
     # Test GCP Pub/Sub config
     gcp_config = GCPPubSubConfig(
         name="test-pubsub",
+        type=SourceType.GCP_PUBSUB,
         project_id="test-project",
         subscription_id="test-subscription",
         credentials_path="/path/to/creds.json",
@@ -214,6 +215,7 @@ def test_source_configs():
     # Test File System config
     fs_config = FileSystemConfig(
         name="test-filesystem",
+        type=SourceType.FILE_SYSTEM,
         file_path="/var/log/apps",
         file_pattern="*.log",
         watch_mode=True,
@@ -251,11 +253,13 @@ def test_ingestion_config():
     sources = [
         GCPPubSubConfig(
             name="pubsub-source",
+            type=SourceType.GCP_PUBSUB,
             project_id="test-project",
             subscription_id="test-sub",
         ),
         FileSystemConfig(
             name="file-source",
+            type=SourceType.FILE_SYSTEM,
             file_path="/var/log/apps",
         ),
     ]
@@ -286,6 +290,7 @@ def test_config_validation():
         sources=[
             GCPPubSubConfig(
                 name="valid-source",
+                type=SourceType.GCP_PUBSUB,
                 project_id="test-project",
                 subscription_id="test-sub",
                 priority=10,
@@ -305,6 +310,7 @@ def test_config_validation():
         sources=[
             GCPPubSubConfig(
                 name="",  # Empty name
+                type=SourceType.GCP_PUBSUB,
                 project_id="test-project",
                 subscription_id="test-sub",
                 priority=150,  # Invalid priority
@@ -405,6 +411,7 @@ def test_config_file_loading():
                 source_config = source_data["config"]
                 source = GCPPubSubConfig(
                     name=source_data["name"],
+                    type=SourceType.GCP_PUBSUB,
                     project_id=source_config["project_id"],
                     subscription_id=source_config["subscription_id"],
                     credentials_path=source_config.get("credentials_path"),
