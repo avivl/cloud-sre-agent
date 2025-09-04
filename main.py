@@ -2,10 +2,16 @@ import asyncio
 import json
 import os
 
+# New ingestion system imports
+from gemini_sre_agent.config.ingestion_config import GCPPubSubConfig, SourceType
+from gemini_sre_agent.ingestion.adapters.gcp_pubsub import GCPPubSubAdapter
+from gemini_sre_agent.ingestion.interfaces.core import LogEntry
+from gemini_sre_agent.ingestion.manager.log_manager import LogManager
+from gemini_sre_agent.ingestion.monitoring.monitoring_manager import MonitoringManager
 from gemini_sre_agent.legacy_config import (
     GlobalConfig,
     ServiceMonitorConfig,
-    load_config
+    load_config,
 )
 from gemini_sre_agent.log_subscriber import LogSubscriber
 from gemini_sre_agent.logger import setup_logging
@@ -16,13 +22,6 @@ from gemini_sre_agent.ml.enhanced_analysis_agent import (
 from gemini_sre_agent.remediation_agent import RemediationAgent
 from gemini_sre_agent.resilience import HyxResilientClient, create_resilience_config
 from gemini_sre_agent.triage_agent import TriageAgent
-
-# New ingestion system imports
-from gemini_sre_agent.ingestion.manager.log_manager import LogManager
-from gemini_sre_agent.ingestion.adapters.gcp_pubsub import GCPPubSubAdapter
-from gemini_sre_agent.config.ingestion_config import GCPPubSubConfig, SourceType
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry
-from gemini_sre_agent.ingestion.monitoring.monitoring_manager import MonitoringManager
 
 
 def validate_environment():
