@@ -384,7 +384,7 @@ class AlertManager:
     ) -> None:
         """Send notification via webhook."""
         try:
-            import aiohttp
+            import aiohttp  # type: ignore
         except ImportError:
             logger.error("aiohttp not available for webhook notifications")
             return

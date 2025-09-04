@@ -165,6 +165,8 @@ class KubernetesConfig(SourceConfig):
     kubeconfig_path: Optional[str] = None
     poll_interval: int = 30
     max_logs: int = 1000
+    max_pods: int = 100
+    tail_lines: int = 100
 
     def __post_init__(self):
         self.type = SourceType.KUBERNETES
@@ -175,6 +177,8 @@ class KubernetesConfig(SourceConfig):
             "kubeconfig_path": self.kubeconfig_path,
             "poll_interval": self.poll_interval,
             "max_logs": self.max_logs,
+            "max_pods": self.max_pods,
+            "tail_lines": self.tail_lines,
         }
 
 

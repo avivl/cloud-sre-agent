@@ -49,6 +49,9 @@ class KubernetesAdapter(LogIngestionInterface):
 
     async def start(self) -> None:
         """Start the Kubernetes adapter."""
+        if not KUBERNETES_AVAILABLE or config is None or client is None:
+            raise SourceConnectionError("Kubernetes client not available")
+            
         try:
             # Load Kubernetes configuration
             if self.config.kubeconfig_path:
@@ -205,9 +208,9 @@ class KubernetesAdapter(LogIngestionInterface):
 
         # Return True if error should be retried
         if isinstance(error, ApiException):
-            if error.status == 404:
+            if hasattr(error, "status") and error.status == 404:
                 return False  # Don't retry not found errors
-            elif error.status >= 500:
+            elif hasattr(error, "status") and error.status >= 500:
                 return True  # Retry server errors
         return True
 
@@ -229,11 +232,14 @@ class KubernetesAdapter(LogIngestionInterface):
 
     async def _test_connection(self) -> None:
         """Test the Kubernetes connection."""
+        if self.v1 is None:
+            raise SourceConnectionError("Kubernetes client not initialized")
+            
         try:
             # Try to list namespaces
             self.v1.list_namespace(limit=1)
         except ApiException as e:
-            if e.status == 403:
+            if hasattr(e, "status") and e.status == 403:
                 # Forbidden, but connection is working
                 pass
             else:
@@ -243,6 +249,9 @@ class KubernetesAdapter(LogIngestionInterface):
 
     async def _get_pods(self) -> List[Any]:
         """Get pods matching the selector."""
+        if self.v1 is None:
+            return []
+            
         try:
             kwargs = {"namespace": self.config.namespace, "limit": self.config.max_pods}
 
@@ -285,6 +294,9 @@ class KubernetesAdapter(LogIngestionInterface):
             if self._last_check_time:
                 kwargs["since_time"] = self._last_check_time
 
+            if self.v1 is None:
+                return []
+                
             response = self.v1.read_namespaced_pod_log(**kwargs)
 
             # Split into lines and filter empty ones
