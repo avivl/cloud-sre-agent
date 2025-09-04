@@ -98,11 +98,11 @@ class TestCircuitBreaker:
         # because the circuit only opens at the beginning of the next call
         assert circuit_breaker.state == CircuitState.CLOSED
         assert circuit_breaker._failure_count == 3
-        
+
         # The next call should open the circuit
         with pytest.raises(CircuitBreakerOpenException):
             await circuit_breaker.call(fail_func)
-        
+
         assert circuit_breaker.state == CircuitState.OPEN
 
     @pytest.mark.asyncio
@@ -146,7 +146,7 @@ class TestCircuitBreaker:
         # First call should be blocked because circuit is open
         with pytest.raises(CircuitBreakerOpenException):
             await circuit_breaker.call(success_func)
-        
+
         assert circuit_breaker.state == CircuitState.OPEN
 
     @pytest.mark.asyncio

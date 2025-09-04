@@ -71,7 +71,7 @@ class FallbackManager:
         for provider in self.providers:
             if provider in provider_funcs:
                 providers_to_try.append(provider)
-        
+
         # Add any additional providers from provider_funcs that aren't in self.providers
         for provider in provider_funcs:
             if provider not in providers_to_try:
@@ -84,7 +84,10 @@ class FallbackManager:
 
         for provider in providers_to_try:
             # Skip unhealthy providers (unless they're the only ones available)
-            if not self._provider_health.get(provider, True) and len(providers_to_try) > 1:
+            if (
+                not self._provider_health.get(provider, True)
+                and len(providers_to_try) > 1
+            ):
                 logger.debug(f"Skipping unhealthy provider: {provider}")
                 continue
 
@@ -198,7 +201,7 @@ class FallbackManager:
         usage = self._provider_usage.get(provider, 0)
         failures = self._provider_failures.get(provider, 0)
         total_successes = max(0, usage - failures)
-        
+
         return {
             "provider": provider,
             "healthy": self._provider_health.get(provider, True),
@@ -207,7 +210,9 @@ class FallbackManager:
             "usage": usage,
             "total_requests": self._total_requests,
             "total_successes": total_successes,
-            "success_rate": (total_successes / max(1, usage)) * 100 if usage > 0 else 0.0,
+            "success_rate": (
+                (total_successes / max(1, usage)) * 100 if usage > 0 else 0.0
+            ),
             "average_response_time": 0.0,  # Not implemented in this version
             "last_failure": self._provider_last_failure.get(provider),
         }

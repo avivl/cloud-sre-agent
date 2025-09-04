@@ -14,10 +14,9 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 try:
     from mirascope import Prompt
-except ImportError as e:
-    raise ImportError(
-        "Required dependency 'mirascope' not installed. Please install: pip install mirascope"
-    ) from e
+except ImportError:
+    # Prompt class not available in current mirascope version
+    Prompt = None
 
 from pydantic import BaseModel
 
@@ -82,7 +81,7 @@ class EnhancedLLMService(Generic[T]):
 
     async def generate_structured(
         self,
-        prompt: Union[str, Prompt],
+        prompt: Union[str, Any],
         response_model: Type[T],
         model: Optional[str] = None,
         model_type: Optional[ModelType] = None,
@@ -183,7 +182,7 @@ class EnhancedLLMService(Generic[T]):
 
     async def generate_text(
         self,
-        prompt: Union[str, Prompt],
+        prompt: Union[str, Any],
         model: Optional[str] = None,
         model_type: Optional[ModelType] = None,
         provider: Optional[str] = None,
@@ -276,7 +275,7 @@ class EnhancedLLMService(Generic[T]):
 
     async def generate_with_fallback(
         self,
-        prompt: Union[str, Prompt],
+        prompt: Union[str, Any],
         response_model: Optional[Type[T]] = None,
         model_type: Optional[ModelType] = None,
         selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE,

@@ -81,14 +81,15 @@ class RetryHandler:
 
         if retryable_exceptions is None:
             retryable_exceptions = (Exception,)
-        
+
         # Import here to avoid circular imports
         from .circuit_breaker import CircuitBreakerOpenException
-        
+
         # Don't retry circuit breaker exceptions
         if CircuitBreakerOpenException in retryable_exceptions:
             retryable_exceptions = tuple(
-                exc for exc in retryable_exceptions 
+                exc
+                for exc in retryable_exceptions
                 if exc != CircuitBreakerOpenException
             )
 

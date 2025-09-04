@@ -143,12 +143,11 @@ class ResilienceManager:
             if enable_retry:
                 result = await asyncio.wait_for(
                     self.retry_handler.execute_with_retry(execute_with_circuit_breaker),
-                    timeout=self.fallback_timeout
+                    timeout=self.fallback_timeout,
                 )
             else:
                 result = await asyncio.wait_for(
-                    execute_with_circuit_breaker(),
-                    timeout=self.fallback_timeout
+                    execute_with_circuit_breaker(), timeout=self.fallback_timeout
                 )
 
             self._total_successes += 1

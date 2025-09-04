@@ -393,7 +393,7 @@ response = await provider.generate(request)
 
 # Record usage
 cost_manager.record_request(
-    provider_name, model, 
+    provider_name, model,
     request.input_tokens, response.output_tokens,
     response.cost_usd, response.success,
     response.response_time_ms

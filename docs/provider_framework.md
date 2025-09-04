@@ -29,10 +29,10 @@ class MyProvider(HTTPAPITemplate):
             ModelType.FAST: "my-fast-model",
             ModelType.SMART: "my-smart-model"
         }
-    
+
     def _get_api_endpoint(self):
         return "/v1/chat/completions"
-    
+
     def _get_headers(self):
         return {"Authorization": f"Bearer {self.api_key}"}
 
@@ -58,10 +58,10 @@ For providers that use HTTP APIs with JSON requests/responses:
 class MyHTTPProvider(HTTPAPITemplate):
     def _get_model_mapping(self):
         return {ModelType.FAST: "fast-model"}
-    
+
     def _get_api_endpoint(self):
         return "/chat/completions"
-    
+
     def _get_headers(self):
         return {"Authorization": f"Bearer {self.api_key}"}
 ```
@@ -74,7 +74,7 @@ For providers that follow OpenAI's API format:
 class MyOpenAIProvider(OpenAICompatibleTemplate):
     def _get_model_mapping(self):
         return {ModelType.FAST: "gpt-3.5-turbo"}
-    
+
     def _get_api_endpoint(self):
         return "/v1/chat/completions"
 ```
@@ -87,14 +87,14 @@ For providers with custom REST API formats:
 class MyRESTProvider(RESTAPITemplate):
     def _get_model_mapping(self):
         return {ModelType.FAST: "custom-model"}
-    
+
     def _build_request_payload(self, request):
         return {
             "messages": request.messages,
             "model": request.model,
             "max_tokens": request.max_tokens
         }
-    
+
     def _parse_response(self, response_data):
         return LLMResponse(
             content=response_data["response"],
@@ -112,7 +112,7 @@ For providers that support streaming responses:
 class MyStreamingProvider(StreamingTemplate):
     def _get_model_mapping(self):
         return {ModelType.FAST: "streaming-model"}
-    
+
     async def _stream_response(self, request):
         # Implement streaming logic
         async for chunk in self._make_streaming_request(request):
@@ -198,7 +198,7 @@ class CustomProvider(BaseProviderTemplate):
     async def _make_api_request(self, request: LLMRequest) -> dict:
         # Custom API request logic
         return await self._custom_api_call(request)
-    
+
     def _parse_response(self, response_data: dict) -> LLMResponse:
         # Custom response parsing
         return LLMResponse(
@@ -207,7 +207,7 @@ class CustomProvider(BaseProviderTemplate):
             usage=response_data.get("usage", {}),
             finish_reason="stop"
         )
-    
+
     def _get_model_mapping(self) -> dict:
         return {ModelType.FAST: "custom-model"}
 ```
@@ -221,11 +221,11 @@ class MyProvider(HTTPAPITemplate):
     @classmethod
     def validate_config(cls, config):
         super().validate_config(config)
-        
+
         # Custom validation
         if not config.custom_field:
             raise ValueError("custom_field is required")
-    
+
     def _get_model_mapping(self):
         return {ModelType.FAST: "my-model"}
 ```
@@ -245,7 +245,7 @@ class MyProvider(HTTPAPITemplate):
                 await asyncio.sleep(1)
                 return await self._make_api_request(request)
             raise
-    
+
     def _get_model_mapping(self):
         return {ModelType.FAST: "my-model"}
 ```
@@ -276,11 +276,11 @@ class MyProvider(BaseProviderTemplate):
     async def _make_api_request(self, request: LLMRequest) -> dict:
         # API request logic
         pass
-    
+
     def _parse_response(self, response_data: dict) -> LLMResponse:
         # Response parsing logic
         pass
-    
+
     def _get_model_mapping(self) -> dict:
         # Model mapping logic
         pass
@@ -294,7 +294,7 @@ Always validate provider-specific configuration:
 @classmethod
 def validate_config(cls, config):
     super().validate_config(config)
-    
+
     # Provider-specific validation
     if not hasattr(config, 'custom_field'):
         raise ValueError("custom_field is required")
@@ -334,7 +334,7 @@ class TestMyProvider:
             base_url="https://api.test.com"
         )
         return MyProvider(config)
-    
+
     @pytest.mark.asyncio
     async def test_generate(self, provider):
         with patch.object(provider, '_make_api_request') as mock_request:
@@ -343,12 +343,12 @@ class TestMyProvider:
                 "model": "test-model",
                 "usage": {"total_tokens": 10}
             }
-            
+
             request = LLMRequest(
                 messages=[{"role": "user", "content": "Hello"}],
                 model="test-model"
             )
-            
+
             response = await provider.generate(request)
             assert response.content == "test"
 ```

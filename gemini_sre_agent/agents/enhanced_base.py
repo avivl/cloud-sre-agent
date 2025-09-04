@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class EnhancedBaseAgent(Generic[T]):
     """
     Enhanced base class for all agents with multi-provider support.
-    
+
     Provides intelligent model selection, provider mixing, and advanced
     configuration options while maintaining backward compatibility.
     """
@@ -56,7 +56,7 @@ class EnhancedBaseAgent(Generic[T]):
     ):
         """
         Initialize the enhanced base agent.
-        
+
         Args:
             llm_config: LLM configuration for multi-provider support
             response_model: Pydantic model for structured responses
@@ -87,22 +87,24 @@ class EnhancedBaseAgent(Generic[T]):
         self.min_quality = min_quality
         self.business_hours_only = business_hours_only
         self.custom_weights = custom_weights
-        
+
         # Initialize enhanced LLM service
         self.llm_service = EnhancedLLMService(llm_config)
-        
+
         # Initialize strategy manager
         self.strategy_manager = StrategyManager(self.llm_service.model_scorer)
-        
+
         # Initialize stats
         self.stats = AgentStats(agent_name=self.__class__.__name__)
-        
+
         # Cache for prompts and model selections
         self._prompts = {}
         self._model_cache = {}
         self._conversation_context = []
-        
-        logger.info(f"EnhancedBaseAgent '{self.__class__.__name__}' initialized with multi-provider support")
+
+        logger.info(
+            f"EnhancedBaseAgent '{self.__class__.__name__}' initialized with multi-provider support"
+        )
 
     async def execute(
         self,
@@ -118,7 +120,7 @@ class EnhancedBaseAgent(Generic[T]):
     ) -> T:
         """
         Execute a prompt with intelligent model selection and multi-provider support.
-        
+
         Args:
             prompt_name: Name of the prompt template
             prompt_args: Arguments for prompt formatting
@@ -129,12 +131,12 @@ class EnhancedBaseAgent(Generic[T]):
             use_fallback: Whether to use fallback models on failure
             force_model_selection: Force re-selection even if cached
             **kwargs: Additional arguments for the LLM service
-            
+
         Returns:
             Structured response of type T
         """
         start_time = time.time()
-        
+
         # Determine the model to use
         selected_model = await self._select_model(
             model=model,
@@ -142,14 +144,14 @@ class EnhancedBaseAgent(Generic[T]):
             optimization_goal=optimization_goal,
             force_selection=force_model_selection,
         )
-        
+
         # Get the prompt template
         prompt = self._get_prompt(prompt_name)
-        
+
         try:
             # Format the prompt template with the provided arguments
             formatted_prompt = prompt.format(**prompt_args)
-            
+
             # Generate structured response using enhanced LLM service
             response = await self.llm_service.generate_structured(
                 prompt=formatted_prompt,
@@ -157,14 +159,18 @@ class EnhancedBaseAgent(Generic[T]):
                 model=selected_model,
                 model_type=self.model_type_preference,
                 provider=provider.value if provider else None,
-                selection_strategy=SelectionStrategy(self._convert_optimization_goal(optimization_goal or self.optimization_goal)),
+                selection_strategy=SelectionStrategy(
+                    self._convert_optimization_goal(
+                        optimization_goal or self.optimization_goal
+                    )
+                ),
                 max_cost=self.max_cost,
                 min_performance=self.min_performance,
                 min_reliability=self.min_quality,
                 temperature=temperature,
                 **kwargs,
             )
-            
+
             # Record success statistics
             if self.collect_stats:
                 self.stats.record_success(
@@ -172,12 +178,14 @@ class EnhancedBaseAgent(Generic[T]):
                     latency_ms=int((time.time() - start_time) * 1000),
                     prompt_name=prompt_name,
                 )
-            
+
             # Update conversation context
-            self._update_conversation_context(prompt_name, prompt_args, selected_model, response)
-            
+            self._update_conversation_context(
+                prompt_name, prompt_args, selected_model, response
+            )
+
             return response
-            
+
         except Exception as e:
             # Record error statistics
             if self.collect_stats:
@@ -186,10 +194,16 @@ class EnhancedBaseAgent(Generic[T]):
                     error=str(e),
                     prompt_name=prompt_name,
                 )
-            
+
             # Try fallback model if available and enabled
-            if use_fallback and self.fallback_model and selected_model != self.fallback_model:
-                logger.warning(f"Primary model {selected_model} failed, trying fallback {self.fallback_model}")
+            if (
+                use_fallback
+                and self.fallback_model
+                and selected_model != self.fallback_model
+            ):
+                logger.warning(
+                    f"Primary model {selected_model} failed, trying fallback {self.fallback_model}"
+                )
                 return await self.execute(
                     prompt_name=prompt_name,
                     prompt_args=prompt_args,
@@ -201,12 +215,16 @@ class EnhancedBaseAgent(Generic[T]):
                     force_model_selection=True,
                     **kwargs,
                 )
-            
+
             # Try different provider if available
             if use_fallback and provider and len(self.provider_preference or []) > 1:
-                alternative_providers = [p for p in (self.provider_preference or []) if p != provider]
+                alternative_providers = [
+                    p for p in (self.provider_preference or []) if p != provider
+                ]
                 if alternative_providers:
-                    logger.warning(f"Provider {provider} failed, trying alternative provider {alternative_providers[0]}")
+                    logger.warning(
+                        f"Provider {provider} failed, trying alternative provider {alternative_providers[0]}"
+                    )
                     return await self.execute(
                         prompt_name=prompt_name,
                         prompt_args=prompt_args,
@@ -218,7 +236,7 @@ class EnhancedBaseAgent(Generic[T]):
                         force_model_selection=True,
                         **kwargs,
                     )
-            
+
             raise
 
     async def _select_model(
@@ -230,35 +248,35 @@ class EnhancedBaseAgent(Generic[T]):
     ) -> str:
         """
         Select the best model based on current strategy and constraints.
-        
+
         Args:
             model: Specific model to use (overrides selection)
             provider: Specific provider to use
             optimization_goal: Override the default optimization goal
             force_selection: Force re-selection even if cached
-            
+
         Returns:
             Selected model name
         """
         # Use specific model if provided
         if model:
             return model
-        
+
         # Use primary model if set and no force selection
         if self.primary_model and not force_selection:
             return self.primary_model
-        
+
         # Create cache key for model selection
         cache_key = f"{optimization_goal or self.optimization_goal}_{provider}_{self.model_type_preference}_{self.max_cost}_{self.min_performance}"
-        
+
         # Return cached selection if available and not forcing
         if not force_selection and cache_key in self._model_cache:
             return self._model_cache[cache_key]
-        
+
         try:
             # Get available models from registry
             available_models = self.llm_service.model_registry.get_all_models()
-            
+
             # Create strategy context
             strategy_context = StrategyContext(
                 task_type=self.model_type_preference,
@@ -268,32 +286,36 @@ class EnhancedBaseAgent(Generic[T]):
                 business_hours_only=self.business_hours_only,
                 provider_preference=self.provider_preference,
             )
-            
+
             # Select model using strategy manager
             result: StrategyResult = self.strategy_manager.select_model(
                 candidates=available_models,
                 goal=optimization_goal or self.optimization_goal,
                 context=strategy_context,
             )
-            
+
             selected_model = result.selected_model.name
-            
+
             # Cache the selection
             self._model_cache[cache_key] = selected_model
-            
-            logger.debug(f"Selected model '{selected_model}' using {result.strategy_used} strategy: {result.reasoning}")
-            
+
+            logger.debug(
+                f"Selected model '{selected_model}' using {result.strategy_used} strategy: {result.reasoning}"
+            )
+
             return selected_model
-            
+
         except Exception as e:
-            logger.warning(f"Model selection failed: {e}, falling back to primary model")
+            logger.warning(
+                f"Model selection failed: {e}, falling back to primary model"
+            )
             return self.primary_model or "smart"
 
     def _convert_optimization_goal(self, goal: OptimizationGoal) -> str:
         """Convert OptimizationGoal to SelectionStrategy string."""
         goal_mapping = {
             OptimizationGoal.COST: "cheapest",
-            OptimizationGoal.PERFORMANCE: "fastest", 
+            OptimizationGoal.PERFORMANCE: "fastest",
             OptimizationGoal.QUALITY: "best_score",
             OptimizationGoal.TIME_BASED: "balanced",
             OptimizationGoal.HYBRID: "balanced",
@@ -306,7 +328,7 @@ class EnhancedBaseAgent(Generic[T]):
             # For now, use simple templates
             # TODO: Integrate with Mirascope for advanced prompt management
             self._prompts[prompt_name] = self._create_default_prompt(prompt_name)
-        
+
         return self._prompts[prompt_name]
 
     def _create_default_prompt(self, prompt_name: str) -> str:
@@ -319,7 +341,7 @@ class EnhancedBaseAgent(Generic[T]):
             "triage": "Triage the following issue: {issue}",
             "remediate": "Provide remediation for: {problem}",
         }
-        
+
         return default_prompts.get(prompt_name, "Please process the following: {input}")
 
     def _update_conversation_context(
@@ -337,9 +359,9 @@ class EnhancedBaseAgent(Generic[T]):
             "model": model,
             "response_type": type(response).__name__,
         }
-        
+
         self._conversation_context.append(context_entry)
-        
+
         # Keep only the last 10 entries to prevent memory bloat
         if len(self._conversation_context) > 10:
             self._conversation_context = self._conversation_context[-10:]
@@ -389,13 +411,15 @@ class EnhancedBaseAgent(Generic[T]):
         self.min_quality = min_quality
         # Clear model cache to force re-selection with new constraints
         self._model_cache.clear()
-        logger.info(f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, min_quality={min_quality}")
+        logger.info(
+            f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, min_quality={min_quality}"
+        )
 
     def get_stats_summary(self) -> Dict[str, Any]:
         """Get comprehensive statistics summary."""
         base_stats = self.stats.get_summary()
         model_stats = self.get_model_selection_stats()
-        
+
         return {
             "agent_stats": base_stats,
             "model_selection_stats": model_stats,

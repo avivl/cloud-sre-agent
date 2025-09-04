@@ -365,9 +365,12 @@ class TestFallbackManager:
         """Test concurrent fallback executions with some failures."""
         # Each call tries gemini (fails) then openai (succeeds), so we need 6 side effects for 3 calls
         mock_provider_func.side_effect = [
-            Exception("fail"), "success",  # Call 1: gemini fails, openai succeeds
-            Exception("fail"), "success",  # Call 2: gemini fails, openai succeeds  
-            Exception("fail"), "success",  # Call 3: gemini fails, openai succeeds
+            Exception("fail"),
+            "success",  # Call 1: gemini fails, openai succeeds
+            Exception("fail"),
+            "success",  # Call 2: gemini fails, openai succeeds
+            Exception("fail"),
+            "success",  # Call 3: gemini fails, openai succeeds
         ]
 
         provider_funcs = {

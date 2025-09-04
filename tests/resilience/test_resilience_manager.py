@@ -123,10 +123,10 @@ class TestResilienceManager:
         # Create different functions for different providers
         async def gemini_func(*args, **kwargs):
             raise Exception("provider_failure")
-        
+
         async def openai_func(*args, **kwargs):
             return "fallback_success"
-        
+
         async def anthropic_func(*args, **kwargs):
             return "fallback_success"
 
@@ -143,18 +143,20 @@ class TestResilienceManager:
 
         # Override the _try_fallback method to use different functions
         original_try_fallback = resilience_manager._try_fallback
-        
+
         async def mock_try_fallback(original_func, *args, **kwargs):
             # Create provider functions dictionary with different functions
             provider_funcs = {}
             for provider in resilience_manager.providers:
                 provider_funcs[provider] = get_provider_func(provider)
-            
-            result, provider_used = await resilience_manager.fallback_manager.execute_with_fallback(
-                provider_funcs, *args, **kwargs
+
+            result, provider_used = (
+                await resilience_manager.fallback_manager.execute_with_fallback(
+                    provider_funcs, *args, **kwargs
+                )
             )
             return result, provider_used
-        
+
         resilience_manager._try_fallback = mock_try_fallback
 
         try:

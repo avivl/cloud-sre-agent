@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class OptimizedBaseAgent(Generic[T]):
     """
     High-performance base agent with comprehensive optimizations.
-    
+
     Integrates performance optimization system to meet < 10ms overhead requirement
     while maintaining all functionality of the enhanced base agent.
     """
@@ -53,7 +53,7 @@ class OptimizedBaseAgent(Generic[T]):
     ):
         """
         Initialize the optimized base agent.
-        
+
         Args:
             llm_config: LLM configuration for multi-provider support
             response_model: Pydantic model for structured responses
@@ -88,7 +88,7 @@ class OptimizedBaseAgent(Generic[T]):
         self.business_hours_only = business_hours_only
         self.custom_weights = custom_weights
         self.enable_optimizations = enable_optimizations
-        
+
         # Initialize optimized LLM service
         self.llm_service = OptimizedLLMService(
             llm_config,
@@ -96,31 +96,35 @@ class OptimizedBaseAgent(Generic[T]):
             batch_size=batch_size,
             max_wait_ms=max_wait_ms,
         )
-        
+
         # Initialize strategy manager (lazy loaded)
         self._strategy_manager_loader = None
-        
+
         # Initialize stats
         self.stats = AgentStats(agent_name=self.__class__.__name__)
-        
+
         # Cache for prompts and model selections
         self._prompts = {}
         self._model_cache = {}
         self._conversation_context = []
-        
+
         # Performance tracking
         self._operation_times: Dict[str, List[float]] = {}
         self._total_operations = 0
-        
-        logger.info(f"OptimizedBaseAgent '{self.__class__.__name__}' initialized with performance optimizations")
+
+        logger.info(
+            f"OptimizedBaseAgent '{self.__class__.__name__}' initialized with performance optimizations"
+        )
 
     async def _get_strategy_manager(self) -> StrategyManager:
         """Lazy load strategy manager."""
         if self._strategy_manager_loader is None:
             # Get the enhanced service to access model scorer
             enhanced_service = await self.llm_service._enhanced_service_loader.get()
-            self._strategy_manager_loader = StrategyManager(enhanced_service.model_scorer)
-        
+            self._strategy_manager_loader = StrategyManager(
+                enhanced_service.model_scorer
+            )
+
         return self._strategy_manager_loader
 
     async def execute(
@@ -137,7 +141,7 @@ class OptimizedBaseAgent(Generic[T]):
     ) -> T:
         """
         Execute a prompt with optimized performance and intelligent model selection.
-        
+
         Args:
             prompt_name: Name of the prompt template
             prompt_args: Arguments for prompt formatting
@@ -148,19 +152,19 @@ class OptimizedBaseAgent(Generic[T]):
             use_fallback: Whether to use fallback models on failure
             force_model_selection: Force re-selection even if cached
             **kwargs: Additional arguments for the LLM service
-            
+
         Returns:
             Structured response of type T
         """
         start_time = time.time()
-        
+
         try:
             # Get the prompt template (cached)
             prompt = self._get_prompt(prompt_name)
-            
+
             # Format the prompt template with the provided arguments
             formatted_prompt = prompt.format(**prompt_args)
-            
+
             # Generate structured response using optimized LLM service
             response = await self.llm_service.generate_structured(
                 prompt=formatted_prompt,
@@ -174,7 +178,7 @@ class OptimizedBaseAgent(Generic[T]):
                 temperature=temperature,
                 **kwargs,
             )
-            
+
             # Record success statistics
             if self.collect_stats:
                 execution_time = (time.time() - start_time) * 1000
@@ -183,19 +187,21 @@ class OptimizedBaseAgent(Generic[T]):
                     latency_ms=int(execution_time),
                     prompt_name=prompt_name,
                 )
-            
+
             # Update conversation context
-            self._update_conversation_context(prompt_name, prompt_args, model or "auto-selected", response)
-            
+            self._update_conversation_context(
+                prompt_name, prompt_args, model or "auto-selected", response
+            )
+
             # Track performance
             execution_time = (time.time() - start_time) * 1000
             self._track_operation_time("execute_success", execution_time)
-            
+
             return response
-            
+
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
-            
+
             # Record error statistics
             if self.collect_stats:
                 self.stats.record_error(
@@ -203,10 +209,12 @@ class OptimizedBaseAgent(Generic[T]):
                     error=str(e),
                     prompt_name=prompt_name,
                 )
-            
+
             # Try fallback model if available and enabled
             if use_fallback and self.fallback_model and model != self.fallback_model:
-                logger.warning(f"Primary model {model} failed, trying fallback {self.fallback_model}")
+                logger.warning(
+                    f"Primary model {model} failed, trying fallback {self.fallback_model}"
+                )
                 return await self.execute(
                     prompt_name=prompt_name,
                     prompt_args=prompt_args,
@@ -218,12 +226,16 @@ class OptimizedBaseAgent(Generic[T]):
                     force_model_selection=True,
                     **kwargs,
                 )
-            
+
             # Try different provider if available
             if use_fallback and provider and len(self.provider_preference or []) > 1:
-                alternative_providers = [p for p in (self.provider_preference or []) if p != provider]
+                alternative_providers = [
+                    p for p in (self.provider_preference or []) if p != provider
+                ]
                 if alternative_providers:
-                    logger.warning(f"Provider {provider} failed, trying alternative provider {alternative_providers[0]}")
+                    logger.warning(
+                        f"Provider {provider} failed, trying alternative provider {alternative_providers[0]}"
+                    )
                     return await self.execute(
                         prompt_name=prompt_name,
                         prompt_args=prompt_args,
@@ -235,7 +247,7 @@ class OptimizedBaseAgent(Generic[T]):
                         force_model_selection=True,
                         **kwargs,
                     )
-            
+
             # Track error performance
             self._track_operation_time("execute_error", execution_time)
             raise
@@ -247,16 +259,16 @@ class OptimizedBaseAgent(Generic[T]):
     ) -> List[T]:
         """
         Execute multiple prompts in batch with optimizations.
-        
+
         Args:
             requests: List of request dictionaries with prompt_name and prompt_args
             **kwargs: Additional arguments for the LLM service
-            
+
         Returns:
             List of structured responses
         """
         start_time = time.time()
-        
+
         try:
             # Prepare batch requests
             batch_requests = []
@@ -265,25 +277,27 @@ class OptimizedBaseAgent(Generic[T]):
                 prompt_args = request["prompt_args"]
                 prompt = self._get_prompt(prompt_name)
                 formatted_prompt = prompt.format(**prompt_args)
-                
-                batch_requests.append({
-                    "prompt": formatted_prompt,
-                    "options": request.get("options", {}),
-                })
-            
+
+                batch_requests.append(
+                    {
+                        "prompt": formatted_prompt,
+                        "options": request.get("options", {}),
+                    }
+                )
+
             # Use batch processing
             results = await self.llm_service.batch_generate_structured(
                 requests=batch_requests,
                 response_model=self.response_model,
                 **kwargs,
             )
-            
+
             # Track performance
             execution_time = (time.time() - start_time) * 1000
             self._track_operation_time("batch_execute", execution_time)
-            
+
             return results
-            
+
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
             self._track_operation_time("batch_execute_error", execution_time)
@@ -296,7 +310,7 @@ class OptimizedBaseAgent(Generic[T]):
             # For now, use simple templates
             # TODO: Integrate with Mirascope for advanced prompt management
             self._prompts[prompt_name] = self._create_default_prompt(prompt_name)
-        
+
         return self._prompts[prompt_name]
 
     def _create_default_prompt(self, prompt_name: str) -> str:
@@ -309,7 +323,7 @@ class OptimizedBaseAgent(Generic[T]):
             "triage": "Triage the following issue: {issue}",
             "remediate": "Provide remediation for: {problem}",
         }
-        
+
         return default_prompts.get(prompt_name, "Please process the following: {input}")
 
     def _update_conversation_context(
@@ -327,9 +341,9 @@ class OptimizedBaseAgent(Generic[T]):
             "model": model,
             "response_type": type(response).__name__,
         }
-        
+
         self._conversation_context.append(context_entry)
-        
+
         # Keep only the last 10 entries to prevent memory bloat
         if len(self._conversation_context) > 10:
             self._conversation_context = self._conversation_context[-10:]
@@ -338,10 +352,10 @@ class OptimizedBaseAgent(Generic[T]):
         """Track operation execution times for performance monitoring."""
         if operation not in self._operation_times:
             self._operation_times[operation] = []
-        
+
         self._operation_times[operation].append(execution_time_ms)
         self._total_operations += 1
-        
+
         # Keep only last 100 measurements to prevent memory growth
         if len(self._operation_times[operation]) > 100:
             self._operation_times[operation] = self._operation_times[operation][-100:]
@@ -389,13 +403,15 @@ class OptimizedBaseAgent(Generic[T]):
         self.min_quality = min_quality
         # Clear model cache to force re-selection with new constraints
         self._model_cache.clear()
-        logger.info(f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, min_quality={min_quality}")
+        logger.info(
+            f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, min_quality={min_quality}"
+        )
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get comprehensive performance statistics."""
         base_stats = self.stats.get_summary()
         llm_stats = self.llm_service.get_performance_stats()
-        
+
         # Calculate operation time statistics
         operation_stats = {}
         for operation, times in self._operation_times.items():
@@ -405,9 +421,13 @@ class OptimizedBaseAgent(Generic[T]):
                     "avg_ms": round(sum(times) / len(times), 2),
                     "min_ms": round(min(times), 2),
                     "max_ms": round(max(times), 2),
-                    "p95_ms": round(sorted(times)[int(len(times) * 0.95)], 2) if len(times) > 1 else times[0],
+                    "p95_ms": (
+                        round(sorted(times)[int(len(times) * 0.95)], 2)
+                        if len(times) > 1
+                        else times[0]
+                    ),
                 }
-        
+
         return {
             "agent_stats": base_stats,
             "llm_service_stats": llm_stats,
@@ -433,7 +453,7 @@ class OptimizedBaseAgent(Generic[T]):
     async def health_check(self) -> Dict[str, Any]:
         """Perform health check with performance metrics."""
         llm_health = await self.llm_service.health_check()
-        
+
         return {
             "agent_name": self.__class__.__name__,
             "status": "healthy" if llm_health["status"] == "healthy" else "unhealthy",

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     """
     Enhanced agent specialized for text generation tasks with multi-provider support.
-    
+
     Optimized for general text generation with intelligent model selection
     based on content complexity and quality requirements.
     """
@@ -39,7 +39,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     ):
         """
         Initialize the enhanced text agent.
-        
+
         Args:
             llm_config: LLM configuration for multi-provider support
             primary_model: Primary model for text generation
@@ -62,7 +62,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
             min_quality=min_quality,
             **kwargs,
         )
-        
+
         logger.info("EnhancedTextAgent initialized with quality-focused optimization")
 
     async def generate_text(
@@ -76,7 +76,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     ) -> TextResponse:
         """
         Generate text using intelligent model selection.
-        
+
         Args:
             prompt: Text generation prompt
             max_length: Maximum length of generated text
@@ -84,7 +84,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
             provider: Specific provider to use
             optimization_goal: Override default optimization goal
             **kwargs: Additional arguments
-            
+
         Returns:
             TextResponse with generated text and metadata
         """
@@ -93,7 +93,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
             "max_length": max_length,
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="generate_text",
             prompt_args=prompt_args,
@@ -111,13 +111,13 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     ) -> TextResponse:
         """
         Summarize text with intelligent model selection.
-        
+
         Args:
             text: Text to summarize
             max_length: Maximum length of summary
             focus_points: Specific points to focus on in summary
             **kwargs: Additional arguments
-            
+
         Returns:
             TextResponse with summary
         """
@@ -128,7 +128,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
             "task": "summarize",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="summarize_text",
             prompt_args=prompt_args,
@@ -144,13 +144,13 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     ) -> TextResponse:
         """
         Translate text with intelligent model selection.
-        
+
         Args:
             text: Text to translate
             target_language: Target language for translation
             source_language: Source language (auto-detect if None)
             **kwargs: Additional arguments
-            
+
         Returns:
             TextResponse with translation
         """
@@ -161,7 +161,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
             "task": "translate",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="translate_text",
             prompt_args=prompt_args,
@@ -172,7 +172,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
 class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     """
     Enhanced agent specialized for analysis tasks with multi-provider support.
-    
+
     Optimized for complex analysis tasks with intelligent model selection
     based on analysis complexity and accuracy requirements.
     """
@@ -190,7 +190,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     ):
         """
         Initialize the enhanced analysis agent.
-        
+
         Args:
             llm_config: LLM configuration for multi-provider support
             primary_model: Primary model for analysis
@@ -213,8 +213,10 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             min_quality=min_quality,
             **kwargs,
         )
-        
-        logger.info("EnhancedAnalysisAgent initialized with quality-focused optimization")
+
+        logger.info(
+            "EnhancedAnalysisAgent initialized with quality-focused optimization"
+        )
 
     async def analyze(
         self,
@@ -226,14 +228,14 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     ) -> AnalysisResponse:
         """
         Perform analysis with intelligent model selection.
-        
+
         Args:
             content: Content to analyze
             criteria: Analysis criteria
             analysis_type: Type of analysis (general, technical, business, etc.)
             depth: Analysis depth (brief, detailed, comprehensive)
             **kwargs: Additional arguments
-            
+
         Returns:
             AnalysisResponse with analysis results
         """
@@ -244,7 +246,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             "depth": depth,
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="analyze",
             prompt_args=prompt_args,
@@ -259,12 +261,12 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     ) -> AnalysisResponse:
         """
         Perform comparative analysis with intelligent model selection.
-        
+
         Args:
             items: Items to compare
             comparison_criteria: Criteria for comparison
             **kwargs: Additional arguments
-            
+
         Returns:
             AnalysisResponse with comparison results
         """
@@ -274,7 +276,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             "task": "compare",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="compare_analysis",
             prompt_args=prompt_args,
@@ -290,13 +292,13 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     ) -> AnalysisResponse:
         """
         Perform trend analysis with intelligent model selection.
-        
+
         Args:
             data: Data for trend analysis
             time_period: Time period for analysis
             metrics: Metrics to analyze
             **kwargs: Additional arguments
-            
+
         Returns:
             AnalysisResponse with trend analysis results
         """
@@ -307,7 +309,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             "task": "trend_analysis",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="trend_analysis",
             prompt_args=prompt_args,
@@ -318,7 +320,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
 class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
     """
     Enhanced agent specialized for code generation tasks with multi-provider support.
-    
+
     Optimized for code generation with intelligent model selection
     based on code complexity and language requirements.
     """
@@ -336,7 +338,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
     ):
         """
         Initialize the enhanced code agent.
-        
+
         Args:
             llm_config: LLM configuration for multi-provider support
             primary_model: Primary model for code generation
@@ -359,7 +361,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
             min_quality=min_quality,
             **kwargs,
         )
-        
+
         logger.info("EnhancedCodeAgent initialized with quality-focused optimization")
 
     async def generate_code(
@@ -372,14 +374,14 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
     ) -> CodeResponse:
         """
         Generate code with intelligent model selection.
-        
+
         Args:
             description: Code generation description
             language: Programming language
             framework: Framework to use (if applicable)
             style_guide: Coding style guide to follow
             **kwargs: Additional arguments
-            
+
         Returns:
             CodeResponse with generated code and metadata
         """
@@ -390,7 +392,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
             "style_guide": style_guide,
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="generate_code",
             prompt_args=prompt_args,
@@ -406,13 +408,13 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
     ) -> CodeResponse:
         """
         Refactor code with intelligent model selection.
-        
+
         Args:
             code: Code to refactor
             language: Programming language
             refactor_type: Type of refactoring (performance, readability, etc.)
             **kwargs: Additional arguments
-            
+
         Returns:
             CodeResponse with refactored code
         """
@@ -423,7 +425,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
             "task": "refactor",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="refactor_code",
             prompt_args=prompt_args,
@@ -439,13 +441,13 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
     ) -> CodeResponse:
         """
         Debug code with intelligent model selection.
-        
+
         Args:
             code: Code to debug
             language: Programming language
             error_message: Error message (if available)
             **kwargs: Additional arguments
-            
+
         Returns:
             CodeResponse with debugged code
         """
@@ -456,7 +458,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
             "task": "debug",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="debug_code",
             prompt_args=prompt_args,
@@ -472,13 +474,13 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
     ) -> CodeResponse:
         """
         Optimize code with intelligent model selection.
-        
+
         Args:
             code: Code to optimize
             language: Programming language
             optimization_goal: Optimization goal (performance, memory, readability)
             **kwargs: Additional arguments
-            
+
         Returns:
             CodeResponse with optimized code
         """
@@ -489,7 +491,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
             "task": "optimize",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="optimize_code",
             prompt_args=prompt_args,
@@ -500,7 +502,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
 class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
     """
     Enhanced agent specialized for triage tasks with multi-provider support.
-    
+
     Optimized for fast triage with intelligent model selection
     based on urgency and complexity requirements.
     """
@@ -518,7 +520,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
     ):
         """
         Initialize the enhanced triage agent.
-        
+
         Args:
             llm_config: LLM configuration for multi-provider support
             primary_model: Primary model for triage
@@ -541,8 +543,10 @@ class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
             min_performance=min_performance,
             **kwargs,
         )
-        
-        logger.info("EnhancedTriageAgent initialized with performance-focused optimization")
+
+        logger.info(
+            "EnhancedTriageAgent initialized with performance-focused optimization"
+        )
 
     async def triage_issue(
         self,
@@ -553,13 +557,13 @@ class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
     ) -> AnalysisResponse:
         """
         Triage an issue with intelligent model selection.
-        
+
         Args:
             issue: Issue description
             context: Additional context information
             urgency_level: Urgency level (low, medium, high, critical)
             **kwargs: Additional arguments
-            
+
         Returns:
             AnalysisResponse with triage results
         """
@@ -570,7 +574,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
             "task": "triage",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="triage_issue",
             prompt_args=prompt_args,
@@ -581,7 +585,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
 class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
     """
     Enhanced agent specialized for remediation tasks with multi-provider support.
-    
+
     Optimized for comprehensive remediation with intelligent model selection
     based on problem complexity and solution quality requirements.
     """
@@ -599,7 +603,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
     ):
         """
         Initialize the enhanced remediation agent.
-        
+
         Args:
             llm_config: LLM configuration for multi-provider support
             primary_model: Primary model for remediation
@@ -622,8 +626,10 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
             min_quality=min_quality,
             **kwargs,
         )
-        
-        logger.info("EnhancedRemediationAgent initialized with quality-focused optimization")
+
+        logger.info(
+            "EnhancedRemediationAgent initialized with quality-focused optimization"
+        )
 
     async def provide_remediation(
         self,
@@ -634,13 +640,13 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
     ) -> AnalysisResponse:
         """
         Provide remediation with intelligent model selection.
-        
+
         Args:
             problem: Problem description
             context: Additional context information
             remediation_type: Type of remediation (technical, process, etc.)
             **kwargs: Additional arguments
-            
+
         Returns:
             AnalysisResponse with remediation recommendations
         """
@@ -651,7 +657,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
             "task": "remediate",
             **kwargs,
         }
-        
+
         return await self.execute(
             prompt_name="provide_remediation",
             prompt_args=prompt_args,

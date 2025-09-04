@@ -236,23 +236,23 @@ class ErrorClassifier:
 
     def _extract_status_code_from_message(self, error_message: str) -> Optional[int]:
         """Extract HTTP status code from error message.
-        
+
         Args:
             error_message: Error message to extract status code from
-            
+
         Returns:
             Status code if found, None otherwise
         """
         import re
-        
+
         # Look for patterns like "429 Client Error", "500 Server Error", etc.
         patterns = [
-            r'(\d{3})\s+(?:Client|Server)\s+Error',
-            r'HTTP\s+(\d{3})',
-            r'Status\s+(\d{3})',
-            r'(\d{3})\s+Error',
+            r"(\d{3})\s+(?:Client|Server)\s+Error",
+            r"HTTP\s+(\d{3})",
+            r"Status\s+(\d{3})",
+            r"(\d{3})\s+Error",
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, error_message)
             if match:
@@ -260,7 +260,7 @@ class ErrorClassifier:
                     return int(match.group(1))
                 except (ValueError, IndexError):
                     continue
-                    
+
         return None
 
     def is_retryable(self, category: ErrorCategory) -> bool:
