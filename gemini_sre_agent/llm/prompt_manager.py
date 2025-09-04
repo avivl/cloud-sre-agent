@@ -11,13 +11,13 @@ import logging
 import os
 from typing import Dict, List
 
+# Note: Mirascope integration will be added in a future update
+# For now, we'll use simple string templates
 try:
     import yaml
-    from mirascope import Prompt
 except ImportError as e:
     raise ImportError(
-        "Required dependencies not installed. Please install: "
-        "pip install mirascope pyyaml"
+        "Required dependency not installed. Please install: pip install pyyaml"
     ) from e
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class PromptManager:
     """
-    Manager for Mirascope prompts with basic functionality.
+    Manager for prompt templates with basic functionality.
     
     Provides prompt loading, caching, and basic management capabilities.
     """
@@ -33,7 +33,7 @@ class PromptManager:
     def __init__(self, prompt_directory: str = "prompts"):
         """Initialize the prompt manager."""
         self.prompt_directory = prompt_directory
-        self.prompts: Dict[str, Prompt] = {}
+        self.prompts: Dict[str, str] = {}  # Changed from Prompt to str
         self.logger = logging.getLogger(__name__)
         self._load_prompts()
 
@@ -51,20 +51,20 @@ class PromptManager:
                     with open(path, "r") as f:
                         prompt_data = yaml.safe_load(f)
                         prompt_name = os.path.splitext(filename)[0]
-                        self.prompts[prompt_name] = Prompt(prompt_data.get("template", ""))
+                        self.prompts[prompt_name] = prompt_data.get("template", "")
                         self.logger.debug(f"Loaded prompt: {prompt_name}")
                 except Exception as e:
                     self.logger.error(f"Failed to load prompt {filename}: {str(e)}")
 
-    def get_prompt(self, name: str) -> Prompt:
+    def get_prompt(self, name: str) -> str:
         """
-        Get a prompt by name.
+        Get a prompt template by name.
         
         Args:
             name: Prompt name
             
         Returns:
-            Mirascope Prompt object
+            Prompt template string
             
         Raises:
             ValueError: If prompt not found

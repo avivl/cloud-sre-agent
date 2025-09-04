@@ -11,12 +11,8 @@ advanced prompt management through Mirascope.
 import logging
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
-try:
-    from mirascope import Prompt
-except ImportError as e:
-    raise ImportError(
-        "Required dependency 'mirascope' not installed. Please install: pip install mirascope"
-    ) from e
+# Note: Mirascope integration will be added in a future update
+# For now, we'll use simple string templates
 
 from pydantic import BaseModel
 
@@ -55,7 +51,7 @@ class LLMService(Generic[T]):
 
     async def generate_structured(
         self,
-        prompt: Union[str, Prompt],
+        prompt: str,
         response_model: Type[T],
         model: Optional[str] = None,
         model_type: Optional[ModelType] = None,
@@ -83,7 +79,7 @@ class LLMService(Generic[T]):
 
     async def generate_text(
         self,
-        prompt: Union[str, Prompt],
+        prompt: str,
         model: Optional[str] = None,
         model_type: Optional[ModelType] = None,
         provider: Optional[str] = None,
