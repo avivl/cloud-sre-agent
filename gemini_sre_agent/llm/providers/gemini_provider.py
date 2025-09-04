@@ -165,7 +165,11 @@ class GeminiProvider(LLMProvider):
                 model="models/embedding-001",
                 contents=text,
             )
-            if result.embeddings and len(result.embeddings) > 0 and result.embeddings[0].values:
+            if (
+                result.embeddings
+                and len(result.embeddings) > 0
+                and result.embeddings[0].values
+            ):
                 return result.embeddings[0].values
             return []
         except Exception as e:

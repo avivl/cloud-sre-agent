@@ -19,14 +19,6 @@ from .error_config import ErrorCategory, ErrorHandlerConfig, RequestContext
 logger = logging.getLogger(__name__)
 
 
-
-
-
-
-
-
-
-
 class EnhancedErrorHandler:
     """Enhanced error handling with categorization and recovery strategies."""
 
@@ -55,12 +47,12 @@ class EnhancedErrorHandler:
     def categorize_error(self, error: Exception) -> ErrorCategory:
         """Categorize error based on patterns and type."""
         error_message = str(error).lower()
-        
+
         # Check against known patterns
         for pattern, category in self.error_patterns.items():
             if pattern in error_message:
                 return category
-        
+
         # Type-based categorization
         if isinstance(error, TimeoutError):
             return ErrorCategory.TIMEOUT
@@ -68,30 +60,28 @@ class EnhancedErrorHandler:
             return ErrorCategory.NETWORK
         elif isinstance(error, PermissionError):
             return ErrorCategory.AUTHENTICATION
-        
+
         # Default to permanent for unknown errors
         return ErrorCategory.PERMANENT
 
     async def handle_error(
-        self, 
-        error: Exception, 
-        context: RequestContext
+        self, error: Exception, context: RequestContext
     ) -> Optional[Any]:
         """Main error handling entry point."""
         category = self.categorize_error(error)
         await self.analytics.record_error(error, category, context)
-        
+
         self.logger.warning(
             f"Error {category.name} for provider {context.provider_id}: {str(error)}"
         )
-        
+
         # Check circuit breaker for provider failures
         if category == ErrorCategory.PROVIDER_FAILURE:
             await self.circuit_breaker.record_failure(context.provider_id)
             if not await self.circuit_breaker.allow_request(context.provider_id):
                 self.logger.info(f"Circuit breaker open for {context.provider_id}")
                 return None
-        
+
         # Apply recovery strategy based on category
         if category == ErrorCategory.TRANSIENT:
             return await self._handle_transient(error, context)
@@ -101,30 +91,38 @@ class EnhancedErrorHandler:
             return await self._handle_timeout(error, context)
         elif category == ErrorCategory.NETWORK:
             return await self._handle_network(error, context)
-        
+
         # For permanent errors, don't retry
         return None
 
-    async def _handle_transient(self, error: Exception, context: RequestContext) -> Optional[Any]:
+    async def _handle_transient(
+        self, error: Exception, context: RequestContext
+    ) -> Optional[Any]:
         """Handle transient errors with retry."""
         if context.retry_count < context.max_retries:
             delay = min(
-                self.config.retry_delay_base * (2 ** context.retry_count),
-                self.config.retry_delay_max
+                self.config.retry_delay_base * (2**context.retry_count),
+                self.config.retry_delay_max,
             )
-            self.logger.info(f"Retrying in {delay}s (attempt {context.retry_count + 1})")
+            self.logger.info(
+                f"Retrying in {delay}s (attempt {context.retry_count + 1})"
+            )
             await asyncio.sleep(delay)
             return "retry"
         return None
 
-    async def _handle_rate_limited(self, error: Exception, context: RequestContext) -> Optional[Any]:
+    async def _handle_rate_limited(
+        self, error: Exception, context: RequestContext
+    ) -> Optional[Any]:
         """Handle rate limit errors with backoff."""
-        delay = min(60.0, self.config.retry_delay_base * (2 ** context.retry_count))
+        delay = min(60.0, self.config.retry_delay_base * (2**context.retry_count))
         self.logger.info(f"Rate limited, backing off for {delay}s")
         await asyncio.sleep(delay)
         return "retry"
 
-    async def _handle_timeout(self, error: Exception, context: RequestContext) -> Optional[Any]:
+    async def _handle_timeout(
+        self, error: Exception, context: RequestContext
+    ) -> Optional[Any]:
         """Handle timeout errors."""
         if context.retry_count < context.max_retries:
             delay = self.config.retry_delay_base * 2
@@ -133,12 +131,14 @@ class EnhancedErrorHandler:
             return "retry"
         return None
 
-    async def _handle_network(self, error: Exception, context: RequestContext) -> Optional[Any]:
+    async def _handle_network(
+        self, error: Exception, context: RequestContext
+    ) -> Optional[Any]:
         """Handle network errors."""
         if context.retry_count < context.max_retries:
             delay = min(
-                self.config.retry_delay_base * (2 ** context.retry_count),
-                self.config.retry_delay_max
+                self.config.retry_delay_base * (2**context.retry_count),
+                self.config.retry_delay_max,
             )
             self.logger.info(f"Network error, retrying in {delay}s")
             await asyncio.sleep(delay)

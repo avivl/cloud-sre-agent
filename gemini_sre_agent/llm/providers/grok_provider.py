@@ -25,7 +25,9 @@ class GrokProvider(LLMProvider):
     def __init__(self, config: LLMProviderConfig):
         super().__init__(config)
         self.api_key = config.api_key
-        self.base_url = str(config.base_url) if config.base_url else "https://api.x.ai/v1"
+        self.base_url = (
+            str(config.base_url) if config.base_url else "https://api.x.ai/v1"
+        )
 
         # Initialize HTTP client
         self.client = httpx.AsyncClient(
@@ -100,7 +102,9 @@ class GrokProvider(LLMProvider):
                 "stream": True,
             }
 
-            async with self.client.stream("POST", "/chat/completions", json=payload) as response:
+            async with self.client.stream(
+                "POST", "/chat/completions", json=payload
+            ) as response:
                 response.raise_for_status()
 
                 async for line in response.aiter_lines():
@@ -200,7 +204,9 @@ class GrokProvider(LLMProvider):
 
         return input_cost + output_cost
 
-    def _convert_messages_to_grok_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _convert_messages_to_grok_format(
+        self, messages: List[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
         """Convert generic message format to Grok format."""
         grok_messages = []
         for message in messages:
@@ -211,10 +217,12 @@ class GrokProvider(LLMProvider):
             if role not in ["system", "user", "assistant"]:
                 role = "user"
 
-            grok_messages.append({
-                "role": role,
-                "content": content,
-            })
+            grok_messages.append(
+                {
+                    "role": role,
+                    "content": content,
+                }
+            )
 
         return grok_messages
 

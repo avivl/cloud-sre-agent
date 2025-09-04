@@ -24,12 +24,13 @@ class AnthropicProvider(LLMProvider):
     def __init__(self, config: LLMProviderConfig):
         super().__init__(config)
         self.api_key = config.api_key
-        self.base_url = str(config.base_url) if config.base_url else "https://api.anthropic.com"
+        self.base_url = (
+            str(config.base_url) if config.base_url else "https://api.anthropic.com"
+        )
 
         # Initialize Anthropic client
         self.client = anthropic.AsyncAnthropic(
-            api_key=self.api_key,
-            base_url=self.base_url
+            api_key=self.api_key, base_url=self.base_url
         )
 
         # Get model from provider_specific config
@@ -42,7 +43,9 @@ class AnthropicProvider(LLMProvider):
             logger.info(f"Generating response with Anthropic model: {self.model}")
 
             # Convert messages to Anthropic format
-            messages = self._convert_messages_to_anthropic_format(request.messages or [])
+            messages = self._convert_messages_to_anthropic_format(
+                request.messages or []
+            )
 
             # Get generation parameters
             provider_specific = self.config.provider_specific or {}
@@ -62,7 +65,7 @@ class AnthropicProvider(LLMProvider):
             # Extract text content from response
             content = ""
             if response.content and len(response.content) > 0:
-                if hasattr(response.content[0], 'text'):
+                if hasattr(response.content[0], "text"):
                     content = response.content[0].text  # type: ignore
                 else:
                     content = str(response.content[0])
@@ -81,10 +84,14 @@ class AnthropicProvider(LLMProvider):
     async def generate_stream(self, request: LLMRequest):  # type: ignore
         """Generate streaming response using Anthropic API."""
         try:
-            logger.info(f"Generating streaming response with Anthropic model: {self.model}")
+            logger.info(
+                f"Generating streaming response with Anthropic model: {self.model}"
+            )
 
             # Convert messages to Anthropic format
-            messages = self._convert_messages_to_anthropic_format(request.messages or [])
+            messages = self._convert_messages_to_anthropic_format(
+                request.messages or []
+            )
 
             # Get generation parameters
             provider_specific = self.config.provider_specific or {}
@@ -96,14 +103,18 @@ class AnthropicProvider(LLMProvider):
                 max_tokens=provider_specific.get("max_tokens", 1000),
                 temperature=provider_specific.get("temperature", 0.7),
                 top_p=provider_specific.get("top_p", 1.0),
-                stream=True
+                stream=True,
             )
 
             # Process streaming response
             async for chunk in stream:
-                if hasattr(chunk, 'type') and chunk.type == "content_block_delta":
-                    if hasattr(chunk, 'delta') and hasattr(chunk.delta, 'text'):
-                        usage = self._extract_usage(chunk) if hasattr(chunk, 'usage') else {"input_tokens": 0, "output_tokens": 0}
+                if hasattr(chunk, "type") and chunk.type == "content_block_delta":
+                    if hasattr(chunk, "delta") and hasattr(chunk.delta, "text"):
+                        usage = (
+                            self._extract_usage(chunk)
+                            if hasattr(chunk, "usage")
+                            else {"input_tokens": 0, "output_tokens": 0}
+                        )
                         yield LLMResponse(
                             content=chunk.delta.text,
                             model=self.model,
@@ -123,7 +134,7 @@ class AnthropicProvider(LLMProvider):
             await self.client.messages.create(  # type: ignore
                 model=self.model,
                 messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=1
+                max_tokens=1,
             )
             return True
         except Exception as e:
@@ -185,7 +196,9 @@ class AnthropicProvider(LLMProvider):
 
         return input_cost + output_cost
 
-    def _convert_messages_to_anthropic_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _convert_messages_to_anthropic_format(
+        self, messages: List[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
         """Convert messages to Anthropic format."""
         anthropic_messages = []
         for message in messages:
@@ -199,10 +212,14 @@ class AnthropicProvider(LLMProvider):
                 # Anthropic handles system messages differently
                 # For now, we'll prepend to the first user message
                 if anthropic_messages and anthropic_messages[0]["role"] == "user":
-                    anthropic_messages[0]["content"] = f"System: {content}\n\n{anthropic_messages[0]['content']}"
+                    anthropic_messages[0][
+                        "content"
+                    ] = f"System: {content}\n\n{anthropic_messages[0]['content']}"
                 else:
                     # If no user message yet, create one
-                    anthropic_messages.append({"role": "user", "content": f"System: {content}"})
+                    anthropic_messages.append(
+                        {"role": "user", "content": f"System: {content}"}
+                    )
 
         return anthropic_messages
 

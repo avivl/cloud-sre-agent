@@ -176,15 +176,15 @@ class LLMProviderFactory:
     def create_providers_from_config(cls, config: Any) -> Dict[str, LLMProvider]:
         """
         Create providers from a configuration object.
-        
+
         Args:
             config: Configuration object with providers
-            
+
         Returns:
             Dictionary mapping provider names to provider instances
         """
         providers = {}
-        
+
         for provider_name, provider_config in config.providers.items():
             try:
                 provider = cls.create_provider(provider_name, provider_config)
@@ -193,7 +193,7 @@ class LLMProviderFactory:
                 logger.error(f"Failed to create provider {provider_name}: {e}")
                 # Continue with other providers
                 continue
-        
+
         return providers
 
 

@@ -5,12 +5,13 @@ Unit tests for Bedrock provider implementation.
 """
 
 import json
-import pytest
 from unittest.mock import MagicMock, patch
 
-from gemini_sre_agent.llm.providers.bedrock_provider import BedrockProvider
+import pytest
+
 from gemini_sre_agent.llm.base import LLMRequest, ModelType
 from gemini_sre_agent.llm.config import LLMProviderConfig
+from gemini_sre_agent.llm.providers.bedrock_provider import BedrockProvider
 
 
 @pytest.fixture
@@ -66,17 +67,22 @@ class TestBedrockProvider:
 
         assert models[ModelType.FAST] == "anthropic.claude-3-5-haiku-20241022-v1:0"
         assert models[ModelType.SMART] == "anthropic.claude-3-5-sonnet-20241022-v1:0"
-        assert models[ModelType.DEEP_THINKING] == "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        assert (
+            models[ModelType.DEEP_THINKING]
+            == "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        )
 
     @pytest.mark.asyncio
     async def test_generate_success(self, provider):
         """Test successful text generation."""
         # Mock the response
         mock_response = MagicMock()
-        mock_response["body"].read.return_value = json.dumps({
-            "content": [{"text": "Test response"}],
-            "usage": {"input_tokens": 10, "output_tokens": 5},
-        }).encode()
+        mock_response["body"].read.return_value = json.dumps(
+            {
+                "content": [{"text": "Test response"}],
+                "usage": {"input_tokens": 10, "output_tokens": 5},
+            }
+        ).encode()
 
         provider.runtime_client.invoke_model = MagicMock(return_value=mock_response)
 
@@ -107,7 +113,9 @@ class TestBedrockProvider:
         mock_response["body"] = events
 
         # Mock the client method directly
-        provider.runtime_client.invoke_model_with_response_stream = MagicMock(return_value=mock_response)
+        provider.runtime_client.invoke_model_with_response_stream = MagicMock(
+            return_value=mock_response
+        )
 
         request = LLMRequest(
             messages=[{"role": "user", "content": "Test prompt"}],
@@ -135,7 +143,9 @@ class TestBedrockProvider:
     @pytest.mark.asyncio
     async def test_health_check_failure(self, provider):
         """Test failed health check."""
-        provider.bedrock_client.list_foundation_models = MagicMock(side_effect=Exception("API error"))
+        provider.bedrock_client.list_foundation_models = MagicMock(
+            side_effect=Exception("API error")
+        )
 
         result = await provider.health_check()
 
@@ -145,9 +155,9 @@ class TestBedrockProvider:
     async def test_embeddings(self, provider):
         """Test embeddings generation."""
         mock_response = MagicMock()
-        mock_response["body"].read.return_value = json.dumps({
-            "embedding": [0.1, 0.2, 0.3]
-        }).encode()
+        mock_response["body"].read.return_value = json.dumps(
+            {"embedding": [0.1, 0.2, 0.3]}
+        ).encode()
 
         provider.runtime_client.invoke_model = MagicMock(return_value=mock_response)
 
@@ -198,6 +208,7 @@ class TestBedrockProvider:
 
     def test_validate_config_missing_region(self):
         """Test configuration validation with missing AWS region."""
+
         # Create a mock config that bypasses Pydantic validation
         class MockConfig:
             def __init__(self):
@@ -228,9 +239,7 @@ class TestBedrockProvider:
 
     def test_extract_content_from_response(self, provider):
         """Test content extraction from response."""
-        response_body = {
-            "content": [{"text": "Test response"}]
-        }
+        response_body = {"content": [{"text": "Test response"}]}
 
         result = provider._extract_content_from_response(response_body)
 
@@ -246,9 +255,7 @@ class TestBedrockProvider:
 
     def test_extract_usage_from_response(self, provider):
         """Test usage extraction from response."""
-        response_body = {
-            "usage": {"input_tokens": 10, "output_tokens": 5}
-        }
+        response_body = {"usage": {"input_tokens": 10, "output_tokens": 5}}
 
         result = provider._extract_usage_from_response(response_body)
 
@@ -273,7 +280,9 @@ class TestBedrockProvider:
     @pytest.mark.asyncio
     async def test_generate_error_handling(self, provider):
         """Test error handling in generate method."""
-        provider.runtime_client.invoke_model = MagicMock(side_effect=Exception("API error"))
+        provider.runtime_client.invoke_model = MagicMock(
+            side_effect=Exception("API error")
+        )
 
         request = LLMRequest(
             messages=[{"role": "user", "content": "Test prompt"}],
@@ -286,7 +295,9 @@ class TestBedrockProvider:
     @pytest.mark.asyncio
     async def test_embeddings_error_handling(self, provider):
         """Test error handling in embeddings method."""
-        provider.runtime_client.invoke_model = MagicMock(side_effect=Exception("Embeddings error"))
+        provider.runtime_client.invoke_model = MagicMock(
+            side_effect=Exception("Embeddings error")
+        )
 
         with pytest.raises(Exception, match="Embeddings error"):
             await provider.embeddings("Test text")
@@ -310,12 +321,14 @@ class TestBedrockProvider:
         with patch("boto3.Session") as mock_session:
             mock_client = MagicMock()
             mock_session.return_value.client.return_value = mock_client
-            
+
             provider = BedrockProvider(config)
-            
+
             assert provider.region == "us-west-2"
             assert provider.profile == "production"
-            mock_session.assert_called_once_with(region_name="us-west-2", profile_name="production")
+            mock_session.assert_called_once_with(
+                region_name="us-west-2", profile_name="production"
+            )
 
     def test_initialization_without_profile(self):
         """Test provider initialization without AWS profile."""
@@ -335,9 +348,9 @@ class TestBedrockProvider:
         with patch("boto3.Session") as mock_session:
             mock_client = MagicMock()
             mock_session.return_value.client.return_value = mock_client
-            
+
             provider = BedrockProvider(config)
-            
+
             assert provider.region == "us-east-1"
             assert provider.profile is None
             mock_session.assert_called_once_with(region_name="us-east-1")

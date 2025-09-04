@@ -18,14 +18,16 @@ from .error_config import CircuitBreakerConfig
 
 class CircuitStatus(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, rejecting requests
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, rejecting requests
     HALF_OPEN = "half_open"  # Testing if system has recovered
 
 
 @dataclass
 class CircuitState:
     """State information for circuit breaker."""
+
     status: CircuitStatus = CircuitStatus.CLOSED
     failure_count: int = 0
     success_count: int = 0
@@ -45,7 +47,7 @@ class CircuitBreaker:
         """Check if circuit allows requests for the provider."""
         async with self._lock:
             state = self._get_state(provider_id)
-            
+
             if state.status == CircuitStatus.CLOSED:
                 return True
             elif state.status == CircuitStatus.OPEN:
@@ -119,5 +121,5 @@ class CircuitBreaker:
                 "failure_count": state.failure_count,
                 "success_count": state.success_count,
                 "call_count": state.call_count,
-                "last_state_change": state.last_state_change
+                "last_state_change": state.last_state_change,
             }

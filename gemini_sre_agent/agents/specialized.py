@@ -12,12 +12,12 @@ from typing import List, Optional
 
 from ..llm.service import LLMService
 from .base import BaseAgent
-from .response_models import TextResponse, AnalysisResponse, CodeResponse
+from .response_models import AnalysisResponse, CodeResponse, TextResponse
 
 
 class TextAgent(BaseAgent[TextResponse]):
     """Agent specialized for text generation tasks."""
-    
+
     def __init__(
         self,
         llm_service: LLMService,
@@ -28,20 +28,19 @@ class TextAgent(BaseAgent[TextResponse]):
             llm_service=llm_service,
             response_model=TextResponse,
             primary_model=primary_model,
-            fallback_model=fallback_model
+            fallback_model=fallback_model,
         )
-    
+
     async def generate_text(self, prompt: str, **kwargs) -> TextResponse:
         """Generate text using the agent."""
         return await self.execute(
-            prompt_name="generate_text",
-            prompt_args={"input": prompt, **kwargs}
+            prompt_name="generate_text", prompt_args={"input": prompt, **kwargs}
         )
 
 
 class AnalysisAgent(BaseAgent[AnalysisResponse]):
     """Agent specialized for analysis tasks."""
-    
+
     def __init__(
         self,
         llm_service: LLMService,
@@ -52,20 +51,22 @@ class AnalysisAgent(BaseAgent[AnalysisResponse]):
             llm_service=llm_service,
             response_model=AnalysisResponse,
             primary_model=primary_model,
-            fallback_model=fallback_model
+            fallback_model=fallback_model,
         )
-    
-    async def analyze(self, content: str, criteria: List[str], **kwargs) -> AnalysisResponse:
+
+    async def analyze(
+        self, content: str, criteria: List[str], **kwargs
+    ) -> AnalysisResponse:
         """Analyze content based on provided criteria."""
         return await self.execute(
             prompt_name="analyze_content",
-            prompt_args={"content": content, "criteria": criteria, **kwargs}
+            prompt_args={"content": content, "criteria": criteria, **kwargs},
         )
 
 
 class CodeAgent(BaseAgent[CodeResponse]):
     """Agent specialized for code generation tasks."""
-    
+
     def __init__(
         self,
         llm_service: LLMService,
@@ -76,12 +77,14 @@ class CodeAgent(BaseAgent[CodeResponse]):
             llm_service=llm_service,
             response_model=CodeResponse,
             primary_model=primary_model,
-            fallback_model=fallback_model
+            fallback_model=fallback_model,
         )
-    
-    async def generate_code(self, description: str, language: str, **kwargs) -> CodeResponse:
+
+    async def generate_code(
+        self, description: str, language: str, **kwargs
+    ) -> CodeResponse:
         """Generate code based on description and language."""
         return await self.execute(
             prompt_name="generate_code",
-            prompt_args={"description": description, "language": language, **kwargs}
+            prompt_args={"description": description, "language": language, **kwargs},
         )

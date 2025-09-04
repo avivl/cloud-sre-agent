@@ -53,10 +53,7 @@ class OllamaProvider(LLMProvider):
 
             # Make the API call
             response = await asyncio.to_thread(
-                self.client.chat,
-                model=self.model,
-                messages=messages,
-                options=options
+                self.client.chat, model=self.model, messages=messages, options=options
             )
 
             # Extract usage information
@@ -76,7 +73,9 @@ class OllamaProvider(LLMProvider):
     async def generate_stream(self, request: LLMRequest):  # type: ignore
         """Generate streaming response using Ollama API."""
         try:
-            logger.info(f"Generating streaming response with Ollama model: {self.model}")
+            logger.info(
+                f"Generating streaming response with Ollama model: {self.model}"
+            )
 
             # Convert messages to Ollama format
             messages = self._convert_messages_to_ollama_format(request.messages or [])
@@ -96,7 +95,7 @@ class OllamaProvider(LLMProvider):
                 model=self.model,
                 messages=messages,
                 options=options,
-                stream=True
+                stream=True,
             )
 
             # Process streaming response
@@ -159,9 +158,7 @@ class OllamaProvider(LLMProvider):
 
             # Use the embeddings endpoint
             response = await asyncio.to_thread(
-                self.client.embeddings,
-                model=self.model,
-                prompt=text
+                self.client.embeddings, model=self.model, prompt=text
             )
 
             return response["embedding"]
@@ -178,7 +175,7 @@ class OllamaProvider(LLMProvider):
             response = self.client.chat(
                 model=self.model,
                 messages=[{"role": "user", "content": text}],
-                options={"num_predict": 0}  # Don't generate, just count tokens
+                options={"num_predict": 0},  # Don't generate, just count tokens
             )
 
             # Extract token count from response
@@ -200,7 +197,9 @@ class OllamaProvider(LLMProvider):
         # Ollama is free (local)
         return 0.0
 
-    def _convert_messages_to_ollama_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _convert_messages_to_ollama_format(
+        self, messages: List[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
         """Convert messages to Ollama format."""
         ollama_messages = []
         for message in messages:

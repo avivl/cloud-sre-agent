@@ -4,13 +4,14 @@
 Unit tests for Grok provider implementation.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from pydantic import HttpUrl
 
-from gemini_sre_agent.llm.providers.grok_provider import GrokProvider
 from gemini_sre_agent.llm.base import LLMRequest, ModelType
 from gemini_sre_agent.llm.config import LLMProviderConfig
+from gemini_sre_agent.llm.providers.grok_provider import GrokProvider
 
 
 @pytest.fixture
@@ -93,6 +94,7 @@ class TestGrokProvider:
     @pytest.mark.asyncio
     async def test_generate_stream(self, provider):
         """Test streaming text generation."""
+
         # Create async iterator for lines
         async def mock_aiter_lines():
             lines = [
@@ -120,7 +122,9 @@ class TestGrokProvider:
                 pass
 
         # Mock the stream method to return the context manager directly
-        provider.client.stream = MagicMock(return_value=MockAsyncContextManager(mock_stream_response))
+        provider.client.stream = MagicMock(
+            return_value=MockAsyncContextManager(mock_stream_response)
+        )
 
         request = LLMRequest(
             messages=[{"role": "user", "content": "Test prompt"}],
@@ -161,9 +165,7 @@ class TestGrokProvider:
     async def test_embeddings(self, provider):
         """Test embeddings generation."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "data": [{"embedding": [0.1, 0.2, 0.3]}]
-        }
+        mock_response.json.return_value = {"data": [{"embedding": [0.1, 0.2, 0.3]}]}
         mock_response.raise_for_status.return_value = None
 
         provider.client.post = AsyncMock(return_value=mock_response)
@@ -217,6 +219,7 @@ class TestGrokProvider:
 
     def test_validate_config_missing_key(self):
         """Test configuration validation with missing API key."""
+
         # Create a mock config object that bypasses Pydantic validation
         class MockConfig:
             def __init__(self):

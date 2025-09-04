@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class PromptManager:
     """
     Manager for prompt templates with basic functionality.
-    
+
     Provides prompt loading, caching, and basic management capabilities.
     """
 
@@ -43,7 +43,7 @@ class PromptManager:
             os.makedirs(self.prompt_directory, exist_ok=True)
             self.logger.info(f"Created prompt directory: {self.prompt_directory}")
             return
-        
+
         for filename in os.listdir(self.prompt_directory):
             if filename.endswith((".yaml", ".yml")):
                 try:
@@ -59,13 +59,13 @@ class PromptManager:
     def get_prompt(self, name: str) -> str:
         """
         Get a prompt template by name.
-        
+
         Args:
             name: Prompt name
-            
+
         Returns:
             Prompt template string
-            
+
         Raises:
             ValueError: If prompt not found
         """
@@ -76,7 +76,7 @@ class PromptManager:
     def add_prompt(self, name: str, template: str) -> None:
         """
         Add a new prompt to the manager.
-        
+
         Args:
             name: Prompt name
             template: Prompt template string
@@ -91,17 +91,17 @@ class PromptManager:
     def save_prompt(self, name: str, template: str) -> None:
         """
         Save a prompt to disk.
-        
+
         Args:
             name: Prompt name
             template: Prompt template string
         """
         prompt_data = {"template": template}
         path = os.path.join(self.prompt_directory, f"{name}.yaml")
-        
+
         with open(path, "w") as f:
             yaml.dump(prompt_data, f, default_flow_style=False)
-        
+
         # Reload prompts to include the new one
         self._load_prompts()
         self.logger.info(f"Saved prompt: {name}")
@@ -109,17 +109,17 @@ class PromptManager:
     def delete_prompt(self, name: str) -> None:
         """
         Delete a prompt from disk and memory.
-        
+
         Args:
             name: Prompt name
         """
         if name in self.prompts:
             del self.prompts[name]
-        
+
         path = os.path.join(self.prompt_directory, f"{name}.yaml")
         if os.path.exists(path):
             os.remove(path)
-        
+
         self.logger.info(f"Deleted prompt: {name}")
 
     def reload_prompts(self) -> None:

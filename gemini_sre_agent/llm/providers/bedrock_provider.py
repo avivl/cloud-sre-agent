@@ -205,7 +205,9 @@ class BedrockProvider(LLMProvider):
         output_cost = (output_tokens / 1000) * output_cost_per_1k
         return input_cost + output_cost
 
-    def _convert_messages_to_bedrock_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _convert_messages_to_bedrock_format(
+        self, messages: List[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
         """Convert generic message format to Bedrock format."""
         bedrock_messages = []
         for message in messages:
@@ -225,7 +227,9 @@ class BedrockProvider(LLMProvider):
             return response_body["content"][0]["text"]
         return ""
 
-    def _extract_usage_from_response(self, response_body: Dict[str, Any]) -> Dict[str, int]:
+    def _extract_usage_from_response(
+        self, response_body: Dict[str, Any]
+    ) -> Dict[str, int]:
         """Extract usage information from Bedrock response."""
         usage = response_body.get("usage", {})
         return {

@@ -13,20 +13,20 @@ from typing import Type, TypeVar
 
 from pydantic import BaseModel
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 
 
 def parse_structured_output(text: str, model: Type[T]) -> T:
     """
     Parse text into a structured Pydantic model.
-    
+
     Args:
         text: Text to parse
         model: Pydantic model class
-        
+
     Returns:
         Parsed model instance
-        
+
     Raises:
         ValueError: If parsing fails
     """
@@ -38,7 +38,7 @@ def parse_structured_output(text: str, model: Type[T]) -> T:
         # If not valid JSON, try to extract JSON from text
         try:
             # Look for JSON-like structure between ``` or {}
-            json_match = re.search(r'```json\n(.*?)\n```', text, re.DOTALL)
+            json_match = re.search(r"```json\n(.*?)\n```", text, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group(1))
                 return model.parse_obj(data)
@@ -51,13 +51,13 @@ def parse_structured_output(text: str, model: Type[T]) -> T:
 def extract_json_from_text(text: str) -> dict:
     """
     Extract JSON object from text that may contain other content.
-    
+
     Args:
         text: Text that may contain JSON
-        
+
     Returns:
         Extracted JSON as dictionary
-        
+
     Raises:
         ValueError: If no valid JSON found
     """
@@ -66,15 +66,15 @@ def extract_json_from_text(text: str) -> dict:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
-    
+
     # Look for JSON in code blocks
     json_patterns = [
-        r'```json\n(.*?)\n```',
-        r'```\n(.*?)\n```',
-        r'`(.*?)`',
-        r'\{.*\}',  # Simple object pattern
+        r"```json\n(.*?)\n```",
+        r"```\n(.*?)\n```",
+        r"`(.*?)`",
+        r"\{.*\}",  # Simple object pattern
     ]
-    
+
     for pattern in json_patterns:
         matches = re.findall(pattern, text, re.DOTALL)
         for match in matches:
@@ -82,17 +82,17 @@ def extract_json_from_text(text: str) -> dict:
                 return json.loads(match)
             except json.JSONDecodeError:
                 continue
-    
+
     raise ValueError("No valid JSON found in text")
 
 
 def sanitize_prompt(prompt: str) -> str:
     """
     Sanitize a prompt by removing potentially sensitive information.
-    
+
     Args:
         prompt: Original prompt text
-        
+
     Returns:
         Sanitized prompt text
     """
@@ -103,24 +103,24 @@ def sanitize_prompt(prompt: str) -> str:
         r'token["\']?\s*[:=]\s*["\']?[a-zA-Z0-9_-]+["\']?',
         r'secret["\']?\s*[:=]\s*["\']?[a-zA-Z0-9_-]+["\']?',
     ]
-    
+
     sanitized = prompt
     for pattern in patterns_to_remove:
-        sanitized = re.sub(pattern, '[REDACTED]', sanitized, flags=re.IGNORECASE)
-    
+        sanitized = re.sub(pattern, "[REDACTED]", sanitized, flags=re.IGNORECASE)
+
     return sanitized
 
 
 def estimate_tokens(text: str) -> int:
     """
     Rough estimation of token count for text.
-    
+
     This is a simple approximation. For accurate token counting,
     use the specific tokenizer for the model being used.
-    
+
     Args:
         text: Text to estimate tokens for
-        
+
     Returns:
         Estimated token count
     """
@@ -132,11 +132,11 @@ def estimate_tokens(text: str) -> int:
 def format_model_name(provider: str, model: str) -> str:
     """
     Format model name for LiteLLM compatibility.
-    
+
     Args:
         provider: Provider name
         model: Model name
-        
+
     Returns:
         Formatted model name for LiteLLM
     """
@@ -149,7 +149,7 @@ def format_model_name(provider: str, model: str) -> str:
         "bedrock": "bedrock/",
         "ollama": "ollama/",
     }
-    
+
     prefix = provider_prefixes.get(provider, f"{provider}/")
     return f"{prefix}{model}"
 
@@ -157,16 +157,16 @@ def format_model_name(provider: str, model: str) -> str:
 def validate_model_name(model_name: str) -> bool:
     """
     Validate that a model name is properly formatted.
-    
+
     Args:
         model_name: Model name to validate
-        
+
     Returns:
         True if valid, False otherwise
     """
     if not model_name or not isinstance(model_name, str):
         return False
-    
+
     # Basic validation: should not be empty and should not contain invalid characters
-    invalid_chars = ['<', '>', ':', '"', '|', '?', '*']
+    invalid_chars = ["<", ">", ":", '"', "|", "?", "*"]
     return not any(char in model_name for char in invalid_chars)

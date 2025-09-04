@@ -16,19 +16,21 @@ from pydantic import BaseModel
 
 class ErrorCategory(Enum):
     """Categorization of different error types for appropriate handling."""
-    TRANSIENT = auto()           # Retry with same provider
-    PROVIDER_FAILURE = auto()    # Try fallback provider
-    PERMANENT = auto()           # Don't retry
-    RATE_LIMITED = auto()        # Backoff and retry
-    QUOTA_EXCEEDED = auto()      # Switch to different provider
-    AUTHENTICATION = auto()      # Check credentials
-    TIMEOUT = auto()             # Retry with longer timeout
-    NETWORK = auto()             # Retry with exponential backoff
+
+    TRANSIENT = auto()  # Retry with same provider
+    PROVIDER_FAILURE = auto()  # Try fallback provider
+    PERMANENT = auto()  # Don't retry
+    RATE_LIMITED = auto()  # Backoff and retry
+    QUOTA_EXCEEDED = auto()  # Switch to different provider
+    AUTHENTICATION = auto()  # Check credentials
+    TIMEOUT = auto()  # Retry with longer timeout
+    NETWORK = auto()  # Retry with exponential backoff
 
 
 @dataclass
 class RequestContext:
     """Context information for error handling."""
+
     provider_id: str
     request_id: str
     model: Optional[str] = None
@@ -38,6 +40,7 @@ class RequestContext:
 
 class CircuitBreakerConfig(BaseModel):
     """Configuration for circuit breaker."""
+
     failure_threshold: int = 5
     reset_timeout: float = 60.0  # seconds
     half_open_max_calls: int = 3
@@ -45,12 +48,14 @@ class CircuitBreakerConfig(BaseModel):
 
 class DeduplicationConfig(BaseModel):
     """Configuration for request deduplication."""
+
     ttl: float = 300.0  # seconds
     enabled: bool = True
 
 
 class ErrorHandlerConfig(BaseModel):
     """Configuration for error handler."""
+
     circuit_breaker_config: CircuitBreakerConfig = CircuitBreakerConfig()
     deduplication_config: DeduplicationConfig = DeduplicationConfig()
     max_retries: int = 3

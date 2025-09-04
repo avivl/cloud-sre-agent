@@ -164,6 +164,7 @@ class OpenAIProvider(LLMProvider):
         try:
             # Use tiktoken for accurate token counting
             import tiktoken  # type: ignore
+
             encoding = tiktoken.get_encoding("cl100k_base")
             return len(encoding.encode(text))
         except ImportError:
@@ -175,14 +176,16 @@ class OpenAIProvider(LLMProvider):
         """Estimate cost for the given token usage."""
         # OpenAI pricing (as of 2024) - using GPT-4o pricing as default
         input_cost_per_1k = 0.0025  # $2.50 per 1M input tokens
-        output_cost_per_1k = 0.01   # $10.00 per 1M output tokens
+        output_cost_per_1k = 0.01  # $10.00 per 1M output tokens
 
         input_cost = (input_tokens / 1000) * input_cost_per_1k
         output_cost = (output_tokens / 1000) * output_cost_per_1k
 
         return input_cost + output_cost
 
-    def _convert_messages_to_openai_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _convert_messages_to_openai_format(
+        self, messages: List[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
         """Convert generic message format to OpenAI format."""
         openai_messages = []
         for message in messages:
@@ -193,10 +196,12 @@ class OpenAIProvider(LLMProvider):
             if role not in ["system", "user", "assistant"]:
                 role = "user"
 
-            openai_messages.append({
-                "role": role,
-                "content": content,
-            })
+            openai_messages.append(
+                {
+                    "role": role,
+                    "content": content,
+                }
+            )
 
         return openai_messages
 

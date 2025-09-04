@@ -8,19 +8,19 @@ structured output capabilities, primary/fallback model logic, and integration
 with Mirascope for prompt management.
 """
 
-from .base import BaseAgent, AgentStats
-from .response_models import TextResponse, AnalysisResponse, CodeResponse
-from .specialized import TextAgent, AnalysisAgent, CodeAgent
+from .base import AgentStats, BaseAgent
 from .legacy_adapter import LegacyAgentAdapter
+from .response_models import AnalysisResponse, CodeResponse, TextResponse
+from .specialized import AnalysisAgent, CodeAgent, TextAgent
 
 __all__ = [
     "BaseAgent",
-    "AgentStats", 
+    "AgentStats",
     "TextResponse",
     "AnalysisResponse",
     "CodeResponse",
     "TextAgent",
-    "AnalysisAgent", 
+    "AnalysisAgent",
     "CodeAgent",
     "LegacyAgentAdapter",
 ]

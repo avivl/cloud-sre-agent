@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 from .config import LLMProviderConfig
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class LLMProvider(ABC):
     """
     Simplified LLM Provider interface that works with LiteLLM.
-    
+
     This interface is minimal since LiteLLM handles most of the complexity
     of different provider APIs and formats.
     """
@@ -46,10 +46,7 @@ class LLMProvider(ABC):
 
     @abstractmethod
     async def generate_text(
-        self,
-        prompt: Union[str, Prompt],
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, prompt: Union[str, Prompt], model: Optional[str] = None, **kwargs: Any
     ) -> str:
         """Generate text response using LiteLLM."""
         pass
@@ -60,17 +57,14 @@ class LLMProvider(ABC):
         prompt: Union[str, Prompt],
         response_model: Type[T],
         model: Optional[str] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> T:
         """Generate structured response using Instructor + LiteLLM."""
         pass
 
     @abstractmethod
     def generate_stream(
-        self,
-        prompt: Union[str, Prompt],
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, prompt: Union[str, Prompt], model: Optional[str] = None, **kwargs: Any
     ) -> AsyncGenerator[str, None]:
         """Generate streaming text response using LiteLLM."""
         pass
@@ -116,5 +110,3 @@ class LLMProvider(ABC):
     def provider_name(self) -> str:
         """Get the provider name."""
         return self.config.provider
-
-

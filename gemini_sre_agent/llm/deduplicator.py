@@ -19,6 +19,7 @@ from .error_config import DeduplicationConfig
 @dataclass
 class CachedResponse:
     """Cached response for deduplication."""
+
     response: Any
     timestamp: float
 
@@ -35,7 +36,7 @@ class RequestDeduplicator:
         """Get cached response if available."""
         if not self.config.enabled:
             return None
-            
+
         request_hash = self._generate_request_hash(request)
         async with self._lock:
             cached = self.cache.get(request_hash)
@@ -47,12 +48,11 @@ class RequestDeduplicator:
         """Cache response for future requests."""
         if not self.config.enabled:
             return
-            
+
         request_hash = self._generate_request_hash(request)
         async with self._lock:
             self.cache[request_hash] = CachedResponse(
-                response=response,
-                timestamp=time.time()
+                response=response, timestamp=time.time()
             )
 
     def _generate_request_hash(self, request: Dict[str, Any]) -> str:
@@ -64,7 +64,7 @@ class RequestDeduplicator:
             "temperature": request.get("temperature"),
             "max_tokens": request.get("max_tokens"),
         }
-        
+
         # Create deterministic string representation
         key_str = str(sorted(key_data.items()))
         return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
@@ -74,7 +74,8 @@ class RequestDeduplicator:
         current_time = time.time()
         async with self._lock:
             expired_keys = [
-                key for key, cached in self.cache.items()
+                key
+                for key, cached in self.cache.items()
                 if current_time - cached.timestamp >= self.config.ttl
             ]
             for key in expired_keys:
@@ -86,7 +87,7 @@ class RequestDeduplicator:
             return {
                 "cache_size": len(self.cache),
                 "enabled": self.config.enabled,
-                "ttl": self.config.ttl
+                "ttl": self.config.ttl,
             }
 
     async def clear_cache(self) -> None:
