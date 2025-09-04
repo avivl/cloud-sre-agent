@@ -34,6 +34,7 @@ dependencies = [
   "mirascope>=1.25.6",
   "ollama>=0.5.3",
   "anthropic>=0.66.0",
+  "openai>=1.106.0",
 ]
 
 [tool.pytest.ini_options]
