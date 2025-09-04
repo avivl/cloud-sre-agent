@@ -12,7 +12,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +146,8 @@ class LLMProvider(ABC):
     def __init__(self, config: Any):
         self.config = config
         self.provider_type = config.provider
-        self.model = config.model
+        # For backward compatibility, set a default model if not specified
+        self.model = getattr(config, "model", None) or "default"
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=config.max_retries, recovery_timeout=60
         )
@@ -157,9 +158,7 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
-    async def generate_stream(
-        self, request: LLMRequest
-    ) -> AsyncGenerator[LLMResponse, None]:
+    async def generate_stream(self, request: LLMRequest):  # type: ignore
         """Generate streaming response."""
         pass
 
@@ -183,6 +182,21 @@ class LLMProvider(ABC):
         """Get available models mapped to semantic types."""
         pass
 
+    @abstractmethod
+    async def embeddings(self, text: str) -> List[float]:
+        """Generate embeddings for the given text."""
+        pass
+
+    @abstractmethod
+    def token_count(self, text: str) -> int:
+        """Count tokens in the given text."""
+        pass
+
+    @abstractmethod
+    def cost_estimate(self, input_tokens: int, output_tokens: int) -> float:
+        """Estimate cost for the given token usage."""
+        pass
+
     @classmethod
     @abstractmethod
     def validate_config(cls, config: Any) -> None:
@@ -192,4 +206,4 @@ class LLMProvider(ABC):
     @property
     def provider_name(self) -> str:
         """Get the provider name."""
-        return self.provider_type.value
+        return self.provider_type

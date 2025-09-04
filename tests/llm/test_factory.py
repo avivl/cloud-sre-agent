@@ -33,6 +33,15 @@ class MockProvider(LLMProvider):
     def get_available_models(self):
         return {}
 
+    async def embeddings(self, text: str):
+        return [0.0] * 768
+
+    def token_count(self, text: str) -> int:
+        return len(text.split())
+
+    def cost_estimate(self, input_tokens: int, output_tokens: int) -> float:
+        return (input_tokens + output_tokens) * 0.001
+
     @classmethod
     def validate_config(cls, config):
         pass
@@ -64,7 +73,7 @@ class TestLLMProviderFactory:
         with pytest.raises(
             ValueError, match="Provider class must inherit from LLMProvider"
         ):
-            LLMProviderFactory.register_provider("invalid", str)
+            LLMProviderFactory.register_provider("invalid", str)  # type: ignore
 
     def test_unregister_provider(self):
         """Test provider unregistration."""
@@ -95,7 +104,7 @@ class TestLLMProviderFactory:
         provider = LLMProviderFactory.create_provider("test-provider", config)
 
         assert isinstance(provider, MockProvider)
-        assert "test-provider:test:test-model" in LLMProviderFactory._instances
+        assert "test-provider:test" in LLMProviderFactory._instances
 
     def test_create_provider_unsupported(self):
         """Test creation of unsupported provider."""
@@ -136,7 +145,7 @@ class TestLLMProviderFactory:
         LLMProviderFactory.create_provider("test-provider", config)
 
         # Get provider
-        provider = LLMProviderFactory.get_provider("test-provider:test:test-model")
+        provider = LLMProviderFactory.get_provider("test-provider:test")
 
         assert isinstance(provider, MockProvider)
 
@@ -158,7 +167,7 @@ class TestLLMProviderFactory:
         LLMProviderFactory.create_provider("test-provider", config)
 
         instances = LLMProviderFactory.list_instances()
-        assert "test-provider:test:test-model" in instances
+        assert "test-provider:test" in instances
 
     def test_clear_instances(self):
         """Test clearing all instances."""
@@ -188,5 +197,5 @@ class TestLLMProviderFactory:
 
         health_status = LLMProviderFactory.health_check_all()
 
-        assert "test-provider:test:test-model" in health_status
-        assert health_status["test-provider:test:test-model"] is True
+        assert "test-provider:test" in health_status
+        assert health_status["test-provider:test"] is True

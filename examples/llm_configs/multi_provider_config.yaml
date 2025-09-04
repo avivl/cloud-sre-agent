@@ -18,6 +18,11 @@ providers:
     timeout: 30
     max_retries: 3
     rate_limit: 60
+    # Custom ModelType mappings - override the default mappings
+    model_type_mappings:
+      FAST: "gemini-1.5-flash-lite" # Use the lite version for fast responses
+      SMART: "gemini-1.5-pro" # Use pro for smart responses
+      DEEP_THINKING: "gemini-1.5-pro" # Use pro for deep thinking
     models:
       gemini-1.5-flash:
         name: "gemini-1.5-flash"
@@ -54,6 +59,11 @@ providers:
     timeout: 30
     max_retries: 3
     rate_limit: 60
+    # Custom ModelType mappings - override the default mappings
+    model_type_mappings:
+      FAST: "gpt-4o-mini" # Use mini for fast responses
+      SMART: "gpt-4o" # Use gpt-4o for smart responses
+      DEEP_THINKING: "gpt-4o" # Use gpt-4o for deep thinking
     models:
       gpt-4o:
         name: "gpt-4o"

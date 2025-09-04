@@ -18,6 +18,14 @@ from .base import (
     ModelType,
     ProviderType,
 )
+from .concrete_providers import (
+    AnthropicProvider,
+    BedrockProvider,
+    GeminiProvider,
+    GrokProvider,
+    OllamaProvider,
+    OpenAIProvider,
+)
 from .factory import LLMProviderFactory
 
 __all__ = [
@@ -30,4 +38,11 @@ __all__ = [
     "LLMProviderError",
     "CircuitBreaker",
     "LLMProviderFactory",
+    # Concrete providers
+    "GeminiProvider",
+    "OpenAIProvider",
+    "AnthropicProvider",
+    "OllamaProvider",
+    "GrokProvider",
+    "BedrockProvider",
 ]

@@ -64,6 +64,11 @@ class LLMProviderConfig(BaseModel):
     models: Dict[str, ModelConfig] = Field(
         default_factory=dict, description="Available models"
     )
+    # ModelType to model name mappings - allows users to configure which models are used for each semantic type
+    model_type_mappings: Dict[ModelType, str] = Field(
+        default_factory=dict,
+        description="Mapping of ModelType to specific model names for this provider",
+    )
     provider_specific: Dict[str, Any] = Field(
         default_factory=dict, description="Provider-specific settings"
     )
@@ -98,6 +103,18 @@ class LLMProviderConfig(BaseModel):
         for model_name in v.keys():
             if not model_name or not model_name.strip():
                 raise ValueError("Model names cannot be empty")
+        return v
+
+    @field_validator("model_type_mappings")
+    @classmethod
+    def validate_model_type_mappings(cls, v):
+        if v is None:
+            return {}
+        # Ensure all ModelType values are valid
+        valid_model_types = {ModelType.FAST, ModelType.SMART, ModelType.DEEP_THINKING}
+        for model_type in v.keys():
+            if model_type not in valid_model_types:
+                raise ValueError(f"Invalid ModelType: {model_type}")
         return v
 
 

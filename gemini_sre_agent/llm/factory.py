@@ -11,6 +11,14 @@ import logging
 from typing import Any, Dict, List, Optional, Type
 
 from .base import ErrorSeverity, LLMProvider, LLMProviderError
+from .concrete_providers import (
+    AnthropicProvider,
+    BedrockProvider,
+    GeminiProvider,
+    GrokProvider,
+    OllamaProvider,
+    OpenAIProvider,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +26,14 @@ logger = logging.getLogger(__name__)
 class LLMProviderFactory:
     """Factory for creating and managing LLM providers."""
 
-    _providers: Dict[str, Type[LLMProvider]] = {}
+    _providers: Dict[str, Type[LLMProvider]] = {
+        "gemini": GeminiProvider,
+        "openai": OpenAIProvider,
+        "anthropic": AnthropicProvider,
+        "ollama": OllamaProvider,
+        "grok": GrokProvider,
+        "bedrock": BedrockProvider,
+    }
     _instances: Dict[str, LLMProvider] = {}
 
     @classmethod
@@ -49,7 +64,7 @@ class LLMProviderFactory:
             provider_class.validate_config(config)
 
             # Create instance key for caching
-            instance_key = f"{provider_name}:{provider_type}:{config.model}"
+            instance_key = f"{provider_name}:{provider_type}"
 
             # Return cached instance if available
             if instance_key in cls._instances:

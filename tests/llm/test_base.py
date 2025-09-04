@@ -5,6 +5,7 @@ Tests for the base LLM provider interfaces and data models.
 """
 
 import asyncio
+from typing import List
 from unittest.mock import Mock
 
 import pytest
@@ -51,6 +52,15 @@ class MockProvider(LLMProvider):
 
     def get_available_models(self):
         return {ModelType.SMART: "mock-model"}
+
+    async def embeddings(self, text: str) -> List[float]:
+        return [0.1] * 768
+
+    def token_count(self, text: str) -> int:
+        return len(text.split())
+
+    def cost_estimate(self, input_tokens: int, output_tokens: int) -> float:
+        return 0.001
 
     @classmethod
     def validate_config(cls, config):
@@ -149,14 +159,14 @@ class TestCircuitBreaker:
     @pytest.mark.asyncio
     async def test_circuit_breaker_recovery(self):
         """Test circuit breaker recovery."""
-        cb = CircuitBreaker(failure_threshold=1, recovery_timeout=0.1)
+        cb = CircuitBreaker(failure_threshold=1, recovery_timeout=1)
 
         cb.call_failed()
         assert cb.state == "open"
         assert cb.is_available() is False
 
         # Wait for recovery timeout
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(1.1)
 
         # Check if available (which should trigger state change to half-open)
         assert cb.is_available() is True

@@ -513,7 +513,41 @@ The system supports three semantic model types:
 
 - **`FAST`**: Optimized for speed and low cost (e.g., GPT-4o-mini, Claude Haiku)
 - **`SMART`**: Balanced performance and capability (e.g., GPT-4o, Claude Sonnet)
-- **`POWERFUL`**: Maximum capability for complex tasks (e.g., GPT-4, Claude Opus)
+- **`DEEP_THINKING`**: Maximum capability for complex tasks (e.g., GPT-4, Claude Opus)
+
+### Model Type Mappings
+
+Each provider can have custom mappings from semantic model types to specific model names. This allows you to override the default model selections per provider:
+
+```yaml
+providers:
+  gemini:
+    provider: "gemini"
+    api_key: "${GEMINI_API_KEY}"
+    # Custom ModelType mappings - override the default mappings
+    model_type_mappings:
+      FAST: "gemini-1.5-flash-lite" # Use the lite version for fast responses
+      SMART: "gemini-1.5-pro" # Use pro for smart responses
+      DEEP_THINKING: "gemini-1.5-pro" # Use pro for deep thinking
+    models:
+      # ... model configurations
+```
+
+**Default Mappings by Provider:**
+
+- **Gemini**: `FAST` → `gemini-1.5-flash`, `SMART` → `gemini-1.5-pro`, `DEEP_THINKING` → `gemini-1.5-pro`
+- **OpenAI**: `FAST` → `gpt-3.5-turbo`, `SMART` → `gpt-4o-mini`, `DEEP_THINKING` → `gpt-4o`
+- **Anthropic**: `FAST` → `claude-3-5-haiku-20241022`, `SMART` → `claude-3-5-sonnet-20241022`, `DEEP_THINKING` → `claude-3-5-sonnet-20241022`
+- **Grok**: `FAST` → `grok-beta`, `SMART` → `grok-beta`, `DEEP_THINKING` → `grok-beta`
+- **Bedrock**: `FAST` → `anthropic.claude-3-5-haiku-20241022-v1:0`, `SMART` → `anthropic.claude-3-5-sonnet-20241022-v1:0`, `DEEP_THINKING` → `anthropic.claude-3-5-sonnet-20241022-v2:0`
+- **Ollama**: `FAST` → `llama3.1:8b`, `SMART` → `llama3.1:70b`, `DEEP_THINKING` → `llama3.1:70b`
+
+**Benefits of Custom Mappings:**
+
+1. **Cost Optimization**: Use cheaper models for FAST tasks
+2. **Performance Tuning**: Select models based on your specific use case
+3. **A/B Testing**: Easily switch between different models for testing
+4. **Provider-Specific Optimization**: Tailor model selection to each provider's strengths
 
 ### Capabilities
 
