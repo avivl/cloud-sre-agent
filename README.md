@@ -16,7 +16,7 @@ Dive in to discover how this agent can transform your cloud log monitoring into 
 
 ## System Architecture
 
-The Gemini SRE Agent employs a sophisticated multi-model AI architecture with **enhanced dynamic prompt generation**, advanced pattern detection, and a **unified enhanced code generation system** for intelligent log monitoring and automated remediation:
+The Gemini SRE Agent employs a sophisticated multi-model AI architecture with **enhanced dynamic prompt generation**, advanced pattern detection, a **unified enhanced code generation system**, and a **comprehensive new log ingestion system** for intelligent log monitoring and automated remediation:
 
 ```mermaid
 graph TB
@@ -25,17 +25,44 @@ graph TB
         PS --> |Log Messages| SUB[Pub/Sub Subscriptions]
     end
 
-    subgraph "Gemini SRE Agent"
-        SUB --> LS[Log Subscriber]
-        LS --> |Raw Logs| MLPR[ML Pattern Refinement<br/>AI Enhancement Layer]
+    subgraph "Gemini SRE Agent - New Log Ingestion System"
+        SUB --> LM[Log Manager<br/>Orchestration Layer]
+        LM --> |Multi-Source| GCP[GCP Pub/Sub Adapter]
+        LM --> |Multi-Source| K8S[Kubernetes Adapter]
+        LM --> |Multi-Source| FS[File System Adapter]
+        LM --> |Multi-Source| AWS[AWS CloudWatch Adapter]
+
+        GCP --> |LogEntry| LP[Log Processor]
+        K8S --> |LogEntry| LP
+        FS --> |LogEntry| LP
+        AWS --> |LogEntry| LP
+
+        LP --> |Structured Logs| MLPR[ML Pattern Refinement<br/>AI Enhancement Layer]
         MLPR --> |Enhanced Analysis| PD[Pattern Detection System<br/>Multi-Layer Analysis]
         PD --> |Pattern Match| TA[Triage Agent<br/>Gemini Flash]
-        LS --> |Raw Logs| TA
+        LP --> |Structured Logs| TA
         TA --> |TriagePacket| AA[Enhanced Analysis Agent<br/>Dynamic Prompt Generation]
         AA --> |ValidationRequest| QA[Quantitative Analyzer<br/>Code Execution]
         QA --> |EmpiricalData| AA
         AA --> |RemediationPlan| UECG[Unified Enhanced<br/>Code Generation System]
         UECG --> |Generated Code| RA[Remediation Agent]
+    end
+
+    subgraph "Legacy System (Backward Compatible)"
+        SUB --> LS[Legacy Log Subscriber]
+        LS --> |Raw Logs| TA
+    end
+
+    subgraph "Comprehensive Monitoring System"
+        MM[Monitoring Manager] --> MC[Metrics Collector]
+        MM --> HC[Health Checker]
+        MM --> PM[Performance Monitor]
+        MM --> AM[Alert Manager]
+
+        LM --> |Health Status| MM
+        LP --> |Processing Metrics| MM
+        TA --> |Analysis Metrics| MM
+        AA --> |Generation Metrics| MM
     end
 
     subgraph "ML Pattern Refinement Layer"
@@ -95,6 +122,9 @@ graph TB
     classDef config fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
     classDef mlComponent fill:#fce4ec,stroke:#c2185b,stroke-width:2px
     classDef codeGenComponent fill:#e8f5e8,stroke:#2e7d32,stroke-width:3px
+    classDef ingestionComponent fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef monitoringComponent fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    classDef legacyComponent fill:#fafafa,stroke:#616161,stroke-width:2px
 
     class TA,AA,QA aiComponent
     class CL,PS,SUB gcpService
@@ -102,6 +132,9 @@ graph TB
     class CONFIG,RESILIENCE config
     class MLPR,LQV,LSan,GEPD,GRC mlComponent
     class UECG,UWO,WCM,WAE,WCG,WVE,WMC,CGF,APIG,DBG,SECG,CVP,SYN,PAT,SEC,PERF,BP codeGenComponent
+    class LM,GCP,K8S,FS,AWS,LP ingestionComponent
+    class MM,MC,HC,PM,AM monitoringComponent
+    class LS legacyComponent
 ```
 
 ### Multi-Model AI Strategy
@@ -291,8 +324,153 @@ graph TB
 
 This unified system represents a significant advancement in AI-powered incident response, providing a complete end-to-end solution for automated code generation, validation, and deployment in SRE workflows.
 
+## New Log Ingestion System
+
+The Gemini SRE Agent now features a **comprehensive new log ingestion system** that provides enterprise-grade log processing capabilities with full backward compatibility. This system represents a major architectural advancement, offering pluggable adapters, comprehensive monitoring, and production-ready resilience patterns.
+
+### Enhanced Log Ingestion Architecture
+
+```mermaid
+graph TB
+    subgraph "Log Ingestion System"
+        LM[Log Manager<br/>Orchestration] --> |Multi-Source| GCP[GCP Pub/Sub<br/>Adapter]
+        LM --> |Multi-Source| K8S[Kubernetes<br/>Adapter]
+        LM --> |Multi-Source| FS[File System<br/>Adapter]
+        LM --> |Multi-Source| AWS[AWS CloudWatch<br/>Adapter]
+
+        GCP --> |LogEntry| LP[Log Processor<br/>Standardization]
+        K8S --> |LogEntry| LP
+        FS --> |LogEntry| LP
+        AWS --> |LogEntry| LP
+
+        LP --> |Structured Logs| AI[AI Analysis<br/>Pipeline]
+    end
+
+    subgraph "Monitoring & Observability"
+        MM[Monitoring Manager] --> MC[Metrics Collector<br/>Real-time Metrics]
+        MM --> HC[Health Checker<br/>Component Health]
+        MM --> PM[Performance Monitor<br/>Processing Analytics]
+        MM --> AM[Alert Manager<br/>Intelligent Alerts]
+
+        LM --> |Health Status| MM
+        LP --> |Processing Metrics| MM
+        GCP --> |Adapter Metrics| MM
+        K8S --> |Adapter Metrics| MM
+    end
+
+    subgraph "Resilience & Reliability"
+        CB[Circuit Breakers] --> GCP
+        CB --> K8S
+        CB --> FS
+        CB --> AWS
+
+        BP[Backpressure Manager] --> LP
+        RT[Retry Logic] --> GCP
+        RT --> K8S
+        RT --> FS
+        RT --> AWS
+    end
+
+    classDef ingestion fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef monitoring fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    classDef resilience fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+
+    class LM,GCP,K8S,FS,AWS,LP ingestion
+    class MM,MC,HC,PM,AM monitoring
+    class CB,BP,RT resilience
+```
+
+### Log Ingestion Capabilities
+
+**Multi-Source Log Ingestion:**
+
+- **GCP Pub/Sub**: Production-ready Google Cloud Pub/Sub integration with flow control and acknowledgment management
+- **Kubernetes**: Container log collection with namespace filtering and pod-level granularity
+- **File System**: Local and remote file monitoring with rotation support and pattern matching
+- **AWS CloudWatch**: Amazon CloudWatch Logs integration with log group and stream management
+- **Extensible Architecture**: Easy addition of new log sources through the adapter pattern
+
+**Enterprise-Grade Monitoring:**
+
+- **Real-time Metrics**: Processing rates, error counts, latency tracking, and throughput analysis
+- **Health Monitoring**: Component-level health checks with automated status reporting
+- **Performance Analytics**: Resource utilization tracking and bottleneck identification
+- **Intelligent Alerting**: Configurable alerts with escalation policies and notification channels
+
+**Production-Ready Resilience:**
+
+- **Circuit Breakers**: Prevent cascade failures and protect downstream systems
+- **Backpressure Management**: Handle high-volume log streams without overwhelming the system
+- **Automatic Retries**: Resilient error handling with exponential backoff and jitter
+- **Graceful Degradation**: Fallback mechanisms and graceful shutdown procedures
+
+**Unified Configuration:**
+
+- **Single Configuration System**: Centralized configuration for all log sources and adapters
+- **Runtime Updates**: Dynamic configuration changes without system restarts
+- **Validation**: Comprehensive configuration validation with detailed error reporting
+- **Environment Integration**: Seamless integration with environment variables and secrets management
+
+### Migration Strategy
+
+The new log ingestion system is designed for **zero-downtime migration** with full backward compatibility:
+
+**Feature Flag Control:**
+
+```bash
+# Enable new ingestion system
+export USE_NEW_INGESTION_SYSTEM=true
+
+# Enable comprehensive monitoring
+export ENABLE_MONITORING=true
+
+# Keep legacy fallback enabled
+export ENABLE_LEGACY_FALLBACK=true
+```
+
+**Migration Phases:**
+
+1. **Phase 1**: Deploy with new system disabled, enable monitoring
+2. **Phase 2**: Enable new system for non-critical services
+3. **Phase 3**: Gradual expansion based on confidence and metrics
+4. **Phase 4**: Full migration with legacy system deprecation
+
+**Safety Features:**
+
+- **Automatic Fallback**: Seamless fallback to legacy system if new system fails
+- **Health Monitoring**: Real-time health checks and status reporting
+- **Performance Tracking**: Comprehensive metrics for migration validation
+- **Rollback Capability**: Instant rollback via environment variable changes
+
+### Benefits
+
+**Operational Excellence:**
+
+- **Enhanced Observability**: Real-time monitoring and alerting capabilities
+- **Improved Reliability**: Circuit breakers, retries, and graceful error handling
+- **Better Performance**: Optimized processing with backpressure management
+- **Simplified Operations**: Unified configuration and monitoring interface
+
+**Future-Proof Architecture:**
+
+- **Multi-Cloud Ready**: Support for GCP, AWS, and hybrid environments
+- **Container Native**: Kubernetes integration with pod and namespace awareness
+- **Extensible Design**: Easy addition of new log sources and processing capabilities
+- **Scalable Processing**: Horizontal scaling with load balancing and distribution
+
+**Cost Optimization:**
+
+- **Efficient Processing**: Optimized resource utilization and processing patterns
+- **Smart Monitoring**: Cost-effective monitoring with configurable sampling
+- **Intelligent Caching**: Response caching and similarity matching for API cost reduction
+- **Resource Management**: Adaptive rate limiting and circuit breaker patterns
+
 ## Key Features
 
+- **🚀 New Log Ingestion System:** Enterprise-grade log processing with pluggable adapters, comprehensive monitoring, and production-ready resilience patterns. Supports GCP Pub/Sub, Kubernetes, File System, and AWS CloudWatch with zero-downtime migration.
+- **📊 Comprehensive Monitoring:** Real-time metrics collection, health checks, performance monitoring, and intelligent alerting with configurable escalation policies and notification channels.
+- **🛡️ Production-Ready Resilience:** Circuit breakers, backpressure management, automatic retries, and graceful degradation with seamless fallback to legacy systems.
+- **🔧 Feature Flag Migration:** Safe, gradual rollout with environment variable controls and automatic fallback capabilities for risk-free deployment.
 - **Unified Enhanced Code Generation System:** Complete AI-powered code generation pipeline with specialized generators, validation, and learning capabilities for automated remediation.
 - **AI-Enhanced Pattern Detection:** Multi-layer analysis engine enhanced with Gemini AI models for intelligent pattern recognition, confidence scoring, and context-aware analysis.
 - **Gemini ML Pattern Refinement:** Advanced AI pipeline with quality validation, PII sanitization, smart caching, and cost optimization for production-ready AI analysis.
@@ -475,6 +653,7 @@ For detailed information on the Gemini SRE Agent, please refer to the following 
 
 - [**Quick Start Guide**](docs/QUICKSTART.md): Get the agent up and running in 15 minutes.
 - [**Architecture Overview**](docs/ARCHITECTURE.md): Understand the core components and data flow of the agent.
+- [**🚀 New Log Ingestion System Migration Guide**](docs/NEW_INGESTION_SYSTEM_MIGRATION.md): Complete guide to migrating to the new enterprise-grade log ingestion system with feature flags, monitoring, and zero-downtime deployment.
 - [**Unified Enhanced Code Generation System**](docs/UNIFIED_ENHANCED_CODE_GENERATION.md): Comprehensive guide to the complete AI-powered code generation pipeline.
 - [**ML Pattern Refinement System**](docs/ML_PATTERN_REFINEMENT.md): Comprehensive guide to the Gemini AI enhancement layer.
 - [**Enhanced Prompt Generation System**](docs/ENHANCED_PROMPT_GENERATION.md): Deep dive into the revolutionary dynamic prompt generation capabilities.
@@ -493,7 +672,17 @@ For detailed information on the Gemini SRE Agent, please refer to the following 
 
 ## Getting Started (Quick Overview)
 
-To quickly get started, ensure you have Python 3.12+ and `uv` installed. Clone the repository, install dependencies with `uv sync`, authenticate your `gcloud` CLI, and set your `GITHUB_TOKEN` environment variable. Then, explore `config/config.yaml` to define your monitoring services. You can run the agent locally with `python main.py` or deploy it to Cloud Run using the provided `deploy.sh` script.
+To quickly get started, ensure you have Python 3.12+ and `uv` installed. Clone the repository, install dependencies with `uv sync`, authenticate your `gcloud` CLI, and set your `GITHUB_TOKEN` environment variable. Then, explore `config/config.yaml` to define your monitoring services.
+
+**New Log Ingestion System:** The agent now features a comprehensive new log ingestion system with enterprise-grade monitoring and resilience. Enable it with:
+
+```bash
+export USE_NEW_INGESTION_SYSTEM=true
+export ENABLE_MONITORING=true
+export ENABLE_LEGACY_FALLBACK=true
+```
+
+You can run the agent locally with `python main.py` or deploy it to Cloud Run using the provided `deploy.sh` script. The new system provides seamless migration with full backward compatibility.
 
 ## Contributing
 
