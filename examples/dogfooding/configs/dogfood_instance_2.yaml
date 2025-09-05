@@ -1,0 +1,40 @@
+# SRE Agent Instance 2 Configuration
+# Monitors the first agent and provides additional analysis
+
+ingestion:
+  sources:
+    - type: "file_system"
+      config:
+        log_file: "/tmp/sre-dogfooding/agent_2.log"
+        watch: true
+        poll_interval: 1.0
+
+logging:
+  level: "DEBUG"
+  format: "json"
+  file: "/tmp/sre-dogfooding/agent_2.log"
+
+llm:
+  provider: "ollama"
+  model: "llama3.1:8b"
+  base_url: "http://localhost:11434"
+  temperature: 0.7
+  max_tokens: 2048
+
+remediation:
+  patch_directory: "/tmp/real_patches"
+  github_token: null  # Will use local patches
+  repo_name: "gemini-sre-agent"
+
+analysis:
+  patterns:
+    - "ERROR"
+    - "WARNING"
+    - "CRITICAL"
+    - "Exception"
+    - "Traceback"
+  
+  thresholds:
+    error_rate: 0.05
+    response_time: 3.0
+    memory_usage: 0.7
