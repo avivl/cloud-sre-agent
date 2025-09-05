@@ -237,8 +237,11 @@ class PromptManager:
         current_metrics = self.prompts[prompt_id].versions[version_to_use].metrics
         for key, value in metrics.items():
             if key in current_metrics:
-                # Average with existing metrics
-                current_metrics[key] = (current_metrics[key] + value) / 2
+                # Only average numeric values, keep strings as latest value
+                if isinstance(value, (int, float)) and isinstance(current_metrics[key], (int, float)):
+                    current_metrics[key] = (current_metrics[key] + value) / 2
+                else:
+                    current_metrics[key] = value
             else:
                 current_metrics[key] = value
 

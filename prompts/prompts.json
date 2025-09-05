@@ -1,0 +1,22 @@
+{
+  "37e371c2-a1c0-49f2-ba3a-344e2945671e": {
+    "id": "37e371c2-a1c0-49f2-ba3a-344e2945671e",
+    "name": "Test",
+    "description": null,
+    "prompt_type": "chat",
+    "versions": {
+      "1.0.0": {
+        "version": "1.0.0",
+        "template": "Analyze: {{data}}",
+        "created_at": "2025-09-04T21:59:02.455410",
+        "description": null,
+        "metrics": {},
+        "tests": [],
+        "metrics_history": []
+      }
+    },
+    "current_version": "1.0.0",
+    "created_at": "2025-09-04T21:59:02.455410",
+    "updated_at": "2025-09-04T21:59:02.455410"
+  }
+}
