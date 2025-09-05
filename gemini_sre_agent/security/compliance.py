@@ -532,7 +532,7 @@ class ComplianceReporter:
         """Check GDPR right to erasure compliance."""
         # This would check for data deletion events
         deletion_events = [
-            e for e in events if e.event_type == AuditEventType.DATA_EXPORT
+            e for e in events if e.event_type == AuditEventType.DATA_DELETION
         ]
 
         return {

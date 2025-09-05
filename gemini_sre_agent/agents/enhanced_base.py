@@ -307,7 +307,9 @@ class EnhancedBaseAgent(Generic[T]):
 
         except Exception as e:
             logger.warning(
-                f"Model selection failed: {e}, falling back to primary model"
+                f"Model selection failed: {e}, falling back to primary model '{self.primary_model or 'smart'}'. "
+                f"Context: task_type={self.model_type_preference}, optimization_goal={optimization_goal}, "
+                f"provider_preference={self.provider_preference}"
             )
             return self.primary_model or "smart"
 

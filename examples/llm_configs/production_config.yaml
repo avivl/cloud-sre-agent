@@ -65,7 +65,7 @@ providers:
         capabilities: ["reasoning", "code_generation"]
       gpt-4-turbo:
         name: "gpt-4-turbo"
-        model_type: "POWERFUL"
+        model_type: "DEEP_THINKING"
         cost_per_1k_tokens: 0.01
         max_tokens: 128000
         supports_streaming: true
@@ -102,7 +102,7 @@ providers:
         capabilities: ["reasoning", "code_generation"]
       claude-3-opus-20240229:
         name: "claude-3-opus-20240229"
-        model_type: "POWERFUL"
+        model_type: "DEEP_THINKING"
         cost_per_1k_tokens: 0.015
         max_tokens: 200000
         supports_streaming: true

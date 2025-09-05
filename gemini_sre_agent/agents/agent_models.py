@@ -7,7 +7,7 @@ support validation, serialization, and integration with the multi-provider
 LLM system.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -92,7 +92,7 @@ class BaseAgentResponse(BaseModel):
         default_factory=lambda: str(uuid4()), description="Unique request identifier"
     )
     timestamp: datetime = Field(
-        default_factory=datetime.now, description="Response timestamp"
+        default_factory=lambda: datetime.now(timezone.utc), description="Response timestamp"
     )
     agent_id: str = Field(
         ..., description="Identifier of the agent that generated this response"

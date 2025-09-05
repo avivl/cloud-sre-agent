@@ -497,7 +497,22 @@ class HybridStrategy(ModelSelectionStrategy):
         filtered_candidates = self._filter_candidates(candidates, context)
 
         if not filtered_candidates:
-            raise ValueError("No models meet the specified constraints")
+            constraint_details = []
+            if context.max_cost:
+                constraint_details.append(f"max_cost={context.max_cost}")
+            if context.min_performance:
+                constraint_details.append(f"min_performance={context.min_performance}")
+            if context.min_quality:
+                constraint_details.append(f"min_quality={context.min_quality}")
+            if context.provider_preference:
+                constraint_details.append(f"provider_preference={context.provider_preference}")
+            
+            constraint_str = ", ".join(constraint_details) if constraint_details else "no specific constraints"
+            raise ValueError(
+                f"No models meet the specified constraints ({constraint_str}). "
+                f"Available candidates: {[c.name for c in candidates]}. "
+                f"Consider relaxing constraints or adding more model providers."
+            )
 
         # Use learned weights or default balanced weights
         if context.custom_weights:

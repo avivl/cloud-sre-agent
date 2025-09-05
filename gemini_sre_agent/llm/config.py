@@ -111,11 +111,36 @@ class LLMProviderConfig(BaseModel):
         if v is None:
             return {}
         # Ensure all ModelType values are valid
-        valid_model_types = {ModelType.FAST, ModelType.SMART, ModelType.DEEP_THINKING}
+        valid_model_types = {ModelType.FAST, ModelType.SMART, ModelType.DEEP_THINKING, ModelType.CODE, ModelType.ANALYSIS}
         for model_type in v.keys():
             if model_type not in valid_model_types:
                 raise ValueError(f"Invalid ModelType: {model_type}")
         return v
+
+    @model_validator(mode='after')
+    def validate_provider_config(self):
+        """Post-init validation for provider configuration."""
+        # Validate that model_type_mappings reference existing models
+        if self.model_type_mappings:
+            for model_type, model_name in self.model_type_mappings.items():
+                if model_name not in self.models:
+                    raise ValueError(
+                        f"Model type mapping '{model_type}' references non-existent model '{model_name}'. "
+                        f"Available models: {list(self.models.keys())}"
+                    )
+        
+        # Validate that at least one model is configured
+        if not self.models:
+            raise ValueError("At least one model must be configured for the provider")
+        
+        # Validate that models have reasonable cost configurations
+        for model_name, model_config in self.models.items():
+            if model_config.cost_per_1k_tokens < 0:
+                raise ValueError(f"Model '{model_name}' has negative cost per 1k tokens")
+            if model_config.max_tokens <= 0:
+                raise ValueError(f"Model '{model_name}' has invalid max_tokens value")
+        
+        return self
 
 
 class AgentLLMConfig(BaseModel):
@@ -179,6 +204,28 @@ class AgentLLMConfig(BaseModel):
                     f"Model override for '{task_name}' must contain 'provider' and 'model_type'"
                 )
         return v
+
+    @model_validator(mode='after')
+    def validate_agent_config(self):
+        """Post-init validation for agent configuration."""
+        # Validate that fallback provider is different from primary provider
+        if self.fallback_provider and self.fallback_provider == self.primary_provider:
+            raise ValueError(
+                f"Fallback provider '{self.fallback_provider}' cannot be the same as primary provider"
+            )
+        
+        # Validate model overrides have valid model types
+        if self.model_overrides:
+            valid_model_types = {ModelType.FAST, ModelType.SMART, ModelType.DEEP_THINKING, ModelType.CODE, ModelType.ANALYSIS}
+            for task_name, override in self.model_overrides.items():
+                model_type_str = override.get("model_type")
+                if model_type_str and model_type_str not in [t.value for t in valid_model_types]:
+                    raise ValueError(
+                        f"Invalid model type '{model_type_str}' in override for task '{task_name}'. "
+                        f"Valid types: {[t.value for t in valid_model_types]}"
+                    )
+        
+        return self
 
 
 class CostConfig(BaseModel):

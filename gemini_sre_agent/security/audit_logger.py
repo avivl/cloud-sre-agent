@@ -22,6 +22,7 @@ class AuditEventType(str, Enum):
     ACCESS_GRANTED = "access_granted"
     ACCESS_DENIED = "access_denied"
     DATA_EXPORT = "data_export"
+    DATA_DELETION = "data_deletion"
     COMPLIANCE_CHECK = "compliance_check"
 
 

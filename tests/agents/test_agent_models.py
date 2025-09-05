@@ -5,7 +5,7 @@ Tests all Pydantic models including validation, serialization, and integration.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 from pydantic import ValidationError
@@ -554,7 +554,7 @@ class TestHealthCheckResponse:
         component1 = ComponentHealth(
             component_name="database",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(),
+            last_check=datetime.now(timezone.utc),
             response_time_ms=50.0,
             error_message="",
             metrics={"connections": 10, "queries_per_second": 100},
@@ -563,7 +563,7 @@ class TestHealthCheckResponse:
         component2 = ComponentHealth(
             component_name="api_server",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(),
+            last_check=datetime.now(timezone.utc),
             response_time_ms=25.0,
             error_message="",
             metrics={"requests_per_second": 500, "error_rate": 0.01},
@@ -589,14 +589,14 @@ class TestHealthCheckResponse:
             overall_status=StatusCode.SUCCESS,
             overall_severity=SeverityLevel.LOW,
             system_uptime="5 days",
-            last_restart=datetime.now(),
+            last_restart=datetime.now(timezone.utc),
             components=[component1, component2],
             resource_utilization=resource_util,
             critical_alerts=[],
             warnings=["High memory usage"],
             recommendations=["Monitor memory usage closely"],
-            next_check_time=datetime.now(),
-            health_score=85.0,
+            next_check_time=datetime.now(timezone.utc),
+            health_score=100.0,
         )
 
         assert response.overall_status == StatusCode.SUCCESS
@@ -611,7 +611,7 @@ class TestHealthCheckResponse:
         healthy_component = ComponentHealth(
             component_name="healthy_service",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(),
+            last_check=datetime.now(timezone.utc),
             response_time_ms=10.0,
             error_message="",
         )
@@ -619,7 +619,7 @@ class TestHealthCheckResponse:
         unhealthy_component = ComponentHealth(
             component_name="unhealthy_service",
             status=StatusCode.ERROR,
-            last_check=datetime.now(),
+            last_check=datetime.now(timezone.utc),
             response_time_ms=None,
             error_message="Service unavailable",
         )
@@ -635,7 +635,7 @@ class TestHealthCheckResponse:
             overall_status=StatusCode.SUCCESS,
             overall_severity=SeverityLevel.MEDIUM,
             system_uptime="3 days",
-            last_restart=datetime.now(),
+            last_restart=datetime.now(timezone.utc),
             components=[healthy_component, unhealthy_component],
             resource_utilization=ResourceUtilization(
                 cpu_usage_percent=50.0,
@@ -646,7 +646,7 @@ class TestHealthCheckResponse:
                 queue_depth=0,
             ),
             recommendations=["Fix unhealthy service"],
-            next_check_time=datetime.now(),
+            next_check_time=datetime.now(timezone.utc),
             health_score=50.0,
         )
 
@@ -658,7 +658,7 @@ class TestHealthCheckResponse:
         component = ComponentHealth(
             component_name="test_component",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(),
+            last_check=datetime.now(timezone.utc),
             response_time_ms=20.0,
             error_message="",
         )
@@ -673,7 +673,7 @@ class TestHealthCheckResponse:
             provider_used="openai",
             cost_usd=0.01,
             system_uptime="1 day",
-            last_restart=datetime.now(),
+            last_restart=datetime.now(timezone.utc),
             resource_utilization=ResourceUtilization(
                 cpu_usage_percent=30.0,
                 memory_usage_percent=40.0,
@@ -682,7 +682,7 @@ class TestHealthCheckResponse:
                 active_connections=50,
                 queue_depth=0,
             ),
-            next_check_time=datetime.now(),
+            next_check_time=datetime.now(timezone.utc),
             health_score=100.0,
         )
 

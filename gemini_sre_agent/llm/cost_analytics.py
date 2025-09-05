@@ -119,6 +119,7 @@ class CostAnalytics:
 
         trends = []
         previous_period_cost = None
+        previous_period_request_count = None
 
         for period, records in grouped_records.items():
             total_cost = sum(record.cost_usd for record in records)
@@ -135,14 +136,12 @@ class CostAnalytics:
                 cost_change_percent = (
                     (total_cost - previous_period_cost) / previous_period_cost
                 ) * 100
-                previous_request_count = len(
-                    grouped_records.get(list(grouped_records.keys())[-2], [])
-                )
-                if previous_request_count > 0:
-                    request_change_percent = (
-                        (request_count - previous_request_count)
-                        / previous_request_count
-                    ) * 100
+                
+            if previous_period_request_count is not None and previous_period_request_count > 0:
+                request_change_percent = (
+                    (request_count - previous_period_request_count)
+                    / previous_period_request_count
+                ) * 100
 
             trends.append(
                 CostTrend(
@@ -157,7 +156,9 @@ class CostAnalytics:
                 )
             )
 
+            # Update previous period values for next iteration
             previous_period_cost = total_cost
+            previous_period_request_count = request_count
 
         return trends
 
