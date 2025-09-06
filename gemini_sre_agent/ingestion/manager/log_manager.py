@@ -84,7 +84,7 @@ class LogManager:
                     # Start log processing task for this source
                     task = asyncio.create_task(self._process_source_logs(source_name))
                     self.tasks.append(task)
-                    logger.info(f"Started source '{source_name}'")
+                    logger.info(f"Started source '{source_name}' with task {task}")
                 except Exception as e:
                     logger.error(f"Failed to start source '{source_name}': {e}")
 
@@ -130,11 +130,13 @@ class LogManager:
     async def _process_source_logs(self, source_name: str) -> None:
         """Process logs from a specific source."""
         source = self.sources[source_name]
+        logger.debug(f"Starting log processing for source '{source_name}'")
 
         while self.running:
             try:
                 # Get logs directly from source (resilience handled by source)
-                log_iterator = await source.get_logs()
+                logger.debug(f"Getting logs from source '{source_name}'")
+                log_iterator = source.get_logs()
                 async for log_entry in log_iterator:
                     # Check backpressure
                     if not await self.backpressure_manager.can_accept():
@@ -161,6 +163,10 @@ class LogManager:
                     # Update backpressure stats
                     await self.backpressure_manager.increment_queue()
                     await self.backpressure_manager.decrement_queue()
+
+                # For file system sources, wait a bit before checking again
+                if hasattr(source, 'config') and hasattr(source.config, 'type') and source.config.type.value == 'file_system':
+                    await asyncio.sleep(1)
 
             except Exception as e:
                 logger.error(f"Error processing logs from source '{source_name}': {e}")

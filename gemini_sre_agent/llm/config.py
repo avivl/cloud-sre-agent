@@ -31,6 +31,12 @@ class ModelConfig(BaseModel):
     capabilities: List[str] = Field(
         default_factory=list, description="List of model capabilities"
     )
+    performance_score: float = Field(
+        0.5, ge=0.0, le=1.0, description="Performance score (0-1)"
+    )
+    reliability_score: float = Field(
+        0.5, ge=0.0, le=1.0, description="Reliability score (0-1)"
+    )
 
     @field_validator("name")
     @classmethod

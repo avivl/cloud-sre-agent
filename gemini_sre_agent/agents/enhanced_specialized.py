@@ -13,7 +13,7 @@ from ..llm.base import ModelType, ProviderType
 from ..llm.config import LLMConfig
 from ..llm.strategy_manager import OptimizationGoal
 from .enhanced_base import EnhancedBaseAgent
-from .response_models import AnalysisResponse, CodeResponse, TextResponse
+from .response_models import AnalysisResponse, CodeResponse, TextResponse, TriageResponse
 
 logger = logging.getLogger(__name__)
 
@@ -499,7 +499,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         )
 
 
-class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
+class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
     """
     Enhanced agent specialized for triage tasks with multi-provider support.
 
@@ -533,7 +533,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[AnalysisResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=AnalysisResponse,
+            response_model=TriageResponse,
             primary_model=primary_model,
             fallback_model=fallback_model,
             optimization_goal=optimization_goal,

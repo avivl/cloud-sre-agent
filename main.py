@@ -3,9 +3,9 @@ import json
 import os
 
 # New ingestion system imports
-from gemini_sre_agent.config.ingestion_config import GCPPubSubConfig, SourceType
+from gemini_sre_agent.config.ingestion_config import GCPPubSubConfig, SourceType, IngestionConfigManager
 from gemini_sre_agent.ingestion.adapters.gcp_pubsub import GCPPubSubAdapter
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry
+from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity
 from gemini_sre_agent.ingestion.manager.log_manager import LogManager
 from gemini_sre_agent.ingestion.monitoring.monitoring_manager import MonitoringManager
 from gemini_sre_agent.legacy_config import (
@@ -22,16 +22,25 @@ from gemini_sre_agent.ml.enhanced_analysis_agent import (
 from gemini_sre_agent.remediation_agent import RemediationAgent
 from gemini_sre_agent.resilience_core import HyxResilientClient, create_resilience_config
 from gemini_sre_agent.triage_agent import TriageAgent
+from gemini_sre_agent.agents.response_models import TriageResponse
 
 
 def validate_environment():
     """Validate required environment variables at startup"""
     logger = setup_logging()  # Get a basic logger for early validation
 
-    required_vars = ["GITHUB_TOKEN"]
-    # GOOGLE_APPLICATION_CREDENTIALS is typically handled by gcloud auth application-default login
-    # LOG_LEVEL is handled by config.yaml
-    optional_vars = ["GOOGLE_APPLICATION_CREDENTIALS"]
+    # Check if we're using the new ingestion system
+    use_new_system = os.getenv("USE_NEW_INGESTION_SYSTEM", "false").lower() == "true"
+    
+    if use_new_system:
+        # New system doesn't require GITHUB_TOKEN for local testing
+        required_vars = []
+        optional_vars = ["GITHUB_TOKEN", "GOOGLE_APPLICATION_CREDENTIALS"]
+        logger.info("[STARTUP] Using new ingestion system - GITHUB_TOKEN is optional")
+    else:
+        # Legacy system requires GITHUB_TOKEN
+        required_vars = ["GITHUB_TOKEN"]
+        optional_vars = ["GOOGLE_APPLICATION_CREDENTIALS"]
 
     missing_required = [var for var in required_vars if not os.getenv(var)]
     if missing_required:
@@ -437,16 +446,36 @@ async def main():
     # Get feature flags
     feature_flags = get_feature_flags()
 
-    config = load_config()
-    global_config = config.gemini_cloud_log_monitor
-
-    # Setup global logging (only once)
-    log_config = global_config.logging
-    logger = setup_logging(
-        log_level=log_config.log_level,
-        json_format=log_config.json_format,
-        log_file=log_config.log_file,
-    )
+    # Load config based on feature flags
+    if feature_flags.get("use_new_ingestion_system", False):
+        # Use new ingestion system config
+        # Get config file from command line arguments or use default
+        import sys
+        config_file = "config/config.yaml"  # default
+        if "--config-file" in sys.argv:
+            config_file_index = sys.argv.index("--config-file")
+            if config_file_index + 1 < len(sys.argv):
+                config_file = sys.argv[config_file_index + 1]
+        
+        config_manager = IngestionConfigManager(config_file)
+        ingestion_config = config_manager.load_config()
+        logger = setup_logging(
+            log_level="DEBUG",
+            json_format=True,
+            log_file="/tmp/sre-dogfooding/agent.log",
+        )
+        logger.info("[STARTUP] Using NEW ingestion system configuration")
+    else:
+        # Use legacy config
+        config = load_config()
+        global_config = config.gemini_cloud_log_monitor
+        log_config = global_config.logging
+        logger = setup_logging(
+            log_level=log_config.log_level,
+            json_format=log_config.json_format,
+            log_file=log_config.log_file,
+        )
+        logger.info("[STARTUP] Using LEGACY configuration")
 
     # Log feature flags
     logger.info(f"[STARTUP] Feature flags: {feature_flags}")
@@ -456,36 +485,227 @@ async def main():
     tasks = []
     log_managers = []  # Track log managers for graceful shutdown
 
-    for service_config in global_config.services:
-        try:
-            if feature_flags.get("use_new_ingestion_system", False):
-                logger.info(
-                    f"[STARTUP] Using NEW ingestion system for {service_config.service_name}"
+    if feature_flags.get("use_new_ingestion_system", False):
+        # For new ingestion system, create a single log manager for all sources
+        logger.info("[STARTUP] Setting up NEW ingestion system with file system sources")
+        
+        # Create a callback function to process logs through the agent pipeline
+        async def process_log_entry(log_entry):
+            """Process log entries through the agent pipeline for new ingestion system."""
+            try:
+                # Convert LogEntry to dict format expected by agents
+                timestamp = getattr(log_entry, 'timestamp', '')
+                if hasattr(timestamp, 'isoformat'):
+                    timestamp = timestamp.isoformat()
+                
+                log_data = {
+                    "insertId": getattr(log_entry, 'id', 'N/A'),
+                    "timestamp": timestamp,
+                    "severity": getattr(log_entry, 'severity', LogSeverity.INFO).value if hasattr(getattr(log_entry, 'severity', LogSeverity.INFO), 'value') else str(getattr(log_entry, 'severity', 'INFO')),
+                    "textPayload": getattr(log_entry, 'message', ''),
+                    "resource": {
+                        "type": "file_system",
+                        "labels": {
+                            "service_name": "dogfood_service",
+                            "source": getattr(log_entry, 'source', 'unknown')
+                        }
+                    }
+                }
+                
+                # Generate flow ID for tracking
+                flow_id = log_data.get("insertId", "N/A")
+                logger.info(f"[LOG_INGESTION] Processing log entry: flow_id={flow_id}")
+                
+                # Initialize enhanced agents for processing
+                from gemini_sre_agent.agents.enhanced_specialized import EnhancedTriageAgent, EnhancedAnalysisAgent
+                from gemini_sre_agent.remediation_agent import RemediationAgent
+                from gemini_sre_agent.llm.config import LLMConfig, LLMProviderConfig, ModelConfig, ModelType
+                from gemini_sre_agent.llm.base import ProviderType
+                
+                # Create LLM configuration for Ollama
+                llm_config = LLMConfig(
+                    providers={
+                        "ollama": LLMProviderConfig(
+                            provider=ProviderType.OLLAMA,
+                            base_url="http://localhost:11434",
+                            api_key=None,  # Ollama doesn't require API key
+                            models={
+                                "llama3.1:8b": ModelConfig(
+                                    name="llama3.1:8b",
+                                    model_type=ModelType.FAST,
+                                    cost_per_1k_tokens=0.0,
+                                    max_tokens=4000,
+                                    supports_streaming=True,
+                                    supports_tools=False,
+                                    capabilities=["text_generation", "analysis"],
+                                    performance_score=0.9,  # Add performance score
+                                    reliability_score=0.8   # Add reliability score
+                                )
+                            }
+                        )
+                    },
+                    default_provider="ollama",
+                    default_model_type=ModelType.FAST,
+                    enable_fallback=True,
+                    enable_monitoring=True
                 )
-                log_manager = await monitor_service_new_system(
-                    service_config, global_config, feature_flags
+                
+                # Create enhanced agents with Ollama configuration
+                triage_agent = EnhancedTriageAgent(
+                    llm_config=llm_config,
+                    primary_model="llama3.1:8b",
+                    fallback_model="llama3.1:8b"
                 )
-                if log_manager:
-                    log_managers.append(log_manager)
-                    # Create a task that keeps the log manager running
-                    task = asyncio.create_task(log_manager.start())
-                    tasks.append(task)
+                analysis_agent = EnhancedAnalysisAgent(
+                    llm_config=llm_config,
+                    primary_model="llama3.1:8b",
+                    fallback_model="llama3.1:8b"
+                )
+                remediation_agent = RemediationAgent(
+                    github_token=os.getenv("GITHUB_TOKEN", "dummy_token"),
+                    repo_name="gemini-sre-agent",
+                    use_local_patches=True,
+                    patch_dir="/tmp/real_patches"
+                )
+                
+                # Process through agent pipeline
+                logger.info(f"[TRIAGE] Starting triage analysis: flow_id={flow_id}")
+                
+                # Convert log data to string for triage
+                log_text = json.dumps(log_data)
+                
+                # Use enhanced triage agent with correct prompt
+                triage_response = await triage_agent.execute(
+                    prompt_name="triage",
+                    prompt_args={
+                        "issue": log_text,
+                        "context": {"flow_id": flow_id, "service": "dogfood_service"},
+                        "urgency_level": "high"
+                    }
+                )
+                
+                # Create a mock TriagePacket for compatibility
+                from gemini_sre_agent.triage_agent import TriagePacket
+                triage_packet = TriagePacket(
+                    issue_id=f"issue_{flow_id}",
+                    initial_timestamp=log_data.get("timestamp", ""),
+                    detected_pattern=triage_response.category,
+                    preliminary_severity_score=8,  # High severity for errors
+                    affected_services=["dogfood_service"],
+                    sample_log_entries=[log_text],
+                    natural_language_summary=triage_response.description
+                )
+                
+                logger.info(f"[TRIAGE] Triage completed: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
+                
+                logger.info(f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
+                
+                # Use enhanced analysis agent with correct prompt
+                analysis_response = await analysis_agent.execute(
+                    prompt_name="analyze",
+                    prompt_args={
+                        "content": log_text,
+                        "criteria": ["error_type", "root_cause", "impact", "solution"],
+                        "analysis_type": "error_analysis",
+                        "depth": "detailed"
+                    }
+                )
+                
+                # Debug: Check what type analysis_response actually is
+                logger.info(f"[DEBUG] analysis_response type: {type(analysis_response)}")
+                logger.info(f"[DEBUG] analysis_response attributes: {dir(analysis_response)}")
+                try:
+                    logger.info(f"[DEBUG] analysis_response.summary: {analysis_response.summary}")
+                except AttributeError as e:
+                    logger.error(f"[DEBUG] Error accessing summary: {e}")
+                try:
+                    logger.info(f"[DEBUG] analysis_response.scores: {analysis_response.scores}")
+                except AttributeError as e:
+                    logger.error(f"[DEBUG] Error accessing scores: {e}")
+                
+                # Create a mock analysis result for compatibility
+                class MockAnalysisResult:
+                    def __init__(self, analysis_response):
+                        self.analysis = {
+                            "root_cause_analysis": analysis_response.summary,
+                            "proposed_fix": analysis_response.key_points[0] if analysis_response.key_points else "No specific fix identified",
+                            "code_patch": "// TODO: Implement fix based on analysis",
+                            "recommendations": analysis_response.recommendations or [],
+                            "confidence": analysis_response.scores.get("confidence", 0.8)
+                        }
+                        self.recommendations = analysis_response.recommendations or []
+                        self.confidence = analysis_response.scores.get("confidence", 0.8)
+                
+                analysis_result = MockAnalysisResult(analysis_response)
+                logger.info(f"[ANALYSIS] Analysis completed: flow_id={flow_id}")
+                
+                logger.info(f"[REMEDIATION] Starting remediation: flow_id={flow_id}")
+                
+                # Create RemediationPlan from analysis result
+                from gemini_sre_agent.analysis_agent import RemediationPlan
+                remediation_plan = RemediationPlan(
+                    root_cause_analysis=analysis_result.analysis["root_cause_analysis"],
+                    proposed_fix=analysis_result.analysis["proposed_fix"],
+                    code_patch=analysis_result.analysis["code_patch"]
+                )
+                
+                # Create local patch
+                remediation_result = await remediation_agent._create_local_patch(
+                    remediation_plan, flow_id, triage_packet.issue_id
+                )
+                logger.info(f"[REMEDIATION] Remediation completed: flow_id={flow_id}")
+                
+            except Exception as e:
+                logger.error(f"[ERROR_HANDLING] Error processing log entry: flow_id={flow_id}, error={e}")
+        
+        log_manager = LogManager(process_log_entry)
+        
+        # Create sources from the ingestion config and add them to the log manager
+        from gemini_sre_agent.ingestion.adapters.file_system import FileSystemAdapter
+        
+        logger.info(f"[STARTUP] Ingestion config: {ingestion_config}")
+        logger.info(f"[STARTUP] Found {len(ingestion_config.sources)} sources in config")
+        for source_config in ingestion_config.sources:
+            logger.info(f"[STARTUP] Processing source: {source_config.name}, type: {source_config.type}")
+            if source_config.type == "file_system":
+                try:
+                    # Create file system adapter
+                    adapter = FileSystemAdapter(source_config)
+                    await log_manager.add_source(adapter)
+                    logger.info(f"[STARTUP] Added file system source: {source_config.name}")
+                except Exception as e:
+                    logger.error(f"[STARTUP] Failed to add source {source_config.name}: {e}")
             else:
+                logger.warning(f"[STARTUP] Unsupported source type: {source_config.type}")
+        
+        log_managers.append(log_manager)
+        
+        # Start the log manager and create a task that keeps it running
+        async def run_log_manager():
+            await log_manager.start()
+            # Keep the manager running until cancelled
+            while True:
+                await asyncio.sleep(1)
+        
+        task = asyncio.create_task(run_log_manager())
+        tasks.append(task)
+    else:
+        # For legacy system, process each service
+        for service_config in global_config.services:
+            try:
                 logger.info(
                     f"[STARTUP] Using LEGACY ingestion system for {service_config.service_name}"
                 )
                 task = monitor_service(service_config, global_config)
                 if task:
                     tasks.append(task)
-        except Exception as e:
-            logger.error(
-                f"[ERROR_HANDLING] Failed to initialize service {service_config.service_name}: {e}"
-            )
+            except Exception as e:
+                logger.error(
+                    f"[ERROR_HANDLING] Failed to initialize service {service_config.service_name}: {e}"
+                )
 
             # Fallback to legacy system if enabled
-            if feature_flags.get(
-                "enable_legacy_fallback", True
-            ) and not feature_flags.get("use_new_ingestion_system", False):
+            if feature_flags.get("enable_legacy_fallback", True):
                 logger.info(
                     f"[FALLBACK] Attempting legacy system for {service_config.service_name}"
                 )

@@ -11,6 +11,7 @@ from github.PullRequest import PullRequest
 from github.Repository import Repository
 
 from .analysis_agent import RemediationPlan
+from .local_patch_manager import LocalPatchManager
 
 logger = logging.getLogger(__name__)
 
@@ -21,19 +22,33 @@ class RemediationAgent:
     based on log analysis and remediation plans.
     """
 
-    def __init__(self, github_token: str, repo_name: str):
+    def __init__(self, github_token: str, repo_name: str, use_local_patches: bool = False, patch_dir: str = "/tmp/real_patches"):
         """
         Initializes the RemediationAgent with a GitHub token and repository name.
 
         Args:
             github_token (str): The GitHub personal access token.
             repo_name (str): The name of the GitHub repository (e.g., "owner/repo").
+            use_local_patches (bool): Whether to use local patches instead of GitHub.
+            patch_dir (str): Directory for local patches when use_local_patches is True.
         """
-        self.github: Github = Github(github_token)
-        self.repo: Repository = self.github.get_repo(repo_name)
-        logger.info(
-            f"[REMEDIATION] RemediationAgent initialized for repository: {repo_name}"
-        )
+        self.use_local_patches = use_local_patches
+        self.repo_name = repo_name
+        
+        if use_local_patches or not github_token or github_token == "dummy_token":
+            self.github = None
+            self.repo = None
+            self.local_patch_manager = LocalPatchManager(patch_dir)
+            logger.info(
+                f"[REMEDIATION] RemediationAgent initialized with local patches in: {patch_dir}"
+            )
+        else:
+            self.github: Github = Github(github_token)
+            self.repo: Repository = self.github.get_repo(repo_name)
+            self.local_patch_manager = None
+            logger.info(
+                f"[REMEDIATION] RemediationAgent initialized for repository: {repo_name}"
+            )
 
     def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
         """
@@ -91,6 +106,7 @@ class RemediationAgent:
     ) -> str:
         """
         Creates a pull request on GitHub with the proposed service code fix.
+        Falls back to local patches if GitHub is not available.
 
         Args:
             remediation_plan (RemediationPlan): The remediation plan containing the service code fix.
@@ -100,11 +116,15 @@ class RemediationAgent:
             issue_id (str): The issue ID from the triage analysis.
 
         Returns:
-            str: The HTML URL of the created pull request.
+            str: The HTML URL of the created pull request or local patch file path.
         """
         logger.info(
             f"[REMEDIATION] Attempting to create pull request: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}, target={base_branch}"
         )
+
+        # If using local patches or GitHub is not available, create local patch
+        if self.use_local_patches or self.github is None:
+            return await self._create_local_patch(remediation_plan, flow_id, issue_id)
 
         try:
             # Get event loop for async operations
@@ -229,3 +249,53 @@ class RemediationAgent:
                 f"[ERROR_HANDLING] An unexpected error occurred during PR creation: flow_id={flow_id}, issue_id={issue_id}, error={e}"
             )
             raise RuntimeError(f"Failed to create pull request: {e}") from e
+
+    async def _create_local_patch(
+        self,
+        remediation_plan: RemediationPlan,
+        flow_id: str,
+        issue_id: str,
+    ) -> str:
+        """
+        Create a local patch file when GitHub is not available.
+
+        Args:
+            remediation_plan (RemediationPlan): The remediation plan containing the service code fix.
+            flow_id (str): The flow ID for tracking this processing pipeline.
+            issue_id (str): The issue ID from the triage analysis.
+
+        Returns:
+            str: Path to the created local patch file.
+        """
+        logger.info(
+            f"[REMEDIATION] Creating local patch: flow_id={flow_id}, issue_id={issue_id}"
+        )
+
+        try:
+            # Extract file path from the service code patch
+            file_path = self._extract_file_path_from_patch(remediation_plan.code_patch)
+            if not file_path:
+                logger.warning(
+                    f"[REMEDIATION] Service code patch provided but no target file path found: flow_id={flow_id}, issue_id={issue_id}"
+                )
+                file_path = "unknown_file.py"  # fallback
+
+            # Create local patch
+            patch_file_path = self.local_patch_manager.create_patch(
+                issue_id=issue_id,
+                file_path=file_path,
+                patch_content=remediation_plan.code_patch,
+                description=remediation_plan.proposed_fix,
+                severity="medium"  # Default severity since it's not available in this RemediationPlan
+            )
+
+            logger.info(
+                f"[REMEDIATION] Local patch created successfully: flow_id={flow_id}, issue_id={issue_id}, patch_file={patch_file_path}"
+            )
+            return patch_file_path
+
+        except Exception as e:
+            logger.error(
+                f"[ERROR_HANDLING] Error creating local patch: flow_id={flow_id}, issue_id={issue_id}, error={e}"
+            )
+            raise RuntimeError(f"Failed to create local patch: {e}") from e

@@ -125,6 +125,41 @@ class FileSystemAdapter(LogIngestionInterface):
                 f"Failed to get logs from file system: {e}"
             ) from e
 
+    async def get_logs_continuous(self) -> AsyncGenerator[LogEntry, None]:  # type: ignore
+        """Get logs from file system continuously."""
+        if not self._is_running:
+            raise SourceNotRunningError("File system adapter is not running")
+
+        try:
+            # Get list of files to process
+            files = self._get_files_to_process()
+
+            while self._is_running:
+                for file_path in files:
+                    try:
+                        # Read new content from file
+                        async for log_entry in self._read_file_content(file_path):
+                            self._total_logs_processed += 1
+                            yield log_entry
+
+                    except Exception as e:
+                        self._total_logs_failed += 1
+                        self._consecutive_failures += 1
+                        logger.error(f"Failed to read file {file_path}: {e}")
+                        continue
+
+                # Reset failure count on successful processing
+                self._consecutive_failures = 0
+                
+                # Wait a bit before checking again
+                await asyncio.sleep(1)
+
+        except Exception as e:
+            self._consecutive_failures += 1
+            raise SourceConnectionError(
+                f"Failed to get logs from file system: {e}"
+            ) from e
+
     def _initialize_file_positions(self) -> None:
         """Initialize file positions for tracking."""
         files = self._get_files_to_process()
@@ -165,9 +200,12 @@ class FileSystemAdapter(LogIngestionInterface):
         try:
             current_size = os.path.getsize(file_path)
             last_position = self._file_positions.get(file_path, 0)
+            
+            logger.debug(f"File {file_path}: current_size={current_size}, last_position={last_position}")
 
             # Only read if file has grown
             if current_size > last_position:
+                logger.debug(f"File {file_path} has grown, reading new content")
                 # Read new content with resilience
                 async def _read_file():
                     with open(
@@ -178,13 +216,19 @@ class FileSystemAdapter(LogIngestionInterface):
                         return content
 
                 content = await self.resilient_client.execute(_read_file)
+                logger.debug(f"Read {len(content)} characters from {file_path}")
 
                 # Parse content into log entries
-                for log_entry in self._parse_file_content(content, file_path):
+                log_entries = self._parse_file_content(content, file_path)
+                logger.debug(f"Parsed {len(log_entries)} log entries from {file_path}")
+                
+                for log_entry in log_entries:
                     yield log_entry
 
                 # Update file position
                 self._file_positions[file_path] = current_size
+            else:
+                logger.debug(f"File {file_path} has not grown, skipping")
 
         except Exception as e:
             raise LogParsingError(f"Failed to read file content: {e}") from e
@@ -196,22 +240,82 @@ class FileSystemAdapter(LogIngestionInterface):
         if not content.strip():
             return log_entries
 
-        # Split content into lines
-        lines = content.strip().split("\n")
-
-        for line_num, line in enumerate(lines, 1):
-            if not line.strip():
-                continue
-
-            try:
-                # Parse log line
-                log_entry = self._parse_log_line(line, file_path, line_num)
-                if log_entry:
+        # Try to parse as JSON logs first (structured logs)
+        try:
+            # Look for JSON objects in the content
+            import json
+            import re
+            
+            # Find JSON objects in the content
+            json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+            json_matches = re.findall(json_pattern, content)
+            
+            for i, json_str in enumerate(json_matches):
+                try:
+                    json_data = json.loads(json_str)
+                    
+                    # Extract fields from JSON
+                    timestamp_str = json_data.get('timestamp', '')
+                    level = json_data.get('level', 'INFO')
+                    message = json_data.get('message', json_str)
+                    
+                    # Parse timestamp
+                    try:
+                        from datetime import datetime
+                        timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    except:
+                        timestamp = datetime.now()
+                    
+                    # Map level to LogSeverity
+                    if level.upper() == 'ERROR':
+                        severity = LogSeverity.ERROR
+                    elif level.upper() == 'WARN':
+                        severity = LogSeverity.WARN
+                    elif level.upper() == 'DEBUG':
+                        severity = LogSeverity.DEBUG
+                    else:
+                        severity = LogSeverity.INFO
+                    
+                    log_entry = LogEntry(
+                        id=f"{file_path}:json:{i}:{timestamp.isoformat()}",
+                        message=message,
+                        timestamp=timestamp,
+                        severity=severity,
+                        source=self.config.name,
+                        metadata={
+                            "file_path": file_path,
+                            "json_data": json_data,
+                            "raw_content": json_str,
+                        },
+                    )
                     log_entries.append(log_entry)
+                    
+                except json.JSONDecodeError:
+                    # Not valid JSON, skip
+                    continue
+                    
+        except Exception:
+            # Fall back to line-by-line parsing
+            pass
 
-            except Exception:
-                # Skip malformed lines but continue processing
-                continue
+        # If no JSON logs found, fall back to line-by-line parsing
+        if not log_entries:
+            # Split content into lines
+            lines = content.strip().split("\n")
+
+            for line_num, line in enumerate(lines, 1):
+                if not line.strip():
+                    continue
+
+                try:
+                    # Parse log line
+                    log_entry = self._parse_log_line(line, file_path, line_num)
+                    if log_entry:
+                        log_entries.append(log_entry)
+
+                except Exception:
+                    # Skip malformed lines but continue processing
+                    continue
 
         return log_entries
 

@@ -121,7 +121,8 @@ class FileSystemConfig(SourceConfig):
     file_path: str = ""
 
     def __post_init__(self):
-        self.type = SourceType.FILE_SYSTEM
+        self.source_type = SourceType.FILE_SYSTEM
+        self.type = SourceType.FILE_SYSTEM  # Keep for backward compatibility
         self.config = {
             "file_path": self.file_path,
             "file_pattern": self.file_pattern,

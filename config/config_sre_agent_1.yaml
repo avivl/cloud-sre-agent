@@ -1,0 +1,40 @@
+# SRE Agent Instance 1 Configuration
+# Monitors the dogfood service and generates patches
+
+ingestion:
+  sources:
+    - type: "file_system"
+      config:
+        log_file: "/tmp/sre-dogfooding/agent_1.log"
+        watch: true
+        poll_interval: 1.0
+
+logging:
+  level: "DEBUG"
+  format: "json"
+  file: "/tmp/sre-dogfooding/agent_1.log"
+
+llm:
+  provider: "ollama"
+  model: "llama3.1:8b"
+  base_url: "http://localhost:11434"
+  temperature: 0.7
+  max_tokens: 2048
+
+remediation:
+  patch_directory: "/tmp/real_patches"
+  github_token: null  # Will use local patches
+  repo_name: "gemini-sre-agent"
+
+analysis:
+  patterns:
+    - "ZeroDivisionError"
+    - "MemoryError"
+    - "ConnectionError"
+    - "ValidationError"
+    - "TimeoutError"
+  
+  thresholds:
+    error_rate: 0.1
+    response_time: 5.0
+    memory_usage: 0.8

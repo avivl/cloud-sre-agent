@@ -20,7 +20,7 @@ except ImportError:
 
 from pydantic import BaseModel
 
-from .base import ModelType, ProviderType
+from .base import ModelType, ProviderType, LLMRequest
 from .config import LLMConfig
 from .factory import get_provider_factory
 from .model_registry import ModelInfo, ModelRegistry
@@ -70,6 +70,9 @@ class EnhancedLLMService(Generic[T]):
         self.model_scorer = ModelScorer()
         self.model_selector = ModelSelector(self.model_registry, self.model_scorer)
         self.performance_monitor = performance_monitor or PerformanceMonitor()
+        
+        # Populate model registry with models from config
+        self._populate_model_registry()
 
         # Track selection statistics
         self._selection_stats: Dict[str, int] = {}
@@ -78,6 +81,44 @@ class EnhancedLLMService(Generic[T]):
         self.logger.info(
             "EnhancedLLMService initialized with intelligent model selection"
         )
+
+    def _populate_model_registry(self):
+        """Populate the model registry with models from the LLM config."""
+        from .model_registry import ModelInfo, ModelCapability
+        
+        for provider_name, provider_config in self.config.providers.items():
+            # Convert string provider to ProviderType enum
+            from .base import ProviderType
+            provider_type = ProviderType(provider_config.provider)
+            for model_name, model_config in provider_config.models.items():
+                # Convert capabilities from strings to ModelCapability enums
+                capabilities = set()
+                for cap_str in model_config.capabilities:
+                    try:
+                        capabilities.add(ModelCapability(cap_str))
+                    except ValueError:
+                        # Skip unknown capabilities
+                        self.logger.warning(f"Unknown capability: {cap_str}")
+                
+                # Create ModelInfo
+                model_info = ModelInfo(
+                    name=model_name,
+                    provider=provider_type,
+                    semantic_type=model_config.model_type,
+                    capabilities=capabilities,
+                    cost_per_1k_tokens=model_config.cost_per_1k_tokens,
+                    max_tokens=model_config.max_tokens,
+                    context_window=model_config.max_tokens,  # Use max_tokens as context window
+                    performance_score=model_config.performance_score,
+                    reliability_score=model_config.reliability_score,
+                    provider_specific=provider_config.provider_specific
+                )
+                
+                # Register the model
+                self.model_registry.register_model(model_info)
+                self.logger.debug(f"Registered model: {model_name} from provider: {provider_name}")
+        
+        self.logger.info(f"Model registry populated with {self.model_registry.get_model_count()} models")
 
     async def generate_structured(
         self,
@@ -123,13 +164,98 @@ class EnhancedLLMService(Generic[T]):
                 f"Generating structured response using model: {selected_model.name} via provider: {provider_name}"
             )
 
-            # Generate the response
-            result = await provider_instance.generate_structured(
-                prompt=prompt,
-                response_model=response_model,
-                model=selected_model.name,
-                **kwargs,
-            )
+            # Generate the response using regular generate method
+            # Convert prompt to LLMRequest format with structured output instruction
+            if isinstance(prompt, str):
+                # Enhance the prompt to request structured JSON output
+                # Check if this is for triage or analysis based on response model
+                if response_model.__name__ == "TriageResponse":
+                    structured_prompt = f"""Please triage the following issue and provide a structured JSON response:
+
+{prompt}
+
+Please respond with a valid JSON object that includes all required fields for triage. The response should be in this format:
+{{
+    "severity": "low|medium|high|critical",
+    "category": "Issue category (e.g., error, warning, performance)",
+    "urgency": "low|medium|high|critical",
+    "description": "Brief description of the issue",
+    "suggested_actions": ["action1", "action2", "action3"]
+}}
+
+Respond only with the JSON object, no additional text."""
+                else:
+                    structured_prompt = f"""Please analyze the following and provide a structured JSON response:
+
+{prompt}
+
+Please respond with a valid JSON object that includes all required fields for the analysis. The response should be in this format:
+{{
+    "summary": "Brief summary of the analysis",
+    "scores": {{"criterion1": 0.8, "criterion2": 0.6}},
+    "key_points": ["point1", "point2", "point3"],
+    "recommendations": ["recommendation1", "recommendation2"]
+}}
+
+Respond only with the JSON object, no additional text."""
+                
+                request = LLMRequest(
+                    prompt=structured_prompt,
+                    temperature=kwargs.get('temperature', 0.7),
+                    max_tokens=kwargs.get('max_tokens', 1000),
+                    model_type=model_type,
+                )
+            else:
+                # Assume it's already a structured prompt
+                request = prompt
+            
+            response = await provider_instance.generate(request)
+            
+            # Parse the response into the structured format
+            try:
+                import json
+                import re
+                
+                # Extract JSON from response (in case there's extra text)
+                json_match = re.search(r'\{.*\}', response.content, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group()
+                    parsed_data = json.loads(json_str)
+                    result = response_model(**parsed_data)
+                else:
+                    # Fallback: create a basic response with the raw content
+                    if response_model.__name__ == "TriageResponse":
+                        result = response_model(
+                            severity="medium",
+                            category="unknown",
+                            urgency="medium",
+                            description=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                            suggested_actions=["Investigate further"]
+                        )
+                    else:
+                        result = response_model(
+                            summary=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                            scores={"confidence": 0.5},
+                            key_points=[response.content[:100] + "..." if len(response.content) > 100 else response.content],
+                            recommendations=[]
+                        )
+            except (json.JSONDecodeError, ValueError) as e:
+                # Fallback: create a basic response with the raw content
+                if response_model.__name__ == "TriageResponse":
+                    result = response_model(
+                        severity="medium",
+                        category="unknown",
+                        urgency="medium",
+                        description=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                        suggested_actions=["Investigate further"]
+                    )
+                else:
+                    result = response_model(
+                        summary=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                        scores={"confidence": 0.5},
+                        key_points=[response.content[:100] + "..." if len(response.content) > 100 else response.content],
+                        recommendations=[]
+                    )
 
             # Record performance metrics
             end_time = time.time()
