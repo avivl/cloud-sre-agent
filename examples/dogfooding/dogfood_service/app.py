@@ -74,6 +74,17 @@ def _get_error_category(error_type: str) -> str:
         "MemoryError": "resource",
         "TimeoutError": "network",
         "JSONDecodeError": "data",
+        "FileNotFoundError": "filesystem",
+        "PermissionError": "security",
+        "ConnectionError": "network",
+        "ValueError": "validation",
+        "KeyError": "data",
+        "AttributeError": "code",
+        "ImportError": "dependency",
+        "OSError": "system",
+        "TypeError": "code",
+        "IndexError": "data",
+        "RecursionError": "code",
     }
     return category_map.get(error_type, "unknown")
 
@@ -184,6 +195,260 @@ def json_error():
         return jsonify({"error": "JSON parsing failed"}), 400
 
 
+@app.route("/error/file")
+def file_error():
+    """Trigger FileNotFoundError - Filesystem error."""
+    try:
+        # Try to read a non-existent file
+        with open("/tmp/non_existent_file.txt", "r") as f:
+            content = f.read()
+        return jsonify({"content": content})
+    except FileNotFoundError as e:
+        log_error(
+            "FileNotFoundError",
+            "/error/file",
+            e,
+            {
+                "file_path": "/tmp/non_existent_file.txt",
+                "operation": "read",
+            },
+        )
+        return jsonify({"error": "File not found"}), 404
+
+
+@app.route("/error/permission")
+def permission_error():
+    """Trigger PermissionError - Security error."""
+    try:
+        # Try to write to a protected directory
+        with open("/root/protected_file.txt", "w") as f:
+            f.write("test")
+        return jsonify({"message": "File written successfully"})
+    except PermissionError as e:
+        log_error(
+            "PermissionError",
+            "/error/permission",
+            e,
+            {
+                "file_path": "/root/protected_file.txt",
+                "operation": "write",
+            },
+        )
+        return jsonify({"error": "Permission denied"}), 403
+
+
+@app.route("/error/connection")
+def connection_error():
+    """Trigger ConnectionError - Network connectivity error."""
+    try:
+        import socket
+        # Try to connect to a non-existent service
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        sock.connect(("192.168.1.999", 9999))  # Invalid IP and port
+        sock.close()
+        return jsonify({"message": "Connection successful"})
+    except (ConnectionError, OSError) as e:
+        log_error(
+            "ConnectionError",
+            "/error/connection",
+            e,
+            {
+                "target_host": "192.168.1.999",
+                "target_port": 9999,
+                "timeout": 1,
+            },
+        )
+        return jsonify({"error": "Connection failed"}), 503
+
+
+@app.route("/error/validation")
+def validation_error():
+    """Trigger ValueError - Data validation error."""
+    try:
+        # Try to convert invalid string to int
+        invalid_number = "not_a_number"
+        result = int(invalid_number)
+        return jsonify({"result": result})
+    except ValueError as e:
+        log_error(
+            "ValueError",
+            "/error/validation",
+            e,
+            {
+                "invalid_input": "not_a_number",
+                "expected_type": "int",
+            },
+        )
+        return jsonify({"error": "Invalid input format"}), 400
+
+
+@app.route("/error/key")
+def key_error():
+    """Trigger KeyError - Missing dictionary key error."""
+    try:
+        data = {"name": "test", "version": "1.0"}
+        # Try to access non-existent key
+        result = data["missing_key"]
+        return jsonify({"result": result})
+    except KeyError as e:
+        log_error(
+            "KeyError",
+            "/error/key",
+            e,
+            {
+                "missing_key": "missing_key",
+                "available_keys": list(data.keys()),
+            },
+        )
+        return jsonify({"error": "Key not found"}), 400
+
+
+@app.route("/error/attribute")
+def attribute_error():
+    """Trigger AttributeError - Code structure error."""
+    try:
+        # Try to call non-existent method
+        data = {"name": "test"}
+        result = data.non_existent_method()
+        return jsonify({"result": result})
+    except AttributeError as e:
+        log_error(
+            "AttributeError",
+            "/error/attribute",
+            e,
+            {
+                "object_type": "dict",
+                "missing_attribute": "non_existent_method",
+            },
+        )
+        return jsonify({"error": "Attribute not found"}), 500
+
+
+@app.route("/error/import")
+def import_error():
+    """Trigger ImportError - Dependency error."""
+    try:
+        # Try to import non-existent module
+        import non_existent_module
+        return jsonify({"message": "Module imported successfully"})
+    except ImportError as e:
+        log_error(
+            "ImportError",
+            "/error/import",
+            e,
+            {
+                "module_name": "non_existent_module",
+                "error_type": "module_not_found",
+            },
+        )
+        return jsonify({"error": "Module not found"}), 500
+
+
+@app.route("/error/type")
+def type_error():
+    """Trigger TypeError - Type mismatch error."""
+    try:
+        # Try to add string and integer
+        result = "hello" + 123
+        return jsonify({"result": result})
+    except TypeError as e:
+        log_error(
+            "TypeError",
+            "/error/type",
+            e,
+            {
+                "left_type": "str",
+                "right_type": "int",
+                "operation": "addition",
+            },
+        )
+        return jsonify({"error": "Type mismatch"}), 400
+
+
+@app.route("/error/index")
+def index_error():
+    """Trigger IndexError - Array access error."""
+    try:
+        # Try to access non-existent array index
+        data = [1, 2, 3]
+        result = data[10]
+        return jsonify({"result": result})
+    except IndexError as e:
+        log_error(
+            "IndexError",
+            "/error/index",
+            e,
+            {
+                "list_length": len(data),
+                "requested_index": 10,
+            },
+        )
+        return jsonify({"error": "Index out of range"}), 400
+
+
+@app.route("/error/recursion")
+def recursion_error():
+    """Trigger RecursionError - Infinite recursion error."""
+    try:
+        def infinite_recursion(n):
+            return infinite_recursion(n + 1)
+        
+        result = infinite_recursion(0)
+        return jsonify({"result": result})
+    except RecursionError as e:
+        log_error(
+            "RecursionError",
+            "/error/recursion",
+            e,
+            {
+                "function_name": "infinite_recursion",
+                "recursion_depth": "exceeded_limit",
+            },
+        )
+        return jsonify({"error": "Maximum recursion depth exceeded"}), 500
+
+
+@app.route("/error/database")
+def database_error():
+    """Trigger database-like error simulation."""
+    try:
+        # Simulate database connection failure
+        raise OSError("Database connection failed: Connection refused")
+    except OSError as e:
+        log_error(
+            "OSError",
+            "/error/database",
+            e,
+            {
+                "error_type": "database_connection",
+                "database_host": "localhost",
+                "database_port": 5432,
+            },
+        )
+        return jsonify({"error": "Database connection failed"}), 503
+
+
+@app.route("/error/rate_limit")
+def rate_limit_error():
+    """Trigger rate limiting error simulation."""
+    try:
+        # Simulate rate limiting
+        raise Exception("Rate limit exceeded: 100 requests per minute")
+    except Exception as e:
+        log_error(
+            "RateLimitError",
+            "/error/rate_limit",
+            e,
+            {
+                "error_type": "rate_limit",
+                "limit": "100 requests per minute",
+                "retry_after": 60,
+            },
+        )
+        return jsonify({"error": "Rate limit exceeded", "retry_after": 60}), 429
+
+
 @app.route("/status")
 def status():
     """Service status endpoint for monitoring."""
@@ -198,6 +463,18 @@ def status():
                 "/error/memory",
                 "/error/timeout",
                 "/error/json",
+                "/error/file",
+                "/error/permission",
+                "/error/connection",
+                "/error/validation",
+                "/error/key",
+                "/error/attribute",
+                "/error/import",
+                "/error/type",
+                "/error/index",
+                "/error/recursion",
+                "/error/database",
+                "/error/rate_limit",
                 "/status",
             ],
             "log_file": log_file,
@@ -225,6 +502,18 @@ if __name__ == "__main__":
     print("  GET /error/memory - MemoryError (with safety limits)")
     print("  GET /error/timeout - TimeoutError")
     print("  GET /error/json - JSONDecodeError")
+    print("  GET /error/file - FileNotFoundError")
+    print("  GET /error/permission - PermissionError")
+    print("  GET /error/connection - ConnectionError")
+    print("  GET /error/validation - ValueError")
+    print("  GET /error/key - KeyError")
+    print("  GET /error/attribute - AttributeError")
+    print("  GET /error/import - ImportError")
+    print("  GET /error/type - TypeError")
+    print("  GET /error/index - IndexError")
+    print("  GET /error/recursion - RecursionError")
+    print("  GET /error/database - Database connection error")
+    print("  GET /error/rate_limit - Rate limiting error")
     print("  GET /status - Service status")
 
     app.run(host="0.0.0.0", port=5001, debug=False)

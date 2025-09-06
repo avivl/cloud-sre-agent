@@ -50,7 +50,7 @@ def test_sre_agent(single_agent=False):
     try:
         # Wait for demo to complete
         print("⏳ Waiting for demo to complete...")
-        time.sleep(25)  # Give demo time to complete and generate logs
+        time.sleep(50)  # Give demo time to complete and generate logs (16 scenarios + processing time)
 
         # Check if patches were generated
         patch_dir = Path("/tmp/real_patches")
