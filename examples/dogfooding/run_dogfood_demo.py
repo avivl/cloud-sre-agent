@@ -83,12 +83,17 @@ def start_sre_agent(config_file, agent_name):
         print(f"❌ Config file not found: {config_path}")
         return None
     
+    # Set environment variables for the SRE agent
+    env = os.environ.copy()
+    env["GITHUB_TOKEN"] = "dummy_token_for_testing"  # Dummy token for testing
+    
     # Start the SRE agent
     process = subprocess.Popen(
         [sys.executable, "main.py", "--config", str(config_path)],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        text=True
+        text=True,
+        env=env
     )
     
     # Wait a moment for the agent to start

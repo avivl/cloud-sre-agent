@@ -20,7 +20,7 @@ from gemini_sre_agent.ml.enhanced_analysis_agent import (
     EnhancedAnalysisConfig,
 )
 from gemini_sre_agent.remediation_agent import RemediationAgent
-from gemini_sre_agent.resilience import HyxResilientClient, create_resilience_config
+from gemini_sre_agent.resilience_core import HyxResilientClient, create_resilience_config
 from gemini_sre_agent.triage_agent import TriageAgent
 
 

@@ -6,6 +6,9 @@ from .fallback_manager import FallbackManager
 from .resilience_manager import ResilienceManager
 from .retry_handler import RetryHandler
 
+# Import from the main resilience module
+from ..resilience import HyxResilientClient, ResilienceConfig, create_resilience_config
+
 __all__ = [
     "ResilienceManager",
     "ErrorClassifier",
@@ -14,4 +17,7 @@ __all__ = [
     "CircuitState",
     "RetryHandler",
     "FallbackManager",
+    "HyxResilientClient",
+    "ResilienceConfig",
+    "create_resilience_config",
 ]
