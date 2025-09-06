@@ -1,229 +1,454 @@
-# SRE Agent Dogfooding Environment
+# Dogfooding Testing Environment
 
-This directory contains a comprehensive testing environment for the SRE agent system, including a mock service that generates various types of errors and test scripts to validate the agent's functionality.
+A streamlined testing environment for the Gemini SRE Agent that demonstrates the agent's ability to monitor, analyze, and fix both external services and itself.
 
 ## Overview
 
-The dogfooding environment consists of:
+This dogfooding environment consists of three main components:
 
-- **Dogfood Service**: A Flask application that generates various types of errors for testing
-- **SRE Agent Instances**: Two configured SRE agents that monitor the service and generate patches
-- **Test Scripts**: Automated testing and demonstration scripts
-- **Configuration Files**: YAML configurations for the SRE agents
-
-## Directory Structure
-
-```
-examples/dogfooding/
-├── dogfood_service/
-│   ├── app.py                 # Flask service with error scenarios
-│   └── requirements.txt       # Python dependencies
-├── configs/
-│   ├── dogfood_instance_1.yaml  # SRE Agent 1 configuration
-│   └── dogfood_instance_2.yaml  # SRE Agent 2 configuration
-├── quick_test.py              # Quick test script
-├── run_dogfood_demo.py        # Comprehensive demo script
-└── README.md                  # This file
-```
+1. **Problem Service** - A Flask-based service that intentionally produces various error types
+2. **SRE Agent Instance #1** - Monitors the Problem Service and creates patches to fix detected issues
+3. **SRE Agent Instance #2** - Monitors Instance #1 and creates patches to fix agent crashes and logic errors
 
 ## Quick Start
 
-### 1. Install Dependencies
+The environment provides two main scripts for testing:
+
+- **`quick_test.py`** - Fast test to verify the system is working
+- **`run_dogfood_demo.py`** - Full orchestration of the dogfooding environment
+
+### Prerequisites
+
+- Python 3.12+
+- Git repository with GitHub integration configured
+- SRE Agent dependencies installed
+- **Ollama installed and running locally**
+
+### Installation
+
+1. **Install and start Ollama:**
+
+   ```bash
+   # Install Ollama (if not already installed)
+   curl -fsSL https://ollama.ai/install.sh | sh
+
+   # Start Ollama service
+   ollama serve
+
+   # Pull required models (in a separate terminal)
+   ollama pull llama3.1:8b
+   ollama pull llama3.1:70b
+   ollama pull codellama:7b
+   ollama pull codellama:13b
+   ```
+
+2. **Install Problem Service dependencies:**
+
+   ```bash
+   cd examples/dogfooding/dogfood_service
+   uv pip install -r requirements.txt
+   ```
+
+3. **Verify configuration files exist:**
+
+   ```bash
+   ls examples/dogfooding/configs/
+   # Should show: dogfood_instance_1.yaml, dogfood_instance_2.yaml
+   ```
+
+4. **Set up GitHub credentials:**
+
+   ```bash
+   export GITHUB_TOKEN="your_github_token_here"
+   ```
+
+5. **Verify Ollama is running:**
+   ```bash
+   curl http://localhost:11434/api/tags
+   # Should return a list of available models
+   ```
+
+### Running the Tests
+
+#### Quick Test (Recommended for first run)
 
 ```bash
-# Install dogfood service dependencies
+cd examples/dogfooding
+python quick_test.py
+```
+
+This will:
+
+- Start the Problem Service
+- Start SRE Agent Instance #1
+- Trigger 4 error scenarios in sequence
+- Generate patches automatically
+- Show test results and cleanup
+
+#### Single Agent Mode
+
+```bash
+python quick_test.py --single-agent
+```
+
+Runs with only the first agent (Fixer), skips the second agent (Meta-Monitor).
+
+#### Full Demo Mode
+
+```bash
+python run_dogfood_demo.py
+```
+
+This will:
+
+- Start the Problem Service
+- Start both SRE Agent instances
+- Trigger 4 error scenarios in sequence
+- Generate patches automatically
+- Run for calculated duration then stop
+
+#### Single Agent Demo
+
+```bash
+python run_dogfood_demo.py --single-agent
+```
+
+Runs the demo with only the first agent.
+
+### Monitoring
+
+#### Manual Log Monitoring
+
+```bash
+# Monitor Problem Service logs
+tail -f /tmp/sre-dogfooding/dogfood_service.log
+
+# Monitor SRE Agent Instance #1 logs
+tail -f /tmp/sre-dogfooding/sre_agent_1.log
+
+# Monitor SRE Agent Instance #2 logs
+tail -f /tmp/sre-dogfooding/sre_agent_2.log
+```
+
+#### Check Generated Patches
+
+```bash
+# List generated patches
+ls -la /tmp/real_patches/
+
+# View a specific patch
+cat /tmp/real_patches/patch_*.patch
+```
+
+## Architecture
+
+### Problem Service
+
+**Location:** `examples/dogfooding/dogfood_service/`
+
+**Error Endpoints:**
+
+- `GET /error/division` - Triggers ZeroDivisionError
+- `GET /error/memory` - Simulates memory exhaustion (with safety limits)
+- `GET /error/timeout` - Simulates connection timeouts
+- `GET /error/json` - Triggers JSON parsing errors
+
+**Features:**
+
+- Structured JSON logging to `/tmp/sre-dogfooding/dogfood_service.log`
+- Health check endpoint at `/`
+- Status endpoint at `/status`
+- Resource safety limits to prevent system issues
+
+### SRE Agent Instance #1 (Fixer)
+
+**Configuration:** `examples/dogfooding/configs/dogfood_instance_1.yaml`
+
+**Purpose:** Monitors the Problem Service and creates PRs to fix detected issues
+
+**Features:**
+
+- File-based log ingestion using modern ingestion system
+- Error detection and categorization
+- Automated patch creation with proper labeling
+- Fix validation through automated testing
+
+### SRE Agent Instance #2 (Meta-Monitor)
+
+**Configuration:** `examples/dogfooding/configs/dogfood_instance_2.yaml`
+
+**Purpose:** Monitors Instance #1 and creates patches to fix agent crashes and logic errors
+
+**Features:**
+
+- Self-healing capabilities
+- Agent crash detection
+- Simple logic error fixes
+- Conservative fix generation
+
+## Configuration
+
+### Agent Configuration
+
+The dogfooding environment uses the modern ingestion system for both instances:
+
+#### Instance 1 (Dogfood Fixer)
+
+- **Configuration:** `configs/dogfood_instance_1.yaml`
+- **Features:** Modern ingestion system with advanced monitoring
+- **Log Ingestion:** Monitors dogfood service logs
+- **Health Monitoring:** Real-time health checks and metrics
+- **Backpressure Management:** Automatic load balancing
+
+#### Instance 2 (Meta-Monitor)
+
+- **Configuration:** `configs/dogfood_instance_2.yaml`
+- **Features:** Modern ingestion system for self-healing
+- **Log Ingestion:** Monitors SRE Agent 1 logs for self-healing
+- **Model Selection:** Configurable primary and fallback models
+- **GitHub Integration:** Automated patch creation and labeling
+
+### Environment Variables
+
+```bash
+# Required for SRE Agent instances
+export USE_NEW_INGESTION_SYSTEM=true
+export GITHUB_TOKEN="your_token_here"  # Optional - will use patch files if not provided
+
+# Ollama configuration
+export OLLAMA_BASE_URL="http://localhost:11434"
+export OLLAMA_MODEL="llama3.1:8b"
+
+# Optional: Custom model selection (overrides config files)
+export PRIMARY_MODEL="llama3.1:8b"
+export FALLBACK_MODEL="llama3.1:70b"
+```
+
+**Note:** If `GITHUB_TOKEN` is not provided or invalid, the SRE Agent will automatically create local patch files instead of GitHub PRs. This allows the dogfooding environment to work without GitHub authentication. Patches are stored in `/tmp/real_patches/`.
+
+## Patch File Management
+
+When GitHub authentication is not available, the SRE Agent automatically creates local patch files instead of PRs. These patch files contain all the information needed to apply fixes.
+
+### Patch File Structure
+
+Patch files are stored in `/tmp/real_patches/` and include:
+
+- **Git patch files** - Standard Git unified diff format
+- **JSON metadata files** - Contains structured data about the fix
+- **Markdown summary files** - Human-readable description of the fix
+
+### Managing Patch Files
+
+```bash
+# List all patch files
+ls -la /tmp/real_patches/
+
+# View a specific patch
+cat /tmp/real_patches/patch_*.patch
+
+# View patch metadata
+cat /tmp/real_patches/patch_*.json
+```
+
+### Patch File Contents
+
+Each patch file includes:
+
+- **Root Cause Analysis** - Detailed analysis of the problem
+- **Proposed Fix** - The suggested solution
+- **Target File** - Which file needs to be modified
+- **Patch Content** - The actual code changes (if available)
+- **Metadata** - Flow ID, Issue ID, timestamps, status
+
+## Testing
+
+### Running Tests
+
+#### Quick Test (Recommended)
+
+```bash
+# Run quick test to verify everything works
+python quick_test.py
+
+# Run with single agent only
+python quick_test.py --single-agent
+```
+
+#### Full Demo Test
+
+```bash
+# Run full demo with both agents
+python run_dogfood_demo.py
+
+# Run with single agent only
+python run_dogfood_demo.py --single-agent
+```
+
+#### Unit Tests (Problem Service)
+
+```bash
+# Test Problem Service
 cd examples/dogfooding/dogfood_service
-pip install -r requirements.txt
+python -m pytest tests/ -v
 
-# Install SRE agent dependencies (from project root)
-cd ../../..
-pip install -r requirements.txt
+# Test specific error scenarios
+python -m pytest tests/test_errors.py::TestErrorEndpoints::test_division_error -v
+
+# Test fix validation
+python -m pytest tests/test_validation.py -v
 ```
 
-### 2. Start Ollama (if using local models)
+### Test Coverage
 
-```bash
-# Start Ollama service
-ollama serve
+The test suite covers:
 
-# Pull required models
-ollama pull llama3.1:8b
-```
-
-### 3. Run Quick Test
-
-```bash
-# Run a quick test with both agents
-python examples/dogfooding/quick_test.py
-
-# Run a quick test with single agent
-python examples/dogfooding/quick_test.py --single-agent
-```
-
-### 4. Run Comprehensive Demo
-
-```bash
-# Run the full demonstration
-python examples/dogfooding/run_dogfood_demo.py
-```
-
-## Error Scenarios
-
-The dogfood service generates the following types of errors:
-
-### Mathematical Errors
-- **Division by Zero**: `GET /error/division`
-- Triggers `ZeroDivisionError` exceptions
-
-### Resource Errors
-- **Memory Allocation**: `GET /error/memory`
-- Triggers `MemoryError` exceptions
-
-### Network Errors
-- **Connection Failures**: `GET /error/connection`
-- Triggers connection-related exceptions
-
-### Validation Errors
-- **Input Validation**: `GET /error/validation`
-- Triggers `ValueError` and `TypeError` exceptions
-
-### Random Errors
-- **Mixed Scenarios**: `GET /error/random`
-- Randomly selects from available error types
-
-## SRE Agent Configuration
-
-### Agent 1 (Primary Monitor)
-- **Log Source**: `/tmp/sre-dogfooding/agent_1.log`
-- **Model**: `llama3.1:8b` (Ollama)
-- **Patterns**: Mathematical and resource errors
-- **Patch Directory**: `/tmp/real_patches`
-
-### Agent 2 (Secondary Monitor)
-- **Log Source**: `/tmp/sre-dogfooding/agent_2.log`
-- **Model**: `llama3.1:8b` (Ollama)
-- **Patterns**: General error patterns
-- **Patch Directory**: `/tmp/real_patches`
-
-## Log Analysis
-
-The test scripts automatically analyze generated logs and provide:
-
-- **Log Entry Counts**: Total entries per log file
-- **Error Classification**: Errors, warnings, and info messages
-- **Pattern Detection**: Specific error types detected
-- **Processing Statistics**: Analysis and remediation operations
-
-## Patch Generation
-
-The SRE agents generate patches in JSON format stored in `/tmp/real_patches/`. Each patch includes:
-
-- **Issue Title**: Description of the problem
-- **Status**: Current patch status
-- **Priority**: Issue priority level
-- **Remediation Plan**: Detailed fix instructions
-- **Metadata**: Timestamps, flow IDs, and context
-
-## Monitoring and Debugging
-
-### Log Files
-- **Agent 1**: `/tmp/sre-dogfooding/agent_1.log`
-- **Agent 2**: `/tmp/sre-dogfooding/agent_2.log`
-- **Dogfood Service**: Console output
-
-### Real-time Monitoring
-```bash
-# Monitor agent logs
-tail -f /tmp/sre-dogfooding/agent_1.log
-tail -f /tmp/sre-dogfooding/agent_2.log
-
-# Monitor patch generation
-watch -n 1 'ls -la /tmp/real_patches/'
-```
-
-### Debug Mode
-All agents run in DEBUG mode by default, providing detailed logging information for troubleshooting.
+- All 4 MVP error endpoints
+- Structured logging validation
+- Error categorization
+- Patch generation and validation
+- Performance characteristics
+- Integration testing
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Service Won't Start**
-   - Check if port 5001 is available
-   - Verify Flask dependencies are installed
-   - Check service logs for errors
+1. **Ollama not running:**
 
-2. **Agents Not Processing Logs**
-   - Verify Ollama is running and models are available
-   - Check agent configuration files
-   - Ensure log directories exist and are writable
+   ```bash
+   # Check if Ollama is running
+   curl http://localhost:11434/api/tags
 
-3. **No Patches Generated**
-   - Verify agents are detecting errors in logs
-   - Check patch directory permissions
-   - Review agent logs for processing errors
+   # Start Ollama if not running
+   ollama serve
 
-### Debug Commands
+   # Check if models are available
+   ollama list
+   ```
+
+2. **Ollama models not found:**
+
+   ```bash
+   # Pull required models
+   ollama pull llama3.1:8b
+   ollama pull llama3.1:70b
+   ollama pull codellama:7b
+   ollama pull codellama:13b
+
+   # Verify models are available
+   ollama list
+   ```
+
+3. **Service won't start:**
+
+   ```bash
+   # Check if port 5001 is available
+   lsof -i :5001
+
+   # Check Flask installation
+   uv pip install Flask==3.0.0
+
+   # If port 5001 is in use, try a different port
+   # Edit dogfood_service/app.py and change port=5001 to port=5002
+   ```
+
+4. **Agent instances fail to start:**
+
+   ```bash
+   # Verify configuration files
+   python -c "import yaml; yaml.safe_load(open('configs/dogfood_instance_1.yaml'))"
+
+   # Check GitHub token
+   echo $GITHUB_TOKEN
+
+   # Check Ollama connectivity
+   curl http://localhost:11434/api/tags
+   ```
+
+5. **No patches created:**
+
+   ```bash
+   # Check agent logs for errors
+   tail -f /tmp/sre-dogfooding/sre_agent_1.log
+
+   # Check if patches directory exists
+   ls -la /tmp/real_patches/
+
+   # Verify GitHub permissions (if using GitHub mode)
+   curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
+
+   # Check Ollama model responses
+   curl -X POST http://localhost:11434/api/generate -d '{"model": "llama3.1:8b", "prompt": "Hello"}'
+   ```
+
+6. **Log files not created:**
+
+   ```bash
+   # Check /tmp directory permissions
+   ls -la /tmp/
+
+   # Create log files manually
+   mkdir -p /tmp/sre-dogfooding
+   touch /tmp/sre-dogfooding/dogfood_service.log /tmp/sre-dogfooding/sre_agent_1.log /tmp/sre-dogfooding/sre_agent_2.log
+   ```
+
+### Debug Mode
+
+Run with debug logging:
 
 ```bash
-# Check service health
-curl http://127.0.0.1:5001/
-
-# Test error endpoints
-curl http://127.0.0.1:5001/error/division
-curl http://127.0.0.1:5001/error/memory
-
-# Check agent status
-ps aux | grep "main.py"
-
-# Verify log generation
-ls -la /tmp/sre-dogfooding/
+export LOG_LEVEL=DEBUG
+python quick_test.py
 ```
 
-## Customization
+## File Structure
 
-### Adding New Error Scenarios
-
-1. Add new endpoints to `dogfood_service/app.py`
-2. Update agent configuration patterns
-3. Test with the provided scripts
-
-### Modifying Agent Behavior
-
-1. Edit configuration files in `configs/`
-2. Adjust logging levels, models, or thresholds
-3. Restart agents to apply changes
-
-### Extending Test Scripts
-
-1. Modify `quick_test.py` for basic testing
-2. Extend `run_dogfood_demo.py` for comprehensive scenarios
-3. Add custom analysis functions as needed
-
-## Performance Considerations
-
-- **Log Rotation**: Consider implementing log rotation for long-running tests
-- **Resource Usage**: Monitor memory usage during memory error scenarios
-- **Model Performance**: Adjust model parameters based on system capabilities
-- **Concurrent Processing**: Test with multiple simultaneous error scenarios
-
-## Integration with CI/CD
-
-The dogfooding environment can be integrated into CI/CD pipelines:
-
-```bash
-# Run in CI environment
-python examples/dogfooding/quick_test.py --single-agent
-
-# Check exit code for success/failure
-echo $?
+```
+examples/dogfooding/
+├── dogfood_service/
+│   ├── app.py                    # Flask service with 4 MVP error endpoints
+│   ├── requirements.txt          # Service dependencies
+│   └── tests/                    # Test suite for validation
+│       ├── test_errors.py        # Error endpoint tests
+│       └── test_validation.py    # Fix validation tests
+├── configs/
+│   ├── dogfood_instance_1.yaml   # Agent Instance #1 config
+│   └── dogfood_instance_2.yaml   # Agent Instance #2 config
+├── quick_test.py                 # Quick test script
+├── run_dogfood_demo.py           # Full orchestration script
+└── README.md                     # This file
 ```
 
 ## Contributing
 
-When adding new features to the dogfooding environment:
+When adding new error scenarios or features:
 
-1. Update this README with new functionality
-2. Add appropriate test cases
-3. Ensure backward compatibility
-4. Test with both single and dual agent configurations
+1. **Keep files under 250 LOC** for maintainability
+2. **Add comprehensive tests** for new functionality
+3. **Update configuration files** as needed
+4. **Test with both quick_test and run_dogfood_demo**
+5. **Verify patch generation** works correctly
+
+## Security Notes
+
+- **GitHub Token:** Use limited-scope tokens for each agent instance
+- **Resource Limits:** Built-in safeguards prevent system resource exhaustion
+- **Code Review:** All generated patches require manual review before applying
+- **Rollback:** Implement rollback mechanisms for failed fixes
+
+## Performance
+
+- **Memory Usage:** Service limited to 1GB per request
+- **CPU Usage:** Throttled to prevent system lockup
+- **Network Timeouts:** Controlled timeout values
+- **Log Rotation:** Automatic log file rotation and cleanup
+
+## Future Enhancements
+
+- **Web Dashboard:** Add web-based monitoring interface
+- **Advanced Scenarios:** Add more complex error types
+- **Containerization:** Docker Compose for isolated environments
+- **Multi-Repository:** Support for multiple repositories
+- **ML Integration:** Machine learning for better error classification
+- **GitHub Integration:** Direct PR creation when GitHub token is available

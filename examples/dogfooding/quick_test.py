@@ -1,315 +1,112 @@
 #!/usr/bin/env python3
 """
-Quick Test Script for SRE Agent Dogfooding
-Tests the SRE agent system with a simple error scenario.
+Quick Test for SRE Agent System
+
+This script quickly tests if the SRE agents are working properly.
 """
 
-import asyncio
-import json
-import os
-import signal
+import argparse
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-# Add the project root to the Python path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
 
-def cleanup_directories():
-    """Clean up log and patch directories."""
-    print("🧹 Cleaning up directories...")
-    
-    # Clean log directory
+def test_sre_agent(single_agent=False):
+    """Quick test of SRE agent functionality."""
+
+    mode = "Single Agent" if single_agent else "Dual Agent"
+    print(f"🧪 Quick SRE Agent Test ({mode})")
+    print("=" * 30)
+
+    # Clean up previous test artifacts
+    print("🧹 Cleaning up previous test artifacts...")
+
+    # Clean up log files
     log_dir = Path("/tmp/sre-dogfooding")
     if log_dir.exists():
-        for file in log_dir.glob("*.log"):
-            file.unlink()
-        print(f"   Cleaned log directory: {log_dir}")
-    
-    # Clean patch directory
-    patch_dir = Path("/tmp/real_patches")
-    if patch_dir.exists():
-        for file in patch_dir.glob("*.json"):
-            file.unlink()
-        print(f"   Cleaned patch directory: {patch_dir}")
-    else:
-        patch_dir.mkdir(parents=True, exist_ok=True)
-        print(f"   Created patch directory: {patch_dir}")
+        for log_file in log_dir.glob("*.log"):
+            log_file.unlink()
 
-def start_dogfood_service():
-    """Start the dogfood service."""
-    print("🚀 Starting dogfood service...")
-    
-    service_dir = Path(__file__).parent / "dogfood_service"
-    service_script = service_dir / "app.py"
-    
-    if not service_script.exists():
-        print(f"❌ Dogfood service not found at {service_script}")
-        return None
-    
-    # Install requirements if needed
-    requirements = service_dir / "requirements.txt"
-    if requirements.exists():
-        print("   Installing dogfood service requirements...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "-r", str(requirements)], 
-                      check=False, capture_output=True)
-    
-    # Start the service
-    process = subprocess.Popen(
-        [sys.executable, str(service_script)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
-    )
-    
-    # Wait a moment for the service to start
-    time.sleep(3)
-    
-    if process.poll() is None:
-        print("   ✅ Dogfood service started successfully")
-        return process
+    # Clean up real patches directory
+    patches_dir = Path("/tmp/real_patches")
+    if patches_dir.exists():
+        for patch_file in patches_dir.glob("*.patch"):
+            patch_file.unlink()
+        print(f"   Cleaned {patches_dir}")
     else:
-        print("   ❌ Failed to start dogfood service")
-        return None
+        # Create the directory if it doesn't exist
+        patches_dir.mkdir(parents=True, exist_ok=True)
+        print(f"   Created {patches_dir}")
 
-def start_sre_agent(config_file, agent_name):
-    """Start an SRE agent with the given configuration."""
-    print(f"🤖 Starting {agent_name}...")
-    
-    config_path = Path(__file__).parent / "configs" / config_file
-    if not config_path.exists():
-        print(f"❌ Config file not found: {config_path}")
-        return None
-    
-    # Copy config to expected location
-    project_root = Path(__file__).parent.parent.parent
-    config_dir = project_root / "config"
-    config_dir.mkdir(exist_ok=True)
-    
-    import shutil
-    shutil.copy2(config_path, config_dir / "config.yaml")
-    print(f"   Copied config to {config_dir / 'config.yaml'}")
-    
-    # Set environment variables for the SRE agent
-    env = os.environ.copy()
-    env["GITHUB_TOKEN"] = "dummy_token_for_testing"  # Dummy token for testing
-    env["USE_NEW_INGESTION_SYSTEM"] = "true"  # Enable new ingestion system
-    
-    # Start the SRE agent from project root
-    process = subprocess.Popen(
-        [sys.executable, "main.py"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        env=env,
-        cwd=str(project_root)
-    )
-    
-    # Wait a moment for the agent to start
-    time.sleep(2)
-    
-    if process.poll() is None:
-        print(f"   ✅ {agent_name} started successfully")
-        return process
-    else:
-        print(f"   ❌ Failed to start {agent_name}")
-        return None
+    # Start the dogfooding demo
+    print("1️⃣ Starting dogfooding demo...")
+    demo_args = [sys.executable, "run_dogfood_demo.py"]
+    if single_agent:
+        demo_args.append("--single-agent")
 
-def trigger_errors():
-    """Trigger various error scenarios in the dogfood service."""
-    print("🔥 Triggering error scenarios...")
-    
-    import requests
-    
-    base_url = "http://127.0.0.1:5001"
-    
-    # Test health check first
+    demo_process = subprocess.Popen(demo_args, cwd=Path(__file__).parent)
+
     try:
-        response = requests.get(f"{base_url}/", timeout=5)
-        if response.status_code == 200:
-            print("   ✅ Service is healthy")
+        # Wait for demo to complete
+        print("⏳ Waiting for demo to complete...")
+        time.sleep(25)  # Give demo time to complete and generate logs
+
+        # Check if patches were generated
+        patch_dir = Path("/tmp/real_patches")
+        if patch_dir.exists():
+            patch_files = list(patch_dir.glob("*.patch"))
+            print(f"✅ Found {len(patch_files)} patches in /tmp/real_patches")
         else:
-            print(f"   ⚠️  Service returned status {response.status_code}")
-    except Exception as e:
-        print(f"   ❌ Service health check failed: {e}")
-        return
-    
-    # Trigger various errors
-    error_endpoints = [
-        "/error/division",
-        "/error/memory", 
-        "/error/connection",
-        "/error/validation",
-        "/error/random"
-    ]
-    
-    for endpoint in error_endpoints:
-        try:
-            print(f"   Triggering {endpoint}...")
-            response = requests.get(f"{base_url}{endpoint}", timeout=10)
-            print(f"     Status: {response.status_code}")
-        except Exception as e:
-            print(f"     Error: {e}")
-        
-        time.sleep(1)  # Brief pause between errors
+            print("❌ No patches found in /tmp/real_patches")
 
-def analyze_logs():
-    """Analyze the generated logs."""
-    print("\n📊 Agent Log Analysis:")
-    
-    log_dir = Path("/tmp/sre-dogfooding")
-    if not log_dir.exists():
-        print("   ❌ Log directory not found")
-        return
-    
-    # Count log entries
-    log_files = list(log_dir.glob("*.log"))
-    if not log_files:
-        print("   ❌ No log files found")
-        return
-    
-    total_entries = 0
-    error_count = 0
-    
-    for log_file in log_files:
-        print(f"\n   📄 {log_file.name}:")
-        try:
-            with open(log_file, 'r') as f:
-                lines = f.readlines()
-            
-            entries = 0
-            errors = 0
-            
-            for line in lines:
-                if line.strip():
-                    entries += 1
-                    try:
-                        log_entry = json.loads(line)
-                        if log_entry.get('level') == 'ERROR':
-                            errors += 1
-                    except json.JSONDecodeError:
-                        # Not a JSON log entry, check for error keywords
-                        if any(keyword in line.lower() for keyword in ['error', 'exception', 'traceback']):
-                            errors += 1
-                    except:
-                        pass
-            
-            print(f"     Log entries: {entries}")
-            print(f"     Errors: {errors}")
-            
-            total_entries += entries
-            error_count += errors
-            
-        except Exception as e:
-            print(f"     Error reading log: {e}")
-    
-    print(f"\n   📈 Summary:")
-    print(f"     Total log entries: {total_entries}")
-    print(f"     Total errors: {error_count}")
-    
-    if error_count > 0:
-        print(f"     ✅ Found {error_count} errors in agent log")
-    else:
-        print(f"     ⚠️  No errors found in agent log")
+        # Check agent logs
+        agent_log = Path("/tmp/sre-dogfooding/sre_agent_1.log")
+        if agent_log.exists():
+            with open(agent_log, "r") as f:
+                content = f.read()
 
-def check_patches():
-    """Check for generated patches."""
-    print("\n🔧 Patch Analysis:")
-    
-    patch_dir = Path("/tmp/real_patches")
-    if not patch_dir.exists():
-        print("   ❌ Patch directory not found")
-        return
-    
-    patch_files = list(patch_dir.glob("*.json"))
-    if not patch_files:
-        print("   ❌ No patch files found")
-        return
-    
-    print(f"   📄 Found {len(patch_files)} patch files:")
-    for patch_file in patch_files:
-        try:
-            with open(patch_file, 'r') as f:
-                patch_data = json.load(f)
-            
-            print(f"     - {patch_file.name}")
-            print(f"       Issue: {patch_data.get('issue_title', 'Unknown')}")
-            print(f"       Status: {patch_data.get('status', 'Unknown')}")
-        except Exception as e:
-            print(f"     - {patch_file.name} (Error reading: {e})")
+            # Count different types of log entries
+            log_processing = content.count("[LOG_INGESTION] Processing log entry")
+            analysis_ops = content.count("[ANALYSIS]")
+            remediation_ops = content.count("[REMEDIATION]")
+            errors = content.count("ERROR")
+
+            print("\n📊 Agent Log Analysis:")
+            print(f"   Log entries processed: {log_processing}")
+            print(f"   Analysis operations: {analysis_ops}")
+            print(f"   Remediation operations: {remediation_ops}")
+            print(f"   Errors: {errors}")
+
+            if errors > 0:
+                print(f"\n❌ Found {errors} errors in agent log")
+                print("   Last few error lines:")
+                error_lines = [line for line in content.split("\n") if "ERROR" in line]
+                for line in error_lines[-3:]:
+                    print(f"   {line}")
+            else:
+                print("✅ No errors found in agent log")
+
+        return True
+
+    finally:
+        # Clean up
+        demo_process.terminate()
+        time.sleep(1)
+
 
 def main():
-    """Main test function."""
-    print("🧪 SRE Agent Quick Test")
-    print("=" * 50)
-    
-    # Parse command line arguments
-    single_agent = "--single-agent" in sys.argv
-    
-    # Clean up first
-    cleanup_directories()
-    
-    # Start services
-    dogfood_process = start_dogfood_service()
-    if not dogfood_process:
-        print("❌ Cannot proceed without dogfood service")
-        return 1
-    
-    # Start SRE agents
-    agent1_process = start_sre_agent("dogfood_instance_1.yaml", "SRE Agent 1")
-    if not agent1_process:
-        print("❌ Cannot proceed without SRE Agent 1")
-        dogfood_process.terminate()
-        return 1
-    
-    agent2_process = None
-    if not single_agent:
-        agent2_process = start_sre_agent("dogfood_instance_2.yaml", "SRE Agent 2")
-        if not agent2_process:
-            print("⚠️  SRE Agent 2 failed to start, continuing with single agent")
-    
-    try:
-        # Wait for agents to initialize
-        print("\n⏳ Waiting for agents to initialize...")
-        time.sleep(5)
-        
-        # Trigger errors
-        trigger_errors()
-        
-        # Wait for processing
-        print("\n⏳ Waiting for agents to process logs...")
-        time.sleep(10)
-        
-        # Analyze results
-        analyze_logs()
-        check_patches()
-        
-        print("\n✅ Quick test completed!")
-        
-    except KeyboardInterrupt:
-        print("\n⚠️  Test interrupted by user")
-    finally:
-        # Cleanup
-        print("\n🧹 Cleaning up processes...")
-        
-        if agent2_process:
-            agent2_process.terminate()
-        if agent1_process:
-            agent1_process.terminate()
-        if dogfood_process:
-            dogfood_process.terminate()
-        
-        # Wait for processes to terminate
-        time.sleep(2)
-        
-        # Force kill if needed
-        for process in [agent2_process, agent1_process, dogfood_process]:
-            if process and process.poll() is None:
-                process.kill()
-    
-    return 0
+    """Main function with argument parsing."""
+    parser = argparse.ArgumentParser(description="Quick SRE Agent Test")
+    parser.add_argument(
+        "--single-agent",
+        action="store_true",
+        help="Run with only the first agent (Fixer), skip the second agent (Meta-Monitor)",
+    )
+
+    args = parser.parse_args()
+    test_sre_agent(single_agent=args.single_agent)
+
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

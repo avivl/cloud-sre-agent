@@ -1,228 +1,230 @@
 #!/usr/bin/env python3
 """
-Dogfood Service - A Flask application that generates various types of errors
-for testing the SRE agent system.
+Dogfooding Problem Service - Flask-based error-producing service for testing SRE Agent.
+
+This service provides 4 MVP error endpoints to test the SRE Agent's ability to:
+1. Detect errors from structured logs
+2. Analyze root causes
+3. Generate fixes via PRs
+
+All files must be under 250 LOC for maintainability.
 """
 
 import json
-import random
+import logging
+import sys
 import time
 import traceback
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
+
 from flask import Flask, jsonify, request
-from werkzeug.exceptions import InternalServerError
+
+# Configure structured JSON logging
+log_file = "/tmp/sre-dogfooding/dogfood_service.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[logging.FileHandler(log_file), logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Global variables for state tracking
-error_count = 0
-memory_chunks = []
+# Service metadata
+SERVICE_VERSION = "1.0.0"
+SERVICE_NAME = "dogfood_service"
 
-@app.route('/')
+
+def log_error(
+    error_type: str,
+    endpoint: str,
+    error: Exception,
+    context: Dict[str, Any] | None = None,
+) -> None:
+    """Log errors in structured JSON format for SRE Agent ingestion."""
+    try:
+        error_data = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": "ERROR",
+            "service": SERVICE_NAME,
+            "error_type": error_type,
+            "category": _get_error_category(error_type),
+            "endpoint": endpoint,
+            "request_id": f"req_{int(time.time() * 1000)}",
+            "traceback": traceback.format_exc(),
+            "context": context if context is not None else {},
+            "metadata": {
+                "error_count": 1,
+                "service_version": SERVICE_VERSION,
+                "environment": "dogfood",
+            },
+        }
+        logger.error(json.dumps(error_data))
+    except Exception as log_error:
+        # Fallback logging if JSON serialization fails
+        logger.error(f"Failed to log error: {log_error}")
+
+
+def _get_error_category(error_type: str) -> str:
+    """Map error types to categories for better classification."""
+    category_map = {
+        "ZeroDivisionError": "mathematical",
+        "MemoryError": "resource",
+        "TimeoutError": "network",
+        "JSONDecodeError": "data",
+    }
+    return category_map.get(error_type, "unknown")
+
+
+@app.route("/")
 def health_check():
     """Health check endpoint."""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "service": "dogfood_service",
-        "version": "1.0.0"
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "service": SERVICE_NAME,
+            "version": SERVICE_VERSION,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+    )
 
-@app.route('/error/division')
+
+@app.route("/error/division")
 def division_error():
-    """Generate a ZeroDivisionError."""
-    global error_count
-    error_count += 1
-    
+    """Trigger ZeroDivisionError - Mathematical error."""
     try:
+        # Intentional division by zero
         result = 10 / 0
         return jsonify({"result": result})
     except ZeroDivisionError as e:
-        error_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "level": "ERROR",
-            "service": "dogfood_service",
-            "error_type": "ZeroDivisionError",
-            "category": "mathematical",
-            "endpoint": "/error/division",
-            "request_id": f"req_{int(time.time() * 1000)}",
-            "traceback": traceback.format_exc(),
-            "context": {
-                "user_agent": request.headers.get('User-Agent', 'unknown'),
-                "ip_address": request.remote_addr
+        log_error(
+            "ZeroDivisionError",
+            "/error/division",
+            e,
+            {
+                "user_agent": request.headers.get("User-Agent", "unknown"),
+                "ip_address": request.remote_addr,
             },
-            "metadata": {
-                "error_count": error_count,
-                "service_version": "1.0.0",
-                "environment": "dogfood"
-            }
-        }
-        
-        print(json.dumps(error_data))
-        raise InternalServerError("Division by zero error")
+        )
+        return jsonify({"error": "Division by zero occurred"}), 500
 
-@app.route('/error/memory')
+
+@app.route("/error/memory")
 def memory_error():
-    """Generate a MemoryError."""
-    global error_count, memory_chunks
-    error_count += 1
-    
+    """Trigger MemoryError - Resource error with safety limits."""
+    allocated_chunks = []
     try:
-        # Simulate memory allocation
-        for i in range(102):
-            chunk = [0] * (1024 * 1024)  # 1MB chunk
-            memory_chunks.append(chunk)
-            if len(memory_chunks) > 100:  # Safety limit
-                raise MemoryError("Simulated memory exhaustion (safety limit reached)")
-        
-        return jsonify({"allocated_mb": len(memory_chunks)})
+        # Simulate memory exhaustion with safety limit (1GB max)
+        max_memory_mb = 1024
+        chunk_size = 10 * 1024 * 1024  # 10MB chunks
+
+        for _i in range(max_memory_mb // 10):  # Safety limit
+            chunk = bytearray(chunk_size)
+            allocated_chunks.append(chunk)
+            time.sleep(0.001)  # Small delay to prevent system lockup
+
+        # If we get here, we've hit our safety limit
+        raise MemoryError("Simulated memory exhaustion (safety limit reached)")
+
     except MemoryError as e:
-        error_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "level": "ERROR",
-            "service": "dogfood_service",
-            "error_type": "MemoryError",
-            "category": "resource",
-            "endpoint": "/error/memory",
-            "request_id": f"req_{int(time.time() * 1000)}",
-            "traceback": traceback.format_exc(),
-            "context": {
-                "allocated_chunks": len(memory_chunks),
-                "total_memory_mb": len(memory_chunks)
+        log_error(
+            "MemoryError",
+            "/error/memory",
+            e,
+            {
+                "allocated_chunks": len(allocated_chunks),
+                "total_memory_mb": len(allocated_chunks) * 10,
             },
-            "metadata": {
-                "error_count": error_count,
-                "service_version": "1.0.0",
-                "environment": "dogfood"
-            }
-        }
-        
-        print(json.dumps(error_data))
-        raise InternalServerError("Memory allocation error")
+        )
+        return jsonify({"error": "Memory allocation failed"}), 500
 
-@app.route('/error/timeout')
+
+@app.route("/error/timeout")
 def timeout_error():
-    """Generate a timeout scenario."""
-    global error_count
-    error_count += 1
-    
-    # Simulate a long-running operation
-    time.sleep(30)  # This will timeout
-    
-    return jsonify({"status": "completed"})
-
-@app.route('/error/connection')
-def connection_error():
-    """Generate a connection error."""
-    global error_count
-    error_count += 1
-    
+    """Trigger TimeoutError - Network error simulation."""
     try:
-        import socket
-        # Try to connect to a non-existent service
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
-        sock.connect(('192.0.2.1', 9999))  # RFC 5737 test IP
-    except Exception as e:
-        error_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "level": "ERROR",
-            "service": "dogfood_service",
-            "error_type": "ConnectionError",
-            "category": "network",
-            "endpoint": "/error/connection",
-            "request_id": f"req_{int(time.time() * 1000)}",
-            "traceback": traceback.format_exc(),
-            "context": {
-                "target_host": "192.0.2.1",
-                "target_port": 9999,
-                "timeout": 1
+        # Simulate network timeout
+        time.sleep(30)  # This will be interrupted by client timeout
+        return jsonify({"result": "should_not_reach_here"})
+    except Exception:
+        # Simulate timeout error
+        timeout_error = TimeoutError("Connection timeout after 30 seconds")
+        log_error(
+            "TimeoutError",
+            "/error/timeout",
+            timeout_error,
+            {
+                "timeout_seconds": 30,
+                "user_agent": request.headers.get("User-Agent", "unknown"),
             },
-            "metadata": {
-                "error_count": error_count,
-                "service_version": "1.0.0",
-                "environment": "dogfood"
-            }
-        }
-        
-        print(json.dumps(error_data))
-        raise InternalServerError("Connection failed")
+        )
+        return jsonify({"error": "Request timeout"}), 408
 
-@app.route('/error/validation')
-def validation_error():
-    """Generate a validation error."""
-    global error_count
-    error_count += 1
-    
+
+@app.route("/error/json")
+def json_error():
+    """Trigger JSONDecodeError - Data serialization error."""
     try:
-        data = request.get_json()
-        if not data or 'required_field' not in data:
-            raise ValueError("Missing required field: 'required_field'")
-        
-        if not isinstance(data['required_field'], str):
-            raise TypeError("Field 'required_field' must be a string")
-        
-        return jsonify({"status": "validated", "data": data})
-    except (ValueError, TypeError) as e:
-        error_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "level": "ERROR",
-            "service": "dogfood_service",
-            "error_type": type(e).__name__,
-            "category": "validation",
-            "endpoint": "/error/validation",
-            "request_id": f"req_{int(time.time() * 1000)}",
-            "traceback": traceback.format_exc(),
-            "context": {
-                "received_data": data if 'data' in locals() else None,
-                "user_agent": request.headers.get('User-Agent', 'unknown')
+        # Intentional JSON parsing error
+        invalid_json = '{"invalid": json, "missing": quotes}'
+        data = json.loads(invalid_json)
+        return jsonify(data)
+    except json.JSONDecodeError as e:
+        log_error(
+            "JSONDecodeError",
+            "/error/json",
+            e,
+            {
+                "invalid_json": '{"invalid": json, "missing": quotes}',
+                "error_position": e.pos,
             },
-            "metadata": {
-                "error_count": error_count,
-                "service_version": "1.0.0",
-                "environment": "dogfood"
-            }
-        }
-        
-        print(json.dumps(error_data))
-        raise InternalServerError("Validation failed")
+        )
+        return jsonify({"error": "JSON parsing failed"}), 400
 
-@app.route('/error/random')
-def random_error():
-    """Generate a random error from the available types."""
-    error_types = ['division', 'memory', 'connection', 'validation']
-    error_type = random.choice(error_types)
-    
-    if error_type == 'division':
-        return division_error()
-    elif error_type == 'memory':
-        return memory_error()
-    elif error_type == 'connection':
-        return connection_error()
-    elif error_type == 'validation':
-        return validation_error()
 
-@app.route('/status')
+@app.route("/status")
 def status():
-    """Get current service status."""
-    return jsonify({
-        "status": "running",
-        "error_count": error_count,
-        "memory_chunks": len(memory_chunks),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
-    })
+    """Service status endpoint for monitoring."""
+    return jsonify(
+        {
+            "service": SERVICE_NAME,
+            "version": SERVICE_VERSION,
+            "status": "running",
+            "endpoints": [
+                "/",
+                "/error/division",
+                "/error/memory",
+                "/error/timeout",
+                "/error/json",
+                "/status",
+            ],
+            "log_file": log_file,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+    )
 
-if __name__ == '__main__':
-    print("Starting Dogfood Service...")
+
+if __name__ == "__main__":
+    # Ensure log directory exists and log file is writable
+    log_dir = Path("/tmp/sre-dogfooding")
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with open(log_file, "a") as f:
+            f.write("")
+    except Exception as e:
+        print(f"Warning: Could not create log file {log_file}: {e}")
+
+    print(f"Starting {SERVICE_NAME} v{SERVICE_VERSION}")
+    print(f"Log file: {log_file}")
     print("Available endpoints:")
-    print("  GET  /              - Health check")
-    print("  GET  /error/division - Division by zero error")
-    print("  GET  /error/memory   - Memory allocation error")
-    print("  GET  /error/timeout  - Timeout error (30s)")
-    print("  GET  /error/connection - Connection error")
-    print("  GET  /error/validation - Validation error")
-    print("  GET  /error/random   - Random error")
-    print("  GET  /status        - Service status")
-    print("\nStarting server on http://127.0.0.1:5001")
-    
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    print("  GET / - Health check")
+    print("  GET /error/division - ZeroDivisionError")
+    print("  GET /error/memory - MemoryError (with safety limits)")
+    print("  GET /error/timeout - TimeoutError")
+    print("  GET /error/json - JSONDecodeError")
+    print("  GET /status - Service status")
+
+    app.run(host="0.0.0.0", port=5001, debug=False)
