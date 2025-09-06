@@ -83,17 +83,28 @@ def start_sre_agent(config_file, agent_name):
         print(f"❌ Config file not found: {config_path}")
         return None
     
+    # Copy config to expected location
+    project_root = Path(__file__).parent.parent.parent
+    config_dir = project_root / "config"
+    config_dir.mkdir(exist_ok=True)
+    
+    import shutil
+    shutil.copy2(config_path, config_dir / "config.yaml")
+    print(f"   Copied config to {config_dir / 'config.yaml'}")
+    
     # Set environment variables for the SRE agent
     env = os.environ.copy()
     env["GITHUB_TOKEN"] = "dummy_token_for_testing"  # Dummy token for testing
+    env["USE_NEW_INGESTION_SYSTEM"] = "true"  # Enable new ingestion system
     
-    # Start the SRE agent
+    # Start the SRE agent from project root
     process = subprocess.Popen(
-        [sys.executable, "main.py", "--config", str(config_path)],
+        [sys.executable, "main.py"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
-        env=env
+        env=env,
+        cwd=str(project_root)
     )
     
     # Wait a moment for the agent to start
