@@ -10,7 +10,11 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from .factory import LLMProviderFactory
+    from .model_registry import ModelRegistry
 
 from pydantic import BaseModel, Field
 
@@ -98,13 +102,19 @@ class CostManagementConfig(BaseModel):
 
 
 class DynamicCostManager:
-    """Manages dynamic pricing and cost tracking across providers."""
+    """Manages dynamic pricing and cost tracking across providers.
+
+    Supports async context manager for proper resource cleanup:
+
+    async with DynamicCostManager(config) as cost_manager:
+        cost = cost_manager.estimate_cost(...)
+    """
 
     def __init__(self, config: CostManagementConfig):
         self.config = config
-        # Simplified for now - these would be passed in a real implementation
-        self.provider_factory = None
-        self.model_registry = None
+        # These will be set by the integration layer
+        self.provider_factory: Optional["LLMProviderFactory"] = None
+        self.model_registry: Optional["ModelRegistry"] = None
 
         # Pricing cache: provider -> model -> PricingInfo
         self.pricing_cache: Dict[ProviderType, Dict[str, PricingInfo]] = {}
@@ -170,13 +180,27 @@ class DynamicCostManager:
     async def stop(self) -> None:
         """Stop the cost management system."""
         self._running = False
-        if self._refresh_task:
+        if self._refresh_task and not self._refresh_task.done():
             self._refresh_task.cancel()
             try:
                 await self._refresh_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Pricing refresh task cancelled successfully")
+            except Exception as e:
+                logger.warning(f"Error stopping pricing refresh task: {e}")
+            finally:
+                self._refresh_task = None
         logger.info("Dynamic cost management system stopped")
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        await self.stop()
+        return False
 
     async def _refresh_pricing_loop(self) -> None:
         """Background task to refresh pricing data."""
