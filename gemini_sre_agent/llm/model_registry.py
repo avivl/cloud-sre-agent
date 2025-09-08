@@ -9,28 +9,16 @@ to specific provider models, enabling easy model selection across different prov
 
 import logging
 from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
 import yaml
 
-from .base import ModelType, ProviderType
+from .capabilities.database import CapabilityDatabase
+from .capabilities.models import ModelCapability
+from .common.enums import ModelType, ProviderType
 
 logger = logging.getLogger(__name__)
-
-
-class ModelCapability(str, Enum):
-    """Model capabilities for filtering and selection."""
-
-    STREAMING = "streaming"
-    TOOLS = "tools"
-    EMBEDDINGS = "embeddings"
-    VISION = "vision"
-    CODE_GENERATION = "code_generation"
-    ANALYSIS = "analysis"
-    REASONING = "reasoning"
-    CREATIVE = "creative"
 
 
 @dataclass
@@ -40,7 +28,7 @@ class ModelInfo:
     name: str
     provider: ProviderType
     semantic_type: ModelType
-    capabilities: Set[ModelCapability] = field(default_factory=set)
+    capabilities: List[ModelCapability] = field(default_factory=list)
     cost_per_1k_tokens: float = 0.0
     max_tokens: int = 4096
     context_window: int = 4096
@@ -76,7 +64,8 @@ class ModelRegistry:
         self._models: Dict[str, ModelInfo] = {}
         self._semantic_mappings: Dict[ModelType, List[str]] = {}
         self._provider_models: Dict[ProviderType, List[str]] = {}
-        self._capability_index: Dict[ModelCapability, Set[str]] = {}
+        self._capability_index: Dict[str, Set[str]] = {}  # Change key type to str
+        self.capability_database = CapabilityDatabase()  # Add this line
         self._last_loaded: Optional[float] = None
 
         if self.config.config_file:
@@ -101,6 +90,14 @@ class ModelRegistry:
 
             self._load_models_from_data(data)
             self._build_indexes()
+            # Add all models to the capability database
+            for model_info in self._models.values():
+                self.capability_database.add_capabilities(
+                    ModelCapabilities(
+                        model_id=f"{model_info.provider}/{model_info.name}",
+                        capabilities=model_info.capabilities,
+                    )
+                )
             self._last_loaded = self._get_current_time()
 
             logger.info(f"Loaded {len(self._models)} models from {config_path}")
@@ -126,12 +123,15 @@ class ModelRegistry:
     def _create_model_info(self, name: str, data: Dict[str, Any]) -> ModelInfo:
         """Create a ModelInfo object from configuration data."""
         # Parse capabilities
-        capabilities = set()
-        for cap_str in data.get("capabilities", []):
+        capabilities = []  # Change set() to []
+        for cap_data in data.get("capabilities", []):  # Change cap_str to cap_data
             try:
-                capabilities.add(ModelCapability(cap_str))
-            except ValueError:
-                logger.warning(f"Unknown capability: {cap_str}")
+                # Assuming cap_data is a dictionary matching ModelCapability structure
+                capabilities.append(
+                    ModelCapability(**cap_data)
+                )  # Create ModelCapability object
+            except Exception as e:  # Catch general exception for parsing errors
+                logger.warning(f"Failed to parse capability {cap_data}: {e}")
 
         # Parse semantic type
         semantic_type = ModelType(data.get("semantic_type", "smart"))
@@ -172,14 +172,20 @@ class ModelRegistry:
 
             # Build capability index
             for capability in model_info.capabilities:
-                if capability not in self._capability_index:
-                    self._capability_index[capability] = set()
-                self._capability_index[capability].add(model_name)
+                if capability.name not in self._capability_index:
+                    self._capability_index[capability.name] = set()
+                self._capability_index[capability.name].add(model_name)
 
     def register_model(self, model_info: ModelInfo) -> None:
         """Register a new model in the registry."""
         self._models[model_info.name] = model_info
         self._build_indexes()
+        self.capability_database.add_capabilities(
+            ModelCapabilities(
+                model_id=f"{model_info.provider}/{model_info.name}",
+                capabilities=model_info.capabilities,
+            )
+        )
         logger.info(f"Registered model: {model_info.name}")
 
     def unregister_model(self, model_name: str) -> bool:
@@ -205,10 +211,19 @@ class ModelRegistry:
         model_names = self._provider_models.get(provider, [])
         return [self._models[name] for name in model_names if name in self._models]
 
-    def get_models_by_capability(self, capability: ModelCapability) -> List[ModelInfo]:
+    def get_models_by_capability(
+        self, capability: str
+    ) -> List[ModelInfo]:  # Change type hint to str
         """Get all models with a specific capability."""
-        model_names = self._capability_index.get(capability, set())
-        return [self._models[name] for name in model_names if name in self._models]
+        model_caps_list = self.capability_database.query_capabilities(
+            capability_name=capability
+        )  # Use capability_database
+        model_ids = [mc.model_id for mc in model_caps_list]
+        return [
+            self._models[name.split("/")[-1]]
+            for name in model_ids
+            if name.split("/")[-1] in self._models
+        ]  # Extract model name from model_id
 
     def get_fallback_chain(self, model_name: str) -> List[ModelInfo]:
         """Get the fallback chain for a model."""
@@ -228,7 +243,7 @@ class ModelRegistry:
         self,
         semantic_type: Optional[ModelType] = None,
         provider: Optional[ProviderType] = None,
-        capabilities: Optional[List[ModelCapability]] = None,
+        capabilities: Optional[List[str]] = None,  # Change type hint to List[str]
         max_cost: Optional[float] = None,
         min_performance: Optional[float] = None,
         min_reliability: Optional[float] = None,
@@ -244,12 +259,30 @@ class ModelRegistry:
         if provider:
             candidates = [m for m in candidates if m.provider == provider]
 
-        # Filter by capabilities
+        # Filter by capabilities using CapabilityDatabase
         if capabilities:
-            required_caps = set(capabilities)
-            candidates = [
-                m for m in candidates if required_caps.issubset(m.capabilities)
-            ]
+            # Get models that have at least one of the required capabilities
+            models_with_any_cap = set()
+            for cap_name in capabilities:
+                for model_caps in self.capability_database.query_capabilities(
+                    capability_name=cap_name
+                ):
+                    models_with_any_cap.add(model_caps.model_id)
+
+            # Filter candidates to only include those that have all required capabilities
+            filtered_by_caps = []
+            for model in candidates:
+                model_id = f"{model.provider}/{model.name}"
+                if model_id in models_with_any_cap:
+                    # Verify all required capabilities are present for this model
+                    model_caps = self.capability_database.get_capabilities(model_id)
+                    if model_caps:
+                        current_cap_names = {c.name for c in model_caps.capabilities}
+                        if all(
+                            req_cap in current_cap_names for req_cap in capabilities
+                        ):
+                            filtered_by_caps.append(model)
+            candidates = filtered_by_caps
 
         # Filter by cost
         if max_cost is not None:

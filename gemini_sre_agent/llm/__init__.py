@@ -15,9 +15,8 @@ from .base import (
     LLMProviderError,
     LLMRequest,
     LLMResponse,
-    ModelType,
-    ProviderType,
 )
+from .common.enums import ModelType, ProviderType
 from .factory import LLMProviderFactory
 from .providers import (
     AnthropicProvider,
