@@ -34,7 +34,7 @@ class OllamaProvider(LLMProvider):
         provider_specific = config.provider_specific or {}
         self.model = provider_specific.get("model", "llama3.1:8b")
 
-    async def generate(self, request: LLMRequest) -> LLMResponse:
+    async def _generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using Ollama API."""
         try:
             logger.info(f"Generating response with Ollama model: {self.model}")

@@ -1,10 +1,14 @@
 import asyncio
 import json
 import os
-from typing import Optional, Any
+from typing import Any, Optional
 
 # New ingestion system imports
-from gemini_sre_agent.config.ingestion_config import GCPPubSubConfig, SourceType, IngestionConfigManager
+from gemini_sre_agent.config.ingestion_config import (
+    GCPPubSubConfig,
+    IngestionConfigManager,
+    SourceType,
+)
 from gemini_sre_agent.ingestion.adapters.gcp_pubsub import GCPPubSubAdapter
 from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity
 from gemini_sre_agent.ingestion.manager.log_manager import LogManager
@@ -14,6 +18,7 @@ from gemini_sre_agent.legacy_config import (
     ServiceMonitorConfig,
     load_config,
 )
+from gemini_sre_agent.local_patch_manager import LocalPatchManager
 from gemini_sre_agent.log_subscriber import LogSubscriber
 from gemini_sre_agent.logger import setup_logging
 from gemini_sre_agent.ml.enhanced_analysis_agent import (
@@ -21,9 +26,11 @@ from gemini_sre_agent.ml.enhanced_analysis_agent import (
     EnhancedAnalysisConfig,
 )
 from gemini_sre_agent.remediation_agent import RemediationAgent
-from gemini_sre_agent.resilience_core import HyxResilientClient, create_resilience_config
+from gemini_sre_agent.resilience_core import (
+    HyxResilientClient,
+    create_resilience_config,
+)
 from gemini_sre_agent.triage_agent import TriageAgent
-from gemini_sre_agent.local_patch_manager import LocalPatchManager
 
 
 def validate_environment():
@@ -32,7 +39,7 @@ def validate_environment():
 
     # Check if we're using the new ingestion system
     use_new_system = os.getenv("USE_NEW_INGESTION_SYSTEM", "false").lower() == "true"
-    
+
     if use_new_system:
         # New system doesn't require GITHUB_TOKEN for local testing
         required_vars = []
@@ -455,16 +462,18 @@ async def main():
         # Use new ingestion system config
         # Get config file from command line arguments or use default
         import sys
+
         config_file = "config/config.yaml"  # default
         if "--config-file" in sys.argv:
             config_file_index = sys.argv.index("--config-file")
             if config_file_index + 1 < len(sys.argv):
                 config_file = sys.argv[config_file_index + 1]
-        
+
         config_manager = IngestionConfigManager(config_file)
         ingestion_config = config_manager.load_config()
-        import tempfile
         import os
+        import tempfile
+
         temp_dir = tempfile.mkdtemp(prefix="sre-dogfooding-")
         log_file = os.path.join(temp_dir, "agent.log")
         logger = setup_logging(
@@ -495,88 +504,107 @@ async def main():
 
     if feature_flags.get("use_new_ingestion_system", False):
         # For new ingestion system, create a single log manager for all sources
-        logger.info("[STARTUP] Setting up NEW ingestion system with file system sources")
-        
+        logger.info(
+            "[STARTUP] Setting up NEW ingestion system with file system sources"
+        )
+
         # Create a callback function to process logs through the agent pipeline
         async def process_log_entry(log_entry):
             """Process log entries through the agent pipeline for new ingestion system."""
             try:
                 # Convert LogEntry to dict format expected by agents
-                timestamp = getattr(log_entry, 'timestamp', '')
-                if hasattr(timestamp, 'isoformat') and callable(getattr(timestamp, 'isoformat', None)):
+                timestamp = getattr(log_entry, "timestamp", "")
+                if hasattr(timestamp, "isoformat") and callable(
+                    getattr(timestamp, "isoformat", None)
+                ):
                     # Only call isoformat if it's not a string (datetime objects have isoformat)
                     if not isinstance(timestamp, str):
                         timestamp = timestamp.isoformat()
-                
+
                 log_data = {
-                    "insertId": getattr(log_entry, 'id', 'N/A'),
+                    "insertId": getattr(log_entry, "id", "N/A"),
                     "timestamp": timestamp,
-                    "severity": getattr(log_entry, 'severity', LogSeverity.INFO).value if hasattr(getattr(log_entry, 'severity', LogSeverity.INFO), 'value') else str(getattr(log_entry, 'severity', 'INFO')),
-                    "textPayload": getattr(log_entry, 'message', ''),
+                    "severity": (
+                        getattr(log_entry, "severity", LogSeverity.INFO).value
+                        if hasattr(
+                            getattr(log_entry, "severity", LogSeverity.INFO), "value"
+                        )
+                        else str(getattr(log_entry, "severity", "INFO"))
+                    ),
+                    "textPayload": getattr(log_entry, "message", ""),
                     "resource": {
                         "type": "file_system",
                         "labels": {
                             "service_name": "dogfood_service",
-                            "source": getattr(log_entry, 'source', 'unknown')
-                        }
-                    }
+                            "source": getattr(log_entry, "source", "unknown"),
+                        },
+                    },
                 }
-                
+
                 # Generate flow ID for tracking
                 flow_id = log_data.get("insertId", "N/A")
                 logger.info(f"[LOG_INGESTION] Processing log entry: flow_id={flow_id}")
-                
+
                 # Initialize enhanced agents for processing
-                from gemini_sre_agent.agents.enhanced_specialized import EnhancedTriageAgent, EnhancedAnalysisAgent, EnhancedRemediationAgent
-                from gemini_sre_agent.remediation_agent import RemediationAgent
-                from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
-                
+                from gemini_sre_agent.agents.enhanced_specialized import (
+                    EnhancedAnalysisAgent,
+                    EnhancedRemediationAgent,
+                    EnhancedTriageAgent,
+                )
+
                 # Load LLM configuration from config file
                 from gemini_sre_agent.llm.config_manager import ConfigManager
-                config_manager = ConfigManager("examples/dogfooding/configs/llm_config.yaml")
+                from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
+                from gemini_sre_agent.remediation_agent import RemediationAgent
+
+                config_manager = ConfigManager(
+                    "examples/dogfooding/configs/llm_config.yaml"
+                )
                 llm_config = config_manager.get_config()
-                
+
                 # Create enhanced agents with Ollama configuration
                 triage_agent = EnhancedTriageAgent(
                     llm_config=llm_config,
                     primary_model="llama3.2:3b",
-                    fallback_model="llama3.2:1b"
+                    fallback_model="llama3.2:1b",
                 )
                 analysis_agent = EnhancedAnalysisAgent(
                     llm_config=llm_config,
                     primary_model="llama3.2:3b",
-                    fallback_model="llama3.2:1b"
+                    fallback_model="llama3.2:1b",
                 )
-                import tempfile
                 import os
+                import tempfile
+
                 patch_dir = tempfile.mkdtemp(prefix="real_patches-")
                 remediation_agent = RemediationAgent(
                     github_token=os.getenv("GITHUB_TOKEN", "dummy_token"),
                     repo_name="gemini-sre-agent",
                     use_local_patches=True,
-                    patch_dir=patch_dir
+                    patch_dir=patch_dir,
                 )
-                
+
                 # Create local patch manager
                 patch_manager = LocalPatchManager(patch_dir)
                 # Process through agent pipeline
                 logger.info(f"[TRIAGE] Starting triage analysis: flow_id={flow_id}")
-                
+
                 # Convert log data to string for triage
                 log_text = json.dumps(log_data)
-                
+
                 # Use enhanced triage agent with correct prompt
                 triage_response = await triage_agent.execute(
                     prompt_name="triage",
                     prompt_args={
                         "issue": log_text,
                         "context": {"flow_id": flow_id, "service": "dogfood_service"},
-                        "urgency_level": "high"
-                    }
+                        "urgency_level": "high",
+                    },
                 )
-                
+
                 # Create a mock TriagePacket for compatibility
                 from gemini_sre_agent.triage_agent import TriagePacket
+
                 triage_packet = TriagePacket(
                     issue_id=f"issue_{flow_id}",
                     initial_timestamp=log_data.get("timestamp", ""),
@@ -584,13 +612,17 @@ async def main():
                     preliminary_severity_score=8,  # High severity for errors
                     affected_services=["dogfood_service"],
                     sample_log_entries=[log_text],
-                    natural_language_summary=triage_response.description
+                    natural_language_summary=triage_response.description,
                 )
-                
-                logger.info(f"[TRIAGE] Triage completed: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
-                
-                logger.info(f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
-                
+
+                logger.info(
+                    f"[TRIAGE] Triage completed: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
+                )
+
+                logger.info(
+                    f"[ANALYSIS] Starting deep analysis: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
+                )
+
                 # Use enhanced analysis agent with correct prompt
                 analysis_response = await analysis_agent.execute(
                     prompt_name="analyze",
@@ -598,22 +630,30 @@ async def main():
                         "content": log_text,
                         "criteria": ["error_type", "root_cause", "impact", "solution"],
                         "analysis_type": "error_analysis",
-                        "depth": "detailed"
-                    }
+                        "depth": "detailed",
+                    },
                 )
-                
+
                 # Debug: Check what type analysis_response actually is
-                logger.info(f"[DEBUG] analysis_response type: {type(analysis_response)}")
-                logger.info(f"[DEBUG] analysis_response attributes: {dir(analysis_response)}")
+                logger.info(
+                    f"[DEBUG] analysis_response type: {type(analysis_response)}"
+                )
+                logger.info(
+                    f"[DEBUG] analysis_response attributes: {dir(analysis_response)}"
+                )
                 try:
-                    logger.info(f"[DEBUG] analysis_response.summary: {analysis_response.summary}")
+                    logger.info(
+                        f"[DEBUG] analysis_response.summary: {analysis_response.summary}"
+                    )
                 except AttributeError as e:
                     logger.error(f"[DEBUG] Error accessing summary: {e}")
                 try:
-                    logger.info(f"[DEBUG] analysis_response.scores: {analysis_response.scores}")
+                    logger.info(
+                        f"[DEBUG] analysis_response.scores: {analysis_response.scores}"
+                    )
                 except AttributeError as e:
                     logger.error(f"[DEBUG] Error accessing scores: {e}")
-                
+
                 # Create remediation agent to generate code patches
                 remediation_agent = EnhancedRemediationAgent(
                     llm_config=llm_config,
@@ -621,7 +661,7 @@ async def main():
                     fallback_model="llama3.2:1b",
                     optimization_goal=OptimizationGoal.QUALITY,
                 )
-                
+
                 # Generate remediation plan with code patch
                 remediation_response = await remediation_agent.create_remediation_plan(
                     issue_description=triage_packet.natural_language_summary,
@@ -630,13 +670,13 @@ async def main():
                     analysis_summary=analysis_response.summary,
                     key_points=analysis_response.key_points,
                 )
-                
+
                 # Create local patch using the LocalPatchManager
                 logger.info(f"[REMEDIATION] Creating local patch: flow_id={flow_id}")
-                
+
                 # Generate a unique issue ID for the patch
                 issue_id = f"issue_{flow_id.replace(':', '_').replace('/', '_')}"
-                
+
                 # Create local patch file
                 patch_manager.create_patch(
                     issue_id=issue_id,
@@ -646,28 +686,39 @@ async def main():
                     severity=remediation_response.priority,
                 )
 
-                logger.info(f"[REMEDIATION] Remediation completed: flow_id={flow_id}, issue_id={issue_id}")
+                logger.info(
+                    f"[REMEDIATION] Remediation completed: flow_id={flow_id}, issue_id={issue_id}"
+                )
             except Exception as e:
                 # flow_id might not be defined if error occurs early
-                flow_id = getattr(log_entry, 'id', 'unknown')
-                logger.error(f"[ERROR_HANDLING] Error processing log entry: flow_id={flow_id}, error={e}")
-        
+                flow_id = getattr(log_entry, "id", "unknown")
+                logger.error(
+                    f"[ERROR_HANDLING] Error processing log entry: flow_id={flow_id}, error={e}"
+                )
+
         log_manager = LogManager(process_log_entry)
         # Create sources from the ingestion config and add them to the log manager
         from gemini_sre_agent.ingestion.adapters.file_system import FileSystemAdapter
-        
+
         # Ensure ingestion_config is defined
         if ingestion_config is None:
             logger.error("[STARTUP] ingestion_config not defined")
             return
         logger.info(f"[STARTUP] Ingestion config: {ingestion_config}")
-        logger.info(f"[STARTUP] Found {len(ingestion_config.sources)} sources in config")
+        logger.info(
+            f"[STARTUP] Found {len(ingestion_config.sources)} sources in config"
+        )
         for source_config in ingestion_config.sources:
-            logger.info(f"[STARTUP] Processing source: {source_config.name}, type: {source_config.type}")
+            logger.info(
+                f"[STARTUP] Processing source: {source_config.name}, type: {source_config.type}"
+            )
             if source_config.type == "file_system":
                 try:
                     # Create file system adapter - need to convert SourceConfig to FileSystemConfig
-                    from gemini_sre_agent.config.ingestion_config import FileSystemConfig
+                    from gemini_sre_agent.config.ingestion_config import (
+                        FileSystemConfig,
+                    )
+
                     file_system_config = FileSystemConfig(
                         name=source_config.name,
                         type=source_config.type,
@@ -683,25 +734,31 @@ async def main():
                         retry_delay=source_config.retry_delay,
                         timeout=source_config.timeout,
                         circuit_breaker_enabled=source_config.circuit_breaker_enabled,
-                        rate_limit_per_second=source_config.rate_limit_per_second
+                        rate_limit_per_second=source_config.rate_limit_per_second,
                     )
                     adapter = FileSystemAdapter(file_system_config)
                     await log_manager.add_source(adapter)
-                    logger.info(f"[STARTUP] Added file system source: {source_config.name}")
+                    logger.info(
+                        f"[STARTUP] Added file system source: {source_config.name}"
+                    )
                 except Exception as e:
-                    logger.error(f"[STARTUP] Failed to add source {source_config.name}: {e}")
+                    logger.error(
+                        f"[STARTUP] Failed to add source {source_config.name}: {e}"
+                    )
             else:
-                logger.warning(f"[STARTUP] Unsupported source type: {source_config.type}")
-        
+                logger.warning(
+                    f"[STARTUP] Unsupported source type: {source_config.type}"
+                )
+
         log_managers.append(log_manager)
-        
+
         # Start the log manager and create a task that keeps it running
         async def run_log_manager():
             await log_manager.start()
             # Keep the manager running until cancelled
             while True:
                 await asyncio.sleep(1)
-        
+
         task = asyncio.create_task(run_log_manager())
         tasks.append(task)
     else:

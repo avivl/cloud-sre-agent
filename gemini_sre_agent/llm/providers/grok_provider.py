@@ -39,7 +39,7 @@ class GrokProvider(LLMProvider):
             timeout=30.0,
         )
 
-    async def generate(self, request: LLMRequest) -> LLMResponse:
+    async def _generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using Grok API."""
         logger.info(f"Generating response with Grok model: {self.model}")
 

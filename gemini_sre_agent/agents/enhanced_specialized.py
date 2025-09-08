@@ -13,7 +13,13 @@ from ..llm.base import ModelType, ProviderType
 from ..llm.config import LLMConfig
 from ..llm.strategy_manager import OptimizationGoal
 from .enhanced_base import EnhancedBaseAgent
-from .response_models import AnalysisResponse, CodeResponse, TextResponse, TriageResponse, RemediationResponse
+from .response_models import (
+    AnalysisResponse,
+    CodeResponse,
+    RemediationResponse,
+    TextResponse,
+    TriageResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -665,10 +671,10 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         )
 
 
-class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
+class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
     """
     Enhanced Remediation Agent for generating code patches and remediation plans.
-    
+
     This agent specializes in creating detailed remediation plans including:
     - Root cause analysis
     - Proposed fixes

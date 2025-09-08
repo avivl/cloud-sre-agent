@@ -61,7 +61,7 @@ class GeminiProvider(LLMProvider):
             logger.error(f"Failed to initialize Gemini model: {e}")
             raise
 
-    async def generate(self, request: LLMRequest) -> LLMResponse:
+    async def _generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using Gemini API."""
         try:
             if self._model is None:

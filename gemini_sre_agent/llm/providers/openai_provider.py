@@ -38,7 +38,7 @@ class OpenAIProvider(LLMProvider):
             organization=self.organization,
         )
 
-    async def generate(self, request: LLMRequest) -> LLMResponse:
+    async def _generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using OpenAI API."""
         logger.info(f"Generating response with OpenAI model: {self.model}")
 

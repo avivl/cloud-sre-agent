@@ -49,7 +49,7 @@ class BedrockProvider(LLMProvider):
             logger.error(f"Failed to initialize Bedrock clients: {e}")
             raise
 
-    async def generate(self, request: LLMRequest) -> LLMResponse:
+    async def _generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using Bedrock API."""
         logger.info(f"Generating response with Bedrock model: {self.model}")
 

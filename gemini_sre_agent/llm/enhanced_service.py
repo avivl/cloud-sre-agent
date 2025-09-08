@@ -20,7 +20,7 @@ except ImportError:
 
 from pydantic import BaseModel
 
-from .base import ModelType, ProviderType, LLMRequest
+from .base import LLMRequest, ModelType, ProviderType
 from .config import LLMConfig
 from .factory import get_provider_factory
 from .model_registry import ModelInfo, ModelRegistry
@@ -70,7 +70,7 @@ class EnhancedLLMService(Generic[T]):
         self.model_scorer = ModelScorer()
         self.model_selector = ModelSelector(self.model_registry, self.model_scorer)
         self.performance_monitor = performance_monitor or PerformanceMonitor()
-        
+
         # Populate model registry with models from config
         self._populate_model_registry()
 
@@ -84,11 +84,12 @@ class EnhancedLLMService(Generic[T]):
 
     def _populate_model_registry(self):
         """Populate the model registry with models from the LLM config."""
-        from .model_registry import ModelInfo, ModelCapability
-        
+        from .model_registry import ModelCapability, ModelInfo
+
         for provider_name, provider_config in self.config.providers.items():
             # Convert string provider to ProviderType enum
             from .base import ProviderType
+
             provider_type = ProviderType(provider_config.provider)
             for model_name, model_config in provider_config.models.items():
                 # Convert capabilities from strings to ModelCapability enums
@@ -99,7 +100,7 @@ class EnhancedLLMService(Generic[T]):
                     except ValueError:
                         # Skip unknown capabilities
                         self.logger.warning(f"Unknown capability: {cap_str}")
-                
+
                 # Create ModelInfo
                 model_info = ModelInfo(
                     name=model_name,
@@ -111,14 +112,18 @@ class EnhancedLLMService(Generic[T]):
                     context_window=model_config.max_tokens,  # Use max_tokens as context window
                     performance_score=model_config.performance_score,
                     reliability_score=model_config.reliability_score,
-                    provider_specific=provider_config.provider_specific
+                    provider_specific=provider_config.provider_specific,
                 )
-                
+
                 # Register the model
                 self.model_registry.register_model(model_info)
-                self.logger.debug(f"Registered model: {model_name} from provider: {provider_name}")
-        
-        self.logger.info(f"Model registry populated with {self.model_registry.get_model_count()} models")
+                self.logger.debug(
+                    f"Registered model: {model_name} from provider: {provider_name}"
+                )
+
+        self.logger.info(
+            f"Model registry populated with {self.model_registry.get_model_count()} models"
+        )
 
     async def generate_structured(
         self,
@@ -213,26 +218,26 @@ Please respond with a valid JSON object that includes all required fields for th
 }}
 
 Respond only with the JSON object, no additional text."""
-                
+
                 request = LLMRequest(
                     prompt=structured_prompt,
-                    temperature=kwargs.get('temperature', 0.7),
-                    max_tokens=kwargs.get('max_tokens', 1000),
+                    temperature=kwargs.get("temperature", 0.7),
+                    max_tokens=kwargs.get("max_tokens", 1000),
                     model_type=model_type,
                 )
             else:
                 # Assume it's already a structured prompt
                 request = prompt
-            
+
             response = await provider_instance.generate(request)
-            
+
             # Parse the response into the structured format
             try:
                 import json
                 import re
-                
+
                 # Extract JSON from response (in case there's extra text)
-                json_match = re.search(r'\{.*\}', response.content, re.DOTALL)
+                json_match = re.search(r"\{.*\}", response.content, re.DOTALL)
                 if json_match:
                     json_str = json_match.group()
                     parsed_data = json.loads(json_str)
@@ -244,23 +249,42 @@ Respond only with the JSON object, no additional text."""
                             severity="medium",
                             category="unknown",
                             urgency="medium",
-                            description=response.content[:200] + "..." if len(response.content) > 200 else response.content,
-                            suggested_actions=["Investigate further"]
+                            description=(
+                                response.content[:200] + "..."
+                                if len(response.content) > 200
+                                else response.content
+                            ),
+                            suggested_actions=["Investigate further"],
                         )
                     elif response_model.__name__ == "RemediationResponse":
                         result = response_model(
-                            root_cause_analysis=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                            root_cause_analysis=(
+                                response.content[:200] + "..."
+                                if len(response.content) > 200
+                                else response.content
+                            ),
                             proposed_fix="Manual review required",
-                            code_patch="# TODO: Generate proper code patch\n# " + response.content[:100],
+                            code_patch="# TODO: Generate proper code patch\n# "
+                            + response.content[:100],
                             priority="medium",
-                            estimated_effort="Unknown"
+                            estimated_effort="Unknown",
                         )
                     else:
                         result = response_model(
-                            summary=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                            summary=(
+                                response.content[:200] + "..."
+                                if len(response.content) > 200
+                                else response.content
+                            ),
                             scores={"confidence": 0.5},
-                            key_points=[response.content[:100] + "..." if len(response.content) > 100 else response.content],
-                            recommendations=[]
+                            key_points=[
+                                (
+                                    response.content[:100] + "..."
+                                    if len(response.content) > 100
+                                    else response.content
+                                )
+                            ],
+                            recommendations=[],
                         )
             except (json.JSONDecodeError, ValueError) as e:
                 # Fallback: create a basic response with the raw content
@@ -269,23 +293,42 @@ Respond only with the JSON object, no additional text."""
                         severity="medium",
                         category="unknown",
                         urgency="medium",
-                        description=response.content[:200] + "..." if len(response.content) > 200 else response.content,
-                        suggested_actions=["Investigate further"]
+                        description=(
+                            response.content[:200] + "..."
+                            if len(response.content) > 200
+                            else response.content
+                        ),
+                        suggested_actions=["Investigate further"],
                     )
                 elif response_model.__name__ == "RemediationResponse":
                     result = response_model(
-                        root_cause_analysis=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                        root_cause_analysis=(
+                            response.content[:200] + "..."
+                            if len(response.content) > 200
+                            else response.content
+                        ),
                         proposed_fix="Manual review required",
-                        code_patch="# TODO: Generate proper code patch\n# " + response.content[:100],
+                        code_patch="# TODO: Generate proper code patch\n# "
+                        + response.content[:100],
                         priority="medium",
-                        estimated_effort="Unknown"
+                        estimated_effort="Unknown",
                     )
                 else:
                     result = response_model(
-                        summary=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                        summary=(
+                            response.content[:200] + "..."
+                            if len(response.content) > 200
+                            else response.content
+                        ),
                         scores={"confidence": 0.5},
-                        key_points=[response.content[:100] + "..." if len(response.content) > 100 else response.content],
-                        recommendations=[]
+                        key_points=[
+                            (
+                                response.content[:100] + "..."
+                                if len(response.content) > 100
+                                else response.content
+                            )
+                        ],
+                        recommendations=[],
                     )
 
             # Record performance metrics

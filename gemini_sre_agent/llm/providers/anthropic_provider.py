@@ -37,7 +37,7 @@ class AnthropicProvider(LLMProvider):
         provider_specific = config.provider_specific or {}
         self.model = provider_specific.get("model", "claude-3-5-sonnet-20241022")
 
-    async def generate(self, request: LLMRequest) -> LLMResponse:
+    async def _generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response using Anthropic API."""
         try:
             logger.info(f"Generating response with Anthropic model: {self.model}")

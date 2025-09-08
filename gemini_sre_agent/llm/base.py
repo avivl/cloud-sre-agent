@@ -9,10 +9,14 @@ functionality that all LLM providers must implement.
 
 import asyncio
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+from gemini_sre_agent.metrics import get_metrics_manager
+from gemini_sre_agent.metrics.enums import ErrorCategory
 
 logger = logging.getLogger(__name__)
 
@@ -152,8 +156,52 @@ class LLMProvider(ABC):
             failure_threshold=config.max_retries, recovery_timeout=60
         )
 
-    @abstractmethod
     async def generate(self, request: LLMRequest) -> LLMResponse:
+        """Generate non-streaming response with metrics."""
+        return await self._generate_with_metrics(request)
+
+    async def _generate_with_metrics(self, request: LLMRequest) -> LLMResponse:
+        start_time = time.time()
+        metrics_manager = get_metrics_manager()
+        try:
+            response = await self._generate(request)
+            latency_ms = (time.time() - start_time) * 1000
+
+            input_tokens = (
+                response.usage.get("input_tokens", 0) if response.usage else 0
+            )
+            output_tokens = (
+                response.usage.get("output_tokens", 0) if response.usage else 0
+            )
+            cost = self.cost_estimate(input_tokens, output_tokens)
+
+            await metrics_manager.record_provider_request(
+                provider_id=self.provider_name,
+                latency_ms=latency_ms,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost=cost,
+                success=True,
+            )
+            response.latency_ms = latency_ms
+            response.cost_usd = cost
+            return response
+        except Exception as e:
+            latency_ms = (time.time() - start_time) * 1000
+            error_category = self._categorize_error(e)
+            await metrics_manager.record_provider_request(
+                provider_id=self.provider_name,
+                latency_ms=latency_ms,
+                input_tokens=0,  # Or estimate from request
+                output_tokens=0,
+                cost=0,
+                success=False,
+                error_info={"error": str(e), "category": error_category.value},
+            )
+            raise
+
+    @abstractmethod
+    async def _generate(self, request: LLMRequest) -> LLMResponse:
         """Generate non-streaming response."""
         pass
 
@@ -202,6 +250,13 @@ class LLMProvider(ABC):
     def validate_config(cls, config: Any) -> None:
         """Validate provider-specific configuration."""
         pass
+
+    def _categorize_error(self, e: Exception) -> ErrorCategory:
+        # Basic error categorization, can be expanded
+        if isinstance(e, asyncio.TimeoutError):
+            return ErrorCategory.TIMEOUT
+        # Add more specific error checks here based on provider exceptions
+        return ErrorCategory.UNKNOWN
 
     @property
     def provider_name(self) -> str:

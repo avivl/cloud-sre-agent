@@ -242,6 +242,7 @@ def connection_error():
     """Trigger ConnectionError - Network connectivity error."""
     try:
         import socket
+
         # Try to connect to a non-existent service
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1)
@@ -331,6 +332,7 @@ def import_error():
     try:
         # Try to import non-existent module
         import non_existent_module
+
         return jsonify({"message": "Module imported successfully"})
     except ImportError as e:
         log_error(
@@ -391,9 +393,10 @@ def index_error():
 def recursion_error():
     """Trigger RecursionError - Infinite recursion error."""
     try:
+
         def infinite_recursion(n):
             return infinite_recursion(n + 1)
-        
+
         result = infinite_recursion(0)
         return jsonify({"result": result})
     except RecursionError as e:

@@ -36,9 +36,22 @@ class DogfoodOrchestrator:
 
     def __init__(self, single_agent=False):
         self.scenarios = [
-            "division", "memory", "timeout", "json", "file", "permission", 
-            "connection", "validation", "key", "attribute", "import", 
-            "type", "index", "recursion", "database", "rate_limit"
+            "division",
+            "memory",
+            "timeout",
+            "json",
+            "file",
+            "permission",
+            "connection",
+            "validation",
+            "key",
+            "attribute",
+            "import",
+            "type",
+            "index",
+            "recursion",
+            "database",
+            "rate_limit",
         ]
         self.base_dir = Path(__file__).parent
         self.service_dir = self.base_dir / "dogfood_service"
@@ -341,7 +354,7 @@ async def main():
         # Calculate runtime based on number of scenarios
         runtime = orchestrator.calculate_runtime()
         logger.info(f"Demo completed. Running for {runtime} seconds total.")
-        
+
         # Wait for agents to process the errors
         await asyncio.sleep(runtime)
 
