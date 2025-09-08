@@ -18,7 +18,9 @@ from gemini_sre_agent.config.ingestion_config import (
 from gemini_sre_agent.ingestion.adapters.file_system import FileSystemAdapter
 from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity
 from gemini_sre_agent.ingestion.manager.log_manager import LogManager
+from gemini_sre_agent.llm.capabilities.discovery import CapabilityDiscovery
 from gemini_sre_agent.llm.config_manager import ConfigManager
+from gemini_sre_agent.llm.factory import LLMProviderFactory
 from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
 from gemini_sre_agent.local_patch_manager import LocalPatchManager
 from gemini_sre_agent.logger import setup_logging
@@ -91,6 +93,14 @@ async def main():
     # Initialize enhanced agents for processing
     config_manager_llm = ConfigManager("examples/dogfooding/configs/llm_config.yaml")
     llm_config = config_manager_llm.get_config()
+
+    llm_factory = LLMProviderFactory(llm_config)
+    all_providers = await llm_factory.get_all_providers()
+    capability_discovery = CapabilityDiscovery(all_providers)
+    await capability_discovery.discover_capabilities()
+    logger.info(
+        f"[STARTUP] Discovered capabilities for {len(capability_discovery.model_capabilities)} models."
+    )
 
     triage_agent = EnhancedTriageAgent(
         llm_config=llm_config,
