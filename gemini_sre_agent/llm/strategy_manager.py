@@ -15,7 +15,8 @@ from datetime import time as dt_time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from .base import ModelType, ProviderType
+from .base import ModelType
+from .common.enums import ProviderType
 from .model_registry import ModelInfo
 from .model_scorer import ModelScore, ModelScorer, ScoringContext, ScoringWeights
 

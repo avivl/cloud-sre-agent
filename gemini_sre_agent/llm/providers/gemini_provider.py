@@ -11,6 +11,7 @@ from google import genai
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
+from ..capabilities.models import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -260,3 +261,10 @@ class GeminiProvider(LLMProvider):
             ]
             if config.model not in valid_models:
                 logger.warning(f"Model {config.model} may not be supported by Gemini")
+
+    def get_custom_capabilities(self) -> List[ModelCapability]:
+        """
+        Get provider-specific custom capabilities for Gemini.
+        For now, Gemini does not have specific custom capabilities beyond standard ones.
+        """
+        return []

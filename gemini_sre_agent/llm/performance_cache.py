@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from .base import ProviderType
+from .common.enums import ProviderType
 
 logger = logging.getLogger(__name__)
 

@@ -130,6 +130,11 @@ class RemediationAgent:
             return await self._create_local_patch(remediation_plan, flow_id, issue_id)
 
         try:
+            # Check if GitHub repo is available
+            if self.repo is None:
+                logger.error(f"[REMEDIATION] GitHub repository not available: flow_id={flow_id}, issue_id={issue_id}")
+                return await self._create_local_patch(remediation_plan, flow_id, issue_id)
+            
             # Get event loop for async operations
             loop = asyncio.get_event_loop()
             
@@ -142,10 +147,11 @@ class RemediationAgent:
             # 2. Create a new branch (idempotent, non-blocking)
             ref: str = f"refs/heads/{branch_name}"
             try:
-                await loop.run_in_executor(
-                    None,
-                    functools.partial(self.repo.create_git_ref, ref=ref, sha=base.commit.sha)
-                )
+                if self.repo is not None:
+                    await loop.run_in_executor(
+                        None,
+                        functools.partial(self.repo.create_git_ref, ref=ref, sha=base.commit.sha)
+                    )
                 logger.info(
                     f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}"
                 )
@@ -173,9 +179,12 @@ class RemediationAgent:
                         remediation_plan.code_patch.strip().split("\n")[1:]
                     )
                     try:
-                        contents: Union[ContentFile, List[ContentFile]] = await loop.run_in_executor(
-                            None, functools.partial(self.repo.get_contents, file_path, ref=branch_name)
-                        )
+                        if self.repo is not None:
+                            contents: Union[ContentFile, List[ContentFile]] = await loop.run_in_executor(
+                                None, functools.partial(self.repo.get_contents, file_path, ref=branch_name)
+                            )
+                        else:
+                            raise Exception("GitHub repository not available")
                         if isinstance(
                             contents, list
                         ):  # Handle case where get_contents returns a list (i.e., it's a directory)
@@ -186,32 +195,34 @@ class RemediationAgent:
                                 f"Cannot update directory {file_path}. Expected a service code file."
                             )
                         
-                        await loop.run_in_executor(
-                            None,
-                            functools.partial(
-                                self.repo.update_file,
-                                contents.path,
-                                f"Fix service issue in {file_path}",
-                                content_to_write,
-                                contents.sha,
-                                branch=branch_name
+                        if self.repo is not None:
+                            await loop.run_in_executor(
+                                None,
+                                functools.partial(
+                                    self.repo.update_file,
+                                    contents.path,
+                                    f"Fix service issue in {file_path}",
+                                    content_to_write,
+                                    contents.sha,
+                                    branch=branch_name
+                                )
                             )
-                        )
                         logger.info(
                             f"[REMEDIATION] Updated service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
                         )
                     except GithubException as e:
                         if e.status == 404:  # File does not exist, create it
-                            await loop.run_in_executor(
-                                None,
-                                functools.partial(
-                                    self.repo.create_file,
-                                    file_path,
-                                    f"Add service code fix in {file_path}",
-                                    content_to_write,
-                                    branch=branch_name
+                            if self.repo is not None:
+                                await loop.run_in_executor(
+                                    None,
+                                    functools.partial(
+                                        self.repo.create_file,
+                                        file_path,
+                                        f"Add service code fix in {file_path}",
+                                        content_to_write,
+                                        branch=branch_name
+                                    )
                                 )
-                            )
                             logger.info(
                                 f"[REMEDIATION] Created service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
                             )
@@ -225,20 +236,24 @@ class RemediationAgent:
             # 4. Create a pull request (non-blocking)
             title = f"Fix: {remediation_plan.proposed_fix[:50]}..."
             body = f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}"
-            pull_request: PullRequest = await loop.run_in_executor(
-                None,
-                functools.partial(
-                    self.repo.create_pull,
-                    title=title,
-                    body=body,
-                    head=branch_name,
-                    base=base_branch
+            if self.repo is not None:
+                pull_request: PullRequest = await loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        self.repo.create_pull,
+                        title=title,
+                        body=body,
+                        head=branch_name,
+                        base=base_branch
+                    )
                 )
-            )
-            logger.info(
-                f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={issue_id}, pr_url={pull_request.html_url}"
-            )
-            return pull_request.html_url
+                logger.info(
+                    f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={issue_id}, pr_url={pull_request.html_url}"
+                )
+                return pull_request.html_url
+            else:
+                logger.error(f"[REMEDIATION] Cannot create pull request - repository not available: flow_id={flow_id}, issue_id={issue_id}")
+                return await self._create_local_patch(remediation_plan, flow_id, issue_id)
 
         except GithubException as e:
             logger.error(

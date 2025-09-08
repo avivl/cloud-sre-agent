@@ -8,6 +8,7 @@ from local file system files and directories.
 """
 
 import glob
+import asyncio
 import logging
 import os
 from datetime import datetime
@@ -261,7 +262,6 @@ class FileSystemAdapter(LogIngestionInterface):
                     
                     # Parse timestamp
                     try:
-                        from datetime import datetime
                         timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                     except:
                         timestamp = datetime.now()

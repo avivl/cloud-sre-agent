@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 import yaml
 
 from .capabilities.database import CapabilityDatabase
-from .capabilities.models import ModelCapability
+from .capabilities.models import ModelCapability, ModelCapabilities
 from .common.enums import ModelType, ProviderType
 
 logger = logging.getLogger(__name__)

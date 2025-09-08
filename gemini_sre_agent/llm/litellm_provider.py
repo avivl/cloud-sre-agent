@@ -19,6 +19,11 @@ except ImportError:
     Prompt = None  # type: ignore
     LITELLM_AVAILABLE = False
 
+# Type aliases for better type checking
+InstructorType = Any
+LiteLLMType = Any
+PromptType = Any
+
 from pydantic import BaseModel
 
 from .config import LLMProviderConfig

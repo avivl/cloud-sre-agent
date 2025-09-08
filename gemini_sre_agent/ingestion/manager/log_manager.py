@@ -136,7 +136,7 @@ class LogManager:
             try:
                 # Get logs directly from source (resilience handled by source)
                 logger.debug(f"Getting logs from source '{source_name}'")
-                log_iterator = source.get_logs()
+                log_iterator = await source.get_logs()
                 async for log_entry in log_iterator:
                     # Check backpressure
                     if not await self.backpressure_manager.can_accept():
@@ -165,8 +165,13 @@ class LogManager:
                     await self.backpressure_manager.decrement_queue()
 
                 # For file system sources, wait a bit before checking again
-                if hasattr(source, 'config') and hasattr(source.config, 'type') and source.config.type.value == 'file_system':
-                    await asyncio.sleep(1)
+                try:
+                    source_config = source.get_config()
+                    if hasattr(source_config, 'source_type') and source_config.source_type.value == 'file_system':
+                        await asyncio.sleep(1)
+                except Exception:
+                    # If we can't get config, continue without the sleep
+                    pass
 
             except Exception as e:
                 logger.error(f"Error processing logs from source '{source_name}': {e}")

@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from .base import ProviderType
+from .common.enums import ProviderType
 
 logger = logging.getLogger(__name__)
 

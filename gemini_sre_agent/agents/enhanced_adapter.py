@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, TypeVar
 
 from pydantic import BaseModel
 
-from ..llm.base import ProviderType
+from ..llm.common.enums import ProviderType
 from ..llm.config import LLMConfig
 from ..llm.strategy_manager import OptimizationGoal
 from .base import BaseAgent

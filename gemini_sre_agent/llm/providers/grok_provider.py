@@ -15,6 +15,7 @@ import httpx
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
+from ..capabilities.models import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +242,13 @@ class GrokProvider(LLMProvider):
         """Validate Grok-specific configuration."""
         if not hasattr(config, "api_key") or not config.api_key:
             raise ValueError("Grok API key is required")
+
+    def get_custom_capabilities(self) -> List[ModelCapability]:
+        """
+        Get provider-specific custom capabilities for Grok.
+        For now, Grok does not have specific custom capabilities beyond standard ones.
+        """
+        return []
 
     async def __aenter__(self):
         """Async context manager entry."""

@@ -14,6 +14,7 @@ import anthropic
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
+from ..capabilities.models import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -241,3 +242,10 @@ class AnthropicProvider(LLMProvider):
 
         if not config.api_key.startswith("sk-ant-"):
             raise ValueError("Anthropic API key must start with 'sk-ant-'")
+
+    def get_custom_capabilities(self) -> List[ModelCapability]:
+        """
+        Get provider-specific custom capabilities for Anthropic.
+        For now, Anthropic does not have specific custom capabilities beyond standard ones.
+        """
+        return []

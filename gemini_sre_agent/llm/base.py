@@ -19,6 +19,7 @@ from gemini_sre_agent.metrics import get_metrics_manager
 from gemini_sre_agent.metrics.enums import ErrorCategory
 
 from .common.enums import ModelType
+from .capabilities.models import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +239,16 @@ class LLMProvider(ABC):
     @abstractmethod
     def validate_config(cls, config: Any) -> None:
         """Validate provider-specific configuration."""
+        pass
+
+    @abstractmethod
+    def get_custom_capabilities(self) -> List[ModelCapability]:
+        """
+        Get provider-specific custom capabilities.
+
+        Returns:
+            A list of ModelCapability objects.
+        """
         pass
 
     def _categorize_error(self, e: Exception) -> ErrorCategory:

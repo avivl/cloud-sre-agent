@@ -93,7 +93,10 @@ class CapabilityComparer:
         best_model_id = None
         best_score = -1.0
 
-        for model_id, model_caps in self.capability_database._capabilities.items(): # Access internal for simplicity
+        for model_id in self.capability_database.get_all_model_ids():
+            model_caps = self.capability_database.get_capabilities(model_id)
+            if not model_caps:
+                continue
             has_all_required = True
             current_cap_names = {cap.name for cap in model_caps.capabilities}
             for req_cap in required_capabilities:
@@ -104,10 +107,10 @@ class CapabilityComparer:
             if has_all_required:
                 # Calculate a simple score based on avg performance and cost efficiency
                 avg_perf = sum(c.performance_score for c in model_caps.capabilities if c.name in required_capabilities) / len(required_capabilities)
-                avg_cost = sum(c.cost_efficiency for c in model_caps.capabilities if c.name in required_capabilities) / len(required_capabilities)
+                avg_cost_eff = sum(c.cost_efficiency for c in model_caps.capabilities if c.name in required_capabilities) / len(required_capabilities)
                 
-                # Simple scoring: higher performance, lower cost (inverted for scoring)
-                score = (avg_perf * 0.7) + ((1 - avg_cost) * 0.3) # Example weighting
+                # Simple scoring: higher performance and higher cost efficiency (both 0-1 scores)
+                score = (avg_perf * 0.7) + (avg_cost_eff * 0.3) # Example weighting
                 
                 if score > best_score:
                     best_score = score

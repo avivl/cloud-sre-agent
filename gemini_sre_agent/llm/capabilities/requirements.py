@@ -30,3 +30,22 @@ class CapabilityRequirements(BaseModel):
     custom_criteria: Dict[str, Any] = Field(
         default_factory=dict, description="Custom criteria for advanced selection."
     )
+
+    def validate_requirements(self) -> bool:
+        """
+        Validate that the requirements are logically consistent.
+        
+        Returns:
+            True if requirements are valid, False otherwise.
+        """
+        if not self.required_capabilities:
+            return True  # Empty requirements are valid
+            
+        # Check for duplicate capabilities
+        if len(self.required_capabilities) != len(set(self.required_capabilities)):
+            return False
+            
+        # Validate custom criteria if needed
+        # Add more validation logic as requirements evolve
+        
+        return True

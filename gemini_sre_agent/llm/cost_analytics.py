@@ -12,7 +12,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from .cost_management import ProviderType, UsageRecord
+from .common.enums import ProviderType
+from .cost_management import UsageRecord
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,8 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar
 
 from pydantic import BaseModel
 
-from .base import ModelType, ProviderType
+from .base import ModelType
+from .common.enums import ProviderType
 from .config import LLMConfig
 from .model_registry import ModelInfo, ModelRegistry
 from .model_scorer import ModelScorer, ScoringContext, ScoringWeights

@@ -78,7 +78,8 @@ class IntegratedCostManager:
         response_time_ms: Optional[int] = None,
     ) -> None:
         """Record a completed request for tracking and analytics."""
-        from .cost_management import ProviderType, UsageRecord
+        from .common.enums import ProviderType
+        from .cost_management import UsageRecord
 
         # Convert provider string to enum
         try:

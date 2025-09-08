@@ -16,6 +16,7 @@ import boto3
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
+from ..capabilities.models import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -245,3 +246,10 @@ class BedrockProvider(LLMProvider):
         )
         if not provider_specific.get("aws_region"):
             raise ValueError("AWS region is required for Bedrock")
+
+    def get_custom_capabilities(self) -> List[ModelCapability]:
+        """
+        Get provider-specific custom capabilities for Bedrock.
+        For now, Bedrock does not have specific custom capabilities beyond standard ones.
+        """
+        return []

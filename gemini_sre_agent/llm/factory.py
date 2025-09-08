@@ -173,6 +173,16 @@ class LLMProviderFactory:
         return health_status
 
     @classmethod
+    async def get_all_providers(cls) -> Dict[str, LLMProvider]:
+        """
+        Get all provider instances.
+
+        Returns:
+            Dictionary mapping provider names to provider instances
+        """
+        return cls._instances.copy()
+
+    @classmethod
     def create_providers_from_config(cls, config: Any) -> Dict[str, LLMProvider]:
         """
         Create providers from a configuration object.
@@ -197,6 +207,6 @@ class LLMProviderFactory:
         return providers
 
 
-def get_provider_factory() -> LLMProviderFactory:
-    """Get a singleton instance of the provider factory."""
+def get_provider_factory() -> Type[LLMProviderFactory]:
+    """Get the provider factory class."""
     return LLMProviderFactory

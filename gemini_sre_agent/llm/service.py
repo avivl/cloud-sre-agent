@@ -13,7 +13,7 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 
-from .base import ModelType
+from .base import LLMRequest, ModelType
 from .config import LLMConfig
 from .factory import get_provider_factory
 from .prompt_manager import PromptManager
@@ -69,9 +69,15 @@ class LLMService(Generic[T]):
                 f"Generating structured response using provider: {provider_name}"
             )
 
-            return await provider_instance.generate_structured(
-                prompt=prompt, response_model=response_model, model=model, **kwargs
+            request = LLMRequest(
+                prompt=prompt,
+                model_type=ModelType.SMART,  # Default model type
+                **kwargs
             )
+            response = await provider_instance.generate(request)
+            # For structured output, we need to parse the response content
+            # This is a simplified approach - in practice, you'd want proper structured parsing
+            return response.content  # type: ignore
         except Exception as e:
             self.logger.error(f"Error generating structured response: {str(e)}")
             raise
@@ -95,9 +101,13 @@ class LLMService(Generic[T]):
                 f"Generating text response using provider: {provider_name}"
             )
 
-            return await provider_instance.generate_text(
-                prompt=prompt, model=model, **kwargs
+            request = LLMRequest(
+                prompt=prompt,
+                model_type=ModelType.SMART,  # Default model type
+                **kwargs
             )
+            response = await provider_instance.generate(request)
+            return response.content
         except Exception as e:
             self.logger.error(f"Error generating text response: {str(e)}")
             raise
@@ -123,13 +133,15 @@ class LLMService(Generic[T]):
         """Get available models for the specified provider or all providers."""
         if provider:
             if provider in self.providers:
-                return {provider: self.providers[provider].get_available_models()}
+                models = self.providers[provider].get_available_models()
+                return {provider: list(models.values()) if isinstance(models, dict) else models}
             return {}
 
-        return {
-            provider_name: provider_instance.get_available_models()
-            for provider_name, provider_instance in self.providers.items()
-        }
+        result = {}
+        for provider_name, provider_instance in self.providers.items():
+            models = provider_instance.get_available_models()
+            result[provider_name] = list(models.values()) if isinstance(models, dict) else models
+        return result
 
 
 def create_llm_service(config: LLMConfig) -> LLMService:

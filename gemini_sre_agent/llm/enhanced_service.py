@@ -19,6 +19,9 @@ except ImportError:
     # Prompt class not available in current mirascope version
     Prompt = None  # type: ignore
 
+# Type alias for better type checking
+PromptType = Any
+
 from pydantic import BaseModel
 
 from .base import LLMRequest, ModelType
@@ -434,10 +437,14 @@ Respond only with the JSON object, no additional text."""
                 f"Generating text response using model: {selected_model.name} via provider: {provider_name}"
             )
 
-            # Generate the response
-            result = await provider_instance.generate_text(
-                prompt=prompt, model=selected_model.name, **kwargs
+            # Generate the response using the correct interface
+            request = LLMRequest(
+                prompt=prompt,
+                model_type=selected_model.semantic_type,
+                **kwargs
             )
+            response = await provider_instance.generate(request)
+            result = response.content
 
             # Record performance metrics
             end_time = time.time()
@@ -527,18 +534,14 @@ Respond only with the JSON object, no additional text."""
 
                 provider_instance = self.providers[provider_name]
 
-                # Generate response based on type
-                if response_model:
-                    result = await provider_instance.generate_structured(
-                        prompt=prompt,
-                        response_model=response_model,
-                        model=model_info.name,
-                        **kwargs,
-                    )
-                else:
-                    result = await provider_instance.generate_text(
-                        prompt=prompt, model=model_info.name, **kwargs
-                    )
+                # Generate response using the correct interface
+                request = LLMRequest(
+                    prompt=prompt,
+                    model_type=model_info.semantic_type,
+                    **kwargs
+                )
+                response = await provider_instance.generate(request)
+                result = response.content
 
                 # Record success
                 self.performance_monitor.record_success(

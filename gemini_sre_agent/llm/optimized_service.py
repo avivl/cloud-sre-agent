@@ -9,16 +9,20 @@ overhead requirement.
 import asyncio
 import logging
 import time
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 try:
     from mirascope import Prompt
 except ImportError:
-    Prompt = str  # Fallback for when mirascope is not available
+    Prompt = None  # type: ignore
+
+# Type alias for better type checking
+PromptType = Any
 
 from pydantic import BaseModel
 
-from .base import ModelType, ProviderType
+from .base import ModelType
+from .common.enums import ProviderType
 from .config import LLMConfig
 from .enhanced_service import EnhancedLLMService
 from .factory import get_provider_factory
@@ -113,8 +117,8 @@ class OptimizedLLMService(Generic[T]):
 
     async def generate_structured(
         self,
-        prompt: Union[str, Prompt],
-        response_model: type[T],
+        prompt: Union[str, Any],
+        response_model: Type[T],
         model: Optional[str] = None,
         model_type: Optional[ModelType] = None,
         provider: Optional[str] = None,
@@ -184,7 +188,7 @@ class OptimizedLLMService(Generic[T]):
 
     async def generate_text(
         self,
-        prompt: Union[str, Prompt],
+        prompt: Union[str, Any],
         model: Optional[str] = None,
         model_type: Optional[ModelType] = None,
         provider: Optional[str] = None,
@@ -275,7 +279,7 @@ class OptimizedLLMService(Generic[T]):
     async def batch_generate_structured(
         self,
         requests: List[Dict[str, Any]],
-        response_model: type[T],
+        response_model: Type[T],
         **kwargs: Any,
     ) -> List[T]:
         """Batch generate structured responses with optimizations."""

@@ -30,6 +30,10 @@ except ImportError:
     Prompt = None
     ChatPrompt = None
 
+# Type aliases for better type checking
+PromptType = Any
+ChatPromptType = Any
+
 T = TypeVar("T", bound=BaseModel)
 
 

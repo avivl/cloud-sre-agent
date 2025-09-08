@@ -77,21 +77,21 @@ def test_find_best_model_for_capabilities(populated_capability_database):
     # Test with capabilities supported by multiple models
     best_model = comparer.find_best_model_for_capabilities(["text_generation"])
     assert best_model is not None
-    # provider1/model_A (0.8 perf, 0.2 cost) vs provider2/model_B (0.7 perf, 0.3 cost) vs provider4/model_D (0.8 perf, 0.2 cost)
-    # Scoring: (perf * 0.7) + ((1 - cost) * 0.3)
-    # A: (0.8 * 0.7) + (0.8 * 0.3) = 0.56 + 0.24 = 0.8
-    # B: (0.7 * 0.7) + (0.7 * 0.3) = 0.49 + 0.21 = 0.7
-    # D: (0.8 * 0.7) + (0.8 * 0.3) = 0.56 + 0.24 = 0.8
+    # provider1/model_A (0.8 perf, 0.2 cost_eff) vs provider2/model_B (0.7 perf, 0.3 cost_eff) vs provider4/model_D (0.8 perf, 0.2 cost_eff)
+    # Scoring: (perf * 0.7) + (cost_eff * 0.3)
+    # A: (0.8 * 0.7) + (0.2 * 0.3) = 0.56 + 0.06 = 0.62
+    # B: (0.7 * 0.7) + (0.3 * 0.3) = 0.49 + 0.09 = 0.58
+    # D: (0.8 * 0.7) + (0.2 * 0.3) = 0.56 + 0.06 = 0.62
     # A and D have same score, so it depends on iteration order.
     # Let's assume provider1/model_A is returned first due to iteration order.
     assert best_model[0] in ["provider1/model_A", "provider4/model_D"]
-    assert best_model[1] == pytest.approx(0.8)
+    assert best_model[1] == pytest.approx(0.62)
 
     # Test with capabilities supported by only one model
     best_model = comparer.find_best_model_for_capabilities(["image_recognition"])
     assert best_model is not None
     assert best_model[0] == "provider2/model_B"
-    assert best_model[1] == pytest.approx((0.7 * 0.7) + (0.7 * 0.3)) # 0.7
+    assert best_model[1] == pytest.approx((0.7 * 0.7) + (0.3 * 0.3)) # 0.58
 
     # Test with capabilities not supported by any model
     best_model = comparer.find_best_model_for_capabilities(["video_analysis"])
@@ -101,4 +101,4 @@ def test_find_best_model_for_capabilities(populated_capability_database):
     best_model = comparer.find_best_model_for_capabilities(["text_generation", "code_generation"])
     assert best_model is not None
     assert best_model[0] == "provider1/model_A"
-    assert best_model[1] == pytest.approx((((0.8+0.9)/2) * 0.7) + (((1-0.2)+(1-0.1))/2 * 0.3)) # (0.85 * 0.7) + (0.85 * 0.3) = 0.85
+    assert best_model[1] == pytest.approx((((0.8+0.9)/2) * 0.7) + (((0.2+0.1)/2) * 0.3)) # (0.85 * 0.7) + (0.15 * 0.3) = 0.64

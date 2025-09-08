@@ -71,3 +71,12 @@ class CapabilityDatabase:
 
     def __contains__(self, model_id: str) -> bool:
         return model_id in self._capabilities
+
+    def get_all_model_ids(self) -> List[str]:
+        """
+        Get all model IDs in the database.
+
+        Returns:
+            A list of all model IDs.
+        """
+        return list(self._capabilities.keys())
