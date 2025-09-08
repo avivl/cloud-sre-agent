@@ -14,8 +14,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from .base import ModelType, ProviderType
-from .model_registry import ModelCapability, ModelInfo, ModelRegistry
+from .capabilities.discovery import CapabilityDiscovery
+from .capabilities.models import ModelCapability
+from .common.enums import ModelType, ProviderType
+from .model_registry import ModelInfo, ModelRegistry
 from .model_scorer import ModelScore, ModelScorer, ScoringContext, ScoringWeights
 
 logger = logging.getLogger(__name__)
@@ -71,16 +73,22 @@ class ModelSelector:
     """
 
     def __init__(
-        self, model_registry: ModelRegistry, model_scorer: Optional[ModelScorer] = None
+        self,
+        model_registry: ModelRegistry,
+        capability_discovery: CapabilityDiscovery,
+        model_scorer: Optional[ModelScorer] = None,
     ):
-        """Initialize the ModelSelector with registry and scorer."""
+        """Initialize the ModelSelector with registry, capability discovery, and scorer."""
         self.model_registry = model_registry
+        self.capability_discovery = capability_discovery  # Add this line
         self.model_scorer = model_scorer or ModelScorer()
         self._selection_cache: Dict[str, SelectionResult] = {}
         self._cache_ttl = 300  # 5 minutes
         self._selection_stats: Dict[str, int] = {}
 
-        logger.info("ModelSelector initialized with registry and scorer")
+        logger.info(
+            "ModelSelector initialized with registry, capability discovery, and scorer"
+        )
 
     def select_model(
         self, criteria: SelectionCriteria, use_cache: bool = True
@@ -162,24 +170,59 @@ class ModelSelector:
 
     def _get_candidate_models(self, criteria: SelectionCriteria) -> List[ModelInfo]:
         """Get candidate models based on criteria."""
-        # Use registry query to get initial candidates
-        candidates = self.model_registry.query_models(
-            semantic_type=criteria.semantic_type,
-            capabilities=(
-                criteria.required_capabilities
-                if criteria.required_capabilities
-                else None
-            ),
-            max_cost=criteria.max_cost,
-            min_performance=criteria.min_performance,
-            min_reliability=criteria.min_reliability,
-        )
+        # Start with all models from the registry
+        all_models = self.model_registry.get_all_models()
+        candidates = []
 
-        # Apply additional filters
-        filtered_candidates = []
-        for model in candidates:
-            if self._meets_criteria(model, criteria):
-                filtered_candidates.append(model)
+        for model_info in all_models:
+            # Filter by semantic type
+            if (
+                criteria.semantic_type
+                and model_info.semantic_type != criteria.semantic_type
+            ):
+                continue
+
+            # Filter by required capabilities using CapabilityDiscovery
+            if criteria.required_capabilities:
+                model_id = f"{model_info.provider}/{model_info.name}"
+                model_caps = self.capability_discovery.get_model_capabilities(model_id)
+                if not model_caps:
+                    continue  # Model has no registered capabilities
+
+                # Check if model has all required capabilities
+                has_all_required = True
+                for req_cap in criteria.required_capabilities:
+                    if not any(
+                        mc.name == req_cap.name for mc in model_caps.capabilities
+                    ):
+                        has_all_required = False
+                        break
+                if not has_all_required:
+                    continue
+
+            # Apply other filters (max_cost, min_performance, min_reliability)
+            if (
+                criteria.max_cost is not None
+                and model_info.cost_per_1k_tokens > criteria.max_cost
+            ):
+                continue
+            if (
+                criteria.min_performance is not None
+                and model_info.performance_score < criteria.min_performance
+            ):
+                continue
+            if (
+                criteria.min_reliability is not None
+                and model_info.reliability_score < criteria.min_reliability
+            ):
+                continue
+
+            candidates.append(model_info)
+
+        # Apply additional filters (provider preference, latency)
+        filtered_candidates = [
+            model for model in candidates if self._meets_criteria(model, criteria)
+        ]
 
         # Limit candidates if specified
         if (
@@ -380,7 +423,7 @@ class ModelSelector:
             reasons.append(f"for {criteria.semantic_type.value} task type")
 
         if criteria.required_capabilities:
-            cap_names = [cap.value for cap in criteria.required_capabilities]
+            cap_names = [cap.name for cap in criteria.required_capabilities]
             reasons.append(f"with capabilities: {', '.join(cap_names)}")
 
         if criteria.max_cost:
