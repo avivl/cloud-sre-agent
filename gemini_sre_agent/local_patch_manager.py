@@ -40,7 +40,7 @@ class LocalPatchManager:
         severity: str = "medium"
     ) -> str:
         """
-        Create a local patch file.
+        Create a local patch file in proper Git patch format.
 
         Args:
             issue_id (str): Unique identifier for the issue
@@ -52,48 +52,121 @@ class LocalPatchManager:
         Returns:
             str: Path to the created patch file
         """
-        timestamp = datetime.now().isoformat()
+        timestamp = datetime.now()
         # Sanitize issue_id to remove invalid filename characters
         sanitized_issue_id = issue_id.replace('/', '_').replace(':', '_').replace('\\', '_')
-        patch_filename = f"{sanitized_issue_id}_{timestamp.replace(':', '-')}.patch"
+        patch_filename = f"{sanitized_issue_id}_{timestamp.strftime('%Y%m%d_%H%M%S')}.patch"
         patch_file_path = self.patch_dir / patch_filename
 
-        # Create patch metadata
-        patch_metadata = {
-            "issue_id": issue_id,
-            "file_path": file_path,
-            "description": description,
-            "severity": severity,
-            "created_at": timestamp,
-            "patch_type": "local"
-        }
-
-        # Create the patch file content
-        patch_content_formatted = f"""# Local Patch File
-# Issue ID: {issue_id}
-# File: {file_path}
-# Created: {timestamp}
-# Severity: {severity}
-# Description: {description}
-
-{'-' * 80}
-# PATCH CONTENT
-{'-' * 80}
-
-{patch_content}
-
-{'-' * 80}
-# METADATA
-{'-' * 80}
-
-{json.dumps(patch_metadata, indent=2)}
-"""
+        # Generate proper Git patch format
+        git_patch = self._generate_git_patch(
+            issue_id=issue_id,
+            file_path=file_path,
+            patch_content=patch_content,
+            description=description,
+            severity=severity,
+            timestamp=timestamp
+        )
 
         # Write the patch file
-        patch_file_path.write_text(patch_content_formatted, encoding='utf-8')
+        patch_file_path.write_text(git_patch, encoding='utf-8')
         
-        logger.info(f"[LOCAL_PATCH] Created patch file: {patch_file_path}")
+        logger.info(f"[LOCAL_PATCH] Created Git patch file: {patch_file_path}")
         return str(patch_file_path)
+
+    def _generate_git_patch(
+        self,
+        issue_id: str,
+        file_path: str,
+        patch_content: str,
+        description: str,
+        severity: str,
+        timestamp: datetime
+    ) -> str:
+        """
+        Generate a proper Git patch format.
+
+        Args:
+            issue_id (str): Unique identifier for the issue
+            file_path (str): Target file path for the patch
+            patch_content (str): The patch content (code changes)
+            description (str): Description of the patch
+            severity (str): Severity level of the issue
+            timestamp (datetime): Timestamp for the patch
+
+        Returns:
+            str: Git patch format content
+        """
+        # Generate commit hash (simplified)
+        commit_hash = f"{hash(issue_id + str(timestamp)):016x}"
+        
+        # Format timestamp for Git
+        git_timestamp = timestamp.strftime("%a %b %d %H:%M:%S %Y %z")
+        
+        # Create commit message
+        commit_subject = f"Fix: {description[:50]}{'...' if len(description) > 50 else ''}"
+        commit_body = f"""Root Cause Analysis:
+{description}
+
+Severity: {severity}
+Issue ID: {issue_id}
+
+This patch addresses the issue identified by the SRE Agent.
+"""
+
+        # Generate the Git patch header
+        git_patch = f"""From {commit_hash} Mon Sep 17 00:00:00 2001
+From: SRE Agent <sre-agent@example.com>
+Date: {git_timestamp}
+Subject: [PATCH] {commit_subject}
+
+{commit_body}
+---
+ {file_path}
+ +++ b/{file_path}
+"""
+
+        # Process the patch content to ensure proper Git diff format
+        if patch_content.strip():
+            # If the patch content doesn't start with @@, assume it's raw code and create a diff
+            if not patch_content.strip().startswith('@@'):
+                git_patch += self._create_git_diff(patch_content, file_path)
+            else:
+                # Use the provided patch content as-is
+                git_patch += patch_content
+        else:
+            # Create a minimal diff if no content provided
+            git_patch += """@@ -1,0 +1,1 @@
++# Fix for {issue_id}
+"""
+
+        return git_patch
+
+    def _create_git_diff(self, code_content: str, file_path: str) -> str:
+        """
+        Create a Git diff from code content.
+
+        Args:
+            code_content (str): The code content to create a diff for
+            file_path (str): The target file path
+
+        Returns:
+            str: Git diff format
+        """
+        lines = code_content.strip().split('\n')
+        
+        # Create a simple diff that adds the code
+        diff_lines = []
+        for i, line in enumerate(lines, 1):
+            diff_lines.append(f"+{line}")
+        
+        # Add context lines
+        context_lines = [
+            "@@ -1,0 +1,{} @@".format(len(lines)),
+            "# Generated by SRE Agent"
+        ]
+        
+        return '\n'.join(context_lines + diff_lines)
 
     def list_patches(self) -> List[Dict]:
         """

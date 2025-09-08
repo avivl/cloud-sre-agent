@@ -168,7 +168,7 @@ class EnhancedLLMService(Generic[T]):
             # Convert prompt to LLMRequest format with structured output instruction
             if isinstance(prompt, str):
                 # Enhance the prompt to request structured JSON output
-                # Check if this is for triage or analysis based on response model
+                # Check if this is for triage, analysis, or remediation based on response model
                 if response_model.__name__ == "TriageResponse":
                     structured_prompt = f"""Please triage the following issue and provide a structured JSON response:
 
@@ -184,6 +184,21 @@ Please respond with a valid JSON object that includes all required fields for tr
 }}
 
 Respond only with the JSON object, no additional text."""
+                elif response_model.__name__ == "RemediationResponse":
+                    structured_prompt = f"""Please provide a detailed remediation plan for the following problem and respond with a structured JSON:
+
+{prompt}
+
+Please respond with a valid JSON object that includes all required fields for remediation. The response should be in this format:
+{{
+    "root_cause_analysis": "Detailed analysis of what caused the issue",
+    "proposed_fix": "Description of the proposed solution",
+    "code_patch": "Actual code changes needed (in Git patch format if applicable)",
+    "priority": "low|medium|high|critical",
+    "estimated_effort": "Estimated time/effort required (e.g., '2 hours', '1 day', 'immediate')"
+}}
+
+Focus on providing actionable, specific solutions with actual code when applicable. Respond only with the JSON object, no additional text."""
                 else:
                     structured_prompt = f"""Please analyze the following and provide a structured JSON response:
 
@@ -232,6 +247,14 @@ Respond only with the JSON object, no additional text."""
                             description=response.content[:200] + "..." if len(response.content) > 200 else response.content,
                             suggested_actions=["Investigate further"]
                         )
+                    elif response_model.__name__ == "RemediationResponse":
+                        result = response_model(
+                            root_cause_analysis=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                            proposed_fix="Manual review required",
+                            code_patch="# TODO: Generate proper code patch\n# " + response.content[:100],
+                            priority="medium",
+                            estimated_effort="Unknown"
+                        )
                     else:
                         result = response_model(
                             summary=response.content[:200] + "..." if len(response.content) > 200 else response.content,
@@ -248,6 +271,14 @@ Respond only with the JSON object, no additional text."""
                         urgency="medium",
                         description=response.content[:200] + "..." if len(response.content) > 200 else response.content,
                         suggested_actions=["Investigate further"]
+                    )
+                elif response_model.__name__ == "RemediationResponse":
+                    result = response_model(
+                        root_cause_analysis=response.content[:200] + "..." if len(response.content) > 200 else response.content,
+                        proposed_fix="Manual review required",
+                        code_patch="# TODO: Generate proper code patch\n# " + response.content[:100],
+                        priority="medium",
+                        estimated_effort="Unknown"
                     )
                 else:
                     result = response_model(

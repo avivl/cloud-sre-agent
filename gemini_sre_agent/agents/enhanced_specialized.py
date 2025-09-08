@@ -13,7 +13,7 @@ from ..llm.base import ModelType, ProviderType
 from ..llm.config import LLMConfig
 from ..llm.strategy_manager import OptimizationGoal
 from .enhanced_base import EnhancedBaseAgent
-from .response_models import AnalysisResponse, CodeResponse, TextResponse, TriageResponse
+from .response_models import AnalysisResponse, CodeResponse, TextResponse, TriageResponse, RemediationResponse
 
 logger = logging.getLogger(__name__)
 
@@ -659,7 +659,91 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         }
 
         return await self.execute(
-            prompt_name="provide_remediation",
+            prompt_name="remediate",
+            prompt_args=prompt_args,
+            optimization_goal=OptimizationGoal.QUALITY,
+        )
+
+
+class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
+    """
+    Enhanced Remediation Agent for generating code patches and remediation plans.
+    
+    This agent specializes in creating detailed remediation plans including:
+    - Root cause analysis
+    - Proposed fixes
+    - Code patches
+    - Priority assessment
+    - Effort estimation
+    """
+
+    def __init__(
+        self,
+        llm_config: LLMConfig,
+        primary_model: Optional[str] = None,
+        fallback_model: Optional[str] = None,
+        optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
+        provider_preference: Optional[ProviderType] = None,
+        max_cost: Optional[float] = None,
+        min_quality: Optional[float] = None,
+        **kwargs: Any,
+    ):
+        """
+        Initialize the Enhanced Remediation Agent.
+
+        Args:
+            llm_config: LLM configuration
+            primary_model: Primary model to use
+            fallback_model: Fallback model if primary fails
+            optimization_goal: Optimization strategy
+            provider_preference: Preferred LLM provider
+            max_cost: Maximum cost per 1k tokens
+            min_quality: Minimum quality score required
+            **kwargs: Additional arguments for the base agent
+        """
+        super().__init__(
+            llm_config=llm_config,
+            response_model=RemediationResponse,
+            primary_model=primary_model,
+            fallback_model=fallback_model,
+            optimization_goal=optimization_goal,
+            provider_preference=provider_preference,
+            model_type_preference=ModelType.CODE,
+            max_cost=max_cost,
+            min_quality=min_quality,
+            **kwargs,
+        )
+
+        logger.info(
+            "EnhancedRemediationAgent initialized with code generation optimization"
+        )
+
+    async def create_remediation_plan(
+        self,
+        issue_description: str,
+        error_context: str,
+        target_file: str,
+        **kwargs: Any,
+    ) -> RemediationResponse:
+        """
+        Create a comprehensive remediation plan for an issue.
+
+        Args:
+            issue_description: Description of the issue to fix
+            error_context: Context about the error (logs, stack traces, etc.)
+            target_file: Target file path for the fix
+            **kwargs: Additional context
+
+        Returns:
+            RemediationResponse with detailed remediation plan
+        """
+        prompt_args = {
+            "problem": f"Issue: {issue_description}\nError Context: {error_context}\nTarget File: {target_file}\nAnalysis: {kwargs.get('analysis_summary', '')}\nKey Points: {', '.join(kwargs.get('key_points', []))}",
+            **kwargs,
+        }
+
+        return await self.execute(
+            prompt_name="remediate",
             prompt_args=prompt_args,
             optimization_goal=OptimizationGoal.QUALITY,
         )

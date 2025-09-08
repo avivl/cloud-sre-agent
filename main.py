@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from typing import Optional, Any
 
 # New ingestion system imports
 from gemini_sre_agent.config.ingestion_config import GCPPubSubConfig, SourceType, IngestionConfigManager
@@ -22,7 +23,7 @@ from gemini_sre_agent.ml.enhanced_analysis_agent import (
 from gemini_sre_agent.remediation_agent import RemediationAgent
 from gemini_sre_agent.resilience_core import HyxResilientClient, create_resilience_config
 from gemini_sre_agent.triage_agent import TriageAgent
-from gemini_sre_agent.agents.response_models import TriageResponse
+from gemini_sre_agent.local_patch_manager import LocalPatchManager
 
 
 def validate_environment():
@@ -446,6 +447,9 @@ async def main():
     # Get feature flags
     feature_flags = get_feature_flags()
 
+    # Initialize variables
+    ingestion_config: Optional[Any] = None
+    global_config: Optional[Any] = None
     # Load config based on feature flags
     if feature_flags.get("use_new_ingestion_system", False):
         # Use new ingestion system config
@@ -459,10 +463,14 @@ async def main():
         
         config_manager = IngestionConfigManager(config_file)
         ingestion_config = config_manager.load_config()
+        import tempfile
+        import os
+        temp_dir = tempfile.mkdtemp(prefix="sre-dogfooding-")
+        log_file = os.path.join(temp_dir, "agent.log")
         logger = setup_logging(
             log_level="DEBUG",
             json_format=True,
-            log_file="/tmp/sre-dogfooding/agent.log",
+            log_file=log_file,
         )
         logger.info("[STARTUP] Using NEW ingestion system configuration")
     else:
@@ -495,8 +503,10 @@ async def main():
             try:
                 # Convert LogEntry to dict format expected by agents
                 timestamp = getattr(log_entry, 'timestamp', '')
-                if hasattr(timestamp, 'isoformat'):
-                    timestamp = timestamp.isoformat()
+                if hasattr(timestamp, 'isoformat') and callable(getattr(timestamp, 'isoformat', None)):
+                    # Only call isoformat if it's not a string (datetime objects have isoformat)
+                    if not isinstance(timestamp, str):
+                        timestamp = timestamp.isoformat()
                 
                 log_data = {
                     "insertId": getattr(log_entry, 'id', 'N/A'),
@@ -517,57 +527,38 @@ async def main():
                 logger.info(f"[LOG_INGESTION] Processing log entry: flow_id={flow_id}")
                 
                 # Initialize enhanced agents for processing
-                from gemini_sre_agent.agents.enhanced_specialized import EnhancedTriageAgent, EnhancedAnalysisAgent
+                from gemini_sre_agent.agents.enhanced_specialized import EnhancedTriageAgent, EnhancedAnalysisAgent, EnhancedRemediationAgent
                 from gemini_sre_agent.remediation_agent import RemediationAgent
-                from gemini_sre_agent.llm.config import LLMConfig, LLMProviderConfig, ModelConfig, ModelType
-                from gemini_sre_agent.llm.base import ProviderType
+                from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
                 
-                # Create LLM configuration for Ollama
-                llm_config = LLMConfig(
-                    providers={
-                        "ollama": LLMProviderConfig(
-                            provider=ProviderType.OLLAMA,
-                            base_url="http://localhost:11434",
-                            api_key=None,  # Ollama doesn't require API key
-                            models={
-                                "llama3.1:8b": ModelConfig(
-                                    name="llama3.1:8b",
-                                    model_type=ModelType.FAST,
-                                    cost_per_1k_tokens=0.0,
-                                    max_tokens=4000,
-                                    supports_streaming=True,
-                                    supports_tools=False,
-                                    capabilities=["text_generation", "analysis"],
-                                    performance_score=0.9,  # Add performance score
-                                    reliability_score=0.8   # Add reliability score
-                                )
-                            }
-                        )
-                    },
-                    default_provider="ollama",
-                    default_model_type=ModelType.FAST,
-                    enable_fallback=True,
-                    enable_monitoring=True
-                )
+                # Load LLM configuration from config file
+                from gemini_sre_agent.llm.config_manager import ConfigManager
+                config_manager = ConfigManager("examples/dogfooding/configs/llm_config.yaml")
+                llm_config = config_manager.get_config()
                 
                 # Create enhanced agents with Ollama configuration
                 triage_agent = EnhancedTriageAgent(
                     llm_config=llm_config,
-                    primary_model="llama3.1:8b",
-                    fallback_model="llama3.1:8b"
+                    primary_model="llama3.2:3b",
+                    fallback_model="llama3.2:1b"
                 )
                 analysis_agent = EnhancedAnalysisAgent(
                     llm_config=llm_config,
-                    primary_model="llama3.1:8b",
-                    fallback_model="llama3.1:8b"
+                    primary_model="llama3.2:3b",
+                    fallback_model="llama3.2:1b"
                 )
+                import tempfile
+                import os
+                patch_dir = tempfile.mkdtemp(prefix="real_patches-")
                 remediation_agent = RemediationAgent(
                     github_token=os.getenv("GITHUB_TOKEN", "dummy_token"),
                     repo_name="gemini-sre-agent",
                     use_local_patches=True,
-                    patch_dir="/tmp/real_patches"
+                    patch_dir=patch_dir
                 )
                 
+                # Create local patch manager
+                patch_manager = LocalPatchManager(patch_dir)
                 # Process through agent pipeline
                 logger.info(f"[TRIAGE] Starting triage analysis: flow_id={flow_id}")
                 
@@ -623,54 +614,78 @@ async def main():
                 except AttributeError as e:
                     logger.error(f"[DEBUG] Error accessing scores: {e}")
                 
-                # Create a mock analysis result for compatibility
-                class MockAnalysisResult:
-                    def __init__(self, analysis_response):
-                        self.analysis = {
-                            "root_cause_analysis": analysis_response.summary,
-                            "proposed_fix": analysis_response.key_points[0] if analysis_response.key_points else "No specific fix identified",
-                            "code_patch": "// TODO: Implement fix based on analysis",
-                            "recommendations": analysis_response.recommendations or [],
-                            "confidence": analysis_response.scores.get("confidence", 0.8)
-                        }
-                        self.recommendations = analysis_response.recommendations or []
-                        self.confidence = analysis_response.scores.get("confidence", 0.8)
-                
-                analysis_result = MockAnalysisResult(analysis_response)
-                logger.info(f"[ANALYSIS] Analysis completed: flow_id={flow_id}")
-                
-                logger.info(f"[REMEDIATION] Starting remediation: flow_id={flow_id}")
-                
-                # Create RemediationPlan from analysis result
-                from gemini_sre_agent.analysis_agent import RemediationPlan
-                remediation_plan = RemediationPlan(
-                    root_cause_analysis=analysis_result.analysis["root_cause_analysis"],
-                    proposed_fix=analysis_result.analysis["proposed_fix"],
-                    code_patch=analysis_result.analysis["code_patch"]
+                # Create remediation agent to generate code patches
+                remediation_agent = EnhancedRemediationAgent(
+                    llm_config=llm_config,
+                    primary_model="llama3.2:3b",
+                    fallback_model="llama3.2:1b",
+                    optimization_goal=OptimizationGoal.QUALITY,
                 )
                 
-                # Create local patch
-                remediation_result = await remediation_agent._create_local_patch(
-                    remediation_plan, flow_id, triage_packet.issue_id
+                # Generate remediation plan with code patch
+                remediation_response = await remediation_agent.create_remediation_plan(
+                    issue_description=triage_packet.natural_language_summary,
+                    error_context=log_text,
+                    target_file="dogfood_service/app.py",  # Target the dogfood service
+                    analysis_summary=analysis_response.summary,
+                    key_points=analysis_response.key_points,
                 )
-                logger.info(f"[REMEDIATION] Remediation completed: flow_id={flow_id}")
                 
+                # Create local patch using the LocalPatchManager
+                logger.info(f"[REMEDIATION] Creating local patch: flow_id={flow_id}")
+                
+                # Generate a unique issue ID for the patch
+                issue_id = f"issue_{flow_id.replace(':', '_').replace('/', '_')}"
+                
+                # Create local patch file
+                patch_manager.create_patch(
+                    issue_id=issue_id,
+                    file_path="dogfood_service/app.py",
+                    patch_content=remediation_response.code_patch,
+                    description=remediation_response.proposed_fix,
+                    severity=remediation_response.priority,
+                )
+
+                logger.info(f"[REMEDIATION] Remediation completed: flow_id={flow_id}, issue_id={issue_id}")
             except Exception as e:
+                # flow_id might not be defined if error occurs early
+                flow_id = getattr(log_entry, 'id', 'unknown')
                 logger.error(f"[ERROR_HANDLING] Error processing log entry: flow_id={flow_id}, error={e}")
         
         log_manager = LogManager(process_log_entry)
-        
         # Create sources from the ingestion config and add them to the log manager
         from gemini_sre_agent.ingestion.adapters.file_system import FileSystemAdapter
         
+        # Ensure ingestion_config is defined
+        if ingestion_config is None:
+            logger.error("[STARTUP] ingestion_config not defined")
+            return
         logger.info(f"[STARTUP] Ingestion config: {ingestion_config}")
         logger.info(f"[STARTUP] Found {len(ingestion_config.sources)} sources in config")
         for source_config in ingestion_config.sources:
             logger.info(f"[STARTUP] Processing source: {source_config.name}, type: {source_config.type}")
             if source_config.type == "file_system":
                 try:
-                    # Create file system adapter
-                    adapter = FileSystemAdapter(source_config)
+                    # Create file system adapter - need to convert SourceConfig to FileSystemConfig
+                    from gemini_sre_agent.config.ingestion_config import FileSystemConfig
+                    file_system_config = FileSystemConfig(
+                        name=source_config.name,
+                        type=source_config.type,
+                        file_path=source_config.config.get("file_path", ""),
+                        file_pattern=source_config.config.get("file_pattern", "*.log"),
+                        watch_mode=source_config.config.get("watch_mode", True),
+                        encoding=source_config.config.get("encoding", "utf-8"),
+                        buffer_size=source_config.config.get("buffer_size", 1000),
+                        max_memory_mb=source_config.config.get("max_memory_mb", 100),
+                        enabled=source_config.enabled,
+                        priority=source_config.priority,
+                        max_retries=source_config.max_retries,
+                        retry_delay=source_config.retry_delay,
+                        timeout=source_config.timeout,
+                        circuit_breaker_enabled=source_config.circuit_breaker_enabled,
+                        rate_limit_per_second=source_config.rate_limit_per_second
+                    )
+                    adapter = FileSystemAdapter(file_system_config)
                     await log_manager.add_source(adapter)
                     logger.info(f"[STARTUP] Added file system source: {source_config.name}")
                 except Exception as e:
@@ -691,13 +706,16 @@ async def main():
         tasks.append(task)
     else:
         # For legacy system, process each service
+        if global_config is None:
+            logger.error("[STARTUP] global_config not defined for legacy system")
+            return
         for service_config in global_config.services:
             try:
                 logger.info(
                     f"[STARTUP] Using LEGACY ingestion system for {service_config.service_name}"
                 )
                 task = monitor_service(service_config, global_config)
-                if task:
+                if task is not None:
                     tasks.append(task)
             except Exception as e:
                 logger.error(
@@ -711,7 +729,7 @@ async def main():
                 )
                 try:
                     task = monitor_service(service_config, global_config)
-                    if task:
+                    if task is not None:
                         tasks.append(task)
                 except Exception as fallback_error:
                     logger.error(

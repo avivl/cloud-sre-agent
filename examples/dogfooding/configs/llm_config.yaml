@@ -1,0 +1,122 @@
+# Dogfooding LLM Configuration
+# This configuration is optimized for the dogfooding environment with local Ollama models
+
+# Main configuration
+default_provider: "ollama"
+default_model_type: "fast"
+enable_fallback: true
+enable_monitoring: true
+
+# Provider configurations
+providers:
+  # Ollama Provider (Primary for dogfooding)
+  ollama:
+    provider: "ollama"
+    base_url: "http://localhost:11434"
+    timeout: 120
+    max_retries: 2
+    rate_limit: null
+    models:
+      llama3.2:3b:
+        name: "llama3.2:3b"
+        model_type: "fast"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 4000
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation", "analysis"]
+        performance_score: 0.8
+        reliability_score: 0.8
+      llama3.2:1b:
+        name: "llama3.2:1b"
+        model_type: "fast"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 2000
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation"]
+        performance_score: 0.7
+        reliability_score: 0.7
+    provider_specific:
+      host: "localhost"
+      port: 11434
+      tls: false
+
+# Agent configurations (Dogfooding-optimized)
+agents:
+  analysis_agent:
+    primary_provider: "ollama"
+    fallback_providers: []
+    model_selection_strategy: "speed_optimized"
+    max_tokens: 8000
+    temperature: 0.3
+    timeout: 60
+    retry_attempts: 2
+    enable_streaming: true
+    enable_tools: false
+    model_preferences:
+      - "llama3.2:3b"
+      - "llama3.2:1b"
+
+  triage_agent:
+    primary_provider: "ollama"
+    fallback_providers: []
+    model_selection_strategy: "speed_optimized"
+    max_tokens: 4000
+    temperature: 0.1
+    timeout: 30
+    retry_attempts: 1
+    enable_streaming: false
+    enable_tools: false
+    model_preferences:
+      - "llama3.2:3b"
+      - "llama3.2:1b"
+
+  remediation_agent:
+    primary_provider: "ollama"
+    fallback_providers: []
+    model_selection_strategy: "quality_optimized"
+    max_tokens: 16000
+    temperature: 0.2
+    timeout: 90
+    retry_attempts: 2
+    enable_streaming: true
+    enable_tools: false
+    model_preferences:
+      - "llama3.2:3b"
+      - "llama3.2:1b"
+
+# Cost management configuration (Dogfooding-friendly)
+cost_config:
+  monthly_budget: 1.0 # Small budget for local models
+  alert_threshold: 0.8
+  enable_tracking: true
+  cost_optimization: false
+  optimization_strategy: "speed"
+  cost_breakdown:
+    by_provider: true
+    by_model: true
+    by_agent: true
+  alerts:
+    email: "dev@company.com"
+    webhook: null
+    threshold_percentages: [50, 75, 90, 100]
+  daily_limit: 0.1
+  weekly_limit: 0.5
+
+# Resilience configuration (Dogfooding-optimized)
+resilience_config:
+  circuit_breaker_threshold: 3
+  circuit_breaker_timeout: 30
+  retry_attempts: 2
+  retry_delay: 0.5
+  retry_backoff: 1.5
+  fallback_enabled: false
+  health_check_interval: 30
+  timeout_multiplier: 1.2
+  jitter_enabled: true
+  max_concurrent_requests: 5
+  rate_limiting:
+    enabled: false
+    requests_per_minute: 1000
+    burst_size: 10

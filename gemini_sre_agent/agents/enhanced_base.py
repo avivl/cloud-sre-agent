@@ -341,7 +341,18 @@ class EnhancedBaseAgent(Generic[T]):
             "analyze": "Analyze the following content: {content}\nCriteria: {criteria}",
             "generate_code": "Generate {language} code for: {description}",
             "triage": "Triage the following issue: {issue}",
-            "remediate": "Provide remediation for: {problem}",
+            "remediate": """Provide a detailed remediation plan for the following problem: {problem}
+
+Please provide your response in the following JSON format:
+{{
+    "root_cause_analysis": "Detailed analysis of what caused the issue",
+    "proposed_fix": "Description of the proposed solution",
+    "code_patch": "Actual code changes needed (in Git patch format if applicable)",
+    "priority": "low|medium|high|critical",
+    "estimated_effort": "Estimated time/effort required (e.g., '2 hours', '1 day', 'immediate')"
+}}
+
+Focus on providing actionable, specific solutions with actual code when applicable.""",
         }
 
         return default_prompts.get(prompt_name, "Please process the following: {input}")
