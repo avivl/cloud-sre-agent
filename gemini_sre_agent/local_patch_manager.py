@@ -8,7 +8,7 @@ GitHub integration is not available or when working in a local development envir
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -54,7 +54,7 @@ class LocalPatchManager:
         Returns:
             str: Path to the created patch file
         """
-        timestamp = datetime.now()
+        timestamp = datetime.now(timezone.utc)
         # Sanitize issue_id to remove invalid filename characters
         sanitized_issue_id = (
             issue_id.replace("/", "_").replace(":", "_").replace("\\", "_")

@@ -246,7 +246,7 @@ def connection_error():
         # Try to connect to a non-existent service
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1)
-        sock.connect(("192.168.1.999", 9999))  # Invalid IP and port
+        sock.connect(("192.0.2.1", 9999))  # Invalid IP and port
         sock.close()
         return jsonify({"message": "Connection successful"})
     except (ConnectionError, OSError) as e:

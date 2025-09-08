@@ -18,28 +18,9 @@ from typing import Any, Dict, List, Optional
 from gemini_sre_agent.metrics import get_metrics_manager
 from gemini_sre_agent.metrics.enums import ErrorCategory
 
+from .common.enums import ModelType
+
 logger = logging.getLogger(__name__)
-
-
-class ProviderType(str, Enum):
-    """Supported LLM provider types."""
-
-    GEMINI = "gemini"
-    OLLAMA = "ollama"
-    CLAUDE = "claude"
-    OPENAI = "openai"
-    GROK = "grok"
-    BEDROCK = "bedrock"
-
-
-class ModelType(str, Enum):
-    """Semantic model types for easy configuration."""
-
-    FAST = "fast"  # Quick responses, lower cost
-    SMART = "smart"  # Balanced performance and quality
-    DEEP_THINKING = "deep"  # Highest quality, slower responses
-    CODE = "code"  # Specialized for code generation
-    ANALYSIS = "analysis"  # Specialized for analysis tasks
 
 
 class ErrorSeverity(Enum):

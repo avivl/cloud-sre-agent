@@ -1,20 +1,6 @@
-"""
-Simplified LLM Provider interface that works with LiteLLM.
-
-This module provides a minimal interface that leverages LiteLLM for provider abstraction,
-integrating with Instructor for structured output and Mirascope for prompt management.
-"""
-
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, AsyncGenerator, List, Optional, Type, TypeVar, Union
-
-try:
-    from mirascope import Prompt
-except ImportError as e:
-    raise ImportError(
-        "Required dependency 'mirascope' not installed. Please install: pip install mirascope"
-    ) from e
+from typing import Any, AsyncGenerator, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 
@@ -46,7 +32,7 @@ class LLMProvider(ABC):
 
     @abstractmethod
     async def generate_text(
-        self, prompt: Union[str, Prompt], model: Optional[str] = None, **kwargs: Any
+        self, prompt: str, model: Optional[str] = None, **kwargs: Any
     ) -> str:
         """Generate text response using LiteLLM."""
         pass
@@ -54,7 +40,7 @@ class LLMProvider(ABC):
     @abstractmethod
     async def generate_structured(
         self,
-        prompt: Union[str, Prompt],
+        prompt: str,
         response_model: Type[T],
         model: Optional[str] = None,
         **kwargs: Any,
@@ -64,7 +50,7 @@ class LLMProvider(ABC):
 
     @abstractmethod
     def generate_stream(
-        self, prompt: Union[str, Prompt], model: Optional[str] = None, **kwargs: Any
+        self, prompt: str, model: Optional[str] = None, **kwargs: Any
     ) -> AsyncGenerator[str, None]:
         """Generate streaming text response using LiteLLM."""
         pass
@@ -89,10 +75,8 @@ class LLMProvider(ABC):
         """Validate the provider configuration."""
         pass
 
-    def _format_prompt(self, prompt: Union[str, Prompt], **kwargs: Any) -> str:
+    def _format_prompt(self, prompt: str, **kwargs: Any) -> str:
         """Format a prompt, handling both string and Mirascope Prompt objects."""
-        if isinstance(prompt, Prompt):
-            return prompt.format(**kwargs)
         return prompt
 
     def _resolve_model(self, model: Optional[str]) -> str:

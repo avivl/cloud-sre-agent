@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 
 from gemini_sre_agent.metrics.config import MetricsConfig
 
-from .base import ModelType
+from .common.enums import ModelType
 
 
 class ModelConfig(BaseModel):
