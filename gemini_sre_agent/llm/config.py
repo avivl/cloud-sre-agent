@@ -255,6 +255,7 @@ class AgentLLMConfig(BaseModel):
 class CostConfig(BaseModel):
     """Cost management configuration."""
 
+    # Budget management
     budget_limits: Dict[str, float] = Field(
         default_factory=dict, description="Budget limits per provider in USD"
     )
@@ -264,6 +265,63 @@ class CostConfig(BaseModel):
     cost_alerts: List[float] = Field(
         default_factory=list, description="Cost alert thresholds as percentages (0-100)"
     )
+
+    # Cost management system
+    enable_cost_tracking: bool = Field(
+        True, description="Enable comprehensive cost tracking"
+    )
+    budget_period: str = Field(
+        "monthly", description="Budget period: daily, weekly, or monthly"
+    )
+    enforcement_policy: str = Field(
+        "warn", description="Budget enforcement: warn, soft_limit, or hard_limit"
+    )
+    auto_reset: bool = Field(
+        True, description="Automatically reset budget at period end"
+    )
+    rollover_unused: bool = Field(
+        False, description="Roll over unused budget to next period"
+    )
+    max_rollover: float = Field(
+        50.0, gt=0, description="Maximum rollover amount in USD"
+    )
+
+    # Cost optimization
+    enable_optimization: bool = Field(
+        True, description="Enable cost optimization recommendations"
+    )
+    optimization_strategy: str = Field(
+        "balanced",
+        description="Optimization strategy: budget, performance, or balanced",
+    )
+    cost_weight: float = Field(
+        0.3, ge=0, le=1, description="Weight for cost in optimization"
+    )
+    performance_weight: float = Field(
+        0.3, ge=0, le=1, description="Weight for performance in optimization"
+    )
+    quality_weight: float = Field(
+        0.4, ge=0, le=1, description="Weight for quality in optimization"
+    )
+
+    # Analytics and reporting
+    enable_analytics: bool = Field(
+        True, description="Enable cost analytics and reporting"
+    )
+    retention_days: int = Field(
+        90, gt=0, description="Days to retain usage data for analytics"
+    )
+    cost_optimization_threshold: float = Field(
+        0.1,
+        gt=0,
+        description="Cost difference threshold for optimization recommendations",
+    )
+
+    # Pricing and refresh
+    refresh_interval: int = Field(
+        3600, gt=0, description="Pricing refresh interval in seconds"
+    )
+    max_records: int = Field(10000, gt=0, description="Maximum usage records to keep")
 
     @field_validator("budget_limits")
     @classmethod
@@ -286,6 +344,38 @@ class CostConfig(BaseModel):
             if not 0 <= alert <= 100:
                 raise ValueError("Cost alerts must be between 0 and 100 (percentages)")
         return sorted(v)
+
+    @field_validator("budget_period")
+    @classmethod
+    def validate_budget_period(cls, v):
+        if v not in ["daily", "weekly", "monthly"]:
+            raise ValueError("Budget period must be 'daily', 'weekly', or 'monthly'")
+        return v
+
+    @field_validator("enforcement_policy")
+    @classmethod
+    def validate_enforcement_policy(cls, v):
+        if v not in ["warn", "soft_limit", "hard_limit"]:
+            raise ValueError(
+                "Enforcement policy must be 'warn', 'soft_limit', or 'hard_limit'"
+            )
+        return v
+
+    @field_validator("optimization_strategy")
+    @classmethod
+    def validate_optimization_strategy(cls, v):
+        if v not in ["budget", "performance", "balanced"]:
+            raise ValueError(
+                "Optimization strategy must be 'budget', 'performance', or 'balanced'"
+            )
+        return v
+
+    @field_validator("cost_weight", "performance_weight", "quality_weight")
+    @classmethod
+    def validate_weights(cls, v):
+        if not 0 <= v <= 1:
+            raise ValueError("Weights must be between 0 and 1")
+        return v
 
 
 class ResilienceConfig(BaseModel):
@@ -411,7 +501,23 @@ class LLMConfig(BaseModel):
         """Set default configurations if not provided."""
         if self.cost_config is None:
             self.cost_config = CostConfig(
-                budget_limits={}, monthly_budget=None, cost_alerts=[]
+                monthly_budget=100.0,
+                enable_cost_tracking=True,
+                budget_period="monthly",
+                enforcement_policy="warn",
+                auto_reset=True,
+                rollover_unused=False,
+                max_rollover=0.0,
+                enable_optimization=True,
+                optimization_strategy="balanced",
+                cost_weight=0.4,
+                performance_weight=0.4,
+                quality_weight=0.2,
+                enable_analytics=True,
+                retention_days=90,
+                cost_optimization_threshold=0.1,
+                refresh_interval=3600,
+                max_records=10000,
             )
         if self.resilience_config is None:
             self.resilience_config = ResilienceConfig(

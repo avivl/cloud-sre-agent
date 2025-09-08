@@ -27,13 +27,24 @@ class IntegratedCostManager:
         analytics_config: AnalyticsConfig,
     ):
         """Initialize the integrated cost management system."""
-        # For now, we'll create a simplified cost manager without the required dependencies
-        # In a real implementation, these would be passed in or created properly
-        self.cost_manager = (
-            None  # DynamicCostManager(cost_config, provider_factory, model_registry)
-        )
+        # Initialize the cost management components
+        from .cost_management import DynamicCostManager
+        from .cost_optimizer import CostOptimizer
+        from .factory import LLMProviderFactory
+        from .model_registry import ModelRegistry
+
+        # Create dependencies
+        self.model_registry = ModelRegistry()
+        self.provider_factory = LLMProviderFactory()
+
+        # Initialize cost manager with dependencies
+        self.cost_manager = DynamicCostManager(cost_config)
+        self.cost_manager.provider_factory = self.provider_factory
+        self.cost_manager.model_registry = self.model_registry
+
+        # Initialize other components
         self.budget_manager = BudgetManager(budget_config)
-        self.cost_optimizer = None  # CostOptimizer(optimization_config)
+        self.cost_optimizer = CostOptimizer(self.cost_manager, self.model_registry)
         self.analytics = CostAnalytics(analytics_config)
 
         logger.info("Integrated cost management system initialized")
@@ -42,9 +53,26 @@ class IntegratedCostManager:
         self, provider: str, model: str, input_tokens: int, output_tokens: int = 0
     ) -> float:
         """Estimate the cost of a request."""
-        # Simplified cost estimation for now
-        # In a real implementation, this would use the cost manager
-        return 0.01  # Default cost estimate
+        from .common.enums import ProviderType
+
+        try:
+            # Handle common provider name variations
+            provider_mapping = {
+                "openai": ProviderType.OPENAI,
+                "anthropic": ProviderType.CLAUDE,
+                "claude": ProviderType.CLAUDE,
+                "google": ProviderType.GEMINI,
+                "gemini": ProviderType.GEMINI,
+            }
+            provider_enum = provider_mapping.get(
+                provider.lower(), ProviderType(provider.upper())
+            )
+            return self.cost_manager.estimate_cost(
+                provider_enum, model, input_tokens, output_tokens
+            )
+        except (ValueError, KeyError):
+            logger.warning(f"Unknown provider: {provider}")
+            return (input_tokens + output_tokens) * 0.001  # Default estimate
 
     async def can_make_request(
         self, provider: str, model: str, input_tokens: int, output_tokens: int = 0
@@ -63,9 +91,45 @@ class IntegratedCostManager:
         performance_requirements: Optional[Dict[str, Any]] = None,
     ) -> Tuple[str, str, float]:
         """Get the optimal provider and model for a request."""
-        # Simplified provider selection for now
-        # In a real implementation, this would use the cost optimizer
-        return ("openai", "gpt-3.5-turbo", 0.8)
+        from .common.enums import ModelType
+        from .cost_management import OptimizationStrategy
+        from .strategy_manager import StrategyContext
+
+        try:
+            # Estimate cost first for budget calculation
+            estimated_cost = await self.estimate_request_cost(
+                "openai", "gpt-3.5-turbo", input_tokens, output_tokens
+            )
+
+            # Create strategy context
+            context = StrategyContext(
+                task_type=(
+                    ModelType(model_type.upper())
+                    if hasattr(ModelType, model_type.upper())
+                    else ModelType.SMART
+                ),
+                max_cost=estimated_cost * 1.2,  # Allow 20% buffer
+                metadata={
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "performance_requirements": performance_requirements or {},
+                },
+            )
+
+            # Get optimal model selection
+            result = self.cost_optimizer.optimize_model_selection(
+                context=context, strategy=OptimizationStrategy.BALANCED
+            )
+
+            return (
+                result.selected_model.provider.value.lower(),
+                result.selected_model.name,
+                result.estimated_cost,
+            )
+        except Exception as e:
+            logger.warning(f"Error in optimal provider selection: {e}")
+            # Fallback to default
+            return ("openai", "gpt-3.5-turbo", 0.8)
 
     def record_request(
         self,
@@ -83,8 +147,18 @@ class IntegratedCostManager:
 
         # Convert provider string to enum
         try:
-            provider_enum = ProviderType(provider.upper())
-        except ValueError:
+            # Handle common provider name variations
+            provider_mapping = {
+                "openai": ProviderType.OPENAI,
+                "anthropic": ProviderType.CLAUDE,
+                "claude": ProviderType.CLAUDE,
+                "google": ProviderType.GEMINI,
+                "gemini": ProviderType.GEMINI,
+            }
+            provider_enum = provider_mapping.get(
+                provider.lower(), ProviderType(provider.upper())
+            )
+        except (ValueError, KeyError):
             logger.warning(f"Unknown provider: {provider}")
             return
 
@@ -207,7 +281,8 @@ class IntegratedCostManager:
 
     async def refresh_pricing_data(self) -> None:
         """Refresh pricing data from all providers."""
-        # Simplified for now - in real implementation would refresh pricing
+        if self.cost_manager:
+            await self.cost_manager._refresh_pricing()
         logger.info("Pricing data refreshed")
 
     def update_budget_config(self, new_config: BudgetConfig) -> None:
@@ -266,6 +341,84 @@ class IntegratedCostManager:
         """Shutdown the cost management system."""
         # Simplified for now - in real implementation would shutdown cost manager
         logger.info("Cost management system shutdown complete")
+
+
+# Convenience function to create cost manager from main config
+def create_cost_manager_from_config(cost_config) -> IntegratedCostManager:
+    """Create an integrated cost manager from the main cost configuration."""
+    from .budget_manager import BudgetConfig
+    from .cost_analytics import AnalyticsConfig
+    from .cost_management import (
+        BudgetPeriod,
+        CostManagementConfig,
+        EnforcementPolicy,
+        OptimizationStrategy,
+    )
+
+    # Convert string enums to proper enum values
+    budget_period_enum = BudgetPeriod.MONTHLY
+    if cost_config.budget_period.lower() == "daily":
+        budget_period_enum = BudgetPeriod.DAILY
+    elif cost_config.budget_period.lower() == "weekly":
+        budget_period_enum = BudgetPeriod.WEEKLY
+
+    enforcement_policy_enum = EnforcementPolicy.WARN
+    if cost_config.enforcement_policy.lower() == "soft_limit":
+        enforcement_policy_enum = EnforcementPolicy.SOFT_LIMIT
+    elif cost_config.enforcement_policy.lower() == "hard_limit":
+        enforcement_policy_enum = EnforcementPolicy.HARD_LIMIT
+
+    optimization_strategy_enum = OptimizationStrategy.BALANCED
+    if cost_config.optimization_strategy.lower() == "budget":
+        optimization_strategy_enum = OptimizationStrategy.BUDGET
+    elif cost_config.optimization_strategy.lower() == "performance":
+        optimization_strategy_enum = OptimizationStrategy.PERFORMANCE
+
+    # Create cost management config
+    cost_mgmt_config = CostManagementConfig(
+        budget_limit=cost_config.monthly_budget or 100.0,
+        budget_period=budget_period_enum,
+        alert_thresholds=(
+            [t / 100 for t in cost_config.cost_alerts]
+            if cost_config.cost_alerts
+            else [0.5, 0.8, 0.9, 1.0]
+        ),
+        enforcement_policy=enforcement_policy_enum,
+        optimization_strategy=optimization_strategy_enum,
+        refresh_interval=cost_config.refresh_interval,
+        max_records=cost_config.max_records,
+    )
+
+    # Create budget config
+    budget_mgmt_config = BudgetConfig(
+        budget_limit=cost_config.monthly_budget or 100.0,
+        budget_period=budget_period_enum,
+        alert_thresholds=(
+            [t / 100 for t in cost_config.cost_alerts]
+            if cost_config.cost_alerts
+            else [0.5, 0.8, 0.9, 1.0]
+        ),
+        enforcement_policy=enforcement_policy_enum,
+        auto_reset=cost_config.auto_reset,
+        rollover_unused=cost_config.rollover_unused,
+        max_rollover=cost_config.max_rollover,
+    )
+
+    # Create analytics config
+    analytics_mgmt_config = AnalyticsConfig(
+        retention_days=cost_config.retention_days,
+        cost_optimization_threshold=cost_config.cost_optimization_threshold,
+        performance_weight=cost_config.performance_weight,
+        quality_weight=cost_config.quality_weight,
+        cost_weight=cost_config.cost_weight,
+    )
+
+    return IntegratedCostManager(
+        cost_config=cost_mgmt_config,
+        budget_config=budget_mgmt_config,
+        optimization_config=None,  # Will be handled internally
+        analytics_config=analytics_mgmt_config,
+    )
 
 
 # Convenience function to create a default integrated cost manager

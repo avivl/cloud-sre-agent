@@ -62,10 +62,8 @@ class CostOptimizer:
         """
         start_time = time.time()
 
-        # Get available models
-        # Get available models for the request type
-        # For now, we'll use a simplified approach since get_models_by_type doesn't exist
-        available_models = []  # This would be populated with actual models
+        # Get available models from the model registry
+        available_models = self.model_registry.get_all_models()
 
         if not available_models:
             raise ValueError(
