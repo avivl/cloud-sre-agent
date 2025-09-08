@@ -175,29 +175,37 @@ class LLMProvider(ABC):
             )
             cost = self.cost_estimate(input_tokens, output_tokens)
 
-            await metrics_manager.record_provider_request(
-                provider_id=self.provider_name,
-                latency_ms=latency_ms,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                cost=cost,
-                success=True,
-            )
+            try:
+                await metrics_manager.record_provider_request(
+                    provider_id=self.provider_name,
+                    latency_ms=latency_ms,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    cost=cost,
+                    success=True,
+                )
+            except Exception as metrics_e:
+                logger.error(f"Error recording successful metrics: {metrics_e}")
             response.latency_ms = latency_ms
             response.cost_usd = cost
+            self.circuit_breaker.call_succeeded()
             return response
         except Exception as e:
             latency_ms = (time.time() - start_time) * 1000
             error_category = self._categorize_error(e)
-            await metrics_manager.record_provider_request(
-                provider_id=self.provider_name,
-                latency_ms=latency_ms,
-                input_tokens=0,  # Or estimate from request
-                output_tokens=0,
-                cost=0,
-                success=False,
-                error_info={"error": str(e), "category": error_category.value},
-            )
+            try:
+                await metrics_manager.record_provider_request(
+                    provider_id=self.provider_name,
+                    latency_ms=latency_ms,
+                    input_tokens=0,  # Or estimate from request
+                    output_tokens=0,
+                    cost=0,
+                    success=False,
+                    error_info={"error": str(e), "category": error_category.value},
+                )
+            except Exception as metrics_e:
+                logger.error(f"Error recording failed metrics: {metrics_e}")
+            self.circuit_breaker.call_failed()
             raise
 
     @abstractmethod
