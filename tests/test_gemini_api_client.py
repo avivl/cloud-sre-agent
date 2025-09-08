@@ -125,7 +125,7 @@ class TestGeminiAPIClientInit:
 class TestGeminiAPIClientGeneration:
     """Test response generation functionality."""
 
-    @pytest.fixture  
+    @pytest.fixture
     def mock_client_setup(self):
         """Setup mock client with dependencies."""
         # Create comprehensive mock for genai module
@@ -135,16 +135,16 @@ class TestGeminiAPIClientGeneration:
         mock_genai.GenerativeModel = Mock(return_value=mock_model)
         mock_genai.types = Mock()
         mock_genai.types.GenerationConfig = Mock()
-        
+
         # Patch both GENAI_AVAILABLE and the genai module at import time
         patches = [
             patch("gemini_sre_agent.ml.gemini_api_client.GENAI_AVAILABLE", True),
             patch("gemini_sre_agent.ml.gemini_api_client.genai", mock_genai),
         ]
-        
+
         for p in patches:
             p.start()
-        
+
         try:
             cost_tracker = AsyncMock(spec=CostTracker)
             rate_limiter = AsyncMock(spec=AdaptiveRateLimiter)

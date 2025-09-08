@@ -28,7 +28,7 @@ class TestPatternContextExtractor:
         """Create sample time window with logs."""
         start_time = datetime.now(timezone.utc)
         window = TimeWindow(start_time=start_time, duration_minutes=10)
-        
+
         # Add diverse logs for testing
         window.logs = [
             LogEntry(
@@ -122,7 +122,9 @@ class TestPatternContextExtractor:
         assert "auth.py" in context.error_related_files
 
     @pytest.mark.asyncio
-    async def test_extract_context_code_extractor_failure(self, extractor, sample_window):
+    async def test_extract_context_code_extractor_failure(
+        self, extractor, sample_window
+    ):
         """Test handling of code extractor failures."""
         mock_code_extractor = AsyncMock()
         mock_code_extractor.extract_code_context.side_effect = Exception("Git error")
@@ -366,12 +368,20 @@ class TestErrorPatternAnalysis:
     def test_error_type_classification(self, extractor):
         """Test error message classification."""
         # Database errors
-        assert extractor._classify_error_type("Database connection failed") == "database_error"
+        assert (
+            extractor._classify_error_type("Database connection failed")
+            == "database_error"
+        )
         assert extractor._classify_error_type("SQL query timeout") == "database_error"
 
         # Network errors
-        assert extractor._classify_error_type("Connection timeout") == "connectivity_error"
-        assert extractor._classify_error_type("Network unreachable") == "connectivity_error"
+        assert (
+            extractor._classify_error_type("Connection timeout") == "connectivity_error"
+        )
+        assert (
+            extractor._classify_error_type("Network unreachable")
+            == "connectivity_error"
+        )
 
         # Auth errors
         assert extractor._classify_error_type("Unauthorized access") == "auth_error"
@@ -459,7 +469,12 @@ class TestHistoricalContextAnalysis:
             "baseline_comparison": "150% above baseline",
             "trend_analysis": "Gradual increase over 2 hours",
             "similar_incidents": ["INC-001", "INC-002", "INC-003", "INC-004"],
-            "recent_changes": ["DB migration", "API update", "Config change", "Extra change"],
+            "recent_changes": [
+                "DB migration",
+                "API update",
+                "Config change",
+                "Extra change",
+            ],
         }
 
         context = await extractor._analyze_historical_context(window, historical_data)
@@ -529,9 +544,7 @@ class TestCodeContextFormatting:
                 findings=["f1", "f2"],
                 analysis_time_ms=100,
             ),
-            "failed_tool": Mock(
-                success=False, error_message="Tool failed"
-            ),
+            "failed_tool": Mock(success=False, error_message="Tool failed"),
         }
 
         formatted = extractor._format_static_analysis_findings(static_analysis)

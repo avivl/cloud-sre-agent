@@ -137,7 +137,9 @@ class TestGeminiPatternClassifierClassification:
         mock_gemini_client_class.return_value = mock_gemini_client
 
         classifier = GeminiPatternClassifier(api_key="test_key")
-        results = await classifier.classify_patterns(sample_window, sample_threshold_results)
+        results = await classifier.classify_patterns(
+            sample_window, sample_threshold_results
+        )
 
         assert len(results) == 1
         pattern_match = results[0]
@@ -205,7 +207,9 @@ class TestGeminiPatternClassifierClassification:
         mock_gemini_client_class.return_value = mock_gemini_client
 
         classifier = GeminiPatternClassifier(api_key="test_key")
-        results = await classifier.classify_patterns(sample_window, sample_threshold_results)
+        results = await classifier.classify_patterns(
+            sample_window, sample_threshold_results
+        )
 
         assert len(results) == 1
         pattern_match = results[0]
@@ -237,7 +241,9 @@ class TestGeminiPatternClassifierClassification:
         mock_gemini_client_class.return_value = mock_gemini_client
 
         classifier = GeminiPatternClassifier(api_key="test_key")
-        results = await classifier.classify_patterns(sample_window, sample_threshold_results)
+        results = await classifier.classify_patterns(
+            sample_window, sample_threshold_results
+        )
 
         assert len(results) == 0
 
@@ -262,7 +268,9 @@ class TestGeminiPatternClassifierClassification:
         mock_gemini_client_class.return_value = mock_gemini_client
 
         classifier = GeminiPatternClassifier(api_key="test_key")
-        results = await classifier.classify_patterns(sample_window, sample_threshold_results)
+        results = await classifier.classify_patterns(
+            sample_window, sample_threshold_results
+        )
 
         assert len(results) == 0
 
@@ -295,7 +303,9 @@ class TestGeminiPatternClassifierClassification:
         mock_gemini_client_class.return_value = mock_gemini_client
 
         classifier = GeminiPatternClassifier(api_key="test_key")
-        results = await classifier.classify_patterns(sample_window, sample_threshold_results)
+        results = await classifier.classify_patterns(
+            sample_window, sample_threshold_results
+        )
 
         # Should return empty list for unknown pattern type
         assert len(results) == 0
@@ -309,9 +319,7 @@ class TestGeminiPatternClassifierHelpers:
         """Test model selection for simple incidents."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
-        window = TimeWindow(
-            start_time=datetime.now(timezone.utc), duration_minutes=5
-        )
+        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=5)
         window.logs = [
             LogEntry(
                 insert_id="log1",
@@ -331,9 +339,7 @@ class TestGeminiPatternClassifierHelpers:
         """Test model selection for complex incidents."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
-        window = TimeWindow(
-            start_time=datetime.now(timezone.utc), duration_minutes=60
-        )
+        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=60)
 
         # Create many logs from multiple services
         window.logs = []
@@ -361,8 +367,14 @@ class TestGeminiPatternClassifierHelpers:
         """Test pattern type string to enum mapping."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
-        assert classifier._map_pattern_type("cascade_failure") == PatternType.CASCADE_FAILURE
-        assert classifier._map_pattern_type("service_degradation") == PatternType.SERVICE_DEGRADATION
+        assert (
+            classifier._map_pattern_type("cascade_failure")
+            == PatternType.CASCADE_FAILURE
+        )
+        assert (
+            classifier._map_pattern_type("service_degradation")
+            == PatternType.SERVICE_DEGRADATION
+        )
         assert classifier._map_pattern_type("unknown_pattern") is None
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
@@ -408,9 +420,7 @@ class TestGeminiPatternClassifierPrompts:
         """Test classification prompt construction."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
-        window = TimeWindow(
-            start_time=datetime.now(timezone.utc), duration_minutes=15
-        )
+        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=15)
         window.logs = [
             LogEntry(
                 insert_id="log1",
@@ -455,9 +465,7 @@ class TestGeminiPatternClassifierPrompts:
             "reasoning": "Multiple service failures detected",
         }
 
-        window = TimeWindow(
-            start_time=datetime.now(timezone.utc), duration_minutes=10
-        )
+        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=10)
         window.logs = [Mock()]
 
         prompt = classifier._build_confidence_prompt(pattern_data, window)
@@ -477,7 +485,10 @@ class TestGeminiPatternClassifierPrompts:
         assert classification_schema["type"] == "object"
         assert "pattern_type" in classification_schema["properties"]
         assert "confidence_score" in classification_schema["properties"]
-        assert "cascade_failure" in classification_schema["properties"]["pattern_type"]["enum"]
+        assert (
+            "cascade_failure"
+            in classification_schema["properties"]["pattern_type"]["enum"]
+        )
 
         # Test confidence schema
         confidence_schema = classifier._build_confidence_schema()

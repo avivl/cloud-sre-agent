@@ -8,6 +8,7 @@ context sharing between multiple models.
 
 import asyncio
 import logging
+import re
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -468,16 +469,49 @@ class ModelMixer:
         ]
 
     def _validate_prompt(self, prompt: str) -> str:
-        """Validate and sanitize prompt input."""
+        """Enhanced validation with security checks."""
         if not prompt or not prompt.strip():
             raise ValueError("Prompt cannot be empty")
 
         if len(prompt) > MAX_PROMPT_LENGTH:
             raise ValueError(f"Prompt too long (max {MAX_PROMPT_LENGTH} characters)")
 
-        # Remove potentially harmful content
-        sanitized = prompt.strip()
-        return sanitized
+        # Add security checks
+        if self._contains_injection_patterns(prompt):
+            raise ValueError("Prompt contains potentially harmful patterns")
+
+        # Sanitize and return
+        return self._sanitize_prompt(prompt.strip())
+
+    def _contains_injection_patterns(self, prompt: str) -> bool:
+        """Check for common injection patterns."""
+        dangerous_patterns = [
+            r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>",
+            r"javascript:",
+            r"data:text/html",
+            r"vbscript:",
+            r"onload\s*=",
+            r"onerror\s*=",
+            r"onclick\s*=",
+            r"<iframe\b",
+            r"<object\b",
+            r"<embed\b",
+            r"<link\b[^>]*javascript",
+            r"<meta\b[^>]*http-equiv",
+        ]
+        return any(
+            re.search(pattern, prompt, re.IGNORECASE) for pattern in dangerous_patterns
+        )
+
+    def _sanitize_prompt(self, prompt: str) -> str:
+        """Sanitize prompt by removing or escaping dangerous content."""
+        # Remove null bytes and control characters
+        sanitized = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", prompt)
+
+        # Normalize whitespace
+        sanitized = re.sub(r"\s+", " ", sanitized)
+
+        return sanitized.strip()
 
     def _validate_model_configs(self, model_configs: List[ModelConfig]) -> None:
         """Validate model configuration list."""
@@ -531,13 +565,18 @@ class ModelMixer:
         else:
             results = await self._execute_parallel(model_configs, prompt, context)
 
-        # Aggregate results
+        # Aggregate results (filter out None values for aggregation)
         if results:
-            aggregated_result, confidence = (
-                await self.result_aggregator.aggregate_results(
-                    results, model_configs, strategy
+            valid_results = [r for r in results if r is not None]
+            if valid_results:
+                aggregated_result, confidence = (
+                    await self.result_aggregator.aggregate_results(
+                        valid_results, model_configs, strategy
+                    )
                 )
-            )
+            else:
+                aggregated_result = ""
+                confidence = 0.0
         else:
             aggregated_result = ""
             confidence = 0.0
@@ -626,7 +665,7 @@ class ModelMixer:
         model_configs: List[ModelConfig],
         prompt: str,
         context: Optional[Dict[str, Any]],
-    ) -> List[LLMResponse]:
+    ) -> List[Optional[LLMResponse]]:
         """Execute models in parallel."""
         tasks = []
         for config in model_configs:
@@ -635,24 +674,25 @@ class ModelMixer:
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Filter out exceptions and return valid responses
-        valid_results = []
+        # Preserve alignment between results and model_configs
+        aligned_results: List[Optional[LLMResponse]] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(
                     f"Model {model_configs[i].provider}:{model_configs[i].model} failed: {result}"
                 )
+                aligned_results.append(None)
             else:
-                valid_results.append(result)
+                aligned_results.append(result)  # type: ignore
 
-        return valid_results
+        return aligned_results
 
     async def _execute_sequential(
         self,
         model_configs: List[ModelConfig],
         prompt: str,
         context: Optional[Dict[str, Any]],
-    ) -> List[LLMResponse]:
+    ) -> List[Optional[LLMResponse]]:
         """Execute models sequentially."""
         results = []
         for config in model_configs:
@@ -670,7 +710,7 @@ class ModelMixer:
         model_configs: List[ModelConfig],
         prompt: str,
         context: Optional[Dict[str, Any]],
-    ) -> List[LLMResponse]:
+    ) -> List[Optional[LLMResponse]]:
         """Execute models in cascade (results feed into next model)."""
         results = []
         current_prompt = prompt

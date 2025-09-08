@@ -280,7 +280,7 @@ class TestLogSanitizerValidation:
         """Test validation counts removed sensitive items."""
         original = "User admin@test.com at 192.168.1.1 with secret=password123"
         sanitized = sanitizer.sanitize_text(original)
-        
+
         validation_result = sanitizer.validate_sanitization(original, sanitized)
 
         # Should show items were removed
@@ -296,7 +296,7 @@ class TestLogSanitizerValidation:
         """Test validation with no sensitive data."""
         original = "Normal log message without sensitive information"
         sanitized = sanitizer.sanitize_text(original)
-        
+
         validation_result = sanitizer.validate_sanitization(original, sanitized)
 
         # All counts should be 0
@@ -307,7 +307,7 @@ class TestLogSanitizerValidation:
         """Test validation with multiple instances of same pattern."""
         original = "Servers 192.168.1.1 and 10.0.0.1 and 172.16.0.1 failed"
         sanitized = sanitizer.sanitize_text(original)
-        
+
         validation_result = sanitizer.validate_sanitization(original, sanitized)
 
         # Should count all IP addresses removed

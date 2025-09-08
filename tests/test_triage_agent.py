@@ -1,12 +1,16 @@
-import pytest
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from gemini_sre_agent.triage_agent import TriageAgent, TriagePacket
+
 
 @pytest.fixture
 def mock_aiplatform():
-    with patch('gemini_sre_agent.triage_agent.aiplatform') as mock_aiplatform:
+    with patch("gemini_sre_agent.triage_agent.aiplatform") as mock_aiplatform:
         yield mock_aiplatform
+
 
 @pytest.fixture
 def mock_gemini_response():
@@ -17,12 +21,15 @@ def mock_gemini_response():
         "preliminary_severity_score": 7,
         "affected_services": ["test-service"],
         "sample_log_entries": ["test log 1", "test log 2"],
-        "natural_language_summary": "Simulated summary of test issue."
+        "natural_language_summary": "Simulated summary of test issue.",
     }
 
-@patch('gemini_sre_agent.triage_agent.GenerativeModel')
+
+@patch("gemini_sre_agent.triage_agent.GenerativeModel")
 @pytest.mark.asyncio
-async def test_analyze_logs(mock_generative_model, mock_aiplatform, mock_gemini_response):
+async def test_analyze_logs(
+    mock_generative_model, mock_aiplatform, mock_gemini_response
+):
     # Arrange
     # Configure the mock GenerativeModel to return a predefined response
     mock_instance = MagicMock()
@@ -32,7 +39,7 @@ async def test_analyze_logs(mock_generative_model, mock_aiplatform, mock_gemini_
     agent = TriageAgent(
         project_id="test-project",
         location="us-central1",
-        triage_model="gemini-1.5-flash-001"
+        triage_model="gemini-1.5-flash-001",
     )
     logs = ["log entry 1", "log entry 2"]
 
@@ -43,10 +50,18 @@ async def test_analyze_logs(mock_generative_model, mock_aiplatform, mock_gemini_
     # Assert
     assert isinstance(triage_packet, TriagePacket)
     assert triage_packet.issue_id == mock_gemini_response["issue_id"]
-    assert triage_packet.preliminary_severity_score == mock_gemini_response["preliminary_severity_score"]
+    assert (
+        triage_packet.preliminary_severity_score
+        == mock_gemini_response["preliminary_severity_score"]
+    )
     assert triage_packet.affected_services == mock_gemini_response["affected_services"]
-    assert triage_packet.sample_log_entries == mock_gemini_response["sample_log_entries"]
-    assert triage_packet.natural_language_summary == mock_gemini_response["natural_language_summary"]
+    assert (
+        triage_packet.sample_log_entries == mock_gemini_response["sample_log_entries"]
+    )
+    assert (
+        triage_packet.natural_language_summary
+        == mock_gemini_response["natural_language_summary"]
+    )
 
     # Verify that generate_content was called with the correct prompt
     expected_prompt_part = "You are an expert SRE Triage Agent"

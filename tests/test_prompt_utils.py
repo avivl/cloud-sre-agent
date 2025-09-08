@@ -40,7 +40,9 @@ class TestBuildContextKwargs:
         # Verify basic string fields
         assert kwargs["primary_service"] == "user-service"
         assert kwargs["affected_services"] == "auth-service, payment-service"
-        assert kwargs["code_changes_context"] == "Deployed version 1.2.3 with auth fixes"
+        assert (
+            kwargs["code_changes_context"] == "Deployed version 1.2.3 with auth fixes"
+        )
         assert kwargs["error_related_files"] == "auth.py, user.py"
 
         # Verify datetime formatting
@@ -101,15 +103,15 @@ class TestBuildContextKwargs:
         context = PatternContext(
             primary_service="test-service",
             affected_services=[],  # Empty list
-            error_patterns={},     # Empty dict
-            error_related_files=[], # Empty list
+            error_patterns={},  # Empty dict
+            error_related_files=[],  # Empty list
         )
 
         kwargs = build_context_kwargs(context)
 
         assert kwargs["primary_service"] == "test-service"
         assert kwargs["affected_services"] == "No services identified"
-        assert kwargs["error_patterns"] == "No error patterns available" 
+        assert kwargs["error_patterns"] == "No error patterns available"
         assert kwargs["error_related_files"] == "No related files identified"
 
     def test_complex_json_serialization(self) -> None:
@@ -128,7 +130,7 @@ class TestBuildContextKwargs:
         )
 
         kwargs = build_context_kwargs(context)
-        
+
         # Verify complex structure is properly serialized
         topology = json.loads(kwargs["service_topology"])
         assert topology == complex_topology
@@ -239,7 +241,7 @@ class TestBuildEvidenceKwargs:
             "log_completeness": 0.0,  # Minimum value
             "missing_data_rate": 100.0,  # Maximum percentage
             "error_concentration": 1.0,  # Maximum correlation
-            "timing_correlation": 0.0,   # Minimum correlation
+            "timing_correlation": 0.0,  # Minimum correlation
             "similar_incidents_count": 0,  # No similar incidents
         }
 
@@ -254,10 +256,10 @@ class TestBuildEvidenceKwargs:
     def test_numeric_vs_string_values(self) -> None:
         """Test that numeric and string values are handled appropriately."""
         evidence_metrics = {
-            "log_completeness": 88.7,              # Numeric
-            "timestamp_consistency": "moderate",    # String
-            "error_concentration": 0.76,           # Numeric float
-            "similar_incidents_count": 5,          # Numeric int
+            "log_completeness": 88.7,  # Numeric
+            "timestamp_consistency": "moderate",  # String
+            "error_concentration": 0.76,  # Numeric float
+            "similar_incidents_count": 5,  # Numeric int
         }
 
         kwargs = build_evidence_kwargs(evidence_metrics)
@@ -278,7 +280,7 @@ class TestBuildEvidenceKwargs:
 
         expected_keys = {
             "log_completeness",
-            "timestamp_consistency", 
+            "timestamp_consistency",
             "missing_data_rate",
             "error_concentration",
             "timing_correlation",
@@ -311,11 +313,11 @@ class TestBuildEvidenceKwargs:
 
         # Should return a dictionary suitable for string formatting
         assert isinstance(kwargs, dict)
-        
+
         # All values should be serializable for template formatting
         for key, value in kwargs.items():
             assert isinstance(value, (int, float, str))
-            
+
             # Test that values can be used in string formatting
             try:
                 formatted = f"Value: {value}"

@@ -34,7 +34,7 @@ class LLMMetricType(Enum):
 
     # Cost metrics
     COST_PER_REQUEST = "cost_per_request"
-    COST_PER_TOKEN = "data_point_alpha"  # nosec B105
+    COST_PER_TOKEN = "cost_per_token"  # nosec B105
     TOTAL_COST = "total_cost"
 
     # Performance metrics

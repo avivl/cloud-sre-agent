@@ -5,9 +5,10 @@ Tests log quality validation including completeness assessment,
 noise detection, consistency checking, and duplicate analysis.
 """
 
-import pytest
 from datetime import datetime, timedelta
 from typing import List
+
+import pytest
 
 from gemini_sre_agent.ml.log_quality_validator import LogQualityValidator
 from gemini_sre_agent.ml.validation_config import (
@@ -100,8 +101,12 @@ class TestLogQualityValidator:
         """Test completeness calculation with missing fields."""
         logs = [
             self.create_test_log("service-1", "Complete log", "ERROR"),  # Complete
-            LogEntry(self.base_time, service_name="service-2"),  # Missing message/severity
-            LogEntry(self.base_time, error_message="Missing service"),  # Missing service
+            LogEntry(
+                self.base_time, service_name="service-2"
+            ),  # Missing message/severity
+            LogEntry(
+                self.base_time, error_message="Missing service"
+            ),  # Missing service
             LogEntry(self.base_time, severity="INFO"),  # Missing service/message
             self.create_test_log("service-5", "Another complete", "WARN"),  # Complete
         ]
@@ -114,11 +119,17 @@ class TestLogQualityValidator:
     def test_noise_ratio_calculation(self):
         """Test noise ratio calculation with various log types."""
         logs = [
-            self.create_test_log("service-1", "Normal error message", "ERROR"),  # Not noisy
-            self.create_test_log("service-2", "Debug info", "DEBUG"),  # Noisy - debug level
+            self.create_test_log(
+                "service-1", "Normal error message", "ERROR"
+            ),  # Not noisy
+            self.create_test_log(
+                "service-2", "Debug info", "DEBUG"
+            ),  # Noisy - debug level
             self.create_test_log("service-3", "Short", "ERROR"),  # Noisy - too short
             self.create_test_log("service-4", "", "INFO"),  # Noisy - empty message
-            self.create_test_log("service-5", "Another normal error", "WARN"),  # Not noisy
+            self.create_test_log(
+                "service-5", "Another normal error", "WARN"
+            ),  # Not noisy
         ]
         window = self.create_test_window(logs)
         metrics = self.validator.assess_log_quality(window)
@@ -129,11 +140,17 @@ class TestLogQualityValidator:
     def test_consistency_calculation(self):
         """Test consistency calculation with message patterns."""
         logs = [
-            self.create_test_log("service-1", "Connection failed to 192.168.1.1", "ERROR"),
+            self.create_test_log(
+                "service-1", "Connection failed to 192.168.1.1", "ERROR"
+            ),
             self.create_test_log("service-2", "Connection failed to 10.0.0.1", "ERROR"),
-            self.create_test_log("service-3", "Connection failed to 172.16.0.1", "ERROR"),
+            self.create_test_log(
+                "service-3", "Connection failed to 172.16.0.1", "ERROR"
+            ),
             self.create_test_log("service-4", "Database timeout occurred", "ERROR"),
-            self.create_test_log("service-5", "Connection failed to 127.0.0.1", "ERROR"),
+            self.create_test_log(
+                "service-5", "Connection failed to 127.0.0.1", "ERROR"
+            ),
         ]
         window = self.create_test_window(logs)
         metrics = self.validator.assess_log_quality(window)
@@ -160,7 +177,9 @@ class TestLogQualityValidator:
         """Test validation passes when all thresholds are met."""
         # Create high-quality logs that meet all thresholds
         logs = [
-            self.create_test_log(f"service-{i % 3}", f"Standard error pattern {i}", "ERROR")
+            self.create_test_log(
+                f"service-{i % 3}", f"Standard error pattern {i}", "ERROR"
+            )
             for i in range(10)
         ]
         window = self.create_test_window(logs)
@@ -202,10 +221,16 @@ class TestLogQualityValidator:
         # Very inconsistent messages with truly different patterns
         logs = [
             self.create_test_log("service-1", "Database connection timeout", "ERROR"),
-            self.create_test_log("service-2", "Authentication failed for user", "ERROR"),
+            self.create_test_log(
+                "service-2", "Authentication failed for user", "ERROR"
+            ),
             self.create_test_log("service-3", "File not found in filesystem", "ERROR"),
-            self.create_test_log("service-4", "Memory allocation error occurred", "ERROR"),
-            self.create_test_log("service-5", "Network socket closed unexpectedly", "ERROR"),
+            self.create_test_log(
+                "service-4", "Memory allocation error occurred", "ERROR"
+            ),
+            self.create_test_log(
+                "service-5", "Network socket closed unexpectedly", "ERROR"
+            ),
         ]
         window = self.create_test_window(logs)
         metrics = self.validator.assess_log_quality(window)
@@ -220,10 +245,18 @@ class TestLogQualityValidator:
         duplicate_message = "Same error message repeated"
         logs = [
             self.create_test_log("service-1", "Unique message", "ERROR"),  # Unique
-            self.create_test_log("service-2", duplicate_message, "ERROR"),  # Duplicate 1
-            self.create_test_log("service-3", duplicate_message, "ERROR"),  # Duplicate 2
-            self.create_test_log("service-4", duplicate_message, "ERROR"),  # Duplicate 3
-            self.create_test_log("service-5", duplicate_message, "ERROR"),  # Duplicate 4
+            self.create_test_log(
+                "service-2", duplicate_message, "ERROR"
+            ),  # Duplicate 1
+            self.create_test_log(
+                "service-3", duplicate_message, "ERROR"
+            ),  # Duplicate 2
+            self.create_test_log(
+                "service-4", duplicate_message, "ERROR"
+            ),  # Duplicate 3
+            self.create_test_log(
+                "service-5", duplicate_message, "ERROR"
+            ),  # Duplicate 4
         ]
         window = self.create_test_window(logs)
 
@@ -311,16 +344,26 @@ class TestLogQualityValidator:
         # Test number normalization
         pattern1 = validator._extract_message_pattern("Error code 404 encountered")
         pattern2 = validator._extract_message_pattern("Error code 500 encountered")
-        assert pattern1 == pattern2  # Both should normalize to "Error code N encountered"
+        assert (
+            pattern1 == pattern2
+        )  # Both should normalize to "Error code N encountered"
 
         # Test UUID normalization (8+ hex chars)
-        uuid_pattern1 = validator._extract_message_pattern("User abc123def456 not found")
-        uuid_pattern2 = validator._extract_message_pattern("User 1234567890abcdef not found")
+        uuid_pattern1 = validator._extract_message_pattern(
+            "User abc123def456 not found"
+        )
+        uuid_pattern2 = validator._extract_message_pattern(
+            "User 1234567890abcdef not found"
+        )
         assert uuid_pattern1 == uuid_pattern2  # Both should use ID placeholder
 
         # Test IP address normalization
-        ip_pattern1 = validator._extract_message_pattern("Connection to 192.168.1.1 failed")
-        ip_pattern2 = validator._extract_message_pattern("Connection to 10.0.0.1 failed")
+        ip_pattern1 = validator._extract_message_pattern(
+            "Connection to 192.168.1.1 failed"
+        )
+        ip_pattern2 = validator._extract_message_pattern(
+            "Connection to 10.0.0.1 failed"
+        )
         assert ip_pattern1 == ip_pattern2  # Both should use IP placeholder
 
     def test_noisy_log_detection(self):
@@ -332,11 +375,15 @@ class TestLogQualityValidator:
         assert validator._is_noisy_log(short_log) is True
 
         # Test debug level detection
-        debug_log = LogEntry(self.base_time, error_message="Debug information", severity="DEBUG")
+        debug_log = LogEntry(
+            self.base_time, error_message="Debug information", severity="DEBUG"
+        )
         assert validator._is_noisy_log(debug_log) is True
 
         # Test trace level detection
-        trace_log = LogEntry(self.base_time, error_message="Trace information", severity="TRACE")
+        trace_log = LogEntry(
+            self.base_time, error_message="Trace information", severity="TRACE"
+        )
         assert validator._is_noisy_log(trace_log) is True
 
         # Test empty message detection

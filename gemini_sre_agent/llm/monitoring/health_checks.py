@@ -433,3 +433,192 @@ class LLMHealthChecker:
         """Get issues for a specific provider."""
         health = self.provider_health.get(provider_name)
         return health.issues if health else []
+
+
+class CircuitBreakerHealthChecker(LLMHealthChecker):
+    """Health checker with circuit breaker pattern."""
+
+    def __init__(
+        self,
+        provider_factory: LLMProviderFactory,
+        failure_threshold: int = 5,
+        recovery_timeout: int = 60,
+        *args,
+        **kwargs,
+    ):
+        """Initialize circuit breaker health checker.
+
+        Args:
+            provider_factory: Factory for creating providers
+            failure_threshold: Number of consecutive failures before opening circuit
+            recovery_timeout: Time in seconds before attempting recovery
+        """
+        super().__init__(provider_factory, *args, **kwargs)
+        self.failure_counts: Dict[str, int] = {}
+        self.circuit_states: Dict[str, str] = {}  # closed, open, half-open
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.last_failure_times: Dict[str, float] = {}
+        self.last_success_times: Dict[str, float] = {}
+
+    async def check_provider_health(self, provider_name: str) -> ProviderHealth:
+        """Check health with circuit breaker logic."""
+        current_time = time.time()
+
+        # Check circuit breaker state
+        if self.circuit_states.get(provider_name) == "open":
+            if (
+                current_time - self.last_failure_times.get(provider_name, 0)
+                > self.recovery_timeout
+            ):
+                self.circuit_states[provider_name] = "half-open"
+                logger.info(
+                    f"Circuit breaker for {provider_name} moved to half-open state"
+                )
+            else:
+                return ProviderHealth(
+                    provider=provider_name,
+                    status=HealthStatus.UNHEALTHY,
+                    last_check=datetime.now(),
+                    issues=["Circuit breaker open"],
+                    avg_response_time_ms=0.0,
+                )
+
+        try:
+            # Perform actual health check
+            provider = self.provider_factory.get_provider(provider_name)
+            if not provider:
+                return ProviderHealth(
+                    provider=provider_name,
+                    status=HealthStatus.UNHEALTHY,
+                    last_check=datetime.now(),
+                    issues=["Provider not found"],
+                    avg_response_time_ms=0.0,
+                )
+
+            # Simple health check with a test request
+            test_request = LLMRequest(
+                prompt="Health check",
+                max_tokens=10,
+                temperature=0.0,
+            )
+
+            start_time = time.time()
+            try:
+                await asyncio.wait_for(
+                    provider.generate(test_request), timeout=self.health_check_timeout
+                )
+                response_time = (time.time() - start_time) * 1000
+
+                health = ProviderHealth(
+                    provider=provider_name,
+                    status=HealthStatus.HEALTHY,
+                    last_check=datetime.now(),
+                    issues=[],
+                    avg_response_time_ms=response_time,
+                )
+
+                self._on_success(provider_name, current_time)
+                return health
+
+            except Exception as e:
+                response_time = (time.time() - start_time) * 1000
+                health = ProviderHealth(
+                    provider=provider_name,
+                    status=HealthStatus.UNHEALTHY,
+                    last_check=datetime.now(),
+                    issues=[str(e)],
+                    avg_response_time_ms=response_time,
+                )
+
+                self._on_failure(provider_name, current_time, [str(e)])
+                return health
+
+        except Exception as e:
+            self._on_failure(provider_name, current_time, [str(e)])
+            return ProviderHealth(
+                provider=provider_name,
+                status=HealthStatus.UNHEALTHY,
+                last_check=datetime.now(),
+                issues=[f"Health check failed: {str(e)}"],
+                avg_response_time_ms=0.0,
+            )
+
+    def _on_success(self, provider_name: str, current_time: float) -> None:
+        """Handle successful health check."""
+        self.failure_counts[provider_name] = 0
+        self.circuit_states[provider_name] = "closed"
+        self.last_success_times[provider_name] = current_time
+        logger.debug(f"Health check success for {provider_name}, circuit closed")
+
+    def _on_failure(
+        self, provider_name: str, current_time: float, issues: List[str]
+    ) -> None:
+        """Handle failed health check."""
+        self.failure_counts[provider_name] = (
+            self.failure_counts.get(provider_name, 0) + 1
+        )
+        self.last_failure_times[provider_name] = current_time
+
+        if self.failure_counts[provider_name] >= self.failure_threshold:
+            self.circuit_states[provider_name] = "open"
+            logger.warning(
+                f"Circuit breaker opened for {provider_name} after "
+                f"{self.failure_counts[provider_name]} consecutive failures"
+            )
+        else:
+            logger.debug(
+                f"Health check failure for {provider_name} "
+                f"({self.failure_counts[provider_name]}/{self.failure_threshold})"
+            )
+
+    def get_circuit_breaker_state(self, provider_name: str) -> Dict[str, Any]:
+        """Get circuit breaker state for a provider."""
+        current_time = time.time()
+
+        return {
+            "provider": provider_name,
+            "state": self.circuit_states.get(provider_name, "closed"),
+            "failure_count": self.failure_counts.get(provider_name, 0),
+            "failure_threshold": self.failure_threshold,
+            "last_failure_time": self.last_failure_times.get(provider_name),
+            "last_success_time": self.last_success_times.get(provider_name),
+            "time_since_last_failure": (
+                current_time - self.last_failure_times.get(provider_name, 0)
+                if provider_name in self.last_failure_times
+                else None
+            ),
+            "time_since_last_success": (
+                current_time - self.last_success_times.get(provider_name, 0)
+                if provider_name in self.last_success_times
+                else None
+            ),
+            "recovery_timeout": self.recovery_timeout,
+        }
+
+    def get_all_circuit_breaker_states(self) -> Dict[str, Dict[str, Any]]:
+        """Get circuit breaker states for all providers."""
+        return {
+            provider: self.get_circuit_breaker_state(provider)
+            for provider in self.provider_factory.list_providers()
+        }
+
+    def reset_circuit_breaker(self, provider_name: str) -> None:
+        """Manually reset circuit breaker for a provider."""
+        self.failure_counts[provider_name] = 0
+        self.circuit_states[provider_name] = "closed"
+        if provider_name in self.last_failure_times:
+            del self.last_failure_times[provider_name]
+        logger.info(f"Circuit breaker manually reset for {provider_name}")
+
+    def is_circuit_open(self, provider_name: str) -> bool:
+        """Check if circuit breaker is open for a provider."""
+        return self.circuit_states.get(provider_name) == "open"
+
+    def get_healthy_providers(self) -> List[str]:
+        """Get list of providers with closed circuit breakers."""
+        return [
+            provider
+            for provider in self.provider_factory.list_providers()
+            if not self.is_circuit_open(provider)
+        ]

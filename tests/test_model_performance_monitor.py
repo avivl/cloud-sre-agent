@@ -112,7 +112,9 @@ class TestModelPerformanceMonitor:
         assert monitor.baseline_confidence is not None
         assert monitor.baseline_latency is not None
         assert monitor.baseline_accuracy == 0.8  # 4/5 correct
-        assert abs(monitor.baseline_confidence - 0.84) < 1e-10  # Mean of 0.8, 0.82, 0.84, 0.86, 0.88
+        assert (
+            abs(monitor.baseline_confidence - 0.84) < 1e-10
+        )  # Mean of 0.8, 0.82, 0.84, 0.86, 0.88
         assert monitor.baseline_latency == 120.0  # Mean of 100, 110, 120, 130, 140
 
     def test_get_performance_metrics_empty(self, monitor: ModelPerformanceMonitor):
@@ -427,9 +429,7 @@ class TestDriftDetector:
         return DriftDetector(config)
 
     @pytest.mark.asyncio
-    async def test_accuracy_drift_detection_no_baseline(
-        self, detector: DriftDetector
-    ):
+    async def test_accuracy_drift_detection_no_baseline(self, detector: DriftDetector):
         """Test accuracy drift detection with no baseline."""
         alerts = []
         await detector.check_accuracy_drift(0.7, None, alerts)
@@ -443,9 +443,7 @@ class TestDriftDetector:
         assert len(alerts) == 0  # 0.02 drift < 0.15 threshold
 
     @pytest.mark.asyncio
-    async def test_accuracy_drift_detection_medium_drift(
-        self, detector: DriftDetector
-    ):
+    async def test_accuracy_drift_detection_medium_drift(self, detector: DriftDetector):
         """Test accuracy drift detection with medium drift."""
         alerts = []
         await detector.check_accuracy_drift(0.6, 0.8, alerts)
@@ -575,8 +573,13 @@ class TestPerformanceMetrics:
 
     def test_calculate_drift_percentage(self):
         """Test drift percentage calculation."""
-        assert abs(PerformanceMetrics.calculate_drift_percentage(0.8, 0.9) - 12.5) < 1e-10
-        assert abs(PerformanceMetrics.calculate_drift_percentage(0.8, 0.7) - (-12.5)) < 1e-10
+        assert (
+            abs(PerformanceMetrics.calculate_drift_percentage(0.8, 0.9) - 12.5) < 1e-10
+        )
+        assert (
+            abs(PerformanceMetrics.calculate_drift_percentage(0.8, 0.7) - (-12.5))
+            < 1e-10
+        )
         assert PerformanceMetrics.calculate_drift_percentage(0.0, 0.5) == 0.0
 
     def test_is_significant_drift(self):

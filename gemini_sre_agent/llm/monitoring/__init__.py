@@ -6,7 +6,7 @@ including structured logging, metrics collection, health checks, and dashboard A
 """
 
 from .dashboard_apis import LLMDashboardAPI
-from .health_checks import HealthStatus, LLMHealthChecker
+from .health_checks import CircuitBreakerHealthChecker, HealthStatus, LLMHealthChecker
 from .llm_metrics import LLMMetricsCollector, LLMMetricType, get_llm_metrics_collector
 from .structured_logging import (
     ErrorLogger,
@@ -25,6 +25,7 @@ __all__ = [
     # Health checks
     "HealthStatus",
     "LLMHealthChecker",
+    "CircuitBreakerHealthChecker",
     # Metrics
     "LLMMetricType",
     "LLMMetricsCollector",

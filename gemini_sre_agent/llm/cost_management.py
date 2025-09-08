@@ -198,9 +198,15 @@ class DynamicCostManager:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit."""
-        await self.stop()
-        return False
+        """Robust async context manager exit."""
+        try:
+            await self.stop()
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+        finally:
+            # Ensure consistent state even on errors
+            self._running = False
+            # Don't return a value to preserve exception propagation
 
     async def _refresh_pricing_loop(self) -> None:
         """Background task to refresh pricing data."""

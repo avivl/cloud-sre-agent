@@ -16,6 +16,7 @@ from .context_sharing import (
     context_propagator,
     feedback_loop,
 )
+from .intelligent_cache import IntelligentCache
 from .model_mixer import (
     MixingResult,
     MixingStrategy,
@@ -50,4 +51,6 @@ __all__ = [
     "context_manager",
     "context_propagator",
     "feedback_loop",
+    # Intelligent caching
+    "IntelligentCache",
 ]

@@ -58,7 +58,9 @@ class TestCodeAnalysisConfig:
 
     def test_invalid_timeout(self, tmp_path: Path) -> None:
         """Test configuration with invalid timeout."""
-        with pytest.raises(ValueError, match="analysis_timeout_seconds must be positive"):
+        with pytest.raises(
+            ValueError, match="analysis_timeout_seconds must be positive"
+        ):
             CodeAnalysisConfig(
                 repository_path=str(tmp_path), analysis_timeout_seconds=0
             )
@@ -291,7 +293,9 @@ class TestComplexityMetrics:
 
     def test_invalid_complexity_values(self) -> None:
         """Test complexity metrics with invalid values."""
-        with pytest.raises(ValueError, match="cyclomatic_complexity cannot be negative"):
+        with pytest.raises(
+            ValueError, match="cyclomatic_complexity cannot be negative"
+        ):
             ComplexityMetrics(
                 cyclomatic_complexity=-1.0,
                 cognitive_complexity=5.0,
@@ -311,9 +315,7 @@ class TestComplexityMetrics:
                 technical_debt_ratio=0.1,
             )
 
-        with pytest.raises(
-            ValueError, match="code_coverage must be between 0 and 100"
-        ):
+        with pytest.raises(ValueError, match="code_coverage must be between 0 and 100"):
             ComplexityMetrics(
                 cyclomatic_complexity=5.0,
                 cognitive_complexity=5.0,

@@ -1,19 +1,33 @@
 import pytest
-from unittest.mock import MagicMock
 
 from gemini_sre_agent.llm.capabilities.comparison import CapabilityComparer
 from gemini_sre_agent.llm.capabilities.database import CapabilityDatabase
-from gemini_sre_agent.llm.capabilities.models import ModelCapability, ModelCapabilities
+from gemini_sre_agent.llm.capabilities.models import ModelCapabilities, ModelCapability
 
 
 @pytest.fixture
 def populated_capability_database():
     """Fixture for a populated CapabilityDatabase."""
     db = CapabilityDatabase()
-    
-    cap_text_gen = ModelCapability(name="text_generation", description="Generates text", performance_score=0.8, cost_efficiency=0.2)
-    cap_code_gen = ModelCapability(name="code_generation", description="Generates code", performance_score=0.9, cost_efficiency=0.1)
-    cap_image_rec = ModelCapability(name="image_recognition", description="Recognizes images", performance_score=0.7, cost_efficiency=0.3)
+
+    cap_text_gen = ModelCapability(
+        name="text_generation",
+        description="Generates text",
+        performance_score=0.8,
+        cost_efficiency=0.2,
+    )
+    cap_code_gen = ModelCapability(
+        name="code_generation",
+        description="Generates code",
+        performance_score=0.9,
+        cost_efficiency=0.1,
+    )
+    cap_image_rec = ModelCapability(
+        name="image_recognition",
+        description="Recognizes images",
+        performance_score=0.7,
+        cost_efficiency=0.3,
+    )
 
     model_caps1 = ModelCapabilities(
         model_id="provider1/model_A", capabilities=[cap_text_gen, cap_code_gen]
@@ -52,22 +66,22 @@ def test_compare_models(populated_capability_database):
     assert model_A_results["summary"]["num_capabilities"] == 2
     assert model_A_results["summary"]["avg_performance_score"] == (0.8 + 0.9) / 2
     assert model_A_results["summary"]["avg_cost_efficiency"] == (0.2 + 0.1) / 2
-    
-    
 
     # Check provider2/model_B
     model_B_results = results["provider2/model_B"]
     assert "text_generation" in model_B_results["capabilities"]
     assert "image_recognition" in model_B_results["capabilities"]
     assert model_B_results["summary"]["num_capabilities"] == 2
-    
-    assert "image_recognition" in model_B_results["summary"]["unique_capabilities"] # Unique to B among compared
+
+    assert (
+        "image_recognition" in model_B_results["summary"]["unique_capabilities"]
+    )  # Unique to B among compared
 
     # Check provider3/model_C
     model_C_results = results["provider3/model_C"]
     assert "code_generation" in model_C_results["capabilities"]
     assert model_C_results["summary"]["num_capabilities"] == 1
-    
+
     assert not model_C_results["summary"]["unique_capabilities"]
 
 
@@ -91,14 +105,18 @@ def test_find_best_model_for_capabilities(populated_capability_database):
     best_model = comparer.find_best_model_for_capabilities(["image_recognition"])
     assert best_model is not None
     assert best_model[0] == "provider2/model_B"
-    assert best_model[1] == pytest.approx((0.7 * 0.7) + (0.3 * 0.3)) # 0.58
+    assert best_model[1] == pytest.approx((0.7 * 0.7) + (0.3 * 0.3))  # 0.58
 
     # Test with capabilities not supported by any model
     best_model = comparer.find_best_model_for_capabilities(["video_analysis"])
     assert best_model is None
 
     # Test with multiple required capabilities
-    best_model = comparer.find_best_model_for_capabilities(["text_generation", "code_generation"])
+    best_model = comparer.find_best_model_for_capabilities(
+        ["text_generation", "code_generation"]
+    )
     assert best_model is not None
     assert best_model[0] == "provider1/model_A"
-    assert best_model[1] == pytest.approx((((0.8+0.9)/2) * 0.7) + (((0.2+0.1)/2) * 0.3)) # (0.85 * 0.7) + (0.15 * 0.3) = 0.64
+    assert best_model[1] == pytest.approx(
+        (((0.8 + 0.9) / 2) * 0.7) + (((0.2 + 0.1) / 2) * 0.3)
+    )  # (0.85 * 0.7) + (0.15 * 0.3) = 0.64
