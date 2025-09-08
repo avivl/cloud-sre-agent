@@ -11,11 +11,13 @@ try:
     import instructor
     import litellm
     from mirascope import Prompt
-except ImportError as e:
-    raise ImportError(
-        "Required dependencies not installed. Please install: "
-        "pip install instructor litellm mirascope"
-    ) from e
+    LITELLM_AVAILABLE = True
+except ImportError:
+    # Set fallback values for when dependencies are not available
+    instructor = None  # type: ignore
+    litellm = None  # type: ignore
+    Prompt = None  # type: ignore
+    LITELLM_AVAILABLE = False
 
 from pydantic import BaseModel
 
@@ -36,12 +38,16 @@ class LiteLLMProvider(LLMProvider):
     """
 
     def __init__(self, config: LLMProviderConfig):
+        if not LITELLM_AVAILABLE:
+            raise ImportError(
+                "LiteLLM is not available. Please install: pip install litellm"
+            )
         super().__init__(config)
         self._configure_litellm()
 
     def _configure_litellm(self) -> None:
         """Configure LiteLLM with provider-specific settings."""
-        if self.config.api_key:
+        if self.config.api_key and litellm is not None:
             key_mapping = {
                 "openai": "api_key",
                 "anthropic": "anthropic_key",
@@ -59,8 +65,9 @@ class LiteLLMProvider(LLMProvider):
                 )
                 litellm.aws_region_name = self.config.region
 
-        litellm.verbose = True
-        litellm.drop_params = True
+        if litellm is not None:
+            litellm.verbose = True
+            litellm.drop_params = True
 
     async def initialize(self) -> None:
         """Initialize the provider with LiteLLM configuration."""
@@ -77,7 +84,7 @@ class LiteLLMProvider(LLMProvider):
             raise
 
     async def generate_text(
-        self, prompt: Union[str, Prompt], model: Optional[str] = None, **kwargs: Any
+        self, prompt: Union[str, Any], model: Optional[str] = None, **kwargs: Any
     ) -> str:
         """Generate text response using LiteLLM."""
         if not self._initialized:
@@ -87,6 +94,8 @@ class LiteLLMProvider(LLMProvider):
         formatted_prompt = self._format_prompt(prompt, **kwargs)
 
         try:
+            if litellm is None:
+                raise ImportError("LiteLLM is not available")
             response = await litellm.acompletion(
                 model=model_name,
                 messages=[{"role": "user", "content": formatted_prompt}],
@@ -99,7 +108,7 @@ class LiteLLMProvider(LLMProvider):
 
     async def generate_structured(
         self,
-        prompt: Union[str, Prompt],
+        prompt: Union[str, Any],
         response_model: Type[T],
         model: Optional[str] = None,
         **kwargs: Any,
@@ -112,6 +121,8 @@ class LiteLLMProvider(LLMProvider):
         formatted_prompt = self._format_prompt(prompt, **kwargs)
 
         try:
+            if instructor is None:
+                raise ImportError("Instructor is not available. Please install: pip install instructor")
             client = instructor.from_litellm(litellm)
             response = await client.chat.completions.create(
                 model=model_name,
@@ -127,7 +138,7 @@ class LiteLLMProvider(LLMProvider):
             raise
 
     def generate_stream(
-        self, prompt: Union[str, Prompt], model: Optional[str] = None, **kwargs: Any
+        self, prompt: Union[str, Any], model: Optional[str] = None, **kwargs: Any
     ) -> AsyncGenerator[str, None]:
         """Generate streaming text response using LiteLLM."""
 
@@ -139,6 +150,8 @@ class LiteLLMProvider(LLMProvider):
             formatted_prompt = self._format_prompt(prompt, **kwargs)
 
             try:
+                if litellm is None:
+                    raise ImportError("LiteLLM is not available")
                 response = await litellm.acompletion(
                     model=model_name,
                     messages=[{"role": "user", "content": formatted_prompt}],

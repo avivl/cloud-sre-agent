@@ -9,7 +9,8 @@ intelligent model selection and multi-provider capabilities.
 import logging
 from typing import Any, Dict, List, Optional
 
-from ..llm.base import ModelType, ProviderType
+from ..llm.base import ModelType
+from ..llm.common.enums import ProviderType
 from ..llm.config import LLMConfig
 from ..llm.strategy_manager import OptimizationGoal
 from .enhanced_base import EnhancedBaseAgent
@@ -581,10 +582,31 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             **kwargs,
         }
 
-        return await self.execute(
+        result = await self.execute(
             prompt_name="triage_issue",
             prompt_args=prompt_args,
             optimization_goal=OptimizationGoal.PERFORMANCE,
+        )
+        
+        # Convert TriageResponse to AnalysisResponse if needed
+        if hasattr(result, 'category') and hasattr(result, 'description'):
+            from .response_models import AnalysisResponse
+            return AnalysisResponse(
+                summary=result.description,
+                key_points=[result.category],
+                scores={"urgency": 8 if urgency_level == "high" else 5},
+                recommendations=["Investigate the issue further", "Monitor for similar patterns"]
+            )
+        # If result is already an AnalysisResponse, return it
+        if hasattr(result, 'summary') and hasattr(result, 'key_points'):
+            return result  # type: ignore
+        # Fallback: create a basic AnalysisResponse
+        from .response_models import AnalysisResponse
+        return AnalysisResponse(
+            summary=str(result),
+            key_points=["Unknown issue type"],
+            scores={"urgency": 5},
+            recommendations=["Manual investigation required"]
         )
 
 
@@ -689,7 +711,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         primary_model: Optional[str] = None,
         fallback_model: Optional[str] = None,
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[ProviderType] = None,
+        provider_preference: Optional[List[ProviderType]] = None,
         max_cost: Optional[float] = None,
         min_quality: Optional[float] = None,
         **kwargs: Any,

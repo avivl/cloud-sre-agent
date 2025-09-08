@@ -4,7 +4,7 @@ import logging
 import re
 from typing import List, Optional, Union
 
-from github import Github, GithubException
+from github import Github as GitHubClient, GithubException
 from github.Branch import Branch
 from github.ContentFile import ContentFile
 from github.PullRequest import PullRequest
@@ -23,6 +23,10 @@ class RemediationAgent:
     """
 
     def __init__(self, github_token: str, repo_name: str, use_local_patches: bool = False, patch_dir: str = "/tmp/real_patches"):
+        # Type annotations for attributes
+        self.github: Optional[GitHubClient] = None
+        self.repo: Optional[Repository] = None
+        self.local_patch_manager: Optional[LocalPatchManager] = None
         """
         Initializes the RemediationAgent with a GitHub token and repository name.
 
@@ -36,15 +40,14 @@ class RemediationAgent:
         self.repo_name = repo_name
         
         if use_local_patches or not github_token or github_token == "dummy_token":
-            self.github = None
-            self.repo = None
+            # Already initialized to None above
             self.local_patch_manager = LocalPatchManager(patch_dir)
             logger.info(
                 f"[REMEDIATION] RemediationAgent initialized with local patches in: {patch_dir}"
             )
         else:
-            self.github: Github = Github(github_token)
-            self.repo: Repository = self.github.get_repo(repo_name)
+            self.github = GitHubClient(github_token)
+            self.repo = self.github.get_repo(repo_name)
             self.local_patch_manager = None
             logger.info(
                 f"[REMEDIATION] RemediationAgent initialized for repository: {repo_name}"
@@ -281,6 +284,8 @@ class RemediationAgent:
                 file_path = "unknown_file.py"  # fallback
 
             # Create local patch
+            if self.local_patch_manager is None:
+                raise RuntimeError("Local patch manager is not initialized")
             patch_file_path = self.local_patch_manager.create_patch(
                 issue_id=issue_id,
                 file_path=file_path,

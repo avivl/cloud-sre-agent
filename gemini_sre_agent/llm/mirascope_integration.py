@@ -18,7 +18,10 @@ from pydantic import BaseModel
 # Mirascope imports with graceful fallback
 try:
     from mirascope import Prompt
-    from mirascope.prompts import ChatPrompt
+    try:
+        from mirascope.prompts import ChatPrompt
+    except ImportError:
+        ChatPrompt = None
 
     MIRASCOPE_AVAILABLE = True
 except ImportError:

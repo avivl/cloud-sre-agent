@@ -81,7 +81,8 @@ class PromptManager:
             name: Prompt name
             template: Prompt template string
         """
-        self.prompts[name] = Prompt(template)
+        # Store as string since Prompt class may not be available
+        self.prompts[name] = template
         self.logger.info(f"Added prompt: {name}")
 
     def list_prompts(self) -> List[str]:

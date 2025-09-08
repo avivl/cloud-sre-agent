@@ -1,0 +1,200 @@
+# Capability Definitions Configuration
+# This file defines the standard capabilities that can be discovered for LLM models
+
+capabilities:
+  # Basic text generation capabilities
+  text_generation:
+    name: "text_generation"
+    description: "Generates human-like text based on a given prompt"
+    parameters:
+      max_tokens:
+        type: "integer"
+        description: "Maximum number of tokens to generate"
+        default: 1000
+      temperature:
+        type: "float"
+        description: "Controls randomness in generation (0.0 to 1.0)"
+        default: 0.7
+      top_p:
+        type: "float"
+        description: "Nucleus sampling parameter"
+        default: 0.9
+    performance_score: 0.8
+    cost_efficiency: 0.7
+
+  # Code generation capabilities
+  code_generation:
+    name: "code_generation"
+    description: "Generates programming code in various languages"
+    parameters:
+      language:
+        type: "string"
+        description: "Programming language for code generation"
+        options: ["python", "javascript", "typescript", "java", "go", "rust", "cpp"]
+      framework:
+        type: "string"
+        description: "Framework or library to use"
+        optional: true
+      style:
+        type: "string"
+        description: "Code style preferences"
+        optional: true
+    performance_score: 0.9
+    cost_efficiency: 0.6
+
+  # Streaming capabilities
+  streaming:
+    name: "streaming"
+    description: "Supports real-time streaming of generated content"
+    parameters:
+      chunk_size:
+        type: "integer"
+        description: "Size of streaming chunks"
+        default: 50
+    performance_score: 0.7
+    cost_efficiency: 0.8
+
+  # Tool/function calling capabilities
+  tool_calling:
+    name: "tool_calling"
+    description: "Can call external tools and functions"
+    parameters:
+      max_tools:
+        type: "integer"
+        description: "Maximum number of tools that can be called"
+        default: 10
+      tool_schema:
+        type: "object"
+        description: "Schema for tool definitions"
+    performance_score: 0.8
+    cost_efficiency: 0.5
+
+  # Structured output capabilities
+  structured_output:
+    name: "structured_output"
+    description: "Can generate structured data (JSON, XML, etc.)"
+    parameters:
+      output_format:
+        type: "string"
+        description: "Output format type"
+        options: ["json", "xml", "yaml", "csv"]
+      schema_validation:
+        type: "boolean"
+        description: "Whether to validate against provided schema"
+        default: true
+    performance_score: 0.7
+    cost_efficiency: 0.6
+
+  # Multi-modal capabilities
+  multimodal:
+    name: "multimodal"
+    description: "Can process multiple input types (text, images, audio)"
+    parameters:
+      input_types:
+        type: "array"
+        description: "Supported input types"
+        items:
+          type: "string"
+        options: ["text", "image", "audio", "video"]
+      output_types:
+        type: "array"
+        description: "Supported output types"
+        items:
+          type: "string"
+        options: ["text", "image", "audio"]
+    performance_score: 0.6
+    cost_efficiency: 0.4
+
+  # Reasoning capabilities
+  reasoning:
+    name: "reasoning"
+    description: "Advanced logical reasoning and problem-solving"
+    parameters:
+      reasoning_depth:
+        type: "string"
+        description: "Level of reasoning complexity"
+        options: ["basic", "intermediate", "advanced"]
+      chain_of_thought:
+        type: "boolean"
+        description: "Supports step-by-step reasoning"
+        default: true
+    performance_score: 0.9
+    cost_efficiency: 0.3
+
+  # Memory capabilities
+  memory:
+    name: "memory"
+    description: "Can maintain context across multiple interactions"
+    parameters:
+      context_length:
+        type: "integer"
+        description: "Maximum context length in tokens"
+        default: 4000
+      memory_type:
+        type: "string"
+        description: "Type of memory support"
+        options: ["conversation", "episodic", "semantic"]
+    performance_score: 0.8
+    cost_efficiency: 0.7
+
+# Provider-specific capability mappings
+provider_mappings:
+  openai:
+    default_capabilities: ["text_generation", "streaming", "tool_calling", "structured_output"]
+    model_specific:
+      gpt-4:
+        additional_capabilities: ["reasoning", "multimodal"]
+      gpt-3.5-turbo:
+        additional_capabilities: ["reasoning"]
+  
+  anthropic:
+    default_capabilities: ["text_generation", "streaming", "reasoning"]
+    model_specific:
+      claude-3-opus:
+        additional_capabilities: ["multimodal", "memory"]
+      claude-3-sonnet:
+        additional_capabilities: ["multimodal"]
+  
+  google:
+    default_capabilities: ["text_generation", "streaming"]
+    model_specific:
+      gemini-pro:
+        additional_capabilities: ["multimodal", "reasoning"]
+      gemini-pro-vision:
+        additional_capabilities: ["multimodal"]
+
+# Capability requirements for different task types
+task_requirements:
+  text_completion:
+    required_capabilities: ["text_generation"]
+    optional_capabilities: ["streaming", "memory"]
+  
+  code_generation:
+    required_capabilities: ["code_generation"]
+    optional_capabilities: ["reasoning", "tool_calling"]
+  
+  analysis:
+    required_capabilities: ["text_generation", "reasoning"]
+    optional_capabilities: ["structured_output", "memory"]
+  
+  multimodal_processing:
+    required_capabilities: ["multimodal"]
+    optional_capabilities: ["text_generation", "reasoning"]
+  
+  tool_integration:
+    required_capabilities: ["tool_calling"]
+    optional_capabilities: ["text_generation", "structured_output"]
+
+# Performance thresholds for capability scoring
+performance_thresholds:
+  excellent: 0.9
+  good: 0.7
+  fair: 0.5
+  poor: 0.3
+
+# Cost efficiency thresholds
+cost_thresholds:
+  very_efficient: 0.8
+  efficient: 0.6
+  moderate: 0.4
+  expensive: 0.2

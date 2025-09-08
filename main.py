@@ -94,8 +94,10 @@ async def main():
     config_manager_llm = ConfigManager("examples/dogfooding/configs/llm_config.yaml")
     llm_config = config_manager_llm.get_config()
 
-    llm_factory = LLMProviderFactory(llm_config)
-    all_providers = await llm_factory.get_all_providers()
+    # Create providers from config first
+    all_providers = LLMProviderFactory.create_providers_from_config(llm_config)
+    
+    # Initialize and run capability discovery
     capability_discovery = CapabilityDiscovery(all_providers)
     await capability_discovery.discover_capabilities()
     logger.info(

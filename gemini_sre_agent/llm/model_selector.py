@@ -438,7 +438,7 @@ class ModelSelector:
         """Generate cache key for selection criteria."""
         key_parts = [
             str(criteria.semantic_type),
-            str(sorted(criteria.required_capabilities)),
+            str(sorted([cap.name for cap in criteria.required_capabilities])),
             str(criteria.max_cost),
             str(criteria.min_performance),
             str(criteria.min_reliability),

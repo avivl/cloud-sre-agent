@@ -12,7 +12,8 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 
-from ..llm.base import ModelType, ProviderType
+from ..llm.base import ModelType
+from ..llm.common.enums import ProviderType
 from ..llm.config import LLMConfig
 from ..llm.enhanced_service import EnhancedLLMService
 from ..llm.model_selector import SelectionStrategy

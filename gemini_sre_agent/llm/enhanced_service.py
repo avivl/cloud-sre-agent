@@ -8,6 +8,7 @@ selection system with the existing provider interfaces, enabling intelligent
 model selection based on task requirements, performance metrics, and fallback chains.
 """
 
+import json
 import logging
 import time
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
@@ -16,11 +17,12 @@ try:
     from mirascope import Prompt
 except ImportError:
     # Prompt class not available in current mirascope version
-    Prompt = None
+    Prompt = None  # type: ignore
 
 from pydantic import BaseModel
 
-from .base import LLMRequest, ModelType, ProviderType
+from .base import LLMRequest, ModelType
+from .common.enums import ProviderType
 from .config import LLMConfig
 from .factory import get_provider_factory
 from .model_registry import ModelInfo, ModelRegistry
@@ -68,7 +70,10 @@ class EnhancedLLMService(Generic[T]):
         # Initialize model selection components
         self.model_registry = model_registry or ModelRegistry()
         self.model_scorer = ModelScorer()
-        self.model_selector = ModelSelector(self.model_registry, self.model_scorer)
+        # Create a dummy capability discovery for now
+        from .capabilities.discovery import CapabilityDiscovery
+        capability_discovery = CapabilityDiscovery(self.providers)
+        self.model_selector = ModelSelector(self.model_registry, capability_discovery, self.model_scorer)
         self.performance_monitor = performance_monitor or PerformanceMonitor()
 
         # Populate model registry with models from config
@@ -88,18 +93,24 @@ class EnhancedLLMService(Generic[T]):
 
         for provider_name, provider_config in self.config.providers.items():
             # Convert string provider to ProviderType enum
-            from .base import ProviderType
+            from .common.enums import ProviderType
 
             provider_type = ProviderType(provider_config.provider)
             for model_name, model_config in provider_config.models.items():
                 # Convert capabilities from strings to ModelCapability enums
-                capabilities = set()
+                capabilities = []
                 for cap_str in model_config.capabilities:
                     try:
-                        capabilities.add(ModelCapability(cap_str))
-                    except ValueError:
+                        capabilities.append(ModelCapability(
+                            name=cap_str,
+                            description=f"Capability: {cap_str}",
+                            performance_score=getattr(model_config, "performance_score", 0.5),
+                            cost_efficiency=1.0 - (model_config.cost_per_1k_tokens / 0.1)  # Normalize cost to efficiency
+                        ))
+                    except (ValueError, AttributeError) as e:
                         # Skip unknown capabilities
-                        self.logger.warning(f"Unknown capability: {cap_str}")
+                        self.logger.warning(f"Unknown capability {cap_str}: {e}")
+                        continue
 
                 # Create ModelInfo
                 model_info = ModelInfo(
@@ -286,7 +297,7 @@ Respond only with the JSON object, no additional text."""
                             ],
                             recommendations=[],
                         )
-            except (json.JSONDecodeError, ValueError) as e:
+            except (json.JSONDecodeError, ValueError) as e:  # type: ignore
                 # Fallback: create a basic response with the raw content
                 if response_model.__name__ == "TriageResponse":
                     result = response_model(
@@ -663,13 +674,15 @@ Respond only with the JSON object, no additional text."""
         """Get available models for the specified provider or all providers."""
         if provider:
             if provider in self.providers:
-                return {provider: self.providers[provider].get_available_models()}
+                models = self.providers[provider].get_available_models()
+                return {provider: list(models.values()) if isinstance(models, dict) else models}
             return {}
 
-        return {
-            provider_name: provider_instance.get_available_models()
-            for provider_name, provider_instance in self.providers.items()
-        }
+        result = {}
+        for provider_name, provider_instance in self.providers.items():
+            models = provider_instance.get_available_models()
+            result[provider_name] = list(models.values()) if isinstance(models, dict) else models
+        return result
 
     def get_model_performance(self, model_name: str) -> Dict[str, Any]:
         """Get performance metrics for a specific model."""

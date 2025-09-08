@@ -14,7 +14,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .base import ModelType, ProviderType
+from .base import ModelType
+from .common.enums import ProviderType
 from .model_registry import ModelCapability, ModelInfo
 
 logger = logging.getLogger(__name__)
@@ -193,7 +194,7 @@ class ModelScorer:
             metadata={
                 "model_provider": model_info.provider.value,
                 "model_semantic_type": model_info.semantic_type.value,
-                "model_capabilities": [cap.value for cap in model_info.capabilities],
+                "model_capabilities": [cap.name for cap in model_info.capabilities],
             },
         )
 
@@ -353,7 +354,7 @@ class ModelScorer:
         key_parts = [
             model_name,
             str(context.task_type),
-            str(sorted(context.required_capabilities)),
+            str(sorted([cap.name for cap in context.required_capabilities])),
             str(context.max_cost),
             str(context.min_performance),
             str(context.min_reliability),
