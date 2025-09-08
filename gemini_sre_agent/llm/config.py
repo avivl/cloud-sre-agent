@@ -10,7 +10,7 @@ management of LLM providers, models, and system settings.
 import os
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from gemini_sre_agent.metrics.config import MetricsConfig
 
@@ -376,6 +376,18 @@ class CostConfig(BaseModel):
         if not 0 <= v <= 1:
             raise ValueError("Weights must be between 0 and 1")
         return v
+
+    @model_validator(mode='after')
+    def validate_weights_sum(self):
+        """Ensure optimization weights sum to approximately 1.0."""
+        total_weight = self.cost_weight + self.performance_weight + self.quality_weight
+        if not 0.95 <= total_weight <= 1.05:  # Allow small floating point errors
+            raise ValueError(
+                f"Optimization weights must sum to 1.0, got {total_weight:.3f}. "
+                f"Current weights: cost={self.cost_weight}, performance={self.performance_weight}, "
+                f"quality={self.quality_weight}"
+            )
+        return self
 
 
 class ResilienceConfig(BaseModel):

@@ -55,6 +55,12 @@ class IntegratedCostManager:
         """Estimate the cost of a request."""
         from .common.enums import ProviderType
 
+        # Input validation
+        if not provider or not model:
+            raise ValueError("Provider and model must be specified")
+        if input_tokens < 0 or output_tokens < 0:
+            raise ValueError("Token counts must be non-negative")
+
         try:
             # Handle common provider name variations
             provider_mapping = {
@@ -70,9 +76,14 @@ class IntegratedCostManager:
             return self.cost_manager.estimate_cost(
                 provider_enum, model, input_tokens, output_tokens
             )
-        except (ValueError, KeyError):
-            logger.warning(f"Unknown provider: {provider}")
-            return (input_tokens + output_tokens) * 0.001  # Default estimate
+        except (ValueError, KeyError) as e:
+            logger.warning(f"Unknown provider '{provider}': {e}")
+            # More sophisticated fallback based on token count
+            base_cost_per_1k = 0.001  # $1 per 1k tokens default
+            return ((input_tokens + output_tokens) / 1000) * base_cost_per_1k
+        except Exception as e:
+            logger.error(f"Error estimating cost for {provider}/{model}: {e}")
+            raise
 
     async def can_make_request(
         self, provider: str, model: str, input_tokens: int, output_tokens: int = 0
