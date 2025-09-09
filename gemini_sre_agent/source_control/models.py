@@ -68,6 +68,7 @@ class FileInfo:
 class BatchOperation:
     """Represents a single operation in a batch."""
 
+    operation_id: str
     operation_type: str
     path: Optional[str] = None
     content: Optional[str] = None

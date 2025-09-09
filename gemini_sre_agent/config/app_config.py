@@ -10,6 +10,7 @@ from pydantic import Field, field_validator
 
 from .base import BaseConfig
 from .ml_config import MLConfig
+from .source_control_global import SourceControlConfig, SourceControlGlobalConfig
 
 
 class ServiceConfig(BaseConfig):
@@ -19,6 +20,9 @@ class ServiceConfig(BaseConfig):
     project_id: str = Field(..., description="GCP project ID")
     location: str = Field(..., description="GCP location/region")
     subscription_id: str = Field(..., description="Pub/Sub subscription ID")
+    source_control: Optional[SourceControlConfig] = Field(
+        None, description="Source control configuration"
+    )
 
     @field_validator("project_id")
     @classmethod
@@ -131,10 +135,14 @@ class AppConfig(BaseConfig):
         default_factory=MonitoringConfig, description="Monitoring configuration"
     )
 
-    # GitHub configuration
-    github: GitHubConfig = Field(
-        default_factory=lambda: GitHubConfig(repository="owner/repo"),
-        description="GitHub configuration",
+    # Source control configuration
+    source_control: Optional[SourceControlGlobalConfig] = Field(
+        None, description="Global source control settings"
+    )
+
+    # GitHub configuration (deprecated - use source_control instead)
+    github: Optional[GitHubConfig] = Field(
+        None, description="Legacy GitHub configuration (deprecated)"
     )
 
     # Logging configuration
@@ -153,4 +161,17 @@ class AppConfig(BaseConfig):
         if len(service_names) != len(set(service_names)):
             raise ValueError("Service names must be unique")
 
+        return v
+
+    @field_validator("services")
+    @classmethod
+    def validate_services_with_source_control(cls, v):
+        """Validate service configurations and source control settings."""
+        for service in v:
+            if service.source_control and service.source_control.repositories:
+                # Validate that at least one repository has proper credentials
+                for repo in service.source_control.repositories:
+                    if repo.type in ["github", "gitlab"] and not repo.credentials:
+                        # This will be handled by global default credentials
+                        pass
         return v

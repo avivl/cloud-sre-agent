@@ -156,6 +156,13 @@ class GitHubRepositoryConfig(RepositoryConfig):
             return self.url
         return f"https://github.com/{self.url}"
 
+    def get_owner_and_repo_name(self) -> tuple[str, str]:
+        """Get the owner and repository name as a tuple."""
+        if "/" not in self.url:
+            raise ValueError(f"Invalid GitHub repository format: {self.url}")
+        parts = self.url.split("/", 1)
+        return (parts[0], parts[1])
+
     def get_owner(self) -> str:
         """Get the repository owner."""
         return self.url.split("/")[0]
