@@ -1,27 +1,39 @@
-# gemini_sre_agent/source_control/models.py
+"""Data models for source control operations."""
 
-"""
-Data models for source control operations and results.
-"""
-
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum, auto
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 
-class OperationStatus(Enum):
-    """Enum representing the status of an operation."""
+class PatchFormat(str, Enum):
+    """Supported patch formats."""
 
-    SUCCESS = auto()
-    FAILURE = auto()
-    PENDING = auto()
-    CONFLICT = auto()
-    UNAUTHORIZED = auto()
-    NOT_FOUND = auto()
-    RATE_LIMITED = auto()
-    TIMEOUT = auto()
-    INVALID_INPUT = auto()
+    UNIFIED = "unified"
+    CONTEXT = "context"
+    GIT = "git"
+
+
+@dataclass
+class FileOperation:
+    """Represents a file operation to be performed."""
+
+    operation_type: str  # "write", "delete", "rename"
+    file_path: str
+    content: Optional[str] = None
+    encoding: Optional[str] = None
+    new_path: Optional[str] = None  # For rename operations
+
+
+@dataclass
+class CommitOptions:
+    """Options for committing changes."""
+
+    commit: bool = True
+    commit_message: str = ""
+    author: Optional[str] = None
+    committer: Optional[str] = None
+    files_to_add: Optional[List[str]] = None
 
 
 @dataclass
@@ -29,94 +41,47 @@ class RepositoryInfo:
     """Information about a repository."""
 
     name: str
-    owner: str
-    default_branch: str
-    url: str
-    is_private: bool
-    created_at: datetime
-    updated_at: datetime
+    url: Optional[str] = None
+    owner: Optional[str] = None
+    is_private: bool = False
+    default_branch: str = "main"
     description: Optional[str] = None
-    additional_info: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class RemediationResult:
-    """Result of a remediation operation."""
-
-    success: bool
-    status: OperationStatus
-    commit_id: Optional[str] = None
-    message: Optional[str] = None
-    error: Optional[str] = None
-    details: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class FileInfo:
-    """Information about a file in the repository."""
-
-    path: str
-    size: int
-    last_modified: datetime
-    sha: str
-    content_type: str
-    is_binary: bool
-    additional_info: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class BatchOperation:
-    """Represents a single operation in a batch."""
-
-    operation_id: str
-    operation_type: str
-    path: Optional[str] = None
-    content: Optional[str] = None
-    message: Optional[str] = None
-    parameters: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class OperationResult:
-    """Result of a single operation."""
-
-    operation_id: str
-    status: OperationStatus
-    success: bool
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    details: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class ConflictInfo:
-    """Information about a merge conflict."""
-
-    path: str
-    conflict_type: str
-    base_sha: str
-    head_sha: str
-    merge_sha: Optional[str] = None
-    conflict_markers: List[str] = field(default_factory=list)
-    resolution_strategy: Optional[str] = None
+    additional_info: Optional[Dict[str, Any]] = None
 
 
 @dataclass
 class BranchInfo:
-    """Information about a branch."""
+    """Information about a Git branch."""
 
     name: str
     sha: str
-    is_protected: bool
-    last_commit: datetime
-    ahead_count: int = 0
-    behind_count: int = 0
-    additional_info: Dict[str, Any] = field(default_factory=dict)
+    is_protected: bool = False
+    last_commit: Optional[datetime] = None
+
+    def __post_init__(self):
+        if self.last_commit is None:
+            self.last_commit = datetime.now()
+
+
+@dataclass
+class FileInfo:
+    """Information about a file."""
+
+    path: str
+    size: int
+    last_modified: Optional[datetime] = None
+    sha: Optional[str] = None
+    is_binary: bool = False
+    encoding: Optional[str] = None
+
+    def __post_init__(self):
+        if self.last_modified is None:
+            self.last_modified = datetime.now()
 
 
 @dataclass
 class CommitInfo:
-    """Information about a commit."""
+    """Information about a Git commit."""
 
     sha: str
     message: str
@@ -124,37 +89,129 @@ class CommitInfo:
     author_email: str
     committer: str
     committer_email: str
-    timestamp: datetime
-    parent_shas: List[str] = field(default_factory=list)
-    additional_info: Dict[str, Any] = field(default_factory=dict)
+    date: datetime
+    parents: Optional[List[str]] = None
+
+    def __post_init__(self):
+        if self.parents is None:
+            self.parents = []
 
 
 @dataclass
-class ProviderCapabilities:
-    """Capabilities supported by a source control provider."""
+class IssueInfo:
+    """Information about an issue or pull request."""
 
-    supports_branches: bool = True
-    supports_merges: bool = True
-    supports_pull_requests: bool = False
-    supports_merge_requests: bool = False
-    supports_direct_commits: bool = True
-    supports_patch_files: bool = True
-    supports_batch_operations: bool = False
-    supports_conflict_resolution: bool = False
-    supports_file_history: bool = True
-    supports_webhooks: bool = False
-    max_file_size: Optional[int] = None
-    max_batch_size: Optional[int] = None
-    additional_capabilities: Dict[str, Any] = field(default_factory=dict)
+    number: int
+    title: str
+    body: Optional[str] = None
+    state: str = "open"
+    author: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    labels: Optional[List[str]] = None
+    assignees: Optional[List[str]] = None
+
+    def __post_init__(self):
+        if self.labels is None:
+            self.labels = []
+        if self.assignees is None:
+            self.assignees = []
+
+
+@dataclass
+class RemediationResult:
+    """Result of a remediation operation."""
+
+    success: bool
+    message: str
+    file_path: str
+    operation_type: str
+    commit_sha: Optional[str] = None
+    pull_request_url: Optional[str] = None
+    error_details: Optional[str] = None
+    additional_info: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        if self.additional_info is None:
+            self.additional_info = {}
+
+
+@dataclass
+class OperationResult:
+    """Result of a batch operation."""
+
+    operation_id: str
+    success: bool
+    message: str
+    file_path: Optional[str] = None
+    error_details: Optional[str] = None
+    additional_info: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        if self.additional_info is None:
+            self.additional_info = {}
+
+
+@dataclass
+class BatchOperation:
+    """Represents a batch operation."""
+
+    operation_id: str
+    operation_type: str
+    file_path: str
+    content: Optional[str] = None
+    additional_params: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        if self.additional_params is None:
+            self.additional_params = {}
+
+
+@dataclass
+class ConflictInfo:
+    """Information about a conflict."""
+
+    path: str
+    conflict_type: str
+    details: Optional[Dict[str, Any]] = None
 
 
 @dataclass
 class ProviderHealth:
-    """Health status of a source control provider."""
+    """Health status of a provider."""
 
-    is_healthy: bool
-    last_check: datetime
-    response_time_ms: Optional[float] = None
-    error_message: Optional[str] = None
-    warnings: List[str] = field(default_factory=list)
-    additional_info: Dict[str, Any] = field(default_factory=dict)
+    status: str
+    message: str
+    details: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class ProviderCapabilities:
+    """Capabilities of a source control provider."""
+
+    supports_pull_requests: bool = False
+    supports_merge_requests: bool = False
+    supports_direct_commits: bool = True
+    supports_patch_generation: bool = True
+    supports_branch_operations: bool = True
+    supports_file_history: bool = True
+    supports_batch_operations: bool = True
+    max_file_size: Optional[int] = None
+    supported_patch_formats: Optional[List[PatchFormat]] = None
+    supported_encodings: Optional[List[str]] = None
+
+    def __post_init__(self):
+        if self.supported_patch_formats is None:
+            self.supported_patch_formats = [PatchFormat.UNIFIED]
+        if self.supported_encodings is None:
+            self.supported_encodings = ["utf-8"]
+
+
+class OperationStatus(str, Enum):
+    """Status of an operation."""
+
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"

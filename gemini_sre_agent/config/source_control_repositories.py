@@ -246,6 +246,18 @@ class LocalRepositoryConfig(RepositoryConfig):
 
     path: str = Field(..., description="Absolute path to the local repository")
     git_enabled: bool = Field(default=True, description="Whether to use Git operations")
+    auto_init_git: bool = Field(
+        default=False, description="Whether to auto-initialize Git if not present"
+    )
+    default_encoding: str = Field(
+        default="utf-8", description="Default encoding for file operations"
+    )
+    backup_files: bool = Field(
+        default=True, description="Whether to create backups before modifications"
+    )
+    backup_directory: Optional[str] = Field(
+        default=None, description="Directory for file backups"
+    )
 
     @field_validator("path")
     @classmethod
