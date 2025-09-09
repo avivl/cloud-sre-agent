@@ -9,6 +9,7 @@ from ..config.source_control_global import (
 from .credential_manager import CredentialManager, EnvironmentBackend, FileBackend
 from .provider_factory import ProviderFactory
 from .providers.github_provider import GitHubProvider
+from .providers.gitlab_provider import GitLabProvider
 from .providers.local_provider import LocalProvider
 from .repository_manager import RepositoryManager
 
@@ -27,6 +28,7 @@ async def setup_repository_system(
     provider_factory = ProviderFactory(credential_manager)
     provider_factory.register_provider("github", GitHubProvider)
     provider_factory.register_provider("local", LocalProvider)
+    provider_factory.register_provider("gitlab", GitLabProvider)
 
     # Create and initialize repository manager
     repo_manager = RepositoryManager(config, provider_factory)
@@ -39,6 +41,7 @@ def create_default_config() -> SourceControlConfig:
     """Create a default configuration for testing purposes."""
     from ..config.source_control_repositories import (
         GitHubRepositoryConfig,
+        GitLabRepositoryConfig,
         LocalRepositoryConfig,
     )
 
@@ -48,5 +51,10 @@ def create_default_config() -> SourceControlConfig:
                 name="test-github-repo", url="https://github.com/test/repo"
             ),
             LocalRepositoryConfig(name="test-local-repo", path="/tmp/test-repo"),
+            GitLabRepositoryConfig(
+                name="test-gitlab-repo",
+                project_id="123456",
+                url="https://gitlab.com/test/repo",
+            ),
         ]
     )
