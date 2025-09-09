@@ -42,8 +42,7 @@ class EnhancedBaseAgent(Generic[T]):
         self,
         llm_config: LLMConfig,
         response_model: Type[T],
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        agent_name: str = "default",
         optimization_goal: OptimizationGoal = OptimizationGoal.HYBRID,
         max_retries: int = 2,
         collect_stats: bool = True,
@@ -61,8 +60,7 @@ class EnhancedBaseAgent(Generic[T]):
         Args:
             llm_config: LLM configuration for multi-provider support
             response_model: Pydantic model for structured responses
-            primary_model: Primary model to use (overrides intelligent selection)
-            fallback_model: Fallback model for error recovery
+            agent_name: Name of the agent for configuration lookup
             optimization_goal: Strategy for model selection optimization
             max_retries: Maximum number of retry attempts
             collect_stats: Whether to collect performance statistics
@@ -76,8 +74,21 @@ class EnhancedBaseAgent(Generic[T]):
         """
         self.llm_config = llm_config
         self.response_model = response_model
-        self.primary_model = primary_model
-        self.fallback_model = fallback_model
+        self.agent_name = agent_name
+        
+        # Get agent configuration
+        agent_config = llm_config.agents.get(agent_name)
+        if agent_config:
+            self.primary_model = f"{agent_config.primary_provider}:{agent_config.primary_model_type.value}"
+            self.fallback_model = (
+                f"{agent_config.fallback_provider}:{agent_config.fallback_model_type.value}"
+                if agent_config.fallback_provider and agent_config.fallback_model_type
+                else None
+            )
+        else:
+            # Fallback to default configuration
+            self.primary_model = None
+            self.fallback_model = None
         self.optimization_goal = optimization_goal
         self.max_retries = max_retries
         self.collect_stats = collect_stats

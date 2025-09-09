@@ -1,7 +1,8 @@
 """Simple tests for the GitLab Provider implementation."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from gemini_sre_agent.config.source_control_repositories import GitLabRepositoryConfig
 from gemini_sre_agent.source_control.providers.gitlab_provider import GitLabProvider
@@ -16,14 +17,14 @@ class TestGitLabProviderSimple:
         config = GitLabRepositoryConfig(
             name="test-gitlab-repo",
             project_id="123456",
-            url="https://gitlab.com/test/repo"
+            url="https://gitlab.com/test/repo",
         )
-        
+
         provider = GitLabProvider(config.model_dump())
         provider.gl = MagicMock()
         provider.project = MagicMock()
         provider.credentials = MagicMock()
-        
+
         return provider
 
     @pytest.mark.asyncio
@@ -57,9 +58,9 @@ class TestGitLabProviderSimple:
         gitlab_provider.project.description = "Test project"
         gitlab_provider.project.visibility = "private"
         gitlab_provider.project.namespace = {"full_path": "test/project"}
-        
+
         info = await gitlab_provider.get_repository_info()
-        
+
         assert info.name == "test-project"
         assert info.url == "https://gitlab.com/test/project"
         assert info.owner == "test"
@@ -70,7 +71,7 @@ class TestGitLabProviderSimple:
     async def test_get_capabilities(self, gitlab_provider):
         """Test getting provider capabilities."""
         capabilities = await gitlab_provider.get_capabilities()
-        
+
         assert capabilities.supports_merge_requests is True
         assert capabilities.supports_direct_commits is True
         assert capabilities.supports_patch_generation is True
@@ -82,9 +83,9 @@ class TestGitLabProviderSimple:
     async def test_get_health_status_healthy(self, gitlab_provider):
         """Test health status when healthy."""
         gitlab_provider.test_connection = AsyncMock(return_value=True)
-        
+
         health = await gitlab_provider.get_health_status()
-        
+
         assert health.status == "healthy"
         assert "operational" in health.message
 
@@ -92,8 +93,8 @@ class TestGitLabProviderSimple:
     async def test_get_health_status_unhealthy(self, gitlab_provider):
         """Test health status when unhealthy."""
         gitlab_provider.test_connection = AsyncMock(return_value=False)
-        
+
         health = await gitlab_provider.get_health_status()
-        
+
         assert health.status == "unhealthy"
         assert "connection failed" in health.message

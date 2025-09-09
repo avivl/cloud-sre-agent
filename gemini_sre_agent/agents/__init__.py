@@ -9,11 +9,6 @@ with Mirascope for prompt management. Now includes multi-provider support.
 """
 
 from .base import AgentStats, BaseAgent
-from .enhanced_adapter import (
-    AgentMigrationHelper,
-    BackwardCompatibilityWrapper,
-    EnhancedAgentAdapter,
-)
 from .enhanced_base import EnhancedBaseAgent
 from .enhanced_specialized import (
     EnhancedAnalysisAgent,
@@ -22,16 +17,11 @@ from .enhanced_specialized import (
     EnhancedTextAgent,
     EnhancedTriageAgent,
 )
-from .legacy_adapter import (
-    LegacyAnalysisAgentAdapter,
-    LegacyRemediationAgentAdapter,
-    LegacyTriageAgentAdapter,
-)
 from .response_models import AnalysisResponse, CodeResponse, TextResponse
 from .specialized import AnalysisAgent, CodeAgent, TextAgent
 
 __all__ = [
-    # Legacy agents (backward compatibility)
+    # Base agents
     "BaseAgent",
     "AgentStats",
     "TextResponse",
@@ -40,9 +30,6 @@ __all__ = [
     "TextAgent",
     "AnalysisAgent",
     "CodeAgent",
-    "LegacyTriageAgentAdapter",
-    "LegacyAnalysisAgentAdapter", 
-    "LegacyRemediationAgentAdapter",
     # Enhanced agents (multi-provider support)
     "EnhancedBaseAgent",
     "EnhancedTextAgent",
@@ -50,8 +37,4 @@ __all__ = [
     "EnhancedCodeAgent",
     "EnhancedTriageAgent",
     "EnhancedRemediationAgent",
-    # Migration and compatibility
-    "EnhancedAgentAdapter",
-    "AgentMigrationHelper",
-    "BackwardCompatibilityWrapper",
 ]

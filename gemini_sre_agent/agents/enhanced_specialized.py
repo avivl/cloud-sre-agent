@@ -36,8 +36,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        agent_name: str = "text_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
         provider_preference: Optional[List[ProviderType]] = None,
         max_cost: Optional[float] = None,
@@ -49,8 +48,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
 
         Args:
             llm_config: LLM configuration for multi-provider support
-            primary_model: Primary model for text generation
-            fallback_model: Fallback model for error recovery
+            agent_name: Name of the agent for configuration lookup
             optimization_goal: Strategy for model selection (default: QUALITY)
             provider_preference: Preferred providers in order
             max_cost: Maximum cost per 1k tokens
@@ -60,8 +58,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
         super().__init__(
             llm_config=llm_config,
             response_model=TextResponse,
-            primary_model=primary_model,
-            fallback_model=fallback_model,
+            agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
             model_type_preference=ModelType.SMART,

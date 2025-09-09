@@ -125,30 +125,6 @@ Provide a structured analysis with:
 Focus on identifying patterns, anomalies, and potential service impacts.
 """
 
-    # Backward compatibility method
-    async def analyze_logs_legacy(self, logs: List[str], flow_id: str) -> Dict[str, Any]:
-        """
-        Legacy compatibility method that returns the old TriagePacket format.
-        
-        Args:
-            logs: List of log entries to analyze
-            flow_id: Flow ID for tracking this processing pipeline
-            
-        Returns:
-            Dict: Legacy TriagePacket format for backward compatibility
-        """
-        response = await self.analyze_logs(logs, flow_id)
-        
-        # Convert to legacy format
-        return {
-            "issue_id": f"enhanced_{flow_id}",
-            "initial_timestamp": "2024-01-01T00:00:00Z",  # Would be extracted from logs
-            "detected_pattern": response.description,
-            "preliminary_severity_score": self._severity_to_score(response.severity),
-            "affected_services": ["unknown"],  # Would be extracted from logs
-            "sample_log_entries": logs[:3],  # First 3 logs as samples
-            "natural_language_summary": response.description,
-        }
 
     def _severity_to_score(self, severity: str) -> int:
         """Convert severity string to numeric score."""

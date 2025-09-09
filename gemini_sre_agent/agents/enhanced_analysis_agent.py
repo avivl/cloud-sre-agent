@@ -151,39 +151,3 @@ Provide a structured remediation plan with:
 Focus on service code fixes that address the root cause of the issue.
 """
 
-    # Backward compatibility method
-    async def analyze_issue_legacy(
-        self,
-        triage_packet: Any,  # Original TriagePacket type
-        historical_logs: List[str],
-        configs: Dict[str, str],
-        flow_id: str,
-    ) -> Dict[str, Any]:
-        """
-        Legacy compatibility method that returns the old RemediationPlan format.
-        
-        Args:
-            triage_packet: Original TriagePacket object
-            historical_logs: List of relevant historical log entries
-            configs: Dictionary of configuration files
-            flow_id: Flow ID for tracking this processing pipeline
-            
-        Returns:
-            Dict: Legacy RemediationPlan format for backward compatibility
-        """
-        # Convert triage packet to dict
-        if hasattr(triage_packet, 'model_dump'):
-            triage_data = triage_packet.model_dump()
-        elif hasattr(triage_packet, 'dict'):
-            triage_data = triage_packet.dict()
-        else:
-            triage_data = triage_packet.__dict__
-        
-        response = await self.analyze_issue(triage_data, historical_logs, configs, flow_id)
-        
-        # Convert to legacy format
-        return {
-            "root_cause_analysis": response.root_cause_analysis,
-            "proposed_fix": response.proposed_fix,
-            "code_patch": response.code_patch,
-        }
