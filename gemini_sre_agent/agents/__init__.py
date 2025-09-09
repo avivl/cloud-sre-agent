@@ -22,7 +22,11 @@ from .enhanced_specialized import (
     EnhancedTextAgent,
     EnhancedTriageAgent,
 )
-from .legacy_adapter import LegacyAgentAdapter
+from .legacy_adapter import (
+    LegacyAnalysisAgentAdapter,
+    LegacyRemediationAgentAdapter,
+    LegacyTriageAgentAdapter,
+)
 from .response_models import AnalysisResponse, CodeResponse, TextResponse
 from .specialized import AnalysisAgent, CodeAgent, TextAgent
 
@@ -36,7 +40,9 @@ __all__ = [
     "TextAgent",
     "AnalysisAgent",
     "CodeAgent",
-    "LegacyAgentAdapter",
+    "LegacyTriageAgentAdapter",
+    "LegacyAnalysisAgentAdapter", 
+    "LegacyRemediationAgentAdapter",
     # Enhanced agents (multi-provider support)
     "EnhancedBaseAgent",
     "EnhancedTextAgent",

@@ -1,0 +1,228 @@
+# Enhanced Multi-Provider LLM Configuration
+# This configuration demonstrates the full capabilities of the enhanced system
+
+# Provider configurations
+providers:
+  # OpenAI Provider
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    base_url: "https://api.openai.com/v1"
+    models:
+      - name: "gpt-4o-mini"
+        model_type: "smart"
+        cost_per_1k_tokens: 0.00015
+        max_tokens: 128000
+        capabilities: ["text", "json", "structured_output"]
+      - name: "gpt-3.5-turbo"
+        model_type: "fast"
+        cost_per_1k_tokens: 0.0005
+        max_tokens: 16385
+        capabilities: ["text", "json"]
+
+  # Anthropic Provider
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}"
+    base_url: "https://api.anthropic.com"
+    models:
+      - name: "claude-3-5-sonnet-20241022"
+        model_type: "smart"
+        cost_per_1k_tokens: 0.003
+        max_tokens: 200000
+        capabilities: ["text", "json", "structured_output", "reasoning"]
+      - name: "claude-3-haiku-20240307"
+        model_type: "fast"
+        cost_per_1k_tokens: 0.00025
+        max_tokens: 200000
+        capabilities: ["text", "json"]
+
+  # Google Provider
+  google:
+    api_key: "${GOOGLE_API_KEY}"
+    base_url: "https://generativelanguage.googleapis.com/v1beta"
+    models:
+      - name: "gemini-1.5-flash"
+        model_type: "fast"
+        cost_per_1k_tokens: 0.000075
+        max_tokens: 1048576
+        capabilities: ["text", "json", "multimodal"]
+      - name: "gemini-1.5-pro"
+        model_type: "smart"
+        cost_per_1k_tokens: 0.00125
+        max_tokens: 2097152
+        capabilities: ["text", "json", "multimodal", "reasoning"]
+
+  # Ollama Provider (Local)
+  ollama:
+    base_url: "http://localhost:11434"
+    models:
+      - name: "llama3.2:3b"
+        model_type: "fast"
+        cost_per_1k_tokens: 0.0  # Free local model
+        max_tokens: 8192
+        capabilities: ["text", "json"]
+      - name: "llama3.2:1b"
+        model_type: "fast"
+        cost_per_1k_tokens: 0.0  # Free local model
+        max_tokens: 4096
+        capabilities: ["text"]
+
+  # Cohere Provider
+  cohere:
+    api_key: "${COHERE_API_KEY}"
+    base_url: "https://api.cohere.ai/v1"
+    models:
+      - name: "command-r-plus"
+        model_type: "smart"
+        cost_per_1k_tokens: 0.003
+        max_tokens: 128000
+        capabilities: ["text", "json", "structured_output"]
+
+# Strategy configuration
+strategy:
+  # Default optimization goal for model selection
+  default_optimization_goal: "hybrid"  # Options: cost_effective, quality, performance, hybrid
+  
+  # Cost limits per task type (per 1k tokens)
+  cost_limits:
+    triage: 0.01
+    analysis: 0.02
+    remediation: 0.03
+    general: 0.01
+  
+  # Quality thresholds (0.0 to 1.0)
+  quality_thresholds:
+    triage: 0.7
+    analysis: 0.8
+    remediation: 0.9
+    general: 0.7
+  
+  # Performance requirements (response time in seconds)
+  performance_requirements:
+    triage: 5.0
+    analysis: 10.0
+    remediation: 15.0
+    general: 5.0
+
+# Model selection preferences
+model_selection:
+  # Preferred providers in order
+  provider_preference:
+    - "ollama"      # Free local models first
+    - "openai"      # Reliable cloud provider
+    - "anthropic"   # High quality
+    - "google"      # Good balance
+    - "cohere"      # Alternative option
+  
+  # Preferred model types by task
+  task_preferences:
+    triage:
+      - "fast"
+      - "smart"
+    analysis:
+      - "smart"
+      - "fast"
+    remediation:
+      - "smart"
+    general:
+      - "fast"
+      - "smart"
+
+# Caching configuration
+caching:
+  enabled: true
+  ttl_seconds: 3600  # 1 hour
+  max_size: 1000     # Maximum number of cached responses
+  strategy: "lru"    # Least recently used eviction
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  metrics_retention_hours: 24
+  collect_detailed_stats: true
+  export_metrics: true
+  
+  # Alerting thresholds
+  alerts:
+    cost_threshold: 1.0      # Alert if cost exceeds $1.00
+    error_rate_threshold: 0.1  # Alert if error rate exceeds 10%
+    latency_threshold: 30.0   # Alert if latency exceeds 30 seconds
+
+# Circuit breaker configuration
+circuit_breaker:
+  enabled: true
+  failure_threshold: 5       # Open after 5 failures
+  recovery_timeout: 60       # Try recovery after 60 seconds
+  half_open_max_calls: 3     # Allow 3 calls in half-open state
+
+# Rate limiting configuration
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60    # Global rate limit
+  burst_size: 10             # Allow bursts up to 10 requests
+  
+  # Per-provider rate limits
+  provider_limits:
+    openai: 60
+    anthropic: 30
+    google: 60
+    cohere: 30
+    ollama: 120  # Higher limit for local models
+
+# Business hours configuration
+business_hours:
+  enabled: false
+  timezone: "UTC"
+  start_hour: 9
+  end_hour: 17
+  days: ["monday", "tuesday", "wednesday", "thursday", "friday"]
+  
+  # Different model preferences during business hours
+  business_hours_preferences:
+    optimization_goal: "quality"
+    preferred_providers: ["anthropic", "openai", "google"]
+  
+  # Off-hours preferences (cost optimization)
+  off_hours_preferences:
+    optimization_goal: "cost_effective"
+    preferred_providers: ["ollama", "openai"]
+
+# Fallback configuration
+fallback:
+  enabled: true
+  max_fallback_attempts: 3
+  fallback_strategy: "cost_effective"  # Use cheapest available model
+  
+  # Emergency fallback (when all providers fail)
+  emergency_fallback:
+    enabled: true
+    model: "llama3.2:1b"  # Local model as last resort
+    provider: "ollama"
+
+# Advanced features
+advanced:
+  # Model mixing for complex tasks
+  model_mixing:
+    enabled: true
+    max_models_per_task: 3
+    mixing_strategy: "parallel"  # Options: parallel, sequential, hybrid
+  
+  # Intelligent caching with semantic similarity
+  intelligent_caching:
+    enabled: true
+    similarity_threshold: 0.9
+    cache_semantic_embeddings: true
+  
+  # Cost optimization
+  cost_optimization:
+    enabled: true
+    budget_limit: 10.0  # Monthly budget limit in USD
+    auto_switch_to_cheaper_models: true
+    cost_alert_threshold: 0.8  # Alert at 80% of budget
+
+# Logging configuration
+logging:
+  level: "INFO"
+  log_requests: true
+  log_responses: false  # Set to true for debugging
+  log_costs: true
+  log_performance: true

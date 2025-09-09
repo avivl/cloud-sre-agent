@@ -1,0 +1,80 @@
+llm:
+  business_hours_only: true
+  default_model_type: smart
+  max_cost: 200.0
+  min_performance: 0.9
+  min_quality: 0.95
+  optimization_goal: quality
+  providers:
+    anthropic:
+      api_key: production-key
+      max_retries: 5
+      models:
+        claude-3-5-sonnet-20241022:
+          capabilities:
+          - text
+          - json
+          cost_per_1k_tokens: 0.003
+          max_tokens: 200000
+          model_type: smart
+          name: claude-3-5-sonnet-20241022
+      provider: anthropic
+      rate_limit: 300
+      timeout: 30
+    gemini:
+      api_key: ***REDACTED***
+      max_retries: 5
+      models:
+        gemini-1.5-flash:
+          capabilities:
+          - text
+          - json
+          cost_per_1k_tokens: 7.5e-05
+          max_tokens: 1000000
+          model_type: fast
+          name: gemini-1.5-flash
+        gemini-1.5-pro:
+          capabilities:
+          - text
+          - json
+          - vision
+          cost_per_1k_tokens: 0.00125
+          max_tokens: 1000000
+          model_type: smart
+          name: gemini-1.5-pro
+      provider: gemini
+      rate_limit: 1000
+      timeout: 30
+    openai:
+      api_key: ***REMOVED***
+      max_retries: 5
+      models:
+        gpt-4o:
+          capabilities:
+          - text
+          - json
+          - vision
+          cost_per_1k_tokens: 0.005
+          max_tokens: 128000
+          model_type: smart
+          name: gpt-4o
+        gpt-4o-mini:
+          capabilities:
+          - text
+          - json
+          cost_per_1k_tokens: 0.00015
+          max_tokens: 128000
+          model_type: smart
+          name: gpt-4o-mini
+      provider: openai
+      rate_limit: 500
+      timeout: 30
+logging:
+  format: json
+  level: WARNING
+monitoring:
+  alert_thresholds:
+    max_cost_per_hour: 50.0
+    max_latency_ms: 2000
+    success_rate: 0.99
+  retention_hours: 168

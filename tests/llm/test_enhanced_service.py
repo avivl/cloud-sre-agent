@@ -1,4 +1,4 @@
-q  # tests/llm/test_enhanced_service.py
+# tests/llm/test_enhanced_service.py
 
 """
 Unit tests for the Enhanced LLM Service with intelligent model selection.

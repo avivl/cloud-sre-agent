@@ -10,7 +10,7 @@ management of LLM providers, models, and system settings.
 import os
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 
 from gemini_sre_agent.metrics.config import MetricsConfig
 
@@ -519,7 +519,7 @@ class LLMConfig(BaseModel):
                 enforcement_policy="warn",
                 auto_reset=True,
                 rollover_unused=False,
-                max_rollover=0.0,
+                max_rollover=50.0,
                 enable_optimization=True,
                 optimization_strategy="balanced",
                 cost_weight=0.4,

@@ -448,3 +448,28 @@ Focus on providing actionable, specific solutions with actual code when applicab
                 "business_hours_only": self.business_hours_only,
             },
         }
+
+    async def process_request(
+        self,
+        prompt_name: str,
+        prompt_args: Dict[str, Any],
+        model: Optional[str] = None,
+        provider: Optional[ProviderType] = None,
+        optimization_goal: Optional[OptimizationGoal] = None,
+        temperature: Optional[float] = None,
+        **kwargs,
+    ) -> T:
+        """
+        Process a request using the enhanced multi-provider system.
+        
+        This is a convenience method that calls execute with the same parameters.
+        """
+        return await self.execute(
+            prompt_name=prompt_name,
+            prompt_args=prompt_args,
+            model=model,
+            provider=provider,
+            optimization_goal=optimization_goal,
+            temperature=temperature,
+            **kwargs,
+        )
