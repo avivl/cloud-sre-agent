@@ -11,13 +11,12 @@ import asyncio
 import base64
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 from github import Github, GithubException
 from github.Repository import Repository
 
-from ...config.source_control_credentials import CredentialConfig
 from ...config.source_control_repositories import GitHubRepositoryConfig
 from ..base_implementation import BaseSourceControlProvider
 from ..models import (
@@ -35,20 +34,19 @@ from ..models import (
 class GitHubProvider(BaseSourceControlProvider):
     """GitHub implementation of the SourceControlProvider interface."""
 
-    def __init__(
-        self,
-        config: GitHubRepositoryConfig,
-        credentials: Optional[CredentialConfig] = None,
-    ):
-        """Initialize the GitHub provider with configuration and credentials."""
-        super().__init__(config.model_dump())
-        self.repo_config = config
-        self.credentials = credentials
+    def __init__(self, config: Dict[str, Any]):
+        """Initialize the GitHub provider with configuration."""
+        super().__init__(config)
+        # Convert config dict back to GitHubRepositoryConfig for type safety
+        self.repo_config = GitHubRepositoryConfig(**config)
+        self.credentials = (
+            None  # Will be set later when credential management is integrated
+        )
         self.logger = logging.getLogger("GitHubProvider")
         self.client: Optional[Github] = None
         self.repo: Optional[Repository] = None
         self.session: Optional[aiohttp.ClientSession] = None
-        self.base_url = config.api_base_url
+        self.base_url = config.get("api_base_url", "https://api.github.com")
         self.retry_count = 3
         self.retry_delay = 2  # seconds
 
