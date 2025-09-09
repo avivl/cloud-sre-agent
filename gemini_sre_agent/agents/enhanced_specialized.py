@@ -184,8 +184,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        agent_name: str = "analysis_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
         provider_preference: Optional[List[ProviderType]] = None,
         max_cost: Optional[float] = None,
@@ -197,8 +196,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
 
         Args:
             llm_config: LLM configuration for multi-provider support
-            primary_model: Primary model for analysis
-            fallback_model: Fallback model for error recovery
+            agent_name: Name of the agent for configuration lookup
             optimization_goal: Strategy for model selection (default: QUALITY)
             provider_preference: Preferred providers in order
             max_cost: Maximum cost per 1k tokens
@@ -208,8 +206,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         super().__init__(
             llm_config=llm_config,
             response_model=AnalysisResponse,
-            primary_model=primary_model,
-            fallback_model=fallback_model,
+            agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
             model_type_preference=ModelType.DEEP_THINKING,
@@ -332,8 +329,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        agent_name: str = "code_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
         provider_preference: Optional[List[ProviderType]] = None,
         max_cost: Optional[float] = None,
@@ -345,8 +341,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
 
         Args:
             llm_config: LLM configuration for multi-provider support
-            primary_model: Primary model for code generation
-            fallback_model: Fallback model for error recovery
+            agent_name: Name of the agent for configuration lookup
             optimization_goal: Strategy for model selection (default: QUALITY)
             provider_preference: Preferred providers in order
             max_cost: Maximum cost per 1k tokens
@@ -356,8 +351,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         super().__init__(
             llm_config=llm_config,
             response_model=CodeResponse,
-            primary_model=primary_model,
-            fallback_model=fallback_model,
+            agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
             model_type_preference=ModelType.CODE,
@@ -514,8 +508,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        agent_name: str = "triage_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.PERFORMANCE,
         provider_preference: Optional[List[ProviderType]] = None,
         max_cost: Optional[float] = None,
@@ -527,8 +520,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
 
         Args:
             llm_config: LLM configuration for multi-provider support
-            primary_model: Primary model for triage
-            fallback_model: Fallback model for error recovery
+            agent_name: Name of the agent for configuration lookup
             optimization_goal: Strategy for model selection (default: PERFORMANCE)
             provider_preference: Preferred providers in order
             max_cost: Maximum cost per 1k tokens
@@ -538,8 +530,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         super().__init__(
             llm_config=llm_config,
             response_model=TriageResponse,
-            primary_model=primary_model,
-            fallback_model=fallback_model,
+            agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
             model_type_preference=ModelType.FAST,
@@ -618,8 +609,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        agent_name: str = "remediation_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
         provider_preference: Optional[List[ProviderType]] = None,
         max_cost: Optional[float] = None,
@@ -631,8 +621,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
 
         Args:
             llm_config: LLM configuration for multi-provider support
-            primary_model: Primary model for remediation
-            fallback_model: Fallback model for error recovery
+            agent_name: Name of the agent for configuration lookup
             optimization_goal: Strategy for model selection (default: QUALITY)
             provider_preference: Preferred providers in order
             max_cost: Maximum cost per 1k tokens
@@ -642,8 +631,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         super().__init__(
             llm_config=llm_config,
             response_model=AnalysisResponse,
-            primary_model=primary_model,
-            fallback_model=fallback_model,
+            agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
             model_type_preference=ModelType.DEEP_THINKING,
@@ -705,8 +693,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        agent_name: str = "remediation_agent_v2",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
         provider_preference: Optional[List[ProviderType]] = None,
         max_cost: Optional[float] = None,
@@ -718,8 +705,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
 
         Args:
             llm_config: LLM configuration
-            primary_model: Primary model to use
-            fallback_model: Fallback model if primary fails
+            agent_name: Name of the agent for configuration lookup
             optimization_goal: Optimization strategy
             provider_preference: Preferred LLM provider
             max_cost: Maximum cost per 1k tokens
@@ -729,8 +715,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         super().__init__(
             llm_config=llm_config,
             response_model=RemediationResponse,
-            primary_model=primary_model,
-            fallback_model=fallback_model,
+            agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
             model_type_preference=ModelType.CODE,

@@ -42,6 +42,7 @@ class EnhancedBaseAgent(Generic[T]):
         self,
         llm_config: LLMConfig,
         response_model: Type[T],
+
         agent_name: str = "default",
         optimization_goal: OptimizationGoal = OptimizationGoal.HYBRID,
         max_retries: int = 2,
@@ -481,6 +482,6 @@ Focus on providing actionable, specific solutions with actual code when applicab
             model=model,
             provider=provider,
             optimization_goal=optimization_goal,
-            temperature=temperature,
+            temperature=temperature or 0.7,
             **kwargs,
         )
