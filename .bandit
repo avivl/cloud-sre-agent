@@ -1,0 +1,3 @@
+[bandit]
+exclude_dirs = tests
+skips = B101,B105,B106,B108

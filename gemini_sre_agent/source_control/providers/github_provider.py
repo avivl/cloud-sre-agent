@@ -428,7 +428,9 @@ class GitHubProvider(BaseSourceControlProvider):
         self, title: str, description: str, head_branch: str, base_branch: str, **kwargs
     ) -> RemediationResult:
         """Create a merge request (GitHub doesn't support merge requests, use pull requests)."""
-        return await self.create_pull_request(title, description, head_branch, base_branch, **kwargs)
+        return await self.create_pull_request(
+            title, description, head_branch, base_branch, **kwargs
+        )
 
     async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
         """Check if a file exists at the given path."""
@@ -456,7 +458,7 @@ class GitHubProvider(BaseSourceControlProvider):
         except Exception:
             return None
 
-    async def get_file_info(self, path: str, ref: Optional[str] = None) -> Optional[FileInfo]:
+    async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
         """Get information about a file."""
         if self.repo is None:
             raise RuntimeError("Repository not initialized")
@@ -464,16 +466,17 @@ class GitHubProvider(BaseSourceControlProvider):
             branch_name = ref or self.repo_config.branch or "main"
             content = self.repo.get_contents(path, ref=branch_name)
             if isinstance(content, list):
-                return None  # It's a directory
+                raise ValueError(f"Path {path} is a directory, not a file")
             return FileInfo(
                 path=path,
                 size=content.size,
+                last_modified=datetime.now(),
                 sha=content.sha,
                 content_type=content.type,
                 is_binary=content.encoding == "base64",
             )
-        except Exception:
-            return None
+        except Exception as e:
+            raise FileNotFoundError(f"File {path} not found") from e
 
     async def refresh_credentials(self) -> bool:
         """Refresh authentication credentials."""
