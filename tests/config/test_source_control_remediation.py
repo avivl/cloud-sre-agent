@@ -8,10 +8,10 @@ import pytest
 from pydantic import ValidationError
 
 from gemini_sre_agent.config.source_control_remediation import (
-    RemediationStrategyConfig,
-    RemediationStrategy,
     ConflictResolutionStrategy,
     PatchFormat,
+    RemediationStrategy,
+    RemediationStrategyConfig,
 )
 
 
@@ -21,7 +21,7 @@ class TestRemediationStrategyConfig:
     def test_default_configuration(self):
         """Test default configuration values."""
         config = RemediationStrategyConfig()
-        
+
         assert config.strategy == RemediationStrategy.PULL_REQUEST
         assert config.auto_merge is False
         assert config.require_review is True
@@ -59,9 +59,9 @@ class TestRemediationStrategyConfig:
             branch_suffix="urgent",
             conflict_resolution=ConflictResolutionStrategy.AUTO_MERGE,
             max_retries=5,
-            retry_delay_seconds=10
+            retry_delay_seconds=10,
         )
-        
+
         assert config.strategy == RemediationStrategy.DIRECT_COMMIT
         assert config.auto_merge is True
         assert config.require_review is False
@@ -105,8 +105,7 @@ class TestRemediationStrategyConfig:
         """Test user validation for assignees and reviewers."""
         # Valid users
         config = RemediationStrategyConfig(
-            assignees=["user1", "user2"],
-            reviewers=["reviewer1"]
+            assignees=["user1", "user2"], reviewers=["reviewer1"]
         )
         assert config.assignees == ["user1", "user2"]
         assert config.reviewers == ["reviewer1"]
@@ -137,12 +136,16 @@ class TestRemediationStrategyConfig:
         # Template too long should raise error
         with pytest.raises(ValidationError) as exc_info:
             RemediationStrategyConfig(commit_message_template="a" * 501)
-        assert "Commit message template cannot exceed 500 characters" in str(exc_info.value)
+        assert "Commit message template cannot exceed 500 characters" in str(
+            exc_info.value
+        )
 
         # Missing required placeholders should raise error
         with pytest.raises(ValidationError) as exc_info:
             RemediationStrategyConfig(commit_message_template="Fix: {issue_id}")
-        assert "Commit message template must include {description}" in str(exc_info.value)
+        assert "Commit message template must include {description}" in str(
+            exc_info.value
+        )
 
         with pytest.raises(ValidationError) as exc_info:
             RemediationStrategyConfig(commit_message_template="Fix: {description}")
@@ -168,8 +171,7 @@ class TestRemediationStrategyConfig:
         """Test branch prefix and suffix validation."""
         # Valid components
         config = RemediationStrategyConfig(
-            branch_prefix="sre-fix",
-            branch_suffix="urgent"
+            branch_prefix="sre-fix", branch_suffix="urgent"
         )
         assert config.branch_prefix == "sre-fix"
         assert config.branch_suffix == "urgent"
@@ -187,15 +189,16 @@ class TestRemediationStrategyConfig:
         # Invalid characters should raise error
         with pytest.raises(ValidationError) as exc_info:
             RemediationStrategyConfig(branch_prefix="invalid@prefix")
-        assert "Branch components can only contain alphanumeric characters" in str(exc_info.value)
+        assert "Branch components can only contain alphanumeric characters" in str(
+            exc_info.value
+        )
 
     def test_get_branch_name(self):
         """Test branch name generation."""
         config = RemediationStrategyConfig(
-            branch_prefix="sre-fix",
-            branch_suffix="urgent"
+            branch_prefix="sre-fix", branch_suffix="urgent"
         )
-        
+
         branch_name = config.get_branch_name("123")
         assert branch_name == "sre-fix-123-urgent"
 
@@ -209,7 +212,7 @@ class TestRemediationStrategyConfig:
         config = RemediationStrategyConfig(
             commit_message_template="Fix: {issue_id} - {description}"
         )
-        
+
         message = config.get_commit_message("123", "Fix critical bug")
         assert message == "Fix: 123 - Fix critical bug"
 
@@ -227,7 +230,9 @@ class TestRemediationStrategyConfig:
         assert patch_config.requires_branch_creation() is False
 
         # Direct commit strategy
-        direct_config = RemediationStrategyConfig(strategy=RemediationStrategy.DIRECT_COMMIT)
+        direct_config = RemediationStrategyConfig(
+            strategy=RemediationStrategy.DIRECT_COMMIT
+        )
         assert direct_config.is_patch_strategy() is False
         assert direct_config.is_direct_commit_strategy() is True
         assert direct_config.requires_branch_creation() is False
@@ -239,7 +244,9 @@ class TestRemediationStrategyConfig:
         assert pr_config.requires_branch_creation() is True
 
         # Merge request strategy
-        mr_config = RemediationStrategyConfig(strategy=RemediationStrategy.MERGE_REQUEST)
+        mr_config = RemediationStrategyConfig(
+            strategy=RemediationStrategy.MERGE_REQUEST
+        )
         assert mr_config.is_patch_strategy() is False
         assert mr_config.is_direct_commit_strategy() is False
         assert mr_config.requires_branch_creation() is True

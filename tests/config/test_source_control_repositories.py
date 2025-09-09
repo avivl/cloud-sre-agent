@@ -10,14 +10,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from gemini_sre_agent.config.source_control_remediation import RemediationStrategyConfig
 from gemini_sre_agent.config.source_control_repositories import (
-    RepositoryConfig,
     GitHubRepositoryConfig,
     GitLabRepositoryConfig,
     LocalRepositoryConfig,
+    RepositoryConfig,
 )
-from gemini_sre_agent.config.source_control_credentials import CredentialConfig
-from gemini_sre_agent.config.source_control_remediation import RemediationStrategyConfig
 
 
 class TestRepositoryConfig:
@@ -26,12 +25,9 @@ class TestRepositoryConfig:
     def test_minimal_valid_config(self):
         """Test minimal valid configuration."""
         config = RepositoryConfig(
-            type="github",
-            name="test-repo",
-            branch="main",
-            paths=["/src"]
+            type="github", name="test-repo", branch="main", paths=["/src"]
         )
-        
+
         assert config.type == "github"
         assert config.name == "test-repo"
         assert config.branch == "main"
@@ -42,7 +38,7 @@ class TestRepositoryConfig:
     def test_default_values(self):
         """Test default values."""
         config = RepositoryConfig(type="github", name="test-repo")
-        
+
         assert config.branch == "main"
         assert config.paths == ["/"]
         assert config.credentials is None
@@ -59,10 +55,16 @@ class TestRepositoryConfig:
         invalid_cases = [
             ("", "Repository name cannot be empty"),
             ("a" * 101, "Repository name cannot exceed 100 characters"),
-            ("invalid@name", "Repository name can only contain alphanumeric characters"),
-            ("invalid name", "Repository name can only contain alphanumeric characters"),
+            (
+                "invalid@name",
+                "Repository name can only contain alphanumeric characters",
+            ),
+            (
+                "invalid name",
+                "Repository name can only contain alphanumeric characters",
+            ),
         ]
-        
+
         for invalid_name, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
                 RepositoryConfig(type="github", name=invalid_name)
@@ -82,7 +84,7 @@ class TestRepositoryConfig:
             ("a" * 256, "Branch name cannot exceed 255 characters"),
             ("invalid@branch", "Branch name can only contain alphanumeric characters"),
         ]
-        
+
         for invalid_branch, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
                 RepositoryConfig(type="github", name="test", branch=invalid_branch)
@@ -103,7 +105,7 @@ class TestRepositoryConfig:
             (["/path", ""], "Paths cannot be empty"),
             (["/path", "a" * 501], "Path '{}' must start with '/'".format("a" * 501)),
         ]
-        
+
         for invalid_paths, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
                 RepositoryConfig(type="github", name="test", paths=invalid_paths)
@@ -112,17 +114,15 @@ class TestRepositoryConfig:
     def test_matches_path(self):
         """Test path matching functionality."""
         config = RepositoryConfig(
-            type="github",
-            name="test",
-            paths=["/src", "/docs", "/config"]
+            type="github", name="test", paths=["/src", "/docs", "/config"]
         )
-        
+
         # Matching paths
         assert config.matches_path("/src/main.py") is True
         assert config.matches_path("/docs/readme.md") is True
         assert config.matches_path("/config/settings.yaml") is True
         assert config.matches_path("/src/api/endpoint.py") is True
-        
+
         # Non-matching paths
         assert config.matches_path("/tests/test.py") is False
         assert config.matches_path("/other/file.py") is False
@@ -148,7 +148,9 @@ class TestGitHubRepositoryConfig:
             assert config.url == url
 
         # URLs with protocol should be cleaned
-        config = GitHubRepositoryConfig(name="test", url="https://github.com/owner/repo")
+        config = GitHubRepositoryConfig(
+            name="test", url="https://github.com/owner/repo"
+        )
         assert config.url == "owner/repo"
 
         config = GitHubRepositoryConfig(name="test", url="http://github.com/owner/repo")
@@ -167,7 +169,7 @@ class TestGitHubRepositoryConfig:
             ("owner@repo", "GitHub URL must be in format 'owner/repo'"),
             ("owner/repo@name", "GitHub repository name contains invalid characters"),
         ]
-        
+
         for invalid_url, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
                 GitHubRepositoryConfig(name="test", url=invalid_url)
@@ -182,7 +184,9 @@ class TestGitHubRepositoryConfig:
             "http://localhost:3000/api",
         ]
         for url in valid_urls:
-            config = GitHubRepositoryConfig(name="test", url="owner/repo", api_base_url=url)
+            config = GitHubRepositoryConfig(
+                name="test", url="owner/repo", api_base_url=url
+            )
             assert config.api_base_url == url
 
         # Invalid URLs
@@ -191,10 +195,12 @@ class TestGitHubRepositoryConfig:
             ("not-a-url", "API base URL must be a valid URL"),
             ("ftp://api.github.com", "API base URL must use http or https protocol"),
         ]
-        
+
         for invalid_url, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
-                GitHubRepositoryConfig(name="test", url="owner/repo", api_base_url=invalid_url)
+                GitHubRepositoryConfig(
+                    name="test", url="owner/repo", api_base_url=invalid_url
+                )
             assert expected_error in str(exc_info.value)
 
     def test_get_full_url(self):
@@ -202,7 +208,9 @@ class TestGitHubRepositoryConfig:
         config = GitHubRepositoryConfig(name="test", url="owner/repo")
         assert config.get_full_url() == "https://github.com/owner/repo"
 
-        config = GitHubRepositoryConfig(name="test", url="https://github.com/owner/repo")
+        config = GitHubRepositoryConfig(
+            name="test", url="https://github.com/owner/repo"
+        )
         assert config.get_full_url() == "https://github.com/owner/repo"
 
     def test_get_owner_and_repo_name(self):
@@ -217,7 +225,9 @@ class TestGitLabRepositoryConfig:
 
     def test_default_type(self):
         """Test that type is set to gitlab by default."""
-        config = GitLabRepositoryConfig(name="test", url="https://gitlab.com/owner/repo")
+        config = GitLabRepositoryConfig(
+            name="test", url="https://gitlab.com/owner/repo"
+        )
         assert config.type == "gitlab"
 
     def test_url_validation(self):
@@ -236,9 +246,12 @@ class TestGitLabRepositoryConfig:
         invalid_cases = [
             ("", "GitLab URL cannot be empty"),
             ("not-a-url", "GitLab URL must be a valid URL"),
-            ("ftp://gitlab.com/owner/repo", "GitLab URL must use http or https protocol"),
+            (
+                "ftp://gitlab.com/owner/repo",
+                "GitLab URL must use http or https protocol",
+            ),
         ]
-        
+
         for invalid_url, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
                 GitLabRepositoryConfig(name="test", url=invalid_url)
@@ -246,13 +259,13 @@ class TestGitLabRepositoryConfig:
 
     def test_get_project_id(self):
         """Test getting project ID."""
-        config = GitLabRepositoryConfig(name="test", url="https://gitlab.com/owner/repo")
+        config = GitLabRepositoryConfig(
+            name="test", url="https://gitlab.com/owner/repo"
+        )
         assert config.get_project_id() is None
 
         config = GitLabRepositoryConfig(
-            name="test",
-            url="https://gitlab.com/owner/repo",
-            project_id="123"
+            name="test", url="https://gitlab.com/owner/repo", project_id="123"
         )
         assert config.get_project_id() == "123"
 
@@ -279,7 +292,7 @@ class TestLocalRepositoryConfig:
             ("relative/path", "Local repository path must be absolute"),
             ("/non/existent/path", "Local repository path does not exist"),
         ]
-        
+
         for invalid_path, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
                 LocalRepositoryConfig(name="test", path=invalid_path)
@@ -309,10 +322,12 @@ class TestLocalRepositoryConfig:
             # Create .git directory
             git_dir = Path(temp_dir) / ".git"
             git_dir.mkdir()
-            
+
             config = LocalRepositoryConfig(name="test", path=temp_dir)
             assert config.is_git_repository() is True
 
             # Git disabled
-            config = LocalRepositoryConfig(name="test", path=temp_dir, git_enabled=False)
+            config = LocalRepositoryConfig(
+                name="test", path=temp_dir, git_enabled=False
+            )
             assert config.is_git_repository() is False

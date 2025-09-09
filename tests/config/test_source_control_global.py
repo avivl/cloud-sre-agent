@@ -7,17 +7,16 @@ Tests for source control global configuration models.
 import pytest
 from pydantic import ValidationError
 
-from gemini_sre_agent.config.source_control_global import (
-    SourceControlGlobalConfig,
-    SourceControlConfig,
-    CredentialStore,
-)
 from gemini_sre_agent.config.source_control_credentials import CredentialConfig
+from gemini_sre_agent.config.source_control_global import (
+    CredentialStore,
+    SourceControlConfig,
+    SourceControlGlobalConfig,
+)
 from gemini_sre_agent.config.source_control_remediation import RemediationStrategyConfig
 from gemini_sre_agent.config.source_control_repositories import (
     GitHubRepositoryConfig,
     GitLabRepositoryConfig,
-    LocalRepositoryConfig,
 )
 
 
@@ -27,7 +26,7 @@ class TestSourceControlGlobalConfig:
     def test_default_configuration(self):
         """Test default configuration values."""
         config = SourceControlGlobalConfig()
-        
+
         assert config.default_provider == "github"
         assert config.credential_store == CredentialStore.ENV
         assert config.auto_discovery is False
@@ -69,9 +68,9 @@ class TestSourceControlGlobalConfig:
             max_cache_size_mb=200,
             enable_credential_rotation=True,
             credential_rotation_interval_days=30,
-            enable_encryption=False
+            enable_encryption=False,
         )
-        
+
         assert config.default_provider == "gitlab"
         assert config.credential_store == CredentialStore.VAULT
         assert config.auto_discovery is True
@@ -117,7 +116,7 @@ class TestSourceControlGlobalConfig:
             (0, "Input should be greater than or equal to 1"),
             (101, "Input should be less than or equal to 100"),
         ]
-        
+
         for invalid_value, expected_error in invalid_cases:
             with pytest.raises(ValidationError) as exc_info:
                 SourceControlGlobalConfig(max_concurrent_operations=invalid_value)
@@ -127,8 +126,7 @@ class TestSourceControlGlobalConfig:
         """Test rate limit validation."""
         # Valid values
         config = SourceControlGlobalConfig(
-            rate_limit_requests_per_minute=1000,
-            rate_limit_burst_size=100
+            rate_limit_requests_per_minute=1000, rate_limit_burst_size=100
         )
         assert config.rate_limit_requests_per_minute == 1000
         assert config.rate_limit_burst_size == 100
@@ -140,7 +138,9 @@ class TestSourceControlGlobalConfig:
 
         with pytest.raises(ValidationError) as exc_info:
             SourceControlGlobalConfig(rate_limit_requests_per_minute=10001)
-        assert "Rate limit cannot exceed 10000 requests per minute" in str(exc_info.value)
+        assert "Rate limit cannot exceed 10000 requests per minute" in str(
+            exc_info.value
+        )
 
         # Invalid burst size
         with pytest.raises(ValidationError) as exc_info:
@@ -156,15 +156,16 @@ class TestSourceControlGlobalConfig:
         # Burst size greater than requests per minute should raise error
         with pytest.raises(ValidationError) as exc_info:
             SourceControlGlobalConfig(
-                rate_limit_requests_per_minute=10,
-                rate_limit_burst_size=20
+                rate_limit_requests_per_minute=10, rate_limit_burst_size=20
             )
-        assert "Burst size cannot be greater than requests per minute" in str(exc_info.value)
+        assert "Burst size cannot be greater than requests per minute" in str(
+            exc_info.value
+        )
 
     def test_get_effective_credentials(self):
         """Test getting effective credentials."""
         config = SourceControlGlobalConfig()
-        
+
         # No default credentials
         effective = config.get_effective_credentials(None)
         assert effective is None
@@ -172,7 +173,7 @@ class TestSourceControlGlobalConfig:
         # With default credentials
         default_creds = CredentialConfig(token_env="DEFAULT_TOKEN")
         config.default_credentials = default_creds
-        
+
         effective = config.get_effective_credentials(None)
         assert effective == default_creds
 
@@ -184,7 +185,7 @@ class TestSourceControlGlobalConfig:
     def test_get_effective_remediation_strategy(self):
         """Test getting effective remediation strategy."""
         config = SourceControlGlobalConfig()
-        
+
         # No default strategy
         effective = config.get_effective_remediation_strategy(None)
         assert isinstance(effective, RemediationStrategyConfig)
@@ -192,7 +193,7 @@ class TestSourceControlGlobalConfig:
         # With default strategy
         default_strategy = RemediationStrategyConfig()
         config.default_remediation_strategy = default_strategy
-        
+
         effective = config.get_effective_remediation_strategy(None)
         assert effective == default_strategy
 
@@ -231,7 +232,7 @@ class TestSourceControlConfig:
         """Test that duplicate repository names raise error."""
         repo1 = GitHubRepositoryConfig(name="test-repo", url="owner/repo1")
         repo2 = GitHubRepositoryConfig(name="test-repo", url="owner/repo2")
-        
+
         with pytest.raises(ValidationError) as exc_info:
             SourceControlConfig(repositories=[repo1, repo2])
         assert "Repository names must be unique within a service" in str(exc_info.value)
@@ -239,8 +240,10 @@ class TestSourceControlConfig:
     def test_valid_repositories(self):
         """Test valid repository configuration."""
         repo1 = GitHubRepositoryConfig(name="repo1", url="owner/repo1")
-        repo2 = GitLabRepositoryConfig(name="repo2", url="https://gitlab.com/owner/repo2")
-        
+        repo2 = GitLabRepositoryConfig(
+            name="repo2", url="https://gitlab.com/owner/repo2"
+        )
+
         config = SourceControlConfig(repositories=[repo1, repo2])
         assert len(config.repositories) == 2
         assert config.repositories[0].name == "repo1"
@@ -249,17 +252,19 @@ class TestSourceControlConfig:
     def test_get_repository_by_name(self):
         """Test getting repository by name."""
         repo1 = GitHubRepositoryConfig(name="repo1", url="owner/repo1")
-        repo2 = GitLabRepositoryConfig(name="repo2", url="https://gitlab.com/owner/repo2")
-        
+        repo2 = GitLabRepositoryConfig(
+            name="repo2", url="https://gitlab.com/owner/repo2"
+        )
+
         config = SourceControlConfig(repositories=[repo1, repo2])
-        
+
         # Existing repository
         found_repo = config.get_repository_by_name("repo1")
         assert found_repo == repo1
-        
+
         found_repo = config.get_repository_by_name("repo2")
         assert found_repo == repo2
-        
+
         # Non-existing repository
         found_repo = config.get_repository_by_name("non-existing")
         assert found_repo is None
@@ -267,22 +272,24 @@ class TestSourceControlConfig:
     def test_get_repositories_by_type(self):
         """Test getting repositories by type."""
         repo1 = GitHubRepositoryConfig(name="repo1", url="owner/repo1")
-        repo2 = GitLabRepositoryConfig(name="repo2", url="https://gitlab.com/owner/repo2")
+        repo2 = GitLabRepositoryConfig(
+            name="repo2", url="https://gitlab.com/owner/repo2"
+        )
         repo3 = GitHubRepositoryConfig(name="repo3", url="owner/repo3")
-        
+
         config = SourceControlConfig(repositories=[repo1, repo2, repo3])
-        
+
         # GitHub repositories
         github_repos = config.get_repositories_by_type("github")
         assert len(github_repos) == 2
         assert github_repos[0].name == "repo1"
         assert github_repos[1].name == "repo3"
-        
+
         # GitLab repositories
         gitlab_repos = config.get_repositories_by_type("gitlab")
         assert len(gitlab_repos) == 1
         assert gitlab_repos[0].name == "repo2"
-        
+
         # Non-existing type
         other_repos = config.get_repositories_by_type("other")
         assert len(other_repos) == 0
@@ -290,25 +297,29 @@ class TestSourceControlConfig:
     def test_get_repositories_for_path(self):
         """Test getting repositories for a specific path."""
         repo1 = GitHubRepositoryConfig(name="repo1", url="owner/repo1", paths=["/src"])
-        repo2 = GitLabRepositoryConfig(name="repo2", url="https://gitlab.com/owner/repo2", paths=["/docs"])
-        repo3 = GitHubRepositoryConfig(name="repo3", url="owner/repo3", paths=["/src", "/config"])
-        
+        repo2 = GitLabRepositoryConfig(
+            name="repo2", url="https://gitlab.com/owner/repo2", paths=["/docs"]
+        )
+        repo3 = GitHubRepositoryConfig(
+            name="repo3", url="owner/repo3", paths=["/src", "/config"]
+        )
+
         config = SourceControlConfig(repositories=[repo1, repo2, repo3])
-        
+
         # Paths that match
         matching_repos = config.get_repositories_for_path("/src/main.py")
         assert len(matching_repos) == 2
         assert matching_repos[0].name == "repo1"
         assert matching_repos[1].name == "repo3"
-        
+
         matching_repos = config.get_repositories_for_path("/docs/readme.md")
         assert len(matching_repos) == 1
         assert matching_repos[0].name == "repo2"
-        
+
         matching_repos = config.get_repositories_for_path("/config/settings.yaml")
         assert len(matching_repos) == 1
         assert matching_repos[0].name == "repo3"
-        
+
         # Path that doesn't match
         matching_repos = config.get_repositories_for_path("/tests/test.py")
         assert len(matching_repos) == 0
