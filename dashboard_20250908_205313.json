@@ -1,0 +1,86 @@
+{
+  "dashboard": {
+    "title": "Enhanced Multi-Provider LLM System Dashboard",
+    "last_updated": "2025-09-08T20:53:13.647950",
+    "uptime_hours": 0.0,
+    "status": "OPERATIONAL"
+  },
+  "overview": {
+    "total_requests": 22,
+    "total_cost": 0.039,
+    "success_rate": 0.0,
+    "average_latency_ms": 634.09,
+    "requests_per_hour": 2200.0,
+    "cost_per_hour": 3.9,
+    "provider_count": 2,
+    "model_count": 2
+  },
+  "providers": {
+    "gemini": {
+      "total_requests": 20,
+      "success_rate": 0.0,
+      "total_cost": 0.039,
+      "avg_latency_ms": 197.5,
+      "p95_latency_ms": 245,
+      "p99_latency_ms": 245,
+      "circuit_breaker_trips": 0,
+      "rate_limit_hits": 1,
+      "last_updated": "2025-09-08T20:53:13.647696"
+    },
+    "openai": {
+      "total_requests": 2,
+      "success_rate": 0.0,
+      "total_cost": 0.0,
+      "avg_latency_ms": 5000.0,
+      "p95_latency_ms": 5000,
+      "p99_latency_ms": 5000,
+      "circuit_breaker_trips": 1,
+      "rate_limit_hits": 0,
+      "last_updated": "2025-09-08T20:53:13.647694"
+    }
+  },
+  "models": {
+    "gemini:gemini-1.5-flash": {
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "model_type": "fast",
+      "total_requests": 20,
+      "success_rate": 0.0,
+      "total_cost": 0.039,
+      "avg_latency_ms": 197.5,
+      "quality_score": 0.0,
+      "last_updated": "2025-09-08T20:53:13.647685"
+    },
+    "openai:gpt-4o-mini": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "model_type": "smart",
+      "total_requests": 2,
+      "success_rate": 0.0,
+      "total_cost": 0.0,
+      "avg_latency_ms": 5000.0,
+      "quality_score": 0.0,
+      "last_updated": "2025-09-08T20:53:13.647611"
+    }
+  },
+  "alerts": [
+    {
+      "level": "WARNING",
+      "message": "Low success rate: 0.00%",
+      "recommendation": "Check provider health and error logs"
+    },
+    {
+      "level": "ERROR",
+      "message": "Circuit breaker tripped 1 times for openai",
+      "recommendation": "Check provider status and consider fallback options"
+    },
+    {
+      "level": "WARNING",
+      "message": "Rate limit hit 1 times for gemini",
+      "recommendation": "Consider implementing request queuing or using multiple API keys"
+    }
+  ],
+  "recommendations": [
+    "Investigate and improve error handling"
+  ]
+}
