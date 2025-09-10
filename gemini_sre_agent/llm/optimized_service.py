@@ -12,12 +12,9 @@ import time
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 try:
-    from mirascope import Prompt
+    from mirascope.llm import Provider
 except ImportError:
-    Prompt = None  # type: ignore
-
-# Type alias for better type checking
-PromptType = Any
+    Provider = None  # type: ignore
 
 from pydantic import BaseModel
 
@@ -34,6 +31,9 @@ from .performance_optimizer import (
     PerformanceOptimizer,
     cached_model_selection,
 )
+
+# Type alias for better type checking
+PromptType = Any
 
 T = TypeVar("T", bound=BaseModel)
 

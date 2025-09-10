@@ -10,24 +10,25 @@ from typing import Any, AsyncGenerator, List, Optional, Type, TypeVar, Union
 try:
     import instructor
     import litellm
-    from mirascope import Prompt
+    from mirascope.llm import Provider
+
     LITELLM_AVAILABLE = True
 except ImportError:
     # Set fallback values for when dependencies are not available
     instructor = None  # type: ignore
     litellm = None  # type: ignore
-    Prompt = None  # type: ignore
+    Provider = None  # type: ignore
     LITELLM_AVAILABLE = False
-
-# Type aliases for better type checking
-InstructorType = Any
-LiteLLMType = Any
-PromptType = Any
 
 from pydantic import BaseModel
 
 from .config import LLMProviderConfig
 from .provider import LLMProvider
+
+# Type aliases for better type checking
+InstructorType = Any
+LiteLLMType = Any
+PromptType = Any
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -62,17 +63,17 @@ class LiteLLMProvider(LLMProvider):
             if self.config.provider in key_mapping:
                 setattr(litellm, key_mapping[self.config.provider], self.config.api_key)
             elif self.config.provider == "bedrock":
-                litellm.aws_access_key_id = self.config.provider_specific.get(
+                litellm.aws_access_key_id = self.config.provider_specific.get(  # type: ignore
                     "aws_access_key_id"
                 )
-                litellm.aws_secret_access_key = self.config.provider_specific.get(
+                litellm.aws_secret_access_key = self.config.provider_specific.get(  # type: ignore
                     "aws_secret_access_key"
                 )
-                litellm.aws_region_name = self.config.region
+                litellm.aws_region_name = self.config.region  # type: ignore
 
         if litellm is not None:
-            litellm.verbose = True
-            litellm.drop_params = True
+            litellm.verbose = True  # type: ignore
+            litellm.drop_params = True  # type: ignore
 
     async def initialize(self) -> None:
         """Initialize the provider with LiteLLM configuration."""
@@ -106,7 +107,7 @@ class LiteLLMProvider(LLMProvider):
                 messages=[{"role": "user", "content": formatted_prompt}],
                 **kwargs,
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content  # type: ignore
         except Exception as e:
             self.logger.error(f"Error generating text with {model_name}: {str(e)}")
             raise
@@ -127,8 +128,10 @@ class LiteLLMProvider(LLMProvider):
 
         try:
             if instructor is None:
-                raise ImportError("Instructor is not available. Please install: pip install instructor")
-            client = instructor.from_litellm(litellm)
+                raise ImportError(
+                    "Instructor is not available. Please install: pip install instructor"
+                )
+            client = instructor.from_litellm(litellm)  # type: ignore
             response = await client.chat.completions.create(
                 model=model_name,
                 response_model=response_model,
@@ -164,7 +167,7 @@ class LiteLLMProvider(LLMProvider):
                     **kwargs,
                 )
 
-                async for chunk in response:
+                async for chunk in response:  # type: ignore
                     if chunk.choices[0].delta.content:
                         yield chunk.choices[0].delta.content
             except Exception as e:

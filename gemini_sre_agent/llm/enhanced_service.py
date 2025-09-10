@@ -8,19 +8,15 @@ selection system with the existing provider interfaces, enabling intelligent
 model selection based on task requirements, performance metrics, and fallback chains.
 """
 
-import json
 import logging
 import time
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 try:
-    from mirascope import Prompt
+    from mirascope.llm import Provider
 except ImportError:
-    # Prompt class not available in current mirascope version
-    Prompt = None  # type: ignore
-
-# Type alias for better type checking
-PromptType = Any
+    # Provider class not available in current mirascope version
+    Provider = None  # type: ignore
 
 from pydantic import BaseModel
 
@@ -38,6 +34,9 @@ from .model_selector import (
 )
 from .performance_cache import MetricType, PerformanceMonitor
 from .prompt_manager import PromptManager
+
+# Type alias for better type checking
+PromptType = Any
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -75,8 +74,11 @@ class EnhancedLLMService(Generic[T]):
         self.model_scorer = ModelScorer()
         # Create a dummy capability discovery for now
         from .capabilities.discovery import CapabilityDiscovery
+
         capability_discovery = CapabilityDiscovery(self.providers)
-        self.model_selector = ModelSelector(self.model_registry, capability_discovery, self.model_scorer)
+        self.model_selector = ModelSelector(
+            self.model_registry, capability_discovery, self.model_scorer
+        )
         self.performance_monitor = performance_monitor or PerformanceMonitor()
 
         # Populate model registry with models from config
@@ -104,12 +106,19 @@ class EnhancedLLMService(Generic[T]):
                 capabilities = []
                 for cap_str in model_config.capabilities:
                     try:
-                        capabilities.append(ModelCapability(
-                            name=cap_str,
-                            description=f"Capability: {cap_str}",
-                            performance_score=getattr(model_config, "performance_score", 0.5),
-                            cost_efficiency=1.0 - (model_config.cost_per_1k_tokens / 0.1)  # Normalize cost to efficiency
-                        ))
+                        capabilities.append(
+                            ModelCapability(
+                                name=cap_str,
+                                description=f"Capability: {cap_str}",
+                                performance_score=getattr(
+                                    model_config, "performance_score", 0.5
+                                ),
+                                cost_efficiency=1.0
+                                - (
+                                    model_config.cost_per_1k_tokens / 0.1
+                                ),  # Normalize cost to efficiency
+                            )
+                        )
                     except (ValueError, AttributeError) as e:
                         # Skip unknown capabilities
                         self.logger.warning(f"Unknown capability {cap_str}: {e}")
@@ -300,7 +309,7 @@ Respond only with the JSON object, no additional text."""
                             ],
                             recommendations=[],
                         )
-            except (json.JSONDecodeError, ValueError) as e:  # type: ignore
+            except (json.JSONDecodeError, ValueError):  # type: ignore
                 # Fallback: create a basic response with the raw content
                 if response_model.__name__ == "TriageResponse":
                     result = response_model(
@@ -388,8 +397,8 @@ Respond only with the JSON object, no additional text."""
                                 "error": str(e),
                             },
                         )
-            except Exception:
-                pass  # Don't let metrics recording errors mask the original error
+            except Exception as metrics_error:
+                self.logger.warning(f"Failed to record metrics: {metrics_error}")
 
             self.logger.error(f"Error generating structured response: {str(e)}")
             raise
@@ -439,9 +448,7 @@ Respond only with the JSON object, no additional text."""
 
             # Generate the response using the correct interface
             request = LLMRequest(
-                prompt=prompt,
-                model_type=selected_model.semantic_type,
-                **kwargs
+                prompt=prompt, model_type=selected_model.semantic_type, **kwargs
             )
             response = await provider_instance.generate(request)
             result = response.content
@@ -485,8 +492,8 @@ Respond only with the JSON object, no additional text."""
                             provider=selected_model.provider,
                             context={"task_type": "text_generation", "error": str(e)},
                         )
-            except Exception:
-                pass  # Don't let metrics recording errors mask the original error
+            except Exception as metrics_error:
+                self.logger.warning(f"Failed to record metrics: {metrics_error}")
 
             self.logger.error(f"Error generating text response: {str(e)}")
             raise
@@ -536,9 +543,7 @@ Respond only with the JSON object, no additional text."""
 
                 # Generate response using the correct interface
                 request = LLMRequest(
-                    prompt=prompt,
-                    model_type=model_info.semantic_type,
-                    **kwargs
+                    prompt=prompt, model_type=model_info.semantic_type, **kwargs
                 )
                 response = await provider_instance.generate(request)
                 result = response.content
@@ -678,13 +683,19 @@ Respond only with the JSON object, no additional text."""
         if provider:
             if provider in self.providers:
                 models = self.providers[provider].get_available_models()
-                return {provider: list(models.values()) if isinstance(models, dict) else models}
+                return {
+                    provider: (
+                        list(models.values()) if isinstance(models, dict) else models
+                    )
+                }
             return {}
 
         result = {}
         for provider_name, provider_instance in self.providers.items():
             models = provider_instance.get_available_models()
-            result[provider_name] = list(models.values()) if isinstance(models, dict) else models
+            result[provider_name] = (
+                list(models.values()) if isinstance(models, dict) else models
+            )
         return result
 
     def get_model_performance(self, model_name: str) -> Dict[str, Any]:

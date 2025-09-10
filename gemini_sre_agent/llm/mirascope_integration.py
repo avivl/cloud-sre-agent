@@ -17,18 +17,19 @@ from pydantic import BaseModel
 
 # Mirascope imports with graceful fallback
 try:
-    from mirascope import Prompt
+    from mirascope.llm import Provider
+
     try:
-        from mirascope.prompts import ChatPrompt
+        from mirascope.llm import CallResponse
     except ImportError:
-        ChatPrompt = None
+        CallResponse = None
 
     MIRASCOPE_AVAILABLE = True
 except ImportError:
     # Fallback for when Mirascope is not available
     MIRASCOPE_AVAILABLE = False
-    Prompt = None
-    ChatPrompt = None
+    Provider = None
+    CallResponse = None
 
 # Type aliases for better type checking
 PromptType = Any
@@ -125,12 +126,9 @@ class PromptManager:
         if not MIRASCOPE_AVAILABLE:
             return template
 
-        if prompt_data.prompt_type == "chat" and ChatPrompt is not None:
-            return ChatPrompt(template=template)
-        elif Prompt is not None:
-            return Prompt(template=template)
-        else:
-            return template
+        # For now, just return the template string
+        # TODO: Implement proper mirascope integration when API is stable
+        return template
 
     def create_version(
         self, prompt_id: str, template: str, version: Optional[str] = None
@@ -245,7 +243,9 @@ class PromptManager:
         for key, value in metrics.items():
             if key in current_metrics:
                 # Only average numeric values, keep strings as latest value
-                if isinstance(value, (int, float)) and isinstance(current_metrics[key], (int, float)):
+                if isinstance(value, (int, float)) and isinstance(
+                    current_metrics[key], (int, float)
+                ):
                     current_metrics[key] = (current_metrics[key] + value) / 2
                 else:
                     current_metrics[key] = value
