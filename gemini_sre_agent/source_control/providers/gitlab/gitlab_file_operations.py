@@ -9,7 +9,7 @@ This module handles file-specific operations for the GitLab provider.
 import asyncio
 import base64
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import gitlab
 from gitlab.exceptions import GitlabGetError
@@ -23,31 +23,46 @@ from ...models import (
 class GitLabFileOperations:
     """Handles file-specific operations for GitLab."""
 
-    def __init__(self, gl: gitlab.Gitlab, project: Any, logger: logging.Logger):
+    def __init__(
+        self,
+        gl: gitlab.Gitlab,
+        project: Any,
+        logger: logging.Logger,
+        error_handling_components: Optional[Dict[str, Any]] = None,
+    ):
         """Initialize file operations with GitLab client and project."""
         self.gl = gl
         self.project = project
         self.logger = logger
+        self.error_handling_components = error_handling_components
+
+    async def _execute_with_error_handling(
+        self, operation_name: str, func, *args, **kwargs
+    ):
+        """Execute an operation with error handling if available."""
+        if self.error_handling_components:
+            resilient_manager = self.error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                return await resilient_manager.execute_resilient_operation(
+                    operation_name, func, *args, **kwargs
+                )
+
+        # Fall back to direct execution
+        return await func(*args, **kwargs)
 
     async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
         """Get file content from GitLab repository."""
-        try:
 
-            def _get_file():
-                try:
-                    file_data = self.project.files.get(
-                        file_path=path, ref=ref or "main"
-                    )
-                    return base64.b64decode(file_data.content).decode("utf-8")
-                except GitlabGetError as e:
-                    if e.response_code == 404:
-                        return ""
-                    raise
+        async def _get_file():
+            try:
+                file_data = self.project.files.get(file_path=path, ref=ref or "main")
+                return base64.b64decode(file_data.content).decode("utf-8")
+            except GitlabGetError as e:
+                if e.response_code == 404:
+                    return ""
+                raise
 
-            return await asyncio.get_event_loop().run_in_executor(None, _get_file)
-        except Exception as e:
-            self.logger.error(f"Failed to get file content for {path}: {e}")
-            return ""
+        return await self._execute_with_error_handling("get_file_content", _get_file)
 
     async def apply_remediation(
         self,
@@ -57,91 +72,74 @@ class GitLabFileOperations:
         branch: Optional[str] = None,
     ) -> RemediationResult:
         """Apply remediation to a file."""
-        try:
 
-            def _apply():
+        async def _apply():
+            try:
+                # Check if file exists
                 try:
-                    # Check if file exists
-                    try:
-                        file_data = self.project.files.get(
-                            file_path=file_path, ref=branch or "main"
-                        )
-                        # Update existing file
-                        file_data.content = base64.b64encode(
-                            remediation.encode("utf-8")
-                        ).decode("utf-8")
-                        file_data.save(
-                            branch=branch or "main", commit_message=commit_message
-                        )
-                    except GitlabGetError as e:
-                        if e.response_code == 404:
-                            # Create new file
-                            self.project.files.create(
-                                {
-                                    "file_path": file_path,
-                                    "content": base64.b64encode(
-                                        remediation.encode("utf-8")
-                                    ).decode("utf-8"),
-                                    "branch": branch or "main",
-                                    "commit_message": commit_message,
-                                }
-                            )
-                        else:
-                            raise
-
-                    return RemediationResult(
-                        success=True,
-                        message=f"Applied remediation to {file_path}",
-                        file_path=file_path,
-                        operation_type="apply_remediation",
-                        commit_sha="",  # GitLab doesn't return commit SHA directly
-                        pull_request_url="",
-                        error_details="",
-                        additional_info={},
+                    file_data = self.project.files.get(
+                        file_path=file_path, ref=branch or "main"
                     )
-                except Exception as e:
-                    return RemediationResult(
-                        success=False,
-                        message=f"Failed to apply remediation: {e}",
-                        file_path=file_path,
-                        operation_type="apply_remediation",
-                        commit_sha="",
-                        pull_request_url="",
-                        error_details=str(e),
-                        additional_info={},
+                    # Update existing file
+                    file_data.content = base64.b64encode(
+                        remediation.encode("utf-8")
+                    ).decode("utf-8")
+                    file_data.save(
+                        branch=branch or "main", commit_message=commit_message
                     )
+                except GitlabGetError as e:
+                    if e.response_code == 404:
+                        # Create new file
+                        self.project.files.create(
+                            {
+                                "file_path": file_path,
+                                "content": base64.b64encode(
+                                    remediation.encode("utf-8")
+                                ).decode("utf-8"),
+                                "branch": branch or "main",
+                                "commit_message": commit_message,
+                            }
+                        )
+                    else:
+                        raise
 
-            return await asyncio.get_event_loop().run_in_executor(None, _apply)
-        except Exception as e:
-            self.logger.error(f"Failed to apply remediation to {file_path}: {e}")
-            return RemediationResult(
-                success=False,
-                message=f"Failed to apply remediation: {e}",
-                file_path=file_path,
-                operation_type="apply_remediation",
-                commit_sha="",
-                pull_request_url="",
-                error_details=str(e),
-                additional_info={},
-            )
+                return RemediationResult(
+                    success=True,
+                    message=f"Applied remediation to {file_path}",
+                    file_path=file_path,
+                    operation_type="apply_remediation",
+                    commit_sha="",  # GitLab doesn't return commit SHA directly
+                    pull_request_url="",
+                    error_details="",
+                    additional_info={},
+                )
+            except Exception as e:
+                return RemediationResult(
+                    success=False,
+                    message=f"Failed to apply remediation: {e}",
+                    file_path=file_path,
+                    operation_type="apply_remediation",
+                    commit_sha="",
+                    pull_request_url="",
+                    error_details=str(e),
+                    additional_info={},
+                )
+
+        return await self._execute_with_error_handling("apply_remediation", _apply)
 
     async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
         """Check if a file exists in the repository."""
-        try:
 
-            def _exists():
-                try:
-                    self.project.files.get(file_path=path, ref=ref or "main")
-                    return True
-                except GitlabGetError as e:
-                    if e.response_code == 404:
-                        return False
-                    raise
+        async def _exists():
+            try:
+                self.project.files.get(file_path=path, ref=ref or "main")
+                return True
+            except GitlabGetError as e:
+                if e.response_code == 404:
+                    return False
+                raise
 
-            return await asyncio.get_event_loop().run_in_executor(None, _exists)
-        except Exception as e:
-            self.logger.error(f"Failed to check if file exists {path}: {e}")
-            return False
+        return await self._execute_with_error_handling("file_exists", _exists)
 
     async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
         """Get file information."""

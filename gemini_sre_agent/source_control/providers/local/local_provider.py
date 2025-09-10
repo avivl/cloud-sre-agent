@@ -7,6 +7,7 @@ from gemini_sre_agent.config.source_control_repositories import LocalRepositoryC
 from gemini_sre_agent.source_control.base_implementation import (
     BaseSourceControlProvider,
 )
+
 # Error handling is now inherited from BaseSourceControlProvider
 from gemini_sre_agent.source_control.models import (
     BatchOperation,
@@ -40,16 +41,30 @@ class LocalProvider(BaseSourceControlProvider):
         self.backup_files = getattr(self.repo_config, "backup_files", True)
         self.backup_directory = getattr(self.repo_config, "backup_directory", None)
 
-        # Initialize sub-modules
+        # Initialize error handling system
+        if (
+            hasattr(self.repo_config, "error_handling")
+            and self.repo_config.error_handling
+        ):
+            self._initialize_error_handling(
+                "local", self.repo_config.error_handling.model_dump()
+            )
+
+        # Initialize sub-modules with error handling components
         self.file_ops = LocalFileOperations(
             self.root_path,
             self.default_encoding,
             self.backup_files,
             self.backup_directory,
             self.logger,
+            self._error_handling_components,
         )
         self.git_ops = LocalGitOperations(
-            self.root_path, self.git_enabled, self.auto_init_git, self.logger
+            self.root_path,
+            self.git_enabled,
+            self.auto_init_git,
+            self.logger,
+            self._error_handling_components,
         )
         self.batch_ops = LocalBatchOperations(
             self.root_path,
@@ -57,14 +72,8 @@ class LocalProvider(BaseSourceControlProvider):
             self.backup_files,
             self.backup_directory,
             self.logger,
+            self._error_handling_components,
         )
-
-        # Initialize error handling system
-        if (
-            hasattr(self.repo_config, "error_handling")
-            and self.repo_config.error_handling
-        ):
-            self._initialize_error_handling("local", self.repo_config.error_handling.model_dump())
 
     async def get_capabilities(self) -> ProviderCapabilities:
         """Get provider capabilities."""
@@ -130,9 +139,9 @@ class LocalProvider(BaseSourceControlProvider):
                     )
                     raise
             else:
-                return self.file_ops.get_file_content(path)
+                return await self.file_ops.get_file_content(path)
         else:
-            return self.file_ops.get_file_content(path)
+            return await self.file_ops.get_file_content(path)
 
     async def apply_remediation(
         self,
@@ -169,31 +178,31 @@ class LocalProvider(BaseSourceControlProvider):
                         additional_info={},
                     )
             else:
-                return self.file_ops.apply_remediation(path, content, message)
+                return await self.file_ops.apply_remediation(path, content, message)
         else:
-            return self.file_ops.apply_remediation(path, content, message)
+            return await self.file_ops.apply_remediation(path, content, message)
 
     async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
         """Check if a file exists."""
-        return self.file_ops.file_exists(path)
+        return await self.file_ops.file_exists(path)
 
     async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
         """Get file information."""
-        return self.file_ops.get_file_info(path)
+        return await self.file_ops.get_file_info(path)
 
     async def list_files(
         self, path: str = "", ref: Optional[str] = None
     ) -> List[FileInfo]:
         """List files in a directory."""
-        return self.file_ops.list_files(path)
+        return await self.file_ops.list_files(path)
 
     async def generate_patch(self, original: str, modified: str) -> str:
         """Generate a patch between original and modified content."""
-        return self.file_ops.generate_patch(original, modified)
+        return await self.file_ops.generate_patch(original, modified)
 
     async def apply_patch(self, patch: str, file_path: str) -> bool:
         """Apply a patch to a file."""
-        return self.file_ops.apply_patch(patch, file_path)
+        return await self.file_ops.apply_patch(patch, file_path)
 
     async def commit_changes(
         self,
@@ -203,33 +212,33 @@ class LocalProvider(BaseSourceControlProvider):
         branch: Optional[str] = None,
     ) -> Optional[str]:
         """Commit changes to a file."""
-        success = self.file_ops.commit_changes(file_path, content, message)
+        success = await self.file_ops.commit_changes(file_path, content, message)
         return "local_commit" if success else None
 
     # Branch operations - delegate to git_ops
     async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
         """Create a new branch."""
-        return self.git_ops.create_branch(name, base_ref)
+        return await self.git_ops.create_branch(name, base_ref)
 
     async def delete_branch(self, name: str) -> bool:
         """Delete a branch."""
-        return self.git_ops.delete_branch(name)
+        return await self.git_ops.delete_branch(name)
 
     async def list_branches(self) -> List[BranchInfo]:
         """List all branches."""
-        return self.git_ops.list_branches()
+        return await self.git_ops.list_branches()
 
     async def get_branch_info(self, name: str) -> Optional[BranchInfo]:
         """Get information about a specific branch."""
-        return self.git_ops.get_branch_info(name)
+        return await self.git_ops.get_branch_info(name)
 
     async def get_current_branch(self) -> str:
         """Get the current branch name."""
-        return self.git_ops.get_current_branch()
+        return await self.git_ops.get_current_branch()
 
     async def get_repository_info(self) -> RepositoryInfo:
         """Get repository information."""
-        return self.git_ops.get_repository_info()
+        return await self.git_ops.get_repository_info()
 
     async def check_conflicts(
         self,
@@ -243,7 +252,7 @@ class LocalProvider(BaseSourceControlProvider):
         base_branch = "main"  # This should be configurable
 
         try:
-            conflict_info = self.git_ops.check_conflicts(
+            conflict_info = await self.git_ops.check_conflicts(
                 path, base_branch, feature_branch
             )
             return conflict_info.has_conflicts
@@ -258,27 +267,27 @@ class LocalProvider(BaseSourceControlProvider):
         strategy: str = "manual",
     ) -> bool:
         """Resolve conflicts in a file."""
-        return self.git_ops.resolve_conflicts(path, content, strategy)
+        return await self.git_ops.resolve_conflicts(path, content, strategy)
 
     # Git operations - delegate to git_ops
     async def get_file_history(self, path: str, limit: int = 10) -> List[CommitInfo]:
         """Get file commit history."""
-        return self.git_ops.get_file_history(path, limit)
+        return await self.git_ops.get_file_history(path, limit)
 
     async def diff_between_commits(self, base_sha: str, head_sha: str) -> str:
         """Get diff between two commits."""
-        return self.git_ops.diff_between_commits(base_sha, head_sha)
+        return await self.git_ops.diff_between_commits(base_sha, head_sha)
 
-    def execute_git_command(self, command: List[str]) -> str:
+    async def execute_git_command(self, command: List[str]) -> str:
         """Execute a Git command and return output."""
-        return self.git_ops.execute_git_command(command)
+        return await self.git_ops.execute_git_command(command)
 
     # Batch operations - delegate to batch_ops
     async def batch_operations(
         self, operations: List[BatchOperation]
     ) -> List[OperationResult]:
         """Execute multiple operations in batch."""
-        return self.batch_ops.batch_operations(operations)
+        return await self.batch_ops.batch_operations(operations)
 
     # Pull request operations (not supported for local provider)
     async def create_pull_request(

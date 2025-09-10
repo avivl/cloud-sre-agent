@@ -7,7 +7,7 @@ This module orchestrates the core file and repository operations for the GitHub 
 """
 
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from github import Github
 from github.Repository import Repository
@@ -30,16 +30,29 @@ from .github_file_operations import GitHubFileOperations
 class GitHubOperations:
     """Orchestrates core file and repository operations for GitHub."""
 
-    def __init__(self, client: Github, repo: Repository, logger: logging.Logger):
+    def __init__(
+        self,
+        client: Github,
+        repo: Repository,
+        logger: logging.Logger,
+        error_handling_components: Optional[Dict[str, Any]] = None,
+    ):
         """Initialize operations with GitHub client and repository."""
         self.client = client
         self.repo = repo
         self.logger = logger
+        self.error_handling_components = error_handling_components
 
-        # Initialize sub-modules
-        self.file_ops = GitHubFileOperations(client, repo, logger)
-        self.branch_ops = GitHubBranchOperations(client, repo, logger)
-        self.batch_ops = GitHubBatchOperations(client, repo, logger)
+        # Initialize sub-modules with error handling components
+        self.file_ops = GitHubFileOperations(
+            client, repo, logger, error_handling_components
+        )
+        self.branch_ops = GitHubBranchOperations(
+            client, repo, logger, error_handling_components
+        )
+        self.batch_ops = GitHubBatchOperations(
+            client, repo, logger, error_handling_components
+        )
 
     # File operations - delegate to file_ops
     async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:

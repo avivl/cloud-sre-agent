@@ -8,7 +8,7 @@ This module handles batch operations for the local provider.
 
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from ...models import (
     BatchOperation,
@@ -26,6 +26,7 @@ class LocalBatchOperations:
         backup_files: bool,
         backup_directory: Optional[str],
         logger: logging.Logger,
+        error_handling_components: Optional[Dict[str, Any]] = None,
     ):
         """Initialize batch operations."""
         self.root_path = root_path
@@ -33,48 +34,69 @@ class LocalBatchOperations:
         self.backup_files = backup_files
         self.backup_directory = backup_directory
         self.logger = logger
+        self.error_handling_components = error_handling_components
 
-    def batch_operations(
+    async def _execute_with_error_handling(
+        self, operation_name: str, func, *args, **kwargs
+    ):
+        """Execute a function with error handling if available."""
+        if (
+            self.error_handling_components
+            and "resilient_manager" in self.error_handling_components
+        ):
+            resilient_manager = self.error_handling_components["resilient_manager"]
+            return await resilient_manager.execute_with_retry(
+                operation_name, func, *args, **kwargs
+            )
+
+        # Fall back to direct execution
+        return await func(*args, **kwargs)
+
+    async def batch_operations(
         self, operations: List[BatchOperation]
     ) -> List[OperationResult]:
         """Execute multiple operations in batch."""
-        results = []
 
-        for operation in operations:
-            try:
-                if operation.operation_type == "create_file":
-                    result = self._create_file(operation)
-                elif operation.operation_type == "update_file":
-                    result = self._update_file(operation)
-                elif operation.operation_type == "delete_file":
-                    result = self._delete_file(operation)
-                else:
-                    result = OperationResult(
-                        operation_id=operation.operation_id,
-                        success=False,
-                        message=f"Unknown operation type: {operation.operation_type}",
-                        file_path=operation.file_path,
-                        error_details=f"Unknown operation type: {operation.operation_type}",
-                        additional_info={},
+        async def _batch():
+            results = []
+
+            for operation in operations:
+                try:
+                    if operation.operation_type == "create_file":
+                        result = self._create_file(operation)
+                    elif operation.operation_type == "update_file":
+                        result = self._update_file(operation)
+                    elif operation.operation_type == "delete_file":
+                        result = self._delete_file(operation)
+                    else:
+                        result = OperationResult(
+                            operation_id=operation.operation_id,
+                            success=False,
+                            message=f"Unknown operation type: {operation.operation_type}",
+                            file_path=operation.file_path,
+                            error_details=f"Unknown operation type: {operation.operation_type}",
+                            additional_info={},
+                        )
+
+                    results.append(result)
+                except Exception as e:
+                    self.logger.error(
+                        f"Failed to execute operation {operation.operation_id}: {e}"
+                    )
+                    results.append(
+                        OperationResult(
+                            operation_id=operation.operation_id,
+                            success=False,
+                            message=f"Operation failed: {e}",
+                            file_path=operation.file_path,
+                            error_details=str(e),
+                            additional_info={},
+                        )
                     )
 
-                results.append(result)
-            except Exception as e:
-                self.logger.error(
-                    f"Failed to execute operation {operation.operation_id}: {e}"
-                )
-                results.append(
-                    OperationResult(
-                        operation_id=operation.operation_id,
-                        success=False,
-                        message=f"Operation failed: {e}",
-                        file_path=operation.file_path,
-                        error_details=str(e),
-                        additional_info={},
-                    )
-                )
+            return results
 
-        return results
+        return await self._execute_with_error_handling("batch_operations", _batch)
 
     def _create_file(self, operation: BatchOperation) -> OperationResult:
         """Create a file."""

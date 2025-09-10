@@ -10,7 +10,7 @@ import asyncio
 import base64
 import difflib
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from github import Github, GithubException
 from github.Repository import Repository
@@ -25,37 +25,54 @@ from ...models import (
 class GitHubFileOperations:
     """Handles file-specific operations for GitHub."""
 
-    def __init__(self, client: Github, repo: Repository, logger: logging.Logger):
+    def __init__(
+        self,
+        client: Github,
+        repo: Repository,
+        logger: logging.Logger,
+        error_handling_components: Optional[Dict[str, Any]] = None,
+    ):
         """Initialize file operations with GitHub client and repository."""
         self.client = client
         self.repo = repo
         self.logger = logger
+        self.error_handling_components = error_handling_components
+
+    async def _execute_with_error_handling(
+        self, operation_name: str, func, *args, **kwargs
+    ):
+        """Execute an operation with error handling if available."""
+        if self.error_handling_components:
+            resilient_manager = self.error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                return await resilient_manager.execute_resilient_operation(
+                    operation_name, func, *args, **kwargs
+                )
+
+        # Fall back to direct execution
+        return await func(*args, **kwargs)
 
     async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
         """Get file content from GitHub repository."""
-        try:
 
-            def _get_file():
-                try:
-                    if ref is None:
-                        contents = self.repo.get_contents(path)
-                    else:
-                        contents = self.repo.get_contents(path, ref=ref)
-                    if isinstance(contents, list):
-                        # If it's a list, we can't get content directly
-                        return ""
-                    elif hasattr(contents, "content"):
-                        return base64.b64decode(contents.content).decode("utf-8")
+        async def _get_file():
+            try:
+                if ref is None:
+                    contents = self.repo.get_contents(path)
+                else:
+                    contents = self.repo.get_contents(path, ref=ref)
+                if isinstance(contents, list):
+                    # If it's a list, we can't get content directly
                     return ""
-                except GithubException as e:
-                    if e.status == 404:
-                        return ""
-                    raise
+                elif hasattr(contents, "content"):
+                    return base64.b64decode(contents.content).decode("utf-8")
+                return ""
+            except GithubException as e:
+                if e.status == 404:
+                    return ""
+                raise
 
-            return await asyncio.get_event_loop().run_in_executor(None, _get_file)
-        except Exception as e:
-            self.logger.error(f"Failed to get file content for {path}: {e}")
-            return ""
+        return await self._execute_with_error_handling("get_file_content", _get_file)
 
     async def apply_remediation(
         self,
@@ -65,161 +82,134 @@ class GitHubFileOperations:
         branch: Optional[str] = None,
     ) -> RemediationResult:
         """Apply remediation to a file."""
-        try:
 
-            def _apply():
-                try:
-                    # Get current file content
-                    if branch is None:
-                        contents = self.repo.get_contents(file_path)
-                    else:
-                        contents = self.repo.get_contents(file_path, ref=branch)
+        async def _apply():
+            try:
+                # Get current file content
+                if branch is None:
+                    contents = self.repo.get_contents(file_path)
+                else:
+                    contents = self.repo.get_contents(file_path, ref=branch)
 
-                    if isinstance(contents, list):
-                        # If it's a list, we can't get content directly
-                        return RemediationResult(
-                            success=False,
-                            message="File not found or is a directory",
-                            file_path=file_path,
-                            operation_type="apply_remediation",
-                            commit_sha="",
-                            pull_request_url="",
-                            error_details="File not found or is a directory",
-                            additional_info={},
-                        )
-
-                    if hasattr(contents, "sha"):
-                        sha = contents.sha
-                    else:
-                        sha = None
-
-                    # Update file with remediation
-                    if sha:
-                        commit = self.repo.update_file(
-                            path=file_path,
-                            message=commit_message,
-                            content=remediation,
-                            sha=sha,
-                            branch=branch,  # type: ignore
-                        )
-                    else:
-                        commit = self.repo.create_file(
-                            path=file_path,
-                            message=commit_message,
-                            content=remediation,
-                            branch=branch,  # type: ignore
-                        )
-
-                    return RemediationResult(
-                        success=True,
-                        message=f"Applied remediation to {file_path}",
-                        file_path=file_path,
-                        operation_type="apply_remediation",
-                        commit_sha=commit["commit"].sha,
-                        pull_request_url="",
-                        error_details="",
-                        additional_info={},
-                    )
-                except GithubException as e:
+                if isinstance(contents, list):
+                    # If it's a list, we can't get content directly
                     return RemediationResult(
                         success=False,
-                        message=f"Failed to apply remediation: {e}",
+                        message="File not found or is a directory",
                         file_path=file_path,
                         operation_type="apply_remediation",
                         commit_sha="",
                         pull_request_url="",
-                        error_details=str(e),
+                        error_details="File not found or is a directory",
                         additional_info={},
                     )
 
-            return await asyncio.get_event_loop().run_in_executor(None, _apply)
-        except Exception as e:
-            self.logger.error(f"Failed to apply remediation to {file_path}: {e}")
-            return RemediationResult(
-                success=False,
-                message=f"Failed to apply remediation: {e}",
-                file_path=file_path,
-                operation_type="apply_remediation",
-                commit_sha="",
-                pull_request_url="",
-                error_details=str(e),
-                additional_info={},
-            )
+                if hasattr(contents, "sha"):
+                    sha = contents.sha
+                else:
+                    sha = None
+
+                # Update file with remediation
+                if sha:
+                    commit = self.repo.update_file(
+                        path=file_path,
+                        message=commit_message,
+                        content=remediation,
+                        sha=sha,
+                        branch=branch,  # type: ignore
+                    )
+                else:
+                    commit = self.repo.create_file(
+                        path=file_path,
+                        message=commit_message,
+                        content=remediation,
+                        branch=branch,  # type: ignore
+                    )
+
+                return RemediationResult(
+                    success=True,
+                    message=f"Applied remediation to {file_path}",
+                    file_path=file_path,
+                    operation_type="apply_remediation",
+                    commit_sha=commit["commit"].sha,
+                    pull_request_url="",
+                    error_details="",
+                    additional_info={},
+                )
+            except GithubException as e:
+                return RemediationResult(
+                    success=False,
+                    message=f"Failed to apply remediation: {e}",
+                    file_path=file_path,
+                    operation_type="apply_remediation",
+                    commit_sha="",
+                    pull_request_url="",
+                    error_details=str(e),
+                    additional_info={},
+                )
+
+        return await self._execute_with_error_handling("apply_remediation", _apply)
 
     async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
         """Check if a file exists in the repository."""
-        try:
 
-            def _exists():
-                try:
-                    if ref is None:
-                        self.repo.get_contents(path)
-                    else:
-                        self.repo.get_contents(path, ref=ref)
-                    return True
-                except GithubException as e:
-                    if e.status == 404:
-                        return False
-                    raise
+        async def _exists():
+            try:
+                if ref is None:
+                    self.repo.get_contents(path)
+                else:
+                    self.repo.get_contents(path, ref=ref)
+                return True
+            except GithubException as e:
+                if e.status == 404:
+                    return False
+                raise
 
-            return await asyncio.get_event_loop().run_in_executor(None, _exists)
-        except Exception as e:
-            self.logger.error(f"Failed to check if file exists {path}: {e}")
-            return False
+        return await self._execute_with_error_handling("file_exists", _exists)
 
     async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
         """Get file information."""
-        try:
 
-            def _get_info():
-                try:
-                    if ref is None:
-                        contents = self.repo.get_contents(path)
-                    else:
-                        contents = self.repo.get_contents(path, ref=ref)
-                    if isinstance(contents, list):
-                        # If it's a list, we can't get file info directly
-                        return FileInfo(
-                            path=path,
-                            size=0,
-                            sha="",
-                            is_binary=False,
-                            last_modified=None,
-                        )
-                    else:
-                        return FileInfo(
-                            path=path,
-                            size=contents.size,  # type: ignore
-                            sha=contents.sha,  # type: ignore
-                            is_binary=contents.type == "file" and contents.size > 0,  # type: ignore
-                            last_modified=(
-                                contents.last_modified  # type: ignore
-                                if hasattr(contents, "last_modified")
-                                and contents.last_modified
-                                else None
-                            ),
-                        )
-                except GithubException as e:
-                    if e.status == 404:
-                        return FileInfo(
-                            path=path,
-                            size=0,
-                            sha="",
-                            is_binary=False,
-                            last_modified=None,
-                        )
-                    raise
+        async def _get_info():
+            try:
+                if ref is None:
+                    contents = self.repo.get_contents(path)
+                else:
+                    contents = self.repo.get_contents(path, ref=ref)
+                if isinstance(contents, list):
+                    # If it's a list, we can't get file info directly
+                    return FileInfo(
+                        path=path,
+                        size=0,
+                        sha="",
+                        is_binary=False,
+                        last_modified=None,
+                    )
+                else:
+                    return FileInfo(
+                        path=path,
+                        size=contents.size,  # type: ignore
+                        sha=contents.sha,  # type: ignore
+                        is_binary=contents.type == "file" and contents.size > 0,  # type: ignore
+                        last_modified=(
+                            contents.last_modified  # type: ignore
+                            if hasattr(contents, "last_modified")
+                            and contents.last_modified
+                            else None
+                        ),
+                    )
+            except GithubException as e:
+                if e.status == 404:
+                    return FileInfo(
+                        path=path,
+                        size=0,
+                        sha="",
+                        is_binary=False,
+                        last_modified=None,
+                    )
+                raise
 
-            return await asyncio.get_event_loop().run_in_executor(None, _get_info)
-        except Exception as e:
-            self.logger.error(f"Failed to get file info for {path}: {e}")
-            return FileInfo(
-                path=path,
-                size=0,
-                sha="",
-                is_binary=False,
-                last_modified=None,
-            )
+        return await self._execute_with_error_handling("get_file_info", _get_info)
 
     async def list_files(
         self, path: str = "", ref: Optional[str] = None

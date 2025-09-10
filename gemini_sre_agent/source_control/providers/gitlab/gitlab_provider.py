@@ -92,15 +92,21 @@ class GitLabProvider(BaseSourceControlProvider):
             else:
                 raise ValueError("Project name is required for GitLab provider")
 
-            # Initialize sub-modules
-            self.file_ops = GitLabFileOperations(self.gl, self.project, self.logger)
-            self.branch_ops = GitLabBranchOperations(self.gl, self.project, self.logger)
-            self.mr_ops = GitLabMergeRequestOperations(
-                self.gl, self.project, self.logger
+            # Initialize error handling system
+            self._initialize_error_handling(
+                "gitlab", self.repo_config.error_handling.model_dump()
             )
 
-            # Initialize error handling system
-            self._initialize_error_handling("gitlab", self.repo_config.error_handling.model_dump())
+            # Initialize sub-modules with error handling components
+            self.file_ops = GitLabFileOperations(
+                self.gl, self.project, self.logger, self._error_handling_components
+            )
+            self.branch_ops = GitLabBranchOperations(
+                self.gl, self.project, self.logger, self._error_handling_components
+            )
+            self.mr_ops = GitLabMergeRequestOperations(
+                self.gl, self.project, self.logger, self._error_handling_components
+            )
 
             self.logger.info(f"GitLab provider initialized for project: {project_name}")
         except Exception as e:
@@ -174,7 +180,12 @@ class GitLabProvider(BaseSourceControlProvider):
         if not self.file_ops:
             raise RuntimeError("Provider not initialized")
         return await self._execute_with_error_handling(
-            "apply_remediation", self.file_ops.apply_remediation, path, content, message, branch
+            "apply_remediation",
+            self.file_ops.apply_remediation,
+            path,
+            content,
+            message,
+            branch,
         )
 
     async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:

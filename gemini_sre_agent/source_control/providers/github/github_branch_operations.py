@@ -8,7 +8,7 @@ This module handles branch-specific operations for the GitHub provider.
 
 import asyncio
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from github import Github, GithubException
 from github.Repository import Repository
@@ -23,50 +23,61 @@ from ...models import (
 class GitHubBranchOperations:
     """Handles branch-specific operations for GitHub."""
 
-    def __init__(self, client: Github, repo: Repository, logger: logging.Logger):
+    def __init__(
+        self,
+        client: Github,
+        repo: Repository,
+        logger: logging.Logger,
+        error_handling_components: Optional[Dict[str, Any]] = None,
+    ):
         """Initialize branch operations with GitHub client and repository."""
         self.client = client
         self.repo = repo
         self.logger = logger
+        self.error_handling_components = error_handling_components
+
+    async def _execute_with_error_handling(
+        self, operation_name: str, func, *args, **kwargs
+    ):
+        """Execute an operation with error handling if available."""
+        if self.error_handling_components:
+            resilient_manager = self.error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                return await resilient_manager.execute_resilient_operation(
+                    operation_name, func, *args, **kwargs
+                )
+
+        # Fall back to direct execution
+        return await func(*args, **kwargs)
 
     async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
         """Create a new branch."""
-        try:
 
-            def _create():
-                try:
-                    ref_to_use = base_ref or self.repo.default_branch
-                    base_ref_obj = self.repo.get_git_ref(f"heads/{ref_to_use}")
-                    self.repo.create_git_ref(
-                        f"refs/heads/{name}", base_ref_obj.object.sha
-                    )
-                    return True
-                except GithubException as e:
-                    self.logger.error(f"Failed to create branch {name}: {e}")
-                    return False
+        async def _create():
+            try:
+                ref_to_use = base_ref or self.repo.default_branch
+                base_ref_obj = self.repo.get_git_ref(f"heads/{ref_to_use}")
+                self.repo.create_git_ref(f"refs/heads/{name}", base_ref_obj.object.sha)
+                return True
+            except GithubException as e:
+                self.logger.error(f"Failed to create branch {name}: {e}")
+                return False
 
-            return await asyncio.get_event_loop().run_in_executor(None, _create)
-        except Exception as e:
-            self.logger.error(f"Failed to create branch {name}: {e}")
-            return False
+        return await self._execute_with_error_handling("create_branch", _create)
 
     async def delete_branch(self, name: str) -> bool:
         """Delete a branch."""
-        try:
 
-            def _delete():
-                try:
-                    ref = self.repo.get_git_ref(f"heads/{name}")
-                    ref.delete()
-                    return True
-                except GithubException as e:
-                    self.logger.error(f"Failed to delete branch {name}: {e}")
-                    return False
+        async def _delete():
+            try:
+                ref = self.repo.get_git_ref(f"heads/{name}")
+                ref.delete()
+                return True
+            except GithubException as e:
+                self.logger.error(f"Failed to delete branch {name}: {e}")
+                return False
 
-            return await asyncio.get_event_loop().run_in_executor(None, _delete)
-        except Exception as e:
-            self.logger.error(f"Failed to delete branch {name}: {e}")
-            return False
+        return await self._execute_with_error_handling("delete_branch", _delete)
 
     async def list_branches(self) -> List[BranchInfo]:
         """List all branches."""

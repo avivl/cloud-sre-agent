@@ -78,16 +78,20 @@ class GitHubProvider(BaseSourceControlProvider):
             repo_name = url_parts[1]
             self.repo = self.client.get_repo(f"{owner}/{repo_name}")
 
+            # Initialize error handling system
+            self._initialize_error_handling(
+                "github", self.repo_config.error_handling.model_dump()
+            )
+
             # Initialize component modules
             if self.client and self.repo:
-                self.operations = GitHubOperations(self.client, self.repo, self.logger)
+                self.operations = GitHubOperations(
+                    self.client, self.repo, self.logger, self._error_handling_components
+                )
                 self.pull_requests = GitHubPullRequests(
                     self.client, self.repo, self.logger
                 )
                 self.utils = GitHubUtils(self.client, self.repo, self.logger)
-
-            # Initialize error handling system
-            self._initialize_error_handling("github", self.repo_config.error_handling.model_dump())
 
         except Exception as e:
             self.logger.error(f"Failed to setup GitHub client: {e}")
@@ -134,7 +138,12 @@ class GitHubProvider(BaseSourceControlProvider):
         if not self.operations:
             raise RuntimeError("GitHub operations not initialized")
         return await self._execute_with_error_handling(
-            "apply_remediation", self.operations.apply_remediation, path, content, message, branch
+            "apply_remediation",
+            self.operations.apply_remediation,
+            path,
+            content,
+            message,
+            branch,
         )
 
     async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
