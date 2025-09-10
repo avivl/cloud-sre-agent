@@ -10,18 +10,15 @@ import json
 import os
 import sys
 import tempfile
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from gemini_sre_agent.agents.enhanced_specialized import (
     EnhancedAnalysisAgent,
     EnhancedRemediationAgentV2,
     EnhancedTriageAgent,
 )
-from gemini_sre_agent.agents.legacy_adapter import (
-    create_enhanced_analysis_agent,
-    create_enhanced_remediation_agent,
-    create_enhanced_triage_agent,
-)
+from gemini_sre_agent.agents.response_models import RemediationResponse
+# Legacy adapter functions are now integrated directly into the enhanced agents
 
 # New ingestion system imports
 from gemini_sre_agent.config.ingestion_config import (
@@ -83,7 +80,7 @@ async def initialize_enhanced_agents(
     llm_config, 
     feature_flags: Dict[str, bool],
     logger
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Initialize enhanced agents with full multi-provider support."""
     
     # Get metrics collector for monitoring
@@ -93,21 +90,21 @@ async def initialize_enhanced_agents(
         # Use legacy adapters for backward compatibility
         logger.info("[STARTUP] Using legacy adapters with enhanced backend")
         
-        triage_agent = create_enhanced_triage_agent(
+        triage_agent = EnhancedTriageAgent(
             project_id="enhanced-project",
             location="us-central1", 
             triage_model="gemini-1.5-flash",
             llm_config=llm_config
         )
         
-        analysis_agent = create_enhanced_analysis_agent(
+        analysis_agent = EnhancedAnalysisAgent(
             project_id="enhanced-project",
             location="us-central1",
             analysis_model="gemini-1.5-flash", 
             llm_config=llm_config
         )
         
-        remediation_agent = create_enhanced_remediation_agent(
+        remediation_agent = EnhancedRemediationAgentV2(
             github_token=os.getenv("GITHUB_TOKEN", "dummy_token"),
             repo_name="enhanced/repo",
             llm_config=llm_config,
@@ -123,7 +120,7 @@ async def initialize_enhanced_agents(
         remediation_optimization = OptimizationGoal.HYBRID
         
         if feature_flags.get("enable_cost_optimization", True):
-            triage_optimization = OptimizationGoal.COST_EFFECTIVE
+            triage_optimization = OptimizationGoal.COST
             analysis_optimization = OptimizationGoal.HYBRID
             remediation_optimization = OptimizationGoal.HYBRID
         
@@ -167,7 +164,7 @@ async def initialize_enhanced_agents(
 
 async def process_log_with_enhanced_pipeline(
     log_entry: LogEntry,
-    agents: Dict[str, any],
+    agents: Dict[str, Any],
     patch_manager: LocalPatchManager,
     logger
 ):
@@ -264,11 +261,13 @@ async def process_log_with_enhanced_pipeline(
             )
         else:
             # Legacy adapter - create a simple remediation plan
-            remediation_response = type('RemediationResponse', (), {
-                'code_patch': f'# FILE: enhanced_service/app.py\n# Enhanced fix for {flow_id}\nprint("Fixed issue")',
-                'proposed_fix': f'Enhanced fix for issue {flow_id}',
-                'priority': 'medium'
-            })()
+            remediation_response = RemediationResponse(
+                root_cause_analysis=f"Enhanced analysis for issue {flow_id}",
+                proposed_fix=f"Enhanced fix for issue {flow_id}",
+                code_patch=f'# FILE: enhanced_service/app.py\n# Enhanced fix for {flow_id}\nprint("Fixed issue")',
+                priority='medium',
+                estimated_effort='2 hours'
+            )
 
         # Create local patch using the LocalPatchManager
         logger.info(f"[ENHANCED_REMEDIATION] Creating enhanced local patch: flow_id={flow_id}")
