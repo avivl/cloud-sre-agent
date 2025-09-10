@@ -18,9 +18,11 @@ from ...models import (
     FileInfo,
     RemediationResult,
 )
+from ..base_sub_operation import BaseSubOperation
+from ..sub_operation_config import SubOperationConfig
 
 
-class LocalFileOperations:
+class LocalFileOperations(BaseSubOperation):
     """Handles file-specific operations for local filesystem."""
 
     def __init__(
@@ -31,30 +33,21 @@ class LocalFileOperations:
         backup_directory: Optional[str],
         logger: logging.Logger,
         error_handling_components: Optional[Dict[str, Any]] = None,
+        config: Optional[SubOperationConfig] = None,
     ):
         """Initialize file operations."""
+        super().__init__(
+            logger=logger,
+            error_handling_components=error_handling_components,
+            config=config,
+            provider_type="local",
+            operation_name="file_operations",
+        )
         self.root_path = root_path
         self.default_encoding = default_encoding
         self.backup_files = backup_files
         self.backup_directory = backup_directory
-        self.logger = logger
-        self.error_handling_components = error_handling_components
 
-    async def _execute_with_error_handling(
-        self, operation_name: str, func, *args, **kwargs
-    ):
-        """Execute a function with error handling if available."""
-        if (
-            self.error_handling_components
-            and "resilient_manager" in self.error_handling_components
-        ):
-            resilient_manager = self.error_handling_components["resilient_manager"]
-            return await resilient_manager.execute_with_retry(
-                operation_name, func, *args, **kwargs
-            )
-
-        # Fall back to direct execution
-        return await func(*args, **kwargs)
 
     async def get_file_content(self, path: str) -> str:
         """Get file content from local filesystem."""
@@ -78,7 +71,7 @@ class LocalFileOperations:
                 self.logger.error(f"Failed to read file {path}: {e}")
                 return ""
 
-        return await self._execute_with_error_handling("get_file_content", _get_file)
+        return await self._execute_with_error_handling("get_file_content", _get_file, "file")
 
     async def apply_remediation(
         self,
@@ -124,7 +117,7 @@ class LocalFileOperations:
                     additional_info={},
                 )
 
-        return await self._execute_with_error_handling("apply_remediation", _apply)
+        return await self._execute_with_error_handling("apply_remediation", _apply, "file")
 
     async def file_exists(self, path: str) -> bool:
         """Check if a file exists."""
@@ -137,7 +130,7 @@ class LocalFileOperations:
                 self.logger.error(f"Failed to check if file exists {path}: {e}")
                 return False
 
-        return await self._execute_with_error_handling("file_exists", _exists)
+        return await self._execute_with_error_handling("file_exists", _exists, "file")
 
     async def get_file_info(self, path: str) -> FileInfo:
         """Get file information."""
@@ -172,7 +165,7 @@ class LocalFileOperations:
                     last_modified=None,
                 )
 
-        return await self._execute_with_error_handling("get_file_info", _get_info)
+        return await self._execute_with_error_handling("get_file_info", _get_info, "file")
 
     async def list_files(self, path: str = "") -> List[FileInfo]:
         """List files in a directory."""
@@ -202,7 +195,7 @@ class LocalFileOperations:
                 self.logger.error(f"Failed to list files in {path}: {e}")
                 return []
 
-        return await self._execute_with_error_handling("list_files", _list)
+        return await self._execute_with_error_handling("list_files", _list, "file")
 
     def _is_binary_file(self, file_path: Path) -> bool:
         """Check if a file is binary."""
@@ -256,7 +249,7 @@ class LocalFileOperations:
                 self.logger.error(f"Failed to generate patch: {e}")
                 return ""
 
-        return await self._execute_with_error_handling("generate_patch", _generate)
+        return await self._execute_with_error_handling("generate_patch", _generate, "file")
 
     async def apply_patch(self, patch: str, file_path: str) -> bool:
         """Apply a patch to a file."""
@@ -289,7 +282,7 @@ class LocalFileOperations:
                 self.logger.error(f"Failed to apply patch to {file_path}: {e}")
                 return False
 
-        return await self._execute_with_error_handling("apply_patch", _apply)
+        return await self._execute_with_error_handling("apply_patch", _apply, "file")
 
     async def commit_changes(
         self,
@@ -317,4 +310,27 @@ class LocalFileOperations:
                 self.logger.error(f"Failed to commit changes to {file_path}: {e}")
                 return False
 
-        return await self._execute_with_error_handling("commit_changes", _commit)
+        return await self._execute_with_error_handling("commit_changes", _commit, "file")
+
+    async def health_check(self) -> bool:
+        """Check if the file operations are healthy."""
+        try:
+            # Test basic file operations
+            test_path = self.root_path / ".health_check_test"
+            test_content = "health_check_test"
+
+            # Test write
+            test_path.write_text(test_content, encoding=self.default_encoding)
+
+            # Test read
+            read_content = test_path.read_text(encoding=self.default_encoding)
+            if read_content != test_content:
+                return False
+
+            # Test delete
+            test_path.unlink()
+
+            return True
+        except Exception as e:
+            self.logger.error(f"Health check failed: {e}")
+            return False
