@@ -6,7 +6,7 @@ LLM system while maintaining backward compatibility with the original interface.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from ..llm.base import ModelType
 from ..llm.common.enums import ProviderType
