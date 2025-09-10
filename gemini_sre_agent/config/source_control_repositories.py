@@ -6,13 +6,14 @@ Repository configuration models for different source control providers.
 
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from pydantic import Field, field_validator
 
 from .base import BaseConfig
 from .source_control_credentials import CredentialConfig
+from .source_control_error_handling import ErrorHandlingConfig
 from .source_control_remediation import RemediationStrategyConfig
 
 
@@ -31,6 +32,10 @@ class RepositoryConfig(BaseConfig):
     remediation: RemediationStrategyConfig = Field(
         default_factory=lambda: RemediationStrategyConfig(),
         description="Remediation configuration",
+    )
+    error_handling: ErrorHandlingConfig = Field(
+        default_factory=lambda: ErrorHandlingConfig(),
+        description="Error handling configuration",
     )
 
     @field_validator("name")
@@ -171,6 +176,43 @@ class GitHubRepositoryConfig(RepositoryConfig):
         """Get the repository name."""
         return self.url.split("/")[1]
 
+    def get_github_error_handling_config(self) -> Dict[str, Any]:
+        """Get GitHub-specific error handling configuration."""
+        base_config = self.error_handling.get_provider_config("github")
+
+        # GitHub-specific overrides
+        github_overrides = {
+            "circuit_breaker": {
+                "file_operations": {
+                    "failure_threshold": 8,  # GitHub is generally reliable
+                    "recovery_timeout": 20.0,
+                    "success_threshold": 2,
+                    "timeout": 45.0,
+                },
+                "pull_request_operations": {
+                    "failure_threshold": 3,  # PR operations are more critical
+                    "recovery_timeout": 120.0,
+                    "success_threshold": 2,
+                    "timeout": 20.0,
+                },
+            },
+            "retry": {
+                "max_retries": 5,  # GitHub can handle more retries
+                "base_delay": 0.5,
+                "max_delay": 30.0,
+                "backoff_factor": 1.5,
+            },
+            "graceful_degradation": {
+                "enabled": True,
+                "fallback_strategies": ["cached_response", "simplified_operation"],
+                "cache_ttl": 600.0,  # 10 minutes for GitHub
+            },
+        }
+
+        # Merge with base config
+        base_config.update(github_overrides)
+        return base_config
+
 
 class GitLabRepositoryConfig(RepositoryConfig):
     """GitLab-specific repository configuration."""
@@ -235,6 +277,47 @@ class GitLabRepositoryConfig(RepositoryConfig):
         """Get the GitLab project ID."""
         return self.project_id
 
+    def get_gitlab_error_handling_config(self) -> Dict[str, Any]:
+        """Get GitLab-specific error handling configuration."""
+        base_config = self.error_handling.get_provider_config("gitlab")
+
+        # GitLab-specific overrides
+        gitlab_overrides = {
+            "circuit_breaker": {
+                "file_operations": {
+                    "failure_threshold": 6,  # GitLab can be less reliable than GitHub
+                    "recovery_timeout": 30.0,
+                    "success_threshold": 3,
+                    "timeout": 50.0,
+                },
+                "merge_request_operations": {
+                    "failure_threshold": 4,  # MR operations are important
+                    "recovery_timeout": 90.0,
+                    "success_threshold": 2,
+                    "timeout": 25.0,
+                },
+            },
+            "retry": {
+                "max_retries": 4,  # Moderate retry count
+                "base_delay": 1.0,
+                "max_delay": 45.0,
+                "backoff_factor": 2.0,
+            },
+            "graceful_degradation": {
+                "enabled": True,
+                "fallback_strategies": [
+                    "cached_response",
+                    "simplified_operation",
+                    "offline_mode",
+                ],
+                "cache_ttl": 480.0,  # 8 minutes for GitLab
+            },
+        }
+
+        # Merge with base config
+        base_config.update(gitlab_overrides)
+        return base_config
+
 
 class LocalRepositoryConfig(RepositoryConfig):
     """Local filesystem repository configuration."""
@@ -291,3 +374,47 @@ class LocalRepositoryConfig(RepositoryConfig):
 
         git_dir = self.get_path() / ".git"
         return git_dir.exists() and git_dir.is_dir()
+
+    def get_local_error_handling_config(self) -> Dict[str, Any]:
+        """Get Local-specific error handling configuration."""
+        base_config = self.error_handling.get_provider_config("local")
+
+        # Local-specific overrides
+        local_overrides = {
+            "circuit_breaker": {
+                "file_operations": {
+                    "failure_threshold": 20,  # Local operations are very reliable
+                    "recovery_timeout": 10.0,
+                    "success_threshold": 1,
+                    "timeout": 120.0,
+                },
+                "git_operations": {
+                    "failure_threshold": 15,  # Git operations are generally reliable locally
+                    "recovery_timeout": 15.0,
+                    "success_threshold": 2,
+                    "timeout": 90.0,
+                },
+            },
+            "retry": {
+                "max_retries": 2,  # Fewer retries needed for local operations
+                "base_delay": 0.1,
+                "max_delay": 5.0,
+                "backoff_factor": 1.5,
+            },
+            "graceful_degradation": {
+                "enabled": True,
+                "fallback_strategies": ["simplified_operation", "offline_mode"],
+                "cache_ttl": 1800.0,  # 30 minutes for local operations
+            },
+            "health_checks": {
+                "enabled": True,
+                "check_interval": 60.0,  # Less frequent checks for local
+                "timeout": 5.0,
+                "failure_threshold": 5,
+                "success_threshold": 1,
+            },
+        }
+
+        # Merge with base config
+        base_config.update(local_overrides)
+        return base_config

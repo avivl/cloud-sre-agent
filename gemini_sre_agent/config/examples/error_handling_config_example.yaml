@@ -1,0 +1,202 @@
+# Error Handling Configuration Example
+# This file demonstrates how to configure the comprehensive error handling system
+# for source control providers.
+
+# Global error handling configuration
+error_handling:
+  enabled: true
+
+  # Circuit breaker configuration
+  circuit_breaker:
+    # File operations - more lenient since they're common
+    file_operations:
+      failure_threshold: 10
+      recovery_timeout: 30.0
+      success_threshold: 2
+      timeout: 60.0
+
+    # Branch operations - moderate settings
+    branch_operations:
+      failure_threshold: 5
+      recovery_timeout: 45.0
+      success_threshold: 3
+      timeout: 45.0
+
+    # Pull request operations - strict settings
+    pull_request_operations:
+      failure_threshold: 5
+      recovery_timeout: 90.0
+      success_threshold: 3
+      timeout: 30.0
+
+    # Batch operations - very lenient
+    batch_operations:
+      failure_threshold: 15
+      recovery_timeout: 20.0
+      success_threshold: 2
+      timeout: 120.0
+
+    # Authentication operations - very strict
+    auth_operations:
+      failure_threshold: 10
+      recovery_timeout: 300.0
+      success_threshold: 5
+      timeout: 15.0
+
+    # Default fallback
+    default:
+      failure_threshold: 5
+      recovery_timeout: 60.0
+      success_threshold: 3
+      timeout: 30.0
+
+  # Retry configuration
+  retry:
+    max_retries: 3
+    base_delay: 1.0
+    max_delay: 60.0
+    backoff_factor: 2.0
+    jitter: true
+
+  # Graceful degradation configuration
+  graceful_degradation:
+    enabled: true
+    fallback_strategies:
+      - cached_response
+      - simplified_operation
+      - offline_mode
+    cache_ttl: 300.0 # 5 minutes
+    simplified_operation_timeout: 10.0
+    offline_mode_enabled: true
+
+  # Health check configuration
+  health_checks:
+    enabled: true
+    check_interval: 30.0 # seconds
+    timeout: 10.0 # seconds
+    failure_threshold: 3
+    success_threshold: 2
+    metrics_retention_hours: 24
+
+  # Metrics configuration
+  metrics:
+    enabled: true
+    collection_interval: 60.0 # seconds
+    retention_hours: 168 # 7 days
+    max_series: 1000
+    max_points_per_series: 10000
+    background_processing: true
+
+  # Provider-specific overrides
+  provider_overrides:
+    github:
+      circuit_breaker:
+        file_operations:
+          failure_threshold: 8 # GitHub is generally reliable
+          recovery_timeout: 20.0
+        pull_request_operations:
+          failure_threshold: 3 # PR operations are more critical
+          recovery_timeout: 120.0
+      retry:
+        max_retries: 5 # GitHub can handle more retries
+        base_delay: 0.5
+        max_delay: 30.0
+        backoff_factor: 1.5
+      graceful_degradation:
+        cache_ttl: 600.0 # 10 minutes for GitHub
+        fallback_strategies:
+          - cached_response
+          - simplified_operation
+
+    gitlab:
+      circuit_breaker:
+        file_operations:
+          failure_threshold: 6 # GitLab can be less reliable
+          recovery_timeout: 30.0
+        merge_request_operations:
+          failure_threshold: 4 # MR operations are important
+          recovery_timeout: 90.0
+      retry:
+        max_retries: 4 # Moderate retry count
+        base_delay: 1.0
+        max_delay: 45.0
+        backoff_factor: 2.0
+      graceful_degradation:
+        cache_ttl: 480.0 # 8 minutes for GitLab
+        fallback_strategies:
+          - cached_response
+          - simplified_operation
+          - offline_mode
+
+    local:
+      circuit_breaker:
+        file_operations:
+          failure_threshold: 20 # Local operations are very reliable
+          recovery_timeout: 10.0
+        git_operations:
+          failure_threshold: 15 # Git operations are reliable locally
+          recovery_timeout: 15.0
+      retry:
+        max_retries: 2 # Fewer retries needed for local
+        base_delay: 0.1
+        max_delay: 5.0
+        backoff_factor: 1.5
+      graceful_degradation:
+        cache_ttl: 1800.0 # 30 minutes for local operations
+        fallback_strategies:
+          - simplified_operation
+          - offline_mode
+      health_checks:
+        check_interval: 60.0 # Less frequent checks for local
+        timeout: 5.0
+        failure_threshold: 5
+        success_threshold: 1
+
+# Example repository configurations with error handling
+repositories:
+  - name: my-github-repo
+    type: github
+    url: owner/repository
+    branch: main
+    paths: [/src, /docs]
+    credentials:
+      token: "${GITHUB_TOKEN}"
+    error_handling:
+      # Inherits from global config with GitHub-specific overrides
+      enabled: true
+      # Can override specific settings here
+      circuit_breaker:
+        file_operations:
+          failure_threshold: 5 # Override for this specific repo
+      retry:
+        max_retries: 2 # Override for this specific repo
+
+  - name: my-gitlab-repo
+    type: gitlab
+    url: https://gitlab.com/group/project
+    branch: main
+    paths: [/]
+    credentials:
+      token: "${GITLAB_TOKEN}"
+    error_handling:
+      # Inherits from global config with GitLab-specific overrides
+      enabled: true
+      graceful_degradation:
+        fallback_strategies:
+          - cached_response
+          - offline_mode # Only these strategies for this repo
+
+  - name: my-local-repo
+    type: local
+    path: /path/to/local/repo
+    git_enabled: true
+    auto_init_git: true
+    backup_files: true
+    error_handling:
+      # Inherits from global config with Local-specific overrides
+      enabled: true
+      circuit_breaker:
+        file_operations:
+          failure_threshold: 50 # Very lenient for local operations
+      retry:
+        max_retries: 1 # Minimal retries for local

@@ -12,6 +12,8 @@ import yaml
 
 from .base import BaseConfig
 from .errors import ConfigFileError
+from .source_control_error_handling import ErrorHandlingConfig
+from .source_control_error_handling_loader import ErrorHandlingConfigLoader
 
 T = TypeVar("T", bound=BaseConfig)
 
@@ -234,3 +236,68 @@ class ConfigLoader:
                 result[key] = value
 
         return result
+
+    def load_error_handling_config(
+        self,
+        environment: Optional[str] = None,
+        config_file: Optional[str] = None,
+    ) -> "ErrorHandlingConfig":
+        """
+        Load error handling configuration.
+
+        Args:
+            environment: Environment name (dev/staging/prod)
+            config_file: Specific config file to load
+
+        Returns:
+            Loaded error handling configuration
+        """
+        error_loader = ErrorHandlingConfigLoader()
+
+        # Try to load from file first
+        if config_file:
+            config_path = self.config_dir / config_file
+            if config_path.exists():
+                return error_loader.load_from_file(config_path)
+
+        # Try environment-specific config
+        env = environment or os.getenv("ENVIRONMENT", "development")
+        env_config_file = f"error_handling_{env}.yaml"
+        env_config_path = self.config_dir / env_config_file
+
+        if env_config_path.exists():
+            return error_loader.load_from_file(env_config_path)
+
+        # Try default error handling config
+        default_config_file = "error_handling.yaml"
+        default_config_path = self.config_dir / default_config_file
+
+        if default_config_path.exists():
+            return error_loader.load_from_file(default_config_path)
+
+        # Try loading from main config file
+        main_config_file = "config.yaml"
+        main_config_path = self.config_dir / main_config_file
+
+        if main_config_path.exists():
+            try:
+                with open(main_config_path, "r", encoding="utf-8") as f:
+                    config_data = yaml.safe_load(f)
+
+                if "error_handling" in config_data:
+                    return error_loader.load_from_dict(config_data["error_handling"])
+            except Exception as e:
+                print(
+                    f"Warning: Failed to load error handling config from main config: {e}"
+                )
+
+        # Fall back to environment variables
+        try:
+            return error_loader.load_from_env()
+        except Exception as e:
+            print(
+                f"Warning: Failed to load error handling config from environment: {e}"
+            )
+
+        # Return default configuration
+        return error_loader.load_default()
