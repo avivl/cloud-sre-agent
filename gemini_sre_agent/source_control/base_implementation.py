@@ -6,17 +6,24 @@ Base implementation of SourceControlProvider with common functionality.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 from .base import SourceControlProvider
+from .error_handling import (
+    CircuitBreakerConfig,
+    ResilientOperationManager,
+    RetryConfig,
+)
+from .metrics import MetricsCollector, OperationMetrics
 from .models import (
     BatchOperation,
     ConflictInfo,
     OperationResult,
-    OperationStatus,
     ProviderHealth,
     RemediationResult,
 )
+from .monitoring import MonitoringManager
 
 
 class BaseSourceControlProvider(SourceControlProvider):
@@ -30,6 +37,51 @@ class BaseSourceControlProvider(SourceControlProvider):
         self._retry_config = self.get_config_value("retry", {})
         self._timeout_config = self.get_config_value("timeout", {})
 
+        # Initialize resilient operation manager
+        circuit_config = CircuitBreakerConfig(
+            failure_threshold=self._retry_config.get(
+                "circuit_breaker_failure_threshold", 5
+            ),
+            recovery_timeout=self._retry_config.get(
+                "circuit_breaker_recovery_timeout", 60.0
+            ),
+            success_threshold=self._retry_config.get(
+                "circuit_breaker_success_threshold", 3
+            ),
+            timeout=self._timeout_config.get("default", 30.0),
+        )
+        retry_config = RetryConfig(
+            max_retries=self._retry_config.get("max_retries", 3),
+            base_delay=self._retry_config.get("base_delay", 1.0),
+            max_delay=self._retry_config.get("max_delay", 60.0),
+            backoff_factor=self._retry_config.get("backoff_factor", 2.0),
+            jitter=self._retry_config.get("jitter", True),
+        )
+        self._resilient_manager = ResilientOperationManager(
+            circuit_breaker_config=circuit_config, retry_config=retry_config
+        )
+
+        # Initialize monitoring
+        enable_monitoring = self.get_config_value("monitoring", {}).get("enabled", True)
+        if enable_monitoring:
+            self.monitoring_manager = MonitoringManager(
+                enable_metrics=self.get_config_value("monitoring", {}).get(
+                    "enable_metrics", True
+                ),
+                enable_health_checks=self.get_config_value("monitoring", {}).get(
+                    "enable_health_checks", True
+                ),
+                enable_alerts=self.get_config_value("monitoring", {}).get(
+                    "enable_alerts", True
+                ),
+            )
+            self.metrics_collector = MetricsCollector()
+            self.operation_metrics = OperationMetrics(self.metrics_collector)
+        else:
+            self.monitoring_manager = None
+            self.metrics_collector = None
+            self.operation_metrics = None
+
     async def _setup_client(self) -> None:
         """Set up the client for the source control system."""
         # To be implemented by subclasses
@@ -40,6 +92,14 @@ class BaseSourceControlProvider(SourceControlProvider):
         # To be implemented by subclasses
         if self._client:
             self._client = None
+
+    async def _execute_resilient_operation(
+        self, operation_name: str, func: Callable, *args, **kwargs
+    ) -> Any:
+        """Execute an operation with full resilience (circuit breaker + retry)."""
+        return await self._resilient_manager.execute_resilient_operation(
+            operation_name, func, *args, **kwargs
+        )
 
     async def handle_operation_failure(self, operation: str, error: Exception) -> bool:
         """Default implementation for handling operation failures."""
@@ -107,10 +167,13 @@ class BaseSourceControlProvider(SourceControlProvider):
                 results.append(
                     OperationResult(
                         operation_id=f"batch_{i}",
-                        status=OperationStatus.SUCCESS,
                         success=True,
-                        result=result,
-                        details={"operation_type": operation.operation_type},
+                        message="Operation completed successfully",
+                        file_path=operation.file_path,
+                        additional_info={
+                            "operation_type": operation.operation_type,
+                            "result": result,
+                        },
                     )
                 )
             except Exception as e:
@@ -118,10 +181,11 @@ class BaseSourceControlProvider(SourceControlProvider):
                 results.append(
                     OperationResult(
                         operation_id=f"batch_{i}",
-                        status=OperationStatus.FAILURE,
                         success=False,
-                        error=str(e),
-                        details={"operation_type": operation.operation_type},
+                        message=f"Operation failed: {str(e)}",
+                        file_path=operation.file_path,
+                        error_details=str(e),
+                        additional_info={"operation_type": operation.operation_type},
                     )
                 )
 
@@ -132,27 +196,59 @@ class BaseSourceControlProvider(SourceControlProvider):
         operation_type = operation.operation_type
 
         if operation_type == "update_file":
-            if operation.path is None or operation.content is None:
+            if operation.file_path is None or operation.content is None:
                 raise ValueError(
                     "Path and content are required for update_file operation"
                 )
             return await self.apply_remediation(
-                operation.path, operation.content, operation.message or "Batch update"
+                operation.file_path, operation.content, "Batch update"
             )
         elif operation_type == "delete_file":
             # This would need to be implemented by subclasses
             raise NotImplementedError("Delete file operation not implemented")
         elif operation_type == "create_branch":
-            name = operation.parameters.get("name")
+            name = (
+                operation.additional_params.get("name")
+                if operation.additional_params
+                else None
+            )
             if name is None:
                 raise ValueError("Branch name is required for create_branch operation")
-            return await self.create_branch(name, operation.parameters.get("base_ref"))
+            return await self.create_branch(
+                name,
+                (
+                    operation.additional_params.get("base_ref")
+                    if operation.additional_params
+                    else None
+                ),
+            )
         else:
             raise ValueError(f"Unknown operation type: {operation_type}")
 
     async def get_health_status(self) -> ProviderHealth:
         """Get the health status of the provider."""
-        return await self.health_check()
+        # Get health from resilient manager
+        resilient_health = self._resilient_manager.get_health_status()
+
+        # Also perform basic health check
+        try:
+            basic_health = await self.health_check()
+            # Combine both health checks
+            return ProviderHealth(
+                status=(
+                    resilient_health.status
+                    if resilient_health.status == "unhealthy"
+                    else basic_health.status
+                ),
+                message=f"Resilient: {resilient_health.message}, Basic: {basic_health.message}",
+                additional_info={
+                    "resilient_health": resilient_health.additional_info,
+                    "basic_health": basic_health.additional_info,
+                },
+            )
+        except Exception as e:
+            self.logger.error(f"Basic health check failed: {e}")
+            return resilient_health
 
     async def check_conflicts(
         self, path: str, content: str, branch: Optional[str] = None
@@ -196,39 +292,43 @@ class BaseSourceControlProvider(SourceControlProvider):
     def _create_remediation_result(
         self,
         success: bool,
-        status: OperationStatus,
-        commit_id: Optional[str] = None,
-        message: Optional[str] = None,
-        error: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        message: str,
+        file_path: str,
+        operation_type: str,
+        commit_sha: Optional[str] = None,
+        pull_request_url: Optional[str] = None,
+        error_details: Optional[str] = None,
+        additional_info: Optional[Dict[str, Any]] = None,
     ) -> RemediationResult:
         """Helper method to create a RemediationResult."""
         return RemediationResult(
             success=success,
-            status=status,
-            commit_id=commit_id,
             message=message,
-            error=error,
-            details=details or {},
+            file_path=file_path,
+            operation_type=operation_type,
+            commit_sha=commit_sha,
+            pull_request_url=pull_request_url,
+            error_details=error_details,
+            additional_info=additional_info or {},
         )
 
     def _create_operation_result(
         self,
         operation_id: str,
         success: bool,
-        status: OperationStatus,
-        result: Any = None,
-        error: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        message: str,
+        file_path: Optional[str] = None,
+        error_details: Optional[str] = None,
+        additional_info: Optional[Dict[str, Any]] = None,
     ) -> OperationResult:
         """Helper method to create an OperationResult."""
         return OperationResult(
             operation_id=operation_id,
-            status=status,
             success=success,
-            result=result,
-            error=error,
-            details=details or {},
+            message=message,
+            file_path=file_path,
+            error_details=error_details,
+            additional_info=additional_info or {},
         )
 
     def _log_operation(
@@ -242,3 +342,52 @@ class BaseSourceControlProvider(SourceControlProvider):
             message += f" - {details}"
 
         self.logger.log(level, message)
+
+    async def get_comprehensive_health_status(self) -> Dict[str, Any]:
+        """Get comprehensive health status including monitoring data."""
+        if not self.monitoring_manager:
+            return {"error": "Monitoring not enabled"}
+
+        # Get basic health status
+        basic_health = await self.get_health_status()
+
+        # Run comprehensive health checks
+        health_checks = await self.monitoring_manager.run_health_checks([self])
+
+        # Get monitoring summary
+        monitoring_summary = self.monitoring_manager.get_monitoring_summary()
+
+        # Get metrics summary if available
+        metrics_summary = {}
+        if self.metrics_collector:
+            metrics_summary = await self.metrics_collector.get_metrics_summary()
+
+        return {
+            "basic_health": {
+                "status": basic_health.status,
+                "message": basic_health.message,
+                "details": basic_health.additional_info,
+            },
+            "comprehensive_checks": health_checks.get(self.__class__.__name__, []),
+            "monitoring": monitoring_summary,
+            "metrics": metrics_summary,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    async def get_metrics_summary(self) -> Dict[str, Any]:
+        """Get metrics summary for this provider."""
+        if not self.metrics_collector:
+            return {"error": "Metrics collection not enabled"}
+
+        return await self.metrics_collector.get_metrics_summary()
+
+    async def get_operation_statistics(
+        self, operation_name: Optional[str] = None, window_minutes: int = 60
+    ) -> Dict[str, Any]:
+        """Get operation statistics for this provider."""
+        if not self.operation_metrics:
+            return {"error": "Operation metrics not enabled"}
+
+        return await self.operation_metrics.get_operation_statistics(
+            self.__class__.__name__, operation_name, window_minutes
+        )

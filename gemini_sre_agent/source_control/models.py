@@ -173,7 +173,18 @@ class ConflictInfo:
 
     path: str
     conflict_type: str
+    has_conflicts: bool = False
+    conflict_files: Optional[List[str]] = None
+    conflict_details: Optional[Dict[str, Any]] = None
     details: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        if self.conflict_files is None:
+            self.conflict_files = []
+        if self.conflict_details is None:
+            self.conflict_details = {}
+        if self.details is None:
+            self.details = {}
 
 
 @dataclass
@@ -182,7 +193,20 @@ class ProviderHealth:
 
     status: str
     message: str
-    details: Optional[Dict[str, Any]] = None
+    is_healthy: bool = True
+    last_check: Optional[datetime] = None
+    response_time_ms: Optional[float] = None
+    error_message: Optional[str] = None
+    warnings: Optional[List[str]] = None
+    additional_info: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        if self.last_check is None:
+            self.last_check = datetime.now()
+        if self.warnings is None:
+            self.warnings = []
+        if self.additional_info is None:
+            self.additional_info = {}
 
 
 @dataclass
@@ -215,3 +239,9 @@ class OperationStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    SUCCESS = "success"
+    RATE_LIMITED = "rate_limited"
+    TIMEOUT = "timeout"
+    UNAUTHORIZED = "unauthorized"
+    NOT_FOUND = "not_found"
+    INVALID_INPUT = "invalid_input"

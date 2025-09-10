@@ -8,9 +8,9 @@ from ..config.source_control_global import (
 )
 from .credential_manager import CredentialManager, EnvironmentBackend, FileBackend
 from .provider_factory import ProviderFactory
-from .providers.github_provider import GitHubProvider
-from .providers.gitlab_provider import GitLabProvider
-from .providers.local_provider import LocalProvider
+from .providers.github.github_provider import GitHubProvider
+from .providers.gitlab.gitlab_provider import GitLabProvider
+from .providers.local.local_provider import LocalProvider
 from .repository_manager import RepositoryManager
 
 

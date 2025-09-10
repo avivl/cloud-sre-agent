@@ -238,6 +238,8 @@ class SourceControlProvider(ABC):
             is_healthy = connection_ok and credentials_ok
 
             return ProviderHealth(
+                status="healthy" if is_healthy else "unhealthy",
+                message="Health check passed" if is_healthy else "Health check failed",
                 is_healthy=is_healthy,
                 last_check=datetime.now(),
                 response_time_ms=response_time,
@@ -249,6 +251,8 @@ class SourceControlProvider(ABC):
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
             return ProviderHealth(
+                status="unhealthy",
+                message=f"Health check failed: {e}",
                 is_healthy=False,
                 last_check=datetime.now(),
                 response_time_ms=None,
