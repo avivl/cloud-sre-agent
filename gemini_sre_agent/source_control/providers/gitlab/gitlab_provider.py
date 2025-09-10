@@ -7,6 +7,10 @@ import gitlab
 
 from ....config.source_control_repositories import GitLabRepositoryConfig
 from ...base_implementation import BaseSourceControlProvider
+from ...error_handling import (
+    ErrorHandlingFactory,
+    create_provider_error_handling,
+)
 from ...models import (
     BatchOperation,
     BranchInfo,
@@ -40,6 +44,10 @@ class GitLabProvider(BaseSourceControlProvider):
         self.file_ops: Optional[GitLabFileOperations] = None
         self.branch_ops: Optional[GitLabBranchOperations] = None
         self.mr_ops: Optional[GitLabMergeRequestOperations] = None
+
+        # Initialize error handling system
+        self.error_handling_factory = ErrorHandlingFactory()
+        self.error_handling_components: Optional[Dict[str, Any]] = None
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -92,6 +100,11 @@ class GitLabProvider(BaseSourceControlProvider):
                 self.gl, self.project, self.logger
             )
 
+            # Initialize error handling system
+            self.error_handling_components = create_provider_error_handling(
+                "gitlab", self.repo_config.error_handling.model_dump()
+            )
+
             self.logger.info(f"GitLab provider initialized for project: {project_name}")
         except Exception as e:
             self.logger.error(f"Failed to initialize GitLab provider: {e}")
@@ -105,6 +118,7 @@ class GitLabProvider(BaseSourceControlProvider):
         self.file_ops = None
         self.branch_ops = None
         self.mr_ops = None
+        self.error_handling_components = None
 
     async def get_capabilities(self) -> ProviderCapabilities:
         """Get provider capabilities."""

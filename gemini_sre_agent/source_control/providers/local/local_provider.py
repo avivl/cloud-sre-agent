@@ -7,6 +7,10 @@ from gemini_sre_agent.config.source_control_repositories import LocalRepositoryC
 from gemini_sre_agent.source_control.base_implementation import (
     BaseSourceControlProvider,
 )
+from gemini_sre_agent.source_control.error_handling import (
+    ErrorHandlingFactory,
+    create_provider_error_handling,
+)
 from gemini_sre_agent.source_control.models import (
     BatchOperation,
     BranchInfo,
@@ -58,6 +62,19 @@ class LocalProvider(BaseSourceControlProvider):
             self.logger,
         )
 
+        # Initialize error handling system
+        self.error_handling_factory = ErrorHandlingFactory()
+        self.error_handling_components: Optional[Dict[str, Any]] = None
+
+        # Set up error handling if configuration is available
+        if (
+            hasattr(self.repo_config, "error_handling")
+            and self.repo_config.error_handling
+        ):
+            self.error_handling_components = create_provider_error_handling(
+                "local", self.repo_config.error_handling.model_dump()
+            )
+
     async def get_capabilities(self) -> ProviderCapabilities:
         """Get provider capabilities."""
         return ProviderCapabilities(
@@ -107,8 +124,24 @@ class LocalProvider(BaseSourceControlProvider):
 
     # File operations - delegate to file_ops
     async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
-        """Get file content from local filesystem."""
-        return self.file_ops.get_file_content(path)
+        """Get file content from local filesystem with error handling."""
+        # Use error handling if available
+        if self.error_handling_components:
+            resilient_manager = self.error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                try:
+                    return await resilient_manager.execute_with_resilience(
+                        "file_operations", self.file_ops.get_file_content, path
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        f"Failed to get file content with error handling: {e}"
+                    )
+                    raise
+            else:
+                return self.file_ops.get_file_content(path)
+        else:
+            return self.file_ops.get_file_content(path)
 
     async def apply_remediation(
         self,
@@ -117,8 +150,37 @@ class LocalProvider(BaseSourceControlProvider):
         message: str,
         branch: Optional[str] = None,
     ) -> RemediationResult:
-        """Apply remediation to a file."""
-        return self.file_ops.apply_remediation(path, content, message)
+        """Apply remediation to a file with error handling."""
+        # Use error handling if available
+        if self.error_handling_components:
+            resilient_manager = self.error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                try:
+                    return await resilient_manager.execute_with_resilience(
+                        "file_operations",
+                        self.file_ops.apply_remediation,
+                        path,
+                        content,
+                        message,
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        f"Failed to apply remediation with error handling: {e}"
+                    )
+                    return RemediationResult(
+                        success=False,
+                        message=f"Failed to apply remediation: {e}",
+                        file_path=path,
+                        operation_type="file_write",
+                        commit_sha=None,
+                        pull_request_url=None,
+                        error_details=str(e),
+                        additional_info={},
+                    )
+            else:
+                return self.file_ops.apply_remediation(path, content, message)
+        else:
+            return self.file_ops.apply_remediation(path, content, message)
 
     async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
         """Check if a file exists."""

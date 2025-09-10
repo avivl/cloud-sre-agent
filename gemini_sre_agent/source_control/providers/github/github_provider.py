@@ -15,6 +15,10 @@ from github.Repository import Repository
 
 from ....config.source_control_repositories import GitHubRepositoryConfig
 from ...base_implementation import BaseSourceControlProvider
+from ...error_handling import (
+    ErrorHandlingFactory,
+    create_provider_error_handling,
+)
 from ...models import (
     BatchOperation,
     BranchInfo,
@@ -52,6 +56,10 @@ class GitHubProvider(BaseSourceControlProvider):
         self.pull_requests: Optional[GitHubPullRequests] = None
         self.utils: Optional[GitHubUtils] = None
 
+        # Initialize error handling system
+        self.error_handling_factory = ErrorHandlingFactory()
+        self.error_handling_components: Optional[Dict[str, Any]] = None
+
     async def _setup_client(self) -> None:
         """Set up GitHub client and repository."""
         try:
@@ -79,6 +87,11 @@ class GitHubProvider(BaseSourceControlProvider):
                 )
                 self.utils = GitHubUtils(self.client, self.repo, self.logger)
 
+            # Initialize error handling system
+            self.error_handling_components = create_provider_error_handling(
+                "github", self.repo_config.error_handling.model_dump()
+            )
+
         except Exception as e:
             self.logger.error(f"Failed to setup GitHub client: {e}")
             raise
@@ -90,6 +103,7 @@ class GitHubProvider(BaseSourceControlProvider):
         self.operations = None
         self.pull_requests = None
         self.utils = None
+        self.error_handling_components = None
 
     async def test_connection(self) -> bool:
         """Test connection to GitHub."""
@@ -191,12 +205,51 @@ class GitHubProvider(BaseSourceControlProvider):
     async def create_pull_request(
         self, title: str, description: str, head_branch: str, base_branch: str, **kwargs
     ) -> RemediationResult:
-        """Create a pull request."""
+        """Create a pull request with error handling."""
         if not self.pull_requests:
             raise RuntimeError("GitHub pull requests not initialized")
-        result = await self.pull_requests.create_pull_request(
-            title, description, head_branch, base_branch, kwargs.get("draft", False)
-        )
+
+        # Use error handling if available
+        if self.error_handling_components:
+            resilient_manager = self.error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                try:
+                    result = await resilient_manager.execute_with_resilience(
+                        "pull_request_operations",
+                        self.pull_requests.create_pull_request,
+                        title,
+                        description,
+                        head_branch,
+                        base_branch,
+                        kwargs.get("draft", False),
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        f"Failed to create pull request with error handling: {e}"
+                    )
+                    return RemediationResult(
+                        success=False,
+                        message=f"Failed to create pull request: {e}",
+                        file_path="",
+                        operation_type="pull_request",
+                        commit_sha=None,
+                        pull_request_url=None,
+                        error_details=str(e),
+                        additional_info={},
+                    )
+            else:
+                result = await self.pull_requests.create_pull_request(
+                    title,
+                    description,
+                    head_branch,
+                    base_branch,
+                    kwargs.get("draft", False),
+                )
+        else:
+            result = await self.pull_requests.create_pull_request(
+                title, description, head_branch, base_branch, kwargs.get("draft", False)
+            )
+
         if result:
             return RemediationResult(
                 success=True,
@@ -265,10 +318,34 @@ class GitHubProvider(BaseSourceControlProvider):
         return await self.operations.get_branch_info(name)
 
     async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
-        """Get detailed information about a file."""
+        """Get detailed information about a file with error handling."""
         if not self.operations:
             raise RuntimeError("GitHub operations not initialized")
-        return await self.operations.get_file_info(path, ref)
+
+        # Use error handling if available
+        if self.error_handling_components:
+            resilient_manager = self.error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                try:
+                    return await resilient_manager.execute_with_resilience(
+                        "file_operations", self.operations.get_file_info, path, ref
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        f"Failed to get file info with error handling: {e}"
+                    )
+                    # Return empty file info on error
+                    return FileInfo(
+                        path=path,
+                        size=0,
+                        sha="",
+                        is_binary=False,
+                        last_modified=None,
+                    )
+            else:
+                return await self.operations.get_file_info(path, ref)
+        else:
+            return await self.operations.get_file_info(path, ref)
 
     async def refresh_credentials(self) -> bool:
         """Refresh GitHub credentials."""
