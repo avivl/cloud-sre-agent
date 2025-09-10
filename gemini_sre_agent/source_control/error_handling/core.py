@@ -7,7 +7,7 @@ This module contains the fundamental types, enums, data classes, and exceptions
 used throughout the error handling system.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Optional
 
@@ -141,32 +141,57 @@ class OperationCircuitBreakerConfig:
     """Configuration for operation-specific circuit breakers."""
 
     # File operations - more lenient
-    file_operations: CircuitBreakerConfig = CircuitBreakerConfig(
-        failure_threshold=10, recovery_timeout=30.0, success_threshold=2, timeout=60.0
+    file_operations: CircuitBreakerConfig = field(
+        default_factory=lambda: CircuitBreakerConfig(
+            failure_threshold=10,
+            recovery_timeout=30.0,
+            success_threshold=2,
+            timeout=60.0,
+        )
     )
 
     # Branch operations - moderate
-    branch_operations: CircuitBreakerConfig = CircuitBreakerConfig(
-        failure_threshold=5, recovery_timeout=45.0, success_threshold=3, timeout=45.0
+    branch_operations: CircuitBreakerConfig = field(
+        default_factory=lambda: CircuitBreakerConfig(
+            failure_threshold=5,
+            recovery_timeout=45.0,
+            success_threshold=3,
+            timeout=45.0,
+        )
     )
 
     # Pull request operations - strict
-    pull_request_operations: CircuitBreakerConfig = CircuitBreakerConfig(
-        failure_threshold=3, recovery_timeout=90.0, success_threshold=5, timeout=30.0
+    pull_request_operations: CircuitBreakerConfig = field(
+        default_factory=lambda: CircuitBreakerConfig(
+            failure_threshold=3,
+            recovery_timeout=90.0,
+            success_threshold=5,
+            timeout=30.0,
+        )
     )
 
     # Batch operations - very lenient
-    batch_operations: CircuitBreakerConfig = CircuitBreakerConfig(
-        failure_threshold=15, recovery_timeout=20.0, success_threshold=2, timeout=120.0
+    batch_operations: CircuitBreakerConfig = field(
+        default_factory=lambda: CircuitBreakerConfig(
+            failure_threshold=15,
+            recovery_timeout=20.0,
+            success_threshold=2,
+            timeout=120.0,
+        )
     )
 
     # Authentication operations - very strict
-    auth_operations: CircuitBreakerConfig = CircuitBreakerConfig(
-        failure_threshold=2, recovery_timeout=300.0, success_threshold=10, timeout=15.0
+    auth_operations: CircuitBreakerConfig = field(
+        default_factory=lambda: CircuitBreakerConfig(
+            failure_threshold=2,
+            recovery_timeout=300.0,
+            success_threshold=10,
+            timeout=15.0,
+        )
     )
 
     # Default fallback
-    default: CircuitBreakerConfig = CircuitBreakerConfig()
+    default: CircuitBreakerConfig = field(default_factory=CircuitBreakerConfig)
 
 
 @dataclass
