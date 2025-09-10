@@ -20,7 +20,17 @@ from .core import (
     RetryConfig,
 )
 from .error_classification import ErrorClassifier
-from .graceful_degradation import GracefulDegradationManager, create_graceful_degradation_manager
+from .factory import (
+    ErrorHandlingFactory,
+    create_error_handling_factory,
+    create_provider_error_handling,
+    create_provider_error_handling_with_preset,
+    get_provider_config,
+)
+from .graceful_degradation import (
+    GracefulDegradationManager,
+    create_graceful_degradation_manager,
+)
 from .health_checks import HealthCheckManager, create_health_check_endpoints
 from .metrics_integration import ErrorHandlingMetrics
 from .resilient_operations import ResilientOperationManager, resilient_manager
@@ -35,6 +45,7 @@ __all__ = [
     "CircuitState",
     "ErrorClassification",
     "ErrorClassifier",
+    "ErrorHandlingFactory",
     "ErrorHandlingMetrics",
     "ErrorType",
     "GracefulDegradationManager",
@@ -43,7 +54,11 @@ __all__ = [
     "ResilientOperationManager",
     "RetryConfig",
     "RetryManager",
+    "create_error_handling_factory",
     "create_graceful_degradation_manager",
     "create_health_check_endpoints",
+    "create_provider_error_handling",
+    "create_provider_error_handling_with_preset",
+    "get_provider_config",
     "resilient_manager",
 ]
