@@ -9,7 +9,6 @@ from ....config.source_control_repositories import GitLabRepositoryConfig
 from ...base_implementation import BaseSourceControlProvider
 from ...error_handling import (
     ErrorHandlingFactory,
-    create_provider_error_handling,
 )
 from ...models import (
     BatchOperation,
@@ -101,9 +100,7 @@ class GitLabProvider(BaseSourceControlProvider):
             )
 
             # Initialize error handling system
-            self.error_handling_components = create_provider_error_handling(
-                "gitlab", self.repo_config.error_handling.model_dump()
-            )
+            self._initialize_error_handling("gitlab", self.repo_config.error_handling.model_dump())
 
             self.logger.info(f"GitLab provider initialized for project: {project_name}")
         except Exception as e:
@@ -118,7 +115,7 @@ class GitLabProvider(BaseSourceControlProvider):
         self.file_ops = None
         self.branch_ops = None
         self.mr_ops = None
-        self.error_handling_components = None
+        self._error_handling_components = None
 
     async def get_capabilities(self) -> ProviderCapabilities:
         """Get provider capabilities."""
@@ -162,7 +159,9 @@ class GitLabProvider(BaseSourceControlProvider):
         """Get file content from GitLab repository."""
         if not self.file_ops:
             raise RuntimeError("Provider not initialized")
-        return await self.file_ops.get_file_content(path, ref)
+        return await self._execute_with_error_handling(
+            "get_file_content", self.file_ops.get_file_content, path, ref
+        )
 
     async def apply_remediation(
         self,
@@ -174,7 +173,9 @@ class GitLabProvider(BaseSourceControlProvider):
         """Apply remediation to a file."""
         if not self.file_ops:
             raise RuntimeError("Provider not initialized")
-        return await self.file_ops.apply_remediation(path, content, message, branch)
+        return await self._execute_with_error_handling(
+            "apply_remediation", self.file_ops.apply_remediation, path, content, message, branch
+        )
 
     async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
         """Check if a file exists in the repository."""

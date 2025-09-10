@@ -7,10 +7,7 @@ from gemini_sre_agent.config.source_control_repositories import LocalRepositoryC
 from gemini_sre_agent.source_control.base_implementation import (
     BaseSourceControlProvider,
 )
-from gemini_sre_agent.source_control.error_handling import (
-    ErrorHandlingFactory,
-    create_provider_error_handling,
-)
+# Error handling is now inherited from BaseSourceControlProvider
 from gemini_sre_agent.source_control.models import (
     BatchOperation,
     BranchInfo,
@@ -63,17 +60,11 @@ class LocalProvider(BaseSourceControlProvider):
         )
 
         # Initialize error handling system
-        self.error_handling_factory = ErrorHandlingFactory()
-        self.error_handling_components: Optional[Dict[str, Any]] = None
-
-        # Set up error handling if configuration is available
         if (
             hasattr(self.repo_config, "error_handling")
             and self.repo_config.error_handling
         ):
-            self.error_handling_components = create_provider_error_handling(
-                "local", self.repo_config.error_handling.model_dump()
-            )
+            self._initialize_error_handling("local", self.repo_config.error_handling.model_dump())
 
     async def get_capabilities(self) -> ProviderCapabilities:
         """Get provider capabilities."""
@@ -126,8 +117,8 @@ class LocalProvider(BaseSourceControlProvider):
     async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
         """Get file content from local filesystem with error handling."""
         # Use error handling if available
-        if self.error_handling_components:
-            resilient_manager = self.error_handling_components.get("resilient_manager")
+        if self._error_handling_components:
+            resilient_manager = self._error_handling_components.get("resilient_manager")
             if resilient_manager:
                 try:
                     return await resilient_manager.execute_with_resilience(
@@ -152,8 +143,8 @@ class LocalProvider(BaseSourceControlProvider):
     ) -> RemediationResult:
         """Apply remediation to a file with error handling."""
         # Use error handling if available
-        if self.error_handling_components:
-            resilient_manager = self.error_handling_components.get("resilient_manager")
+        if self._error_handling_components:
+            resilient_manager = self._error_handling_components.get("resilient_manager")
             if resilient_manager:
                 try:
                     return await resilient_manager.execute_with_resilience(

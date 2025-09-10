@@ -12,8 +12,10 @@ from typing import Any, Callable, Dict, List, Optional
 from .base import SourceControlProvider
 from .error_handling import (
     CircuitBreakerConfig,
+    ErrorHandlingFactory,
     ResilientOperationManager,
     RetryConfig,
+    create_provider_error_handling,
 )
 from .metrics import MetricsCollector, OperationMetrics
 from .models import (
@@ -37,7 +39,10 @@ class BaseSourceControlProvider(SourceControlProvider):
         self._retry_config = self.get_config_value("retry", {})
         self._timeout_config = self.get_config_value("timeout", {})
 
-        # Initialize resilient operation manager
+        # Initialize error handling system
+        self._error_handling_factory = ErrorHandlingFactory()
+        self._error_handling_components = None
+        # Initialize resilient operation manager (legacy support)
         circuit_config = CircuitBreakerConfig(
             failure_threshold=self._retry_config.get(
                 "circuit_breaker_failure_threshold", 5
@@ -100,6 +105,33 @@ class BaseSourceControlProvider(SourceControlProvider):
         return await self._resilient_manager.execute_resilient_operation(
             operation_name, func, *args, **kwargs
         )
+
+    def _initialize_error_handling(self, provider_name: str, config: Optional[Dict[str, Any]] = None) -> None:
+        """Initialize the advanced error handling system for a specific provider."""
+        try:
+            self._error_handling_components = create_provider_error_handling(
+                provider_name, config
+            )
+            self.logger.info(f"Error handling system initialized for {provider_name}")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize error handling for {provider_name}: {e}")
+            # Fall back to legacy resilient manager
+            self._error_handling_components = None
+
+    async def _execute_with_error_handling(
+        self, operation_name: str, func: Callable, *args, **kwargs
+    ) -> Any:
+        """Execute an operation with advanced error handling."""
+        if self._error_handling_components:
+            # Use advanced error handling system
+            resilient_manager = self._error_handling_components.get("resilient_manager")
+            if resilient_manager:
+                return await resilient_manager.execute_resilient_operation(
+                    operation_name, func, *args, **kwargs
+                )
+
+        # Fall back to legacy resilient manager
+        return await self._execute_resilient_operation(operation_name, func, *args, **kwargs)
 
     async def handle_operation_failure(self, operation: str, error: Exception) -> bool:
         """Default implementation for handling operation failures."""

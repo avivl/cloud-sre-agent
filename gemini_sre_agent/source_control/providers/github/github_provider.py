@@ -17,7 +17,6 @@ from ....config.source_control_repositories import GitHubRepositoryConfig
 from ...base_implementation import BaseSourceControlProvider
 from ...error_handling import (
     ErrorHandlingFactory,
-    create_provider_error_handling,
 )
 from ...models import (
     BatchOperation,
@@ -88,9 +87,7 @@ class GitHubProvider(BaseSourceControlProvider):
                 self.utils = GitHubUtils(self.client, self.repo, self.logger)
 
             # Initialize error handling system
-            self.error_handling_components = create_provider_error_handling(
-                "github", self.repo_config.error_handling.model_dump()
-            )
+            self._initialize_error_handling("github", self.repo_config.error_handling.model_dump())
 
         except Exception as e:
             self.logger.error(f"Failed to setup GitHub client: {e}")
@@ -103,7 +100,7 @@ class GitHubProvider(BaseSourceControlProvider):
         self.operations = None
         self.pull_requests = None
         self.utils = None
-        self.error_handling_components = None
+        self._error_handling_components = None
 
     async def test_connection(self) -> bool:
         """Test connection to GitHub."""
@@ -122,7 +119,9 @@ class GitHubProvider(BaseSourceControlProvider):
         """Get file content from GitHub repository."""
         if not self.operations:
             raise RuntimeError("GitHub operations not initialized")
-        return await self.operations.get_file_content(path, ref)
+        return await self._execute_with_error_handling(
+            "get_file_content", self.operations.get_file_content, path, ref
+        )
 
     async def apply_remediation(
         self,
@@ -134,19 +133,25 @@ class GitHubProvider(BaseSourceControlProvider):
         """Apply a remediation to a file."""
         if not self.operations:
             raise RuntimeError("GitHub operations not initialized")
-        return await self.operations.apply_remediation(path, content, message, branch)
+        return await self._execute_with_error_handling(
+            "apply_remediation", self.operations.apply_remediation, path, content, message, branch
+        )
 
     async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
         """Create a new branch."""
         if not self.operations:
             raise RuntimeError("GitHub operations not initialized")
-        return await self.operations.create_branch(name, base_ref)
+        return await self._execute_with_error_handling(
+            "create_branch", self.operations.create_branch, name, base_ref
+        )
 
     async def delete_branch(self, name: str) -> bool:
         """Delete a branch."""
         if not self.operations:
             raise RuntimeError("GitHub operations not initialized")
-        return await self.operations.delete_branch(name)
+        return await self._execute_with_error_handling(
+            "delete_branch", self.operations.delete_branch, name
+        )
 
     async def list_branches(self) -> List[BranchInfo]:
         """List all branches in the repository."""
