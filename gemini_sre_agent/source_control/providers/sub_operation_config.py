@@ -17,45 +17,45 @@ from ..error_handling.core import CircuitBreakerConfig, RetryConfig
 @dataclass
 class SubOperationConfig:
     """Configuration for sub-operation modules."""
-    
+
     # Operation-specific settings
     operation_name: str
     provider_type: str  # 'github', 'gitlab', 'local'
-    
+
     # Error handling configuration
     error_handling_enabled: bool = True
     circuit_breaker_config: Optional[CircuitBreakerConfig] = None
     retry_config: Optional[RetryConfig] = None
-    
+
     # Operation-specific timeouts
     default_timeout: float = 30.0
     file_operation_timeout: float = 60.0
     branch_operation_timeout: float = 45.0
     batch_operation_timeout: float = 120.0
     git_command_timeout: float = 30.0
-    
+
     # Retry settings for specific operation types
     file_operation_retries: int = 3
     branch_operation_retries: int = 2
     batch_operation_retries: int = 1
     git_command_retries: int = 2
-    
+
     # Logging configuration
     log_level: str = "INFO"
     log_operations: bool = True
     log_errors: bool = True
     log_performance: bool = False
-    
+
     # Performance settings
     enable_metrics: bool = True
     enable_tracing: bool = False
-    
+
     # Provider-specific settings
     provider_settings: Dict[str, Any] = field(default_factory=dict)
-    
+
     # Custom operation settings
     custom_settings: Dict[str, Any] = field(default_factory=dict)
-    
+
     def get_operation_timeout(self, operation_type: str) -> float:
         """Get timeout for specific operation type."""
         timeout_map = {
@@ -65,7 +65,7 @@ class SubOperationConfig:
             "git": self.git_command_timeout,
         }
         return timeout_map.get(operation_type, self.default_timeout)
-    
+
     def get_operation_retries(self, operation_type: str) -> int:
         """Get retry count for specific operation type."""
         retry_map = {
@@ -75,7 +75,7 @@ class SubOperationConfig:
             "git": self.git_command_retries,
         }
         return retry_map.get(operation_type, 2)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
@@ -83,11 +83,11 @@ class SubOperationConfig:
             "provider_type": self.provider_type,
             "error_handling_enabled": self.error_handling_enabled,
             "circuit_breaker_config": (
-                self.circuit_breaker_config.__dict__ if self.circuit_breaker_config else None
+                self.circuit_breaker_config.__dict__
+                if self.circuit_breaker_config
+                else None
             ),
-            "retry_config": (
-                self.retry_config.__dict__ if self.retry_config else None
-            ),
+            "retry_config": (self.retry_config.__dict__ if self.retry_config else None),
             "default_timeout": self.default_timeout,
             "file_operation_timeout": self.file_operation_timeout,
             "branch_operation_timeout": self.branch_operation_timeout,
@@ -106,20 +106,22 @@ class SubOperationConfig:
             "provider_settings": self.provider_settings,
             "custom_settings": self.custom_settings,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SubOperationConfig":
         """Create configuration from dictionary."""
         # Extract circuit breaker config
         circuit_breaker_config = None
         if data.get("circuit_breaker_config"):
-            circuit_breaker_config = CircuitBreakerConfig(**data["circuit_breaker_config"])
-        
+            circuit_breaker_config = CircuitBreakerConfig(
+                **data["circuit_breaker_config"]
+            )
+
         # Extract retry config
         retry_config = None
         if data.get("retry_config"):
             retry_config = RetryConfig(**data["retry_config"])
-        
+
         return cls(
             operation_name=data["operation_name"],
             provider_type=data["provider_type"],
@@ -148,40 +150,42 @@ class SubOperationConfig:
 
 class SubOperationConfigManager:
     """Manages configuration for sub-operation modules."""
-    
+
     def __init__(self, logger: Optional[logging.Logger] = None):
         """Initialize configuration manager."""
         self.logger = logger or logging.getLogger("SubOperationConfigManager")
         self._configs: Dict[str, SubOperationConfig] = {}
-    
+
     def register_config(self, config: SubOperationConfig) -> None:
         """Register a sub-operation configuration."""
         key = f"{config.provider_type}_{config.operation_name}"
         self._configs[key] = config
         self.logger.info(f"Registered configuration for {key}")
-    
-    def get_config(self, provider_type: str, operation_name: str) -> Optional[SubOperationConfig]:
+
+    def get_config(
+        self, provider_type: str, operation_name: str
+    ) -> Optional[SubOperationConfig]:
         """Get configuration for a specific sub-operation."""
         key = f"{provider_type}_{operation_name}"
         return self._configs.get(key)
-    
+
     def create_default_config(
-        self, 
-        provider_type: str, 
+        self,
+        provider_type: str,
         operation_name: str,
-        custom_settings: Optional[Dict[str, Any]] = None
+        custom_settings: Optional[Dict[str, Any]] = None,
     ) -> SubOperationConfig:
         """Create default configuration for a sub-operation."""
         # Get provider-specific defaults
         provider_defaults = self._get_provider_defaults(provider_type)
-        
+
         # Create base configuration
         config = SubOperationConfig(
             operation_name=operation_name,
             provider_type=provider_type,
-            **provider_defaults
+            **provider_defaults,
         )
-        
+
         # Apply custom settings if provided
         if custom_settings:
             for key, value in custom_settings.items():
@@ -189,9 +193,9 @@ class SubOperationConfigManager:
                     setattr(config, key, value)
                 else:
                     config.custom_settings[key] = value
-        
+
         return config
-    
+
     def _get_provider_defaults(self, provider_type: str) -> Dict[str, Any]:
         """Get provider-specific default settings."""
         defaults = {
@@ -220,15 +224,15 @@ class SubOperationConfigManager:
                 "branch_operation_retries": 1,
                 "batch_operation_retries": 1,
                 "git_command_retries": 2,
-            }
+            },
         }
-        
+
         return defaults.get(provider_type, {})
-    
+
     def list_configs(self) -> List[str]:
         """List all registered configuration keys."""
         return list(self._configs.keys())
-    
+
     def clear_configs(self) -> None:
         """Clear all registered configurations."""
         self._configs.clear()
@@ -239,7 +243,9 @@ class SubOperationConfigManager:
 _config_manager = SubOperationConfigManager()
 
 
-def get_sub_operation_config(provider_type: str, operation_name: str) -> Optional[SubOperationConfig]:
+def get_sub_operation_config(
+    provider_type: str, operation_name: str
+) -> Optional[SubOperationConfig]:
     """Get sub-operation configuration."""
     return _config_manager.get_config(provider_type, operation_name)
 
@@ -250,9 +256,11 @@ def register_sub_operation_config(config: SubOperationConfig) -> None:
 
 
 def create_sub_operation_config(
-    provider_type: str, 
+    provider_type: str,
     operation_name: str,
-    custom_settings: Optional[Dict[str, Any]] = None
+    custom_settings: Optional[Dict[str, Any]] = None,
 ) -> SubOperationConfig:
     """Create sub-operation configuration."""
-    return _config_manager.create_default_config(provider_type, operation_name, custom_settings)
+    return _config_manager.create_default_config(
+        provider_type, operation_name, custom_settings
+    )
