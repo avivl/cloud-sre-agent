@@ -163,9 +163,9 @@ class OperationCircuitBreakerConfig:
     # Pull request operations - strict
     pull_request_operations: CircuitBreakerConfig = field(
         default_factory=lambda: CircuitBreakerConfig(
-            failure_threshold=3,
+            failure_threshold=5,
             recovery_timeout=90.0,
-            success_threshold=5,
+            success_threshold=3,
             timeout=30.0,
         )
     )
@@ -183,9 +183,9 @@ class OperationCircuitBreakerConfig:
     # Authentication operations - very strict
     auth_operations: CircuitBreakerConfig = field(
         default_factory=lambda: CircuitBreakerConfig(
-            failure_threshold=2,
+            failure_threshold=10,
             recovery_timeout=300.0,
-            success_threshold=10,
+            success_threshold=5,
             timeout=15.0,
         )
     )

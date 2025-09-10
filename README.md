@@ -667,6 +667,8 @@ For detailed information on the Gemini SRE Agent, please refer to the following 
 - [**Performance Tuning Guide**](docs/PERFORMANCE.md): Recommendations for optimizing agent performance and cost.
 - [**Operations Runbook**](docs/OPERATIONS.md): Guidelines for operating, monitoring, and maintaining the agent.
 - [**Logging and Flow Tracking**](docs/LOGGING.md): Complete guide to the flow tracking system and structured logging format.
+- [**Error Handling System**](docs/ERROR_HANDLING_SYSTEM.md): Comprehensive guide to the robust error handling, circuit breakers, retry mechanisms, and graceful degradation.
+- [**Error Handling Quick Reference**](docs/ERROR_HANDLING_QUICK_REFERENCE.md): Quick reference guide for developers using the error handling system.
 - [**Troubleshooting Guide**](docs/TROUBLESHOOTING.md): Systematic approaches for debugging issues using flow tracking and execution path tracing.
 - [**Development Guide**](docs/DEVELOPMENT.md): Information for contributors, including testing, code style, and contributing.
 
