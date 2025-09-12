@@ -6,10 +6,13 @@ Enhanced LLM Service with Intelligent Model Selection.
 This module provides an enhanced LLM service that integrates the semantic model
 selection system with the existing provider interfaces, enabling intelligent
 model selection based on task requirements, performance metrics, and fallback chains.
+
+This is now a coordination module that uses the modular service components.
 """
 
 import logging
 import time
+from datetime import timedelta
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 try:
@@ -35,6 +38,11 @@ from .model_selector import (
 from .performance_cache import MetricType, PerformanceMonitor
 from .prompt_manager import PromptManager
 
+# Import the new modular service components
+from .service_base import BaseService, ServiceConfig, ServiceHealth, ServiceStatus
+from .service_manager import LoadBalancingStrategy, ServiceManager, ServiceType
+from .service_metrics import ServiceAlert, ServiceMetricsManager
+
 # Type alias for better type checking
 PromptType = Any
 
@@ -50,6 +58,8 @@ class EnhancedLLMService(Generic[T]):
     Integrates the semantic model selection system with provider interfaces,
     enabling intelligent model selection based on task requirements, performance
     metrics, and fallback chains.
+
+    This is now a coordination module that uses the modular service components.
     """
 
     def __init__(
@@ -57,6 +67,7 @@ class EnhancedLLMService(Generic[T]):
         config: LLMConfig,
         model_registry: Optional[ModelRegistry] = None,
         performance_monitor: Optional[PerformanceMonitor] = None,
+        service_manager: Optional[ServiceManager] = None,
     ):
         """Initialize the enhanced LLM service."""
         self.config = config
@@ -81,6 +92,10 @@ class EnhancedLLMService(Generic[T]):
         )
         self.performance_monitor = performance_monitor or PerformanceMonitor()
 
+        # Initialize service manager and metrics
+        self.service_manager = service_manager or ServiceManager()
+        self.metrics_manager = ServiceMetricsManager()
+
         # Populate model registry with models from config
         self._populate_model_registry()
 
@@ -89,7 +104,7 @@ class EnhancedLLMService(Generic[T]):
         self._last_selection_time: Dict[str, float] = {}
 
         self.logger.info(
-            "EnhancedLLMService initialized with intelligent model selection"
+            "EnhancedLLMService initialized with intelligent model selection and modular services"
         )
 
     def _populate_model_registry(self):
@@ -724,11 +739,148 @@ Respond only with the JSON object, no additional text."""
         """Get model rankings based on multiple performance metrics."""
         return self.performance_monitor.get_model_rankings(metric_types, weights)
 
+    # Service Manager Integration Methods
+
+    async def initialize_services(self) -> None:
+        """Initialize the service manager and all services."""
+        await self.service_manager.initialize()
+        self.logger.info("All services initialized successfully")
+
+    async def shutdown_services(self) -> None:
+        """Shutdown the service manager and all services."""
+        await self.service_manager.shutdown()
+        self.logger.info("All services shutdown successfully")
+
+    async def get_service_health(
+        self, service_type: ServiceType
+    ) -> Optional[ServiceHealth]:
+        """Get health status for a specific service type."""
+        service = await self.service_manager.get_service(service_type)
+        if not service:
+            return None
+        return await service.check_health()
+
+    async def execute_service_request(
+        self,
+        service_type: ServiceType,
+        request_data: Dict[str, Any],
+        service_id: Optional[str] = None,
+    ) -> Any:
+        """Execute a request through the appropriate service."""
+        return await self.service_manager.execute_service_request(
+            service_type, request_data, service_id
+        )
+
+    def get_service_metrics(self, service_id: str) -> Optional[Dict[str, Any]]:
+        """Get metrics for a specific service."""
+        metrics = self.metrics_manager.get_service_metrics(service_id)
+        if not metrics:
+            return None
+
+        return {
+            "service_id": metrics.service_id,
+            "request_count": metrics.request_count,
+            "success_count": metrics.success_count,
+            "error_count": metrics.error_count,
+            "avg_response_time": metrics.avg_response_time,
+            "error_rate": metrics.error_rate,
+            "throughput": metrics.throughput,
+            "availability": metrics.availability,
+            "health_score": metrics.health_score,
+        }
+
+    def get_all_service_metrics(self) -> Dict[str, Dict[str, Any]]:
+        """Get metrics for all services."""
+        all_metrics = self.metrics_manager.get_all_metrics()
+        return {
+            service_id: {
+                "service_id": metrics.service_id,
+                "request_count": metrics.request_count,
+                "success_count": metrics.success_count,
+                "error_count": metrics.error_count,
+                "avg_response_time": metrics.avg_response_time,
+                "error_rate": metrics.error_rate,
+                "throughput": metrics.throughput,
+                "availability": metrics.availability,
+                "health_score": metrics.health_score,
+            }
+            for service_id, metrics in all_metrics.items()
+        }
+
+    def add_service_alert(
+        self,
+        service_id: str,
+        metric_name: str,
+        threshold: float,
+        operator: str = ">",
+        duration_seconds: int = 300,
+        severity: str = "medium",
+        message: str = "",
+    ) -> None:
+        """Add an alert configuration for a service."""
+        alert = ServiceAlert(
+            service_id=service_id,
+            metric_name=metric_name,
+            threshold=threshold,
+            operator=operator,
+            duration=timedelta(seconds=duration_seconds),
+            severity=severity,
+            message=message or f"{metric_name} {operator} {threshold}",
+        )
+        self.metrics_manager.add_alert(alert)
+        self.logger.info(f"Added alert for {service_id}: {metric_name}")
+
+    def get_active_alerts(self) -> List[Dict[str, Any]]:
+        """Get all currently active alerts."""
+        alerts = self.metrics_manager.get_active_alerts()
+        return [
+            {
+                "service_id": alert.service_id,
+                "metric_name": alert.metric_name,
+                "threshold": alert.threshold,
+                "operator": alert.operator,
+                "severity": alert.severity,
+                "message": alert.message,
+                "triggered_at": (
+                    alert.triggered_at.isoformat() if alert.triggered_at else None
+                ),
+            }
+            for alert in alerts
+        ]
+
+    def generate_service_report(self, service_id: str) -> Dict[str, Any]:
+        """Generate a comprehensive report for a service."""
+        return self.metrics_manager.generate_service_report(service_id)
+
+    def generate_summary_report(self) -> Dict[str, Any]:
+        """Generate a summary report for all services."""
+        return self.metrics_manager.generate_summary_report()
+
 
 def create_enhanced_llm_service(
     config: LLMConfig,
     model_registry: Optional[ModelRegistry] = None,
     performance_monitor: Optional[PerformanceMonitor] = None,
+    service_manager: Optional[ServiceManager] = None,
 ) -> EnhancedLLMService:
     """Factory function to create and configure an EnhancedLLMService instance."""
-    return EnhancedLLMService(config, model_registry, performance_monitor)
+    return EnhancedLLMService(
+        config, model_registry, performance_monitor, service_manager
+    )
+
+
+# Export all public classes and functions
+__all__ = [
+    "EnhancedLLMService",
+    "create_enhanced_llm_service",
+    # Re-export service components for convenience
+    "ServiceManager",
+    "ServiceType",
+    "LoadBalancingStrategy",
+    "ServiceMetricsManager",
+    "ServiceAlert",
+    "BaseService",
+    "ServiceConfig",
+    "ServiceStatus",
+    "ServiceHealth",
+]
