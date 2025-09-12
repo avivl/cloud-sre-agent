@@ -1,0 +1,378 @@
+openapi: 3.0.3
+info:
+  title: Dogfooding Service API
+  description: |
+    Flask-based error-producing service for testing SRE Agent capabilities.
+    This service provides error endpoints to test the SRE Agent's ability to:
+    1. Detect errors from structured logs
+    2. Analyze root causes
+    3. Generate fixes via PRs
+  version: 1.0.0
+  contact:
+    name: Gemini SRE Agent Team
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5001
+    description: Development server
+  - url: https://dogfooding.example.com
+    description: Production server
+
+paths:
+  /:
+    get:
+      summary: Health check
+      description: Returns the health status of the service
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /status:
+    get:
+      summary: Service status
+      description: Returns detailed service status and available endpoints
+      operationId: getStatus
+      tags:
+        - Status
+      responses:
+        '200':
+          description: Service status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /error/division:
+    get:
+      summary: Trigger division by zero error
+      description: Intentionally triggers a ZeroDivisionError for testing
+      operationId: triggerDivisionError
+      tags:
+        - Error Testing
+      responses:
+        '500':
+          description: Division by zero error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/memory:
+    get:
+      summary: Trigger memory error
+      description: Intentionally triggers a MemoryError with safety limits
+      operationId: triggerMemoryError
+      tags:
+        - Error Testing
+      responses:
+        '500':
+          description: Memory allocation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/timeout:
+    get:
+      summary: Trigger timeout error
+      description: Intentionally triggers a TimeoutError for testing
+      operationId: triggerTimeoutError
+      tags:
+        - Error Testing
+      responses:
+        '408':
+          description: Request timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/json:
+    get:
+      summary: Trigger JSON decode error
+      description: Intentionally triggers a JSONDecodeError for testing
+      operationId: triggerJsonError
+      tags:
+        - Error Testing
+      responses:
+        '400':
+          description: JSON parsing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/file:
+    get:
+      summary: Trigger file not found error
+      description: Intentionally triggers a FileNotFoundError for testing
+      operationId: triggerFileError
+      tags:
+        - Error Testing
+      responses:
+        '404':
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/permission:
+    get:
+      summary: Trigger permission error
+      description: Intentionally triggers a PermissionError for testing
+      operationId: triggerPermissionError
+      tags:
+        - Error Testing
+      responses:
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/connection:
+    get:
+      summary: Trigger connection error
+      description: Intentionally triggers a ConnectionError for testing
+      operationId: triggerConnectionError
+      tags:
+        - Error Testing
+      responses:
+        '503':
+          description: Connection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/validation:
+    get:
+      summary: Trigger validation error
+      description: Intentionally triggers a ValueError for testing
+      operationId: triggerValidationError
+      tags:
+        - Error Testing
+      responses:
+        '400':
+          description: Invalid input format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/key:
+    get:
+      summary: Trigger key error
+      description: Intentionally triggers a KeyError for testing
+      operationId: triggerKeyError
+      tags:
+        - Error Testing
+      responses:
+        '400':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/attribute:
+    get:
+      summary: Trigger attribute error
+      description: Intentionally triggers an AttributeError for testing
+      operationId: triggerAttributeError
+      tags:
+        - Error Testing
+      responses:
+        '500':
+          description: Attribute not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/import:
+    get:
+      summary: Trigger import error
+      description: Intentionally triggers an ImportError for testing
+      operationId: triggerImportError
+      tags:
+        - Error Testing
+      responses:
+        '500':
+          description: Module not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/type:
+    get:
+      summary: Trigger type error
+      description: Intentionally triggers a TypeError for testing
+      operationId: triggerTypeError
+      tags:
+        - Error Testing
+      responses:
+        '400':
+          description: Type mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/index:
+    get:
+      summary: Trigger index error
+      description: Intentionally triggers an IndexError for testing
+      operationId: triggerIndexError
+      tags:
+        - Error Testing
+      responses:
+        '400':
+          description: Index out of range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/recursion:
+    get:
+      summary: Trigger recursion error
+      description: Intentionally triggers a RecursionError for testing
+      operationId: triggerRecursionError
+      tags:
+        - Error Testing
+      responses:
+        '500':
+          description: Maximum recursion depth exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/database:
+    get:
+      summary: Trigger database error
+      description: Intentionally triggers a database connection error for testing
+      operationId: triggerDatabaseError
+      tags:
+        - Error Testing
+      responses:
+        '503':
+          description: Database connection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /error/rate_limit:
+    get:
+      summary: Trigger rate limit error
+      description: Intentionally triggers a rate limiting error for testing
+      operationId: triggerRateLimitError
+      tags:
+        - Error Testing
+      responses:
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - version
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+        service:
+          type: string
+          example: "dogfood_service"
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+
+    StatusResponse:
+      type: object
+      required:
+        - service
+        - version
+        - status
+        - endpoints
+        - log_file
+        - timestamp
+      properties:
+        service:
+          type: string
+          example: "dogfood_service"
+        version:
+          type: string
+          example: "1.0.0"
+        status:
+          type: string
+          enum: [running]
+        endpoints:
+          type: array
+          items:
+            type: string
+          example: ["/", "/error/division", "/error/memory"]
+        log_file:
+          type: string
+          example: "/tmp/sre-dogfooding/dogfood_service.log"
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message describing what went wrong
+
+    RateLimitErrorResponse:
+      type: object
+      required:
+        - error
+        - retry_after
+      properties:
+        error:
+          type: string
+          example: "Rate limit exceeded"
+        retry_after:
+          type: integer
+          description: Seconds to wait before retrying
+          example: 60
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Status
+    description: Service status and information endpoints
+  - name: Error Testing
+    description: Endpoints that intentionally trigger various types of errors for testing SRE Agent capabilities

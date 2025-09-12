@@ -1,0 +1,771 @@
+openapi: 3.0.3
+info:
+  title: Gemini SRE Agent API
+  description: |
+    Comprehensive API specification for the Gemini SRE Agent system.
+    This API provides endpoints for monitoring, metrics, health checks,
+    cost analytics, and system management.
+  version: 1.0.0
+  contact:
+    name: Gemini SRE Agent Team
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.gemini-sre-agent.com/v1
+    description: Production server
+  - url: https://staging-api.gemini-sre-agent.com/v1
+    description: Staging server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+paths:
+  /health:
+    get:
+      summary: Get system health status
+      description: Returns the overall health status of the system and all providers
+      operationId: getHealthStatus
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Health status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatusResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /overview:
+    get:
+      summary: Get system overview
+      description: Returns a comprehensive overview of the system including health, metrics, and cost data
+      operationId: getOverview
+      tags:
+        - Dashboard
+      responses:
+        '200':
+          description: System overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverviewResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /metrics:
+    get:
+      summary: Get metrics data
+      description: Returns metrics data for providers and models
+      operationId: getMetrics
+      tags:
+        - Metrics
+      parameters:
+        - name: provider
+          in: query
+          description: Filter metrics by provider
+          required: false
+          schema:
+            type: string
+            example: "openai"
+        - name: model
+          in: query
+          description: Filter metrics by model (requires provider)
+          required: false
+          schema:
+            type: string
+            example: "gpt-4"
+      responses:
+        '200':
+          description: Metrics data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /performance:
+    get:
+      summary: Get performance data
+      description: Returns performance data for charts and graphs
+      operationId: getPerformanceData
+      tags:
+        - Performance
+      parameters:
+        - name: provider
+          in: query
+          description: Filter performance data by provider
+          required: false
+          schema:
+            type: string
+            example: "openai"
+        - name: hours
+          in: query
+          description: Time range in hours
+          required: false
+          schema:
+            type: integer
+            default: 24
+            minimum: 1
+            maximum: 168
+      responses:
+        '200':
+          description: Performance data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cost-analytics:
+    get:
+      summary: Get cost analytics
+      description: Returns cost analytics and spending data
+      operationId: getCostAnalytics
+      tags:
+        - Cost
+      parameters:
+        - name: provider
+          in: query
+          description: Filter cost data by provider
+          required: false
+          schema:
+            type: string
+            example: "openai"
+        - name: days
+          in: query
+          description: Time range in days
+          required: false
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 365
+      responses:
+        '200':
+          description: Cost analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostAnalyticsResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /alerts:
+    get:
+      summary: Get current alerts
+      description: Returns current alerts and issues in the system
+      operationId: getAlerts
+      tags:
+        - Alerts
+      responses:
+        '200':
+          description: Alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /status:
+    get:
+      summary: Get system status
+      description: Returns overall system status including health, metrics, and alerts
+      operationId: getSystemStatus
+      tags:
+        - Status
+      responses:
+        '200':
+          description: System status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatusResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthStatusResponse:
+      type: object
+      required:
+        - timestamp
+        - summary
+        - providers
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health check
+        summary:
+          $ref: '#/components/schemas/HealthSummary'
+        providers:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ProviderHealth'
+
+    HealthSummary:
+      type: object
+      required:
+        - overall_status
+        - total_providers
+        - healthy_providers
+        - degraded_providers
+        - unhealthy_providers
+      properties:
+        overall_status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        total_providers:
+          type: integer
+        healthy_providers:
+          type: integer
+        degraded_providers:
+          type: integer
+        unhealthy_providers:
+          type: integer
+
+    ProviderHealth:
+      type: object
+      required:
+        - status
+        - last_check
+        - check_count
+        - success_count
+        - failure_count
+        - success_rate
+        - avg_response_time_ms
+        - issues
+        - models
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        last_check:
+          type: string
+          format: date-time
+        check_count:
+          type: integer
+        success_count:
+          type: integer
+        failure_count:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+        avg_response_time_ms:
+          type: number
+          format: float
+        issues:
+          type: array
+          items:
+            type: string
+        models:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ModelHealth'
+
+    ModelHealth:
+      type: object
+      required:
+        - status
+        - message
+        - duration_ms
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        message:
+          type: string
+        duration_ms:
+          type: number
+          format: float
+        timestamp:
+          type: string
+          format: date-time
+        error:
+          type: string
+          nullable: true
+
+    OverviewResponse:
+      type: object
+      required:
+        - timestamp
+        - health
+        - metrics
+        - cost
+        - status
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        health:
+          $ref: '#/components/schemas/HealthSummary'
+        metrics:
+          $ref: '#/components/schemas/MetricsSummary'
+        cost:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [operational, degraded, unhealthy]
+
+    MetricsSummary:
+      type: object
+      required:
+        - total_requests
+        - overall_success_rate
+        - average_latency_ms
+        - total_cost
+      properties:
+        total_requests:
+          type: integer
+        overall_success_rate:
+          type: number
+          format: float
+        average_latency_ms:
+          type: number
+          format: float
+        total_cost:
+          type: number
+          format: float
+
+    MetricsResponse:
+      type: object
+      required:
+        - timestamp
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        provider:
+          type: string
+        model:
+          type: string
+        summary:
+          $ref: '#/components/schemas/MetricsSummary'
+        providers:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ProviderMetrics'
+        models:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ModelMetrics'
+        metrics:
+          $ref: '#/components/schemas/ModelMetrics'
+
+    ProviderMetrics:
+      type: object
+      required:
+        - total_requests
+        - successful_requests
+        - failed_requests
+        - success_rate
+        - error_rate
+        - total_cost
+        - total_tokens
+        - avg_latency_ms
+        - p95_latency_ms
+        - p99_latency_ms
+        - circuit_breaker_trips
+        - rate_limit_hits
+        - last_updated
+      properties:
+        total_requests:
+          type: integer
+        successful_requests:
+          type: integer
+        failed_requests:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+        error_rate:
+          type: number
+          format: float
+        total_cost:
+          type: number
+          format: float
+        total_tokens:
+          type: integer
+        avg_latency_ms:
+          type: number
+          format: float
+        p95_latency_ms:
+          type: number
+          format: float
+        p99_latency_ms:
+          type: number
+          format: float
+        circuit_breaker_trips:
+          type: integer
+        rate_limit_hits:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    ModelMetrics:
+      type: object
+      required:
+        - provider
+        - model
+        - model_type
+        - total_requests
+        - successful_requests
+        - failed_requests
+        - success_rate
+        - total_cost
+        - total_tokens
+        - avg_latency_ms
+        - quality_score
+        - last_updated
+      properties:
+        provider:
+          type: string
+        model:
+          type: string
+        model_type:
+          type: string
+        total_requests:
+          type: integer
+        successful_requests:
+          type: integer
+        failed_requests:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+        total_cost:
+          type: number
+          format: float
+        total_tokens:
+          type: integer
+        avg_latency_ms:
+          type: number
+          format: float
+        quality_score:
+          type: number
+          format: float
+        last_updated:
+          type: string
+          format: date-time
+
+    PerformanceResponse:
+      type: object
+      required:
+        - timestamp
+        - time_range_hours
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        provider:
+          type: string
+        time_range_hours:
+          type: integer
+        current_metrics:
+          $ref: '#/components/schemas/CurrentMetrics'
+        historical_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalDataPoint'
+        providers:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              current_metrics:
+                $ref: '#/components/schemas/CurrentMetrics'
+              historical_data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoricalDataPoint'
+
+    CurrentMetrics:
+      type: object
+      required:
+        - avg_latency_ms
+        - p95_latency_ms
+        - p99_latency_ms
+        - success_rate
+        - requests_per_minute
+        - requests_per_second
+      properties:
+        avg_latency_ms:
+          type: number
+          format: float
+        p95_latency_ms:
+          type: number
+          format: float
+        p99_latency_ms:
+          type: number
+          format: float
+        success_rate:
+          type: number
+          format: float
+        requests_per_minute:
+          type: number
+          format: float
+        requests_per_second:
+          type: number
+          format: float
+
+    HistoricalDataPoint:
+      type: object
+      required:
+        - timestamp
+        - requests_per_minute
+        - avg_latency_ms
+        - success_rate
+        - error_rate
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        requests_per_minute:
+          type: number
+          format: float
+        avg_latency_ms:
+          type: number
+          format: float
+        success_rate:
+          type: number
+          format: float
+        error_rate:
+          type: number
+          format: float
+
+    CostAnalyticsResponse:
+      type: object
+      required:
+        - timestamp
+        - time_range_days
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        provider:
+          type: string
+        time_range_days:
+          type: integer
+        analytics:
+          type: object
+          additionalProperties: true
+        cost_data:
+          $ref: '#/components/schemas/CostData'
+
+    CostData:
+      type: object
+      required:
+        - total_cost
+        - daily_average
+        - cost_trend
+        - breakdown
+      properties:
+        total_cost:
+          type: number
+          format: float
+        daily_average:
+          type: number
+          format: float
+        cost_trend:
+          type: string
+          enum: [increasing, decreasing, stable]
+        breakdown:
+          type: object
+          properties:
+            input_tokens:
+              type: number
+              format: float
+            output_tokens:
+              type: number
+              format: float
+
+    AlertsResponse:
+      type: object
+      required:
+        - timestamp
+        - total_alerts
+        - critical_alerts
+        - warning_alerts
+        - alerts
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        total_alerts:
+          type: integer
+        critical_alerts:
+          type: integer
+        warning_alerts:
+          type: integer
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+
+    Alert:
+      type: object
+      required:
+        - type
+        - severity
+        - provider
+        - message
+        - details
+        - timestamp
+      properties:
+        type:
+          type: string
+          enum: [health, performance, reliability, cost]
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        provider:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+
+    SystemStatusResponse:
+      type: object
+      required:
+        - timestamp
+        - status
+        - health
+        - metrics
+        - alerts
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [operational, degraded, unhealthy]
+        health:
+          $ref: '#/components/schemas/HealthSummary'
+        metrics:
+          $ref: '#/components/schemas/MetricsSummary'
+        alerts:
+          type: object
+          required:
+            - total
+            - critical
+            - warnings
+          properties:
+            total:
+              type: integer
+            critical:
+              type: integer
+            warnings:
+              type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Health monitoring and status endpoints
+  - name: Dashboard
+    description: Dashboard and overview endpoints
+  - name: Metrics
+    description: Metrics and performance data endpoints
+  - name: Performance
+    description: Performance monitoring and analytics endpoints
+  - name: Cost
+    description: Cost analytics and spending endpoints
+  - name: Alerts
+    description: Alert and notification endpoints
+  - name: Status
+    description: System status and monitoring endpoints
