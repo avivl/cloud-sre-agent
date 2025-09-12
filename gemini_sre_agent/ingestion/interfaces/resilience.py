@@ -66,12 +66,24 @@ class AsyncCircuitBreaker:
 
     @property
     def state(self):
+        """
+        State.
+
+        """
         if self.circuit_breaker:
             return self.circuit_breaker.state
         return "closed"
 
     @property
     def failure_count(self):
+        """
+        Failure Count.
+
+        Raises:
+            ValueError: If input parameters are invalid.
+            RuntimeError: If operation fails.
+
+        """
         if self.circuit_breaker:
             return self.circuit_breaker.failure_count
         return 0

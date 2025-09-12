@@ -189,6 +189,17 @@ class TestModelScorer:
         scorer = ModelScorer()
 
         def custom_scorer(model_info: ModelInfo, context: ScoringContext) -> float:
+            """
+            Custom Scorer.
+
+            Args:
+                model_info: ModelInfo: Description of model_info: ModelInfo.
+                context: ScoringContext: Description of context: ScoringContext.
+
+            Returns:
+                float: Description of return value.
+
+            """
             return 0.5
 
         scorer.register_custom_scorer(ScoringDimension.COST, custom_scorer)
@@ -357,6 +368,17 @@ class TestModelScorer:
 
         # Register a scorer that raises an exception
         def faulty_scorer(model_info: ModelInfo, context: ScoringContext) -> float:
+            """
+            Faulty Scorer.
+
+            Args:
+                model_info: ModelInfo: Description of model_info: ModelInfo.
+                context: ScoringContext: Description of context: ScoringContext.
+
+            Returns:
+                float: Description of return value.
+
+            """
             raise ValueError("Test error")
 
         scorer.register_custom_scorer(ScoringDimension.COST, faulty_scorer)
@@ -377,6 +399,17 @@ class TestModelScorer:
 
         # Register a scorer that returns out-of-range values
         def extreme_scorer(model_info: ModelInfo, context: ScoringContext) -> float:
+            """
+            Extreme Scorer.
+
+            Args:
+                model_info: ModelInfo: Description of model_info: ModelInfo.
+                context: ScoringContext: Description of context: ScoringContext.
+
+            Returns:
+                float: Description of return value.
+
+            """
             return 2.0  # Above 1.0
 
         scorer.register_custom_scorer(ScoringDimension.COST, extreme_scorer)

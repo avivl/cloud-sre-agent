@@ -316,6 +316,14 @@ async def main():
 
     # Set up signal handlers for graceful shutdown
     def signal_handler(signum, frame):
+        """
+        Signal Handler.
+
+        Args:
+            signum: Description of signum.
+            frame: Description of frame.
+
+        """
         logger.info("Received shutdown signal")
         asyncio.create_task(orchestrator.cleanup())
         sys.exit(0)

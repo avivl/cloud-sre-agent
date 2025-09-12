@@ -17,6 +17,10 @@ class TestEnvironmentBackend:
 
     @pytest.fixture
     def backend(self):
+        """
+        Backend.
+
+        """
         return EnvironmentBackend()
 
     @pytest.mark.asyncio
@@ -69,11 +73,22 @@ class TestFileBackend:
 
     @pytest.fixture
     def temp_dir(self):
+        """
+        Temp Dir.
+
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
     def backend(self, temp_dir):
+        """
+        Backend.
+
+        Args:
+            temp_dir: Description of temp_dir.
+
+        """
         return FileBackend(temp_dir)
 
     @pytest.mark.asyncio
@@ -113,10 +128,18 @@ class TestCredentialManager:
 
     @pytest.fixture
     def manager(self):
+        """
+        Manager.
+
+        """
         return CredentialManager()
 
     @pytest.fixture
     def manager_with_encryption(self):
+        """
+        Manager With Encryption.
+
+        """
         return CredentialManager(encryption_key="test-key-12345")
 
     @pytest.mark.asyncio
@@ -164,6 +187,10 @@ class TestCredentialManager:
 
     @pytest.fixture
     def temp_dir(self):
+        """
+        Temp Dir.
+
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 

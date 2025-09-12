@@ -208,16 +208,40 @@ class MetricValidationSchema(BaseModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, v):
+        """
+        Validate Name.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_non_empty_string(v)
 
     @field_validator("value")
     @classmethod
     def validate_value(cls, v):
+        """
+        Validate Value.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_positive_number(v)
 
     @field_validator("timestamp")
     @classmethod
     def validate_timestamp(cls, v):
+        """
+        Validate Timestamp.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_timestamp(v)
 
 
@@ -235,6 +259,14 @@ class LogValidationSchema(BaseModel):
     @field_validator("level")
     @classmethod
     def validate_level(cls, v):
+        """
+        Validate Level.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in allowed_levels:
             raise ValueError(f"Log level must be one of: {', '.join(allowed_levels)}")
@@ -243,11 +275,27 @@ class LogValidationSchema(BaseModel):
     @field_validator("message")
     @classmethod
     def validate_message(cls, v):
+        """
+        Validate Message.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_non_empty_string(v)
 
     @field_validator("timestamp")
     @classmethod
     def validate_timestamp(cls, v):
+        """
+        Validate Timestamp.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_timestamp(v)
 
 
@@ -265,21 +313,53 @@ class CodeAnalysisValidationSchema(BaseModel):
     @field_validator("file_path")
     @classmethod
     def validate_file_path(cls, v):
+        """
+        Validate File Path.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_non_empty_string(v)
 
     @field_validator("severity")
     @classmethod
     def validate_severity(cls, v):
+        """
+        Validate Severity.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_severity_level(v)
 
     @field_validator("confidence")
     @classmethod
     def validate_confidence(cls, v):
+        """
+        Validate Confidence.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_confidence_score(v)
 
     @field_validator("message")
     @classmethod
     def validate_message(cls, v):
+        """
+        Validate Message.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         return validate_non_empty_string(v)
 
 
@@ -292,7 +372,21 @@ def validate_with_schema(schema_class: type) -> Callable:
     """Decorator to validate function arguments with a Pydantic schema."""
 
     def decorator(func: Callable) -> Callable:
+        """
+        Decorator.
+
+        Args:
+            func: Callable: Description of func: Callable.
+
+        Returns:
+            Callable: Description of return value.
+
+        """
         def wrapper(*args, **kwargs):
+            """
+            Wrapper.
+
+            """
             try:
                 # Validate kwargs with the schema
                 validated_data = schema_class(**kwargs)
@@ -309,6 +403,10 @@ def validate_confidence(func: Callable) -> Callable:
     """Decorator to validate confidence parameters."""
 
     def wrapper(*args, **kwargs):
+        """
+        Wrapper.
+
+        """
         if "confidence" in kwargs:
             kwargs["confidence"] = validate_confidence_score(kwargs["confidence"])
         return func(*args, **kwargs)
@@ -320,6 +418,10 @@ def validate_severity(func: Callable) -> Callable:
     """Decorator to validate severity parameters."""
 
     def wrapper(*args, **kwargs):
+        """
+        Wrapper.
+
+        """
         if "severity" in kwargs:
             kwargs["severity"] = validate_severity_level(kwargs["severity"])
         return func(*args, **kwargs)

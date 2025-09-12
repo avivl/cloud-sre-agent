@@ -41,16 +41,34 @@ def integration_config():
 
 @pytest.fixture(scope="session")
 def gcp_project_id(integration_config):
+    """
+    Gcp Project Id.
+
+    Args:
+        integration_config: Description of integration_config.
+
+    """
     return integration_config.services[0].project_id
 
 
 @pytest.fixture(scope="session")
 def gcp_location(integration_config):
+    """
+    Gcp Location.
+
+    Args:
+        integration_config: Description of integration_config.
+
+    """
     return integration_config.services[0].location
 
 
 @pytest.fixture(scope="session")
 def github_token():
+    """
+    Github Token.
+
+    """
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         pytest.skip("GITHUB_TOKEN environment variable not set for integration tests")
@@ -59,11 +77,25 @@ def github_token():
 
 @pytest.fixture(scope="session")
 def github_repo_name(integration_config):
+    """
+    Github Repo Name.
+
+    Args:
+        integration_config: Description of integration_config.
+
+    """
     return integration_config.default_github_config.repository
 
 
 @pytest.fixture(scope="session")
 def github_base_branch(integration_config):
+    """
+    Github Base Branch.
+
+    Args:
+        integration_config: Description of integration_config.
+
+    """
     return integration_config.default_github_config.base_branch
 
 

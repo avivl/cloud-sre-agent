@@ -110,14 +110,29 @@ class TestEnhancedCodeGenerationAgent:
                 self.learning_data = {}
 
             def add_generation_record(self, record):
+                """
+                Add Generation Record.
+
+                Args:
+                    record: Description of record.
+
+                """
                 self.generation_history.append(record)
                 if len(self.generation_history) > 1000:
                     self.generation_history = self.generation_history[-1000:]
 
             def get_history_count(self):
+                """
+                Get History Count.
+
+                """
                 return len(self.generation_history)
 
             def reset_history(self):
+                """
+                Reset History.
+
+                """
                 self.generation_history = []
                 self.learning_data = {}
 
@@ -150,6 +165,15 @@ class TestEnhancedCodeGenerationAgent:
                 self.learning_data = {}
 
             def update_learning_data(self, domain, success, quality_score):
+                """
+                Update Learning Data.
+
+                Args:
+                    domain: Description of domain.
+                    success: Description of success.
+                    quality_score: Description of quality_score.
+
+                """
                 if domain not in self.learning_data:
                     self.learning_data[domain] = {
                         "total_generations": 0,
@@ -173,6 +197,13 @@ class TestEnhancedCodeGenerationAgent:
                 )
 
             def get_domain_stats(self, domain):
+                """
+                Get Domain Stats.
+
+                Args:
+                    domain: Description of domain.
+
+                """
                 return self.learning_data.get(domain, {})
 
         agent = MockAgent()
@@ -209,6 +240,14 @@ class TestEnhancedCodeGenerationAgent:
                 self.config.human_review_threshold = human_review_threshold
 
             def check_requires_human_review(self, quality_score, critical_issues_count):
+                """
+                Check Requires Human Review.
+
+                Args:
+                    quality_score: Description of quality_score.
+                    critical_issues_count: Description of critical_issues_count.
+
+                """
                 return (
                     quality_score < self.config.human_review_threshold
                     or critical_issues_count > 0
@@ -242,9 +281,20 @@ class TestEnhancedCodeGenerationAgent:
                 self.generation_history = []
 
             def add_generation_record(self, record):
+                """
+                Add Generation Record.
+
+                Args:
+                    record: Description of record.
+
+                """
                 self.generation_history.append(record)
 
             def calculate_statistics(self):
+                """
+                Calculate Statistics.
+
+                """
                 if not self.generation_history:
                     return {"message": "No generation history available"}
 

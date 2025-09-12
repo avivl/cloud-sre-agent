@@ -54,6 +54,13 @@ def register_health_check(name: str):
     """Decorator to register a health check function."""
 
     def decorator(func: Callable[[SourceControlProvider], Awaitable[HealthCheck]]):
+        """
+        Decorator.
+
+        Args:
+            func: Callable[[SourceControlProvider], Awaitable[HealthCheck]]: Description of func: Callable[[SourceControlProvider], Awaitable[HealthCheck]].
+
+        """
         health_check_registry.register(name, func)
         return func
 

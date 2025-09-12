@@ -43,6 +43,14 @@ class ModelConfig(BaseModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, v):
+        """
+        Validate Name.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if not v or not v.strip():
             raise ValueError("Model name cannot be empty")
         return v.strip()
@@ -50,6 +58,14 @@ class ModelConfig(BaseModel):
     @field_validator("capabilities")
     @classmethod
     def validate_capabilities(cls, v):
+        """
+        Validate Capabilities.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is None:
             return []
         return [cap.strip() for cap in v if cap.strip()]
@@ -84,6 +100,15 @@ class LLMProviderConfig(BaseModel):
     @field_validator("api_key")
     @classmethod
     def validate_api_key(cls, v, info):
+        """
+        Validate Api Key.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+            info: Description of info.
+
+        """
         provider = info.data.get("provider")
         # Only Ollama doesn't require an API key
         if provider and provider != "ollama" and not v:
@@ -97,6 +122,15 @@ class LLMProviderConfig(BaseModel):
     @field_validator("region")
     @classmethod
     def validate_region(cls, v, info):
+        """
+        Validate Region.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+            info: Description of info.
+
+        """
         provider = info.data.get("provider")
         if provider == "bedrock" and not v:
             raise ValueError("Region is required for Bedrock provider")
@@ -105,6 +139,14 @@ class LLMProviderConfig(BaseModel):
     @field_validator("models")
     @classmethod
     def validate_models(cls, v):
+        """
+        Validate Models.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is None:
             return {}
         # Ensure model names are valid
@@ -116,6 +158,14 @@ class LLMProviderConfig(BaseModel):
     @field_validator("model_type_mappings")
     @classmethod
     def validate_model_type_mappings(cls, v):
+        """
+        Validate Model Type Mappings.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is None:
             return {}
         # Ensure all ModelType values are valid
@@ -190,6 +240,14 @@ class AgentLLMConfig(BaseModel):
     @field_validator("primary_provider")
     @classmethod
     def validate_primary_provider(cls, v):
+        """
+        Validate Primary Provider.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if not v or not v.strip():
             raise ValueError("Primary provider cannot be empty")
         return v.strip()
@@ -197,6 +255,14 @@ class AgentLLMConfig(BaseModel):
     @field_validator("fallback_provider")
     @classmethod
     def validate_fallback_provider(cls, v):
+        """
+        Validate Fallback Provider.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is not None and not v.strip():
             raise ValueError("Fallback provider cannot be empty")
         return v.strip() if v else None
@@ -204,6 +270,14 @@ class AgentLLMConfig(BaseModel):
     @field_validator("model_overrides")
     @classmethod
     def validate_model_overrides(cls, v):
+        """
+        Validate Model Overrides.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is None:
             return {}
         # Validate override structure
@@ -326,6 +400,14 @@ class CostConfig(BaseModel):
     @field_validator("budget_limits")
     @classmethod
     def validate_budget_limits(cls, v):
+        """
+        Validate Budget Limits.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is None:
             return {}
         for provider, limit in v.items():
@@ -338,6 +420,14 @@ class CostConfig(BaseModel):
     @field_validator("cost_alerts")
     @classmethod
     def validate_cost_alerts(cls, v):
+        """
+        Validate Cost Alerts.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is None:
             return []
         for alert in v:
@@ -348,6 +438,14 @@ class CostConfig(BaseModel):
     @field_validator("budget_period")
     @classmethod
     def validate_budget_period(cls, v):
+        """
+        Validate Budget Period.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v not in ["daily", "weekly", "monthly"]:
             raise ValueError("Budget period must be 'daily', 'weekly', or 'monthly'")
         return v
@@ -355,6 +453,14 @@ class CostConfig(BaseModel):
     @field_validator("enforcement_policy")
     @classmethod
     def validate_enforcement_policy(cls, v):
+        """
+        Validate Enforcement Policy.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v not in ["warn", "soft_limit", "hard_limit"]:
             raise ValueError(
                 "Enforcement policy must be 'warn', 'soft_limit', or 'hard_limit'"
@@ -364,6 +470,14 @@ class CostConfig(BaseModel):
     @field_validator("optimization_strategy")
     @classmethod
     def validate_optimization_strategy(cls, v):
+        """
+        Validate Optimization Strategy.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v not in ["budget", "performance", "balanced"]:
             raise ValueError(
                 "Optimization strategy must be 'budget', 'performance', or 'balanced'"
@@ -373,6 +487,14 @@ class CostConfig(BaseModel):
     @field_validator("cost_weight", "performance_weight", "quality_weight")
     @classmethod
     def validate_weights(cls, v):
+        """
+        Validate Weights.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if not 0 <= v <= 1:
             raise ValueError("Weights must be between 0 and 1")
         return v
@@ -412,6 +534,14 @@ class ResilienceConfig(BaseModel):
     @field_validator("retry_delay")
     @classmethod
     def validate_retry_delay(cls, v):
+        """
+        Validate Retry Delay.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v <= 0:
             raise ValueError("Retry delay must be positive")
         return v
@@ -450,6 +580,15 @@ class LLMConfig(BaseModel):
     @field_validator("default_provider")
     @classmethod
     def validate_default_provider(cls, v, info):
+        """
+        Validate Default Provider.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+            info: Description of info.
+
+        """
         if not v or not v.strip():
             raise ValueError("Default provider cannot be empty")
         v = v.strip()
@@ -465,6 +604,14 @@ class LLMConfig(BaseModel):
     @field_validator("providers")
     @classmethod
     def validate_providers(cls, v):
+        """
+        Validate Providers.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if v is None:
             return {}
         # Allow empty providers for testing/initialization
@@ -484,6 +631,15 @@ class LLMConfig(BaseModel):
     @field_validator("agents")
     @classmethod
     def validate_agents(cls, v, info):
+        """
+        Validate Agents.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+            info: Description of info.
+
+        """
         if v is None:
             return {}
 

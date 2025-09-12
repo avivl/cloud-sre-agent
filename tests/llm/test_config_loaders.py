@@ -33,6 +33,13 @@ class TestBaseConfigLoader:
         loader = BaseConfigLoader("test_source")
 
         def test_validator(data):
+            """
+            Test Validator.
+
+            Args:
+                data: Description of data.
+
+            """
             return ["error1", "error2"] if "invalid" in data else []
 
         loader.add_validator(test_validator)
@@ -315,6 +322,13 @@ class TestProgrammaticConfigLoader:
         config_data = {"invalid": "data"}
 
         def validator(data):
+            """
+            Validator.
+
+            Args:
+                data: Description of data.
+
+            """
             return ["Validation error"] if "invalid" in data else []
 
         loader = ProgrammaticConfigLoader(config_data)

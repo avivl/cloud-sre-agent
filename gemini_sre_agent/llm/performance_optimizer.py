@@ -441,6 +441,13 @@ def cached_model_selection(ttl_seconds: float = 60.0):
     """Decorator for caching model selection results."""
 
     def decorator(func):
+        """
+        Decorator.
+
+        Args:
+            func: Description of func.
+
+        """
         cache = PerformanceCache(max_size=100, ttl_seconds=ttl_seconds)
 
         @functools.wraps(func)

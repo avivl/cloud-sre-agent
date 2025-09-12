@@ -68,6 +68,13 @@ async def test_discover_capabilities(mock_llm_providers):
 
 
 def test_get_model_capabilities(mock_llm_providers):
+    """
+    Test Get Model Capabilities.
+
+    Args:
+        mock_llm_providers: Description of mock_llm_providers.
+
+    """
     discovery = CapabilityDiscovery(mock_llm_providers)
     # Manually add some capabilities for testing retrieval
     discovery.model_capabilities["test_provider/model_fast"] = ModelCapabilities(
@@ -86,6 +93,13 @@ def test_get_model_capabilities(mock_llm_providers):
 
 
 def test_find_models_by_capability(mock_llm_providers):
+    """
+    Test Find Models By Capability.
+
+    Args:
+        mock_llm_providers: Description of mock_llm_providers.
+
+    """
     discovery = CapabilityDiscovery(mock_llm_providers)
     # Manually add some capabilities for testing search
     discovery.model_capabilities["provider1/model_A"] = ModelCapabilities(

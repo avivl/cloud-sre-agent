@@ -45,25 +45,72 @@ class MockProvider(LLMProvider):
         return True
 
     def supports_streaming(self) -> bool:
+        """
+        Supports Streaming.
+
+        Returns:
+            bool: Description of return value.
+
+        """
         return True
 
     def supports_tools(self) -> bool:
+        """
+        Supports Tools.
+
+        Returns:
+            bool: Description of return value.
+
+        """
         return False
 
     def get_available_models(self):
+        """
+        Get Available Models.
+
+        """
         return {ModelType.SMART: "mock-model"}
 
     async def embeddings(self, text: str) -> List[float]:
         return [0.1] * 768
 
     def token_count(self, text: str) -> int:
+        """
+        Token Count.
+
+        Args:
+            text: str: Description of text: str.
+
+        Returns:
+            int: Description of return value.
+
+        """
         return len(text.split())
 
     def cost_estimate(self, input_tokens: int, output_tokens: int) -> float:
+        """
+        Cost Estimate.
+
+        Args:
+            input_tokens: int: Description of input_tokens: int.
+            output_tokens: int: Description of output_tokens: int.
+
+        Returns:
+            float: Description of return value.
+
+        """
         return 0.001
 
     @classmethod
     def validate_config(cls, config):
+        """
+        Validate Config.
+
+        Args:
+            cls: Description of cls.
+            config: Description of config.
+
+        """
         pass
 
 

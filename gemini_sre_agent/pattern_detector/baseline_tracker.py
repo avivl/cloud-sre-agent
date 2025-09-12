@@ -25,6 +25,13 @@ class BaselineTracker:
         )
 
     def update_baseline(self, window: TimeWindow) -> None:
+        """
+        Update Baseline.
+
+        Args:
+            window: TimeWindow: Description of window: TimeWindow.
+
+        """
         total_logs = len(window.logs)
         error_logs = len(window.get_error_logs())
         error_rate = (error_logs / total_logs * 100) if total_logs > 0 else 0.0
@@ -57,12 +64,33 @@ class BaselineTracker:
         )
 
     def get_global_baseline(self, window_count: int) -> float:
+        """
+        Get Global Baseline.
+
+        Args:
+            window_count: int: Description of window_count: int.
+
+        Returns:
+            float: Description of return value.
+
+        """
         if not self.global_baseline:
             return 0.0
         recent_windows = self.global_baseline[-window_count:]
         return sum(recent_windows) / len(recent_windows)
 
     def get_service_baseline(self, service_name: str, window_count: int) -> float:
+        """
+        Get Service Baseline.
+
+        Args:
+            service_name: str: Description of service_name: str.
+            window_count: int: Description of window_count: int.
+
+        Returns:
+            float: Description of return value.
+
+        """
         service_history = self.service_baselines.get(service_name, [])
         if not service_history:
             return 0.0

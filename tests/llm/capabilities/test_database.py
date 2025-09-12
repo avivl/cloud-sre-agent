@@ -28,6 +28,14 @@ def sample_model_capabilities():
 
 
 def test_add_capabilities(capability_database, sample_model_capabilities):
+    """
+    Test Add Capabilities.
+
+    Args:
+        capability_database: Description of capability_database.
+        sample_model_capabilities: Description of sample_model_capabilities.
+
+    """
     for caps in sample_model_capabilities:
         capability_database.add_capabilities(caps)
     assert len(capability_database) == 3
@@ -39,6 +47,14 @@ def test_add_capabilities(capability_database, sample_model_capabilities):
 
 
 def test_get_capabilities(capability_database, sample_model_capabilities):
+    """
+    Test Get Capabilities.
+
+    Args:
+        capability_database: Description of capability_database.
+        sample_model_capabilities: Description of sample_model_capabilities.
+
+    """
     capability_database.add_capabilities(sample_model_capabilities[0])
     retrieved_caps = capability_database.get_capabilities("provider1/model_A")
     assert retrieved_caps == sample_model_capabilities[0]
@@ -46,6 +62,14 @@ def test_get_capabilities(capability_database, sample_model_capabilities):
 
 
 def test_query_capabilities_by_name(capability_database, sample_model_capabilities):
+    """
+    Test Query Capabilities By Name.
+
+    Args:
+        capability_database: Description of capability_database.
+        sample_model_capabilities: Description of sample_model_capabilities.
+
+    """
     for caps in sample_model_capabilities:
         capability_database.add_capabilities(caps)
 
@@ -76,6 +100,14 @@ def test_query_capabilities_by_name(capability_database, sample_model_capabiliti
 
 
 def test_query_all_capabilities(capability_database, sample_model_capabilities):
+    """
+    Test Query All Capabilities.
+
+    Args:
+        capability_database: Description of capability_database.
+        sample_model_capabilities: Description of sample_model_capabilities.
+
+    """
     for caps in sample_model_capabilities:
         capability_database.add_capabilities(caps)
     all_caps = capability_database.query_capabilities()
@@ -85,6 +117,14 @@ def test_query_all_capabilities(capability_database, sample_model_capabilities):
 
 
 def test_clear_database(capability_database, sample_model_capabilities):
+    """
+    Test Clear Database.
+
+    Args:
+        capability_database: Description of capability_database.
+        sample_model_capabilities: Description of sample_model_capabilities.
+
+    """
     for caps in sample_model_capabilities:
         capability_database.add_capabilities(caps)
     assert len(capability_database) > 0

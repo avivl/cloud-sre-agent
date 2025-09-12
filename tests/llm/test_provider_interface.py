@@ -45,6 +45,14 @@ class MockLLMProvider(LLMProvider):
         return response_model(message="Test", confidence=0.95)
 
     def generate_stream(self, prompt, model=None, **kwargs):
+        """
+        Generate Stream.
+
+        Args:
+            prompt: Description of prompt.
+            model: Description of model.
+
+        """
         async def _stream():
             yield "Test"
             yield " response"
@@ -55,12 +63,37 @@ class MockLLMProvider(LLMProvider):
         return True
 
     def get_available_models(self) -> list:
+        """
+        Get Available Models.
+
+        Returns:
+            list: Description of return value.
+
+        """
         return ["test-model"]
 
     def estimate_cost(self, prompt: str, model=None) -> float:
+        """
+        Estimate Cost.
+
+        Args:
+            prompt: str: Description of prompt: str.
+            model: Description of model.
+
+        Returns:
+            float: Description of return value.
+
+        """
         return 0.01
 
     def validate_config(self) -> bool:
+        """
+        Validate Config.
+
+        Returns:
+            bool: Description of return value.
+
+        """
         return True
 
 

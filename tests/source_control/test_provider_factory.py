@@ -17,14 +17,29 @@ class TestProviderFactory:
 
     @pytest.fixture
     def credential_manager(self):
+        """
+        Credential Manager.
+
+        """
         return MagicMock(spec=CredentialManager)
 
     @pytest.fixture
     def factory(self, credential_manager):
+        """
+        Factory.
+
+        Args:
+            credential_manager: Description of credential_manager.
+
+        """
         return ProviderFactory(credential_manager)
 
     @pytest.fixture
     def mock_github_provider_class(self):
+        """
+        Mock Github Provider Class.
+
+        """
         return MagicMock()
 
     @pytest.mark.asyncio

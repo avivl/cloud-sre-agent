@@ -28,6 +28,13 @@ class TestPatternDetectorIntegration:
         received_windows = []
 
         def pattern_callback(window):
+            """
+            Pattern Callback.
+
+            Args:
+                window: Description of window.
+
+            """
             received_windows.append(window)
 
         manager = WindowManager(
@@ -65,6 +72,13 @@ class TestPatternDetectorIntegration:
         received_windows = []
 
         def pattern_callback(window):
+            """
+            Pattern Callback.
+
+            Args:
+                window: Description of window.
+
+            """
             received_windows.append(window)
 
         manager = WindowManager(
@@ -123,6 +137,13 @@ class TestSmartThresholdsIntegration:
         triggered_results = []
 
         def pattern_callback(window):
+            """
+            Pattern Callback.
+
+            Args:
+                window: Description of window.
+
+            """
             results = evaluator.evaluate_window(window)
             triggered = [r for r in results if r.triggered]
             if triggered:
@@ -199,6 +220,13 @@ class TestPatternClassificationIntegration:
         pattern_callback_results = []
 
         def pattern_callback(window: TimeWindow):
+            """
+            Pattern Callback.
+
+            Args:
+                window: TimeWindow: Description of window: TimeWindow.
+
+            """
             pattern_callback_results.append(window)
 
         window_manager = WindowManager(

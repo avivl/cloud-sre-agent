@@ -93,6 +93,16 @@ class MetricsManager:
         return 1.0  # Default to healthy if no metrics yet
 
     def get_dashboard_data(self, time_range: str = "1h") -> Dict[str, Any]:
+        """
+        Get Dashboard Data.
+
+        Args:
+            time_range: str: Description of time_range: str.
+
+        Returns:
+            Dict[str, Any]: Description of return value.
+
+        """
         from .dashboard import DashboardDataGenerator
 
         """

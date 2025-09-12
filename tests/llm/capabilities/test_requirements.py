@@ -5,6 +5,10 @@ from gemini_sre_agent.llm.common.enums import ModelType
 
 
 def test_capability_requirements_initialization():
+    """
+    Test Capability Requirements Initialization.
+
+    """
     reqs = CapabilityRequirements(
         task_name="Summarization",
         required_capabilities=["text_generation"],
@@ -25,6 +29,10 @@ def test_capability_requirements_initialization():
 
 
 def test_capability_requirements_defaults():
+    """
+    Test Capability Requirements Defaults.
+
+    """
     reqs = CapabilityRequirements(task_name="DefaultTask")
     assert reqs.required_capabilities == []
     assert reqs.preferred_model_type is None
@@ -35,6 +43,10 @@ def test_capability_requirements_defaults():
 
 
 def test_capability_requirements_validation():
+    """
+    Test Capability Requirements Validation.
+
+    """
     with pytest.raises(ValueError):
         # min_performance_score out of range
         CapabilityRequirements(task_name="Invalid", min_performance_score=1.5)

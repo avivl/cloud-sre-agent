@@ -63,6 +63,10 @@ class TestCircuitBreaker:
         """Test successful execution with synchronous function."""
 
         def sync_success_func():
+            """
+            Sync Success Func.
+
+            """
             return "sync_success"
 
         result = await circuit_breaker.call(sync_success_func)

@@ -32,6 +32,13 @@ def mock_metrics_manager():
 
 
 def test_generate_overview_data(mock_metrics_manager):
+    """
+    Test Generate Overview Data.
+
+    Args:
+        mock_metrics_manager: Description of mock_metrics_manager.
+
+    """
     generator = DashboardDataGenerator(mock_metrics_manager)
     overview_data = generator.generate_overview_data()
 

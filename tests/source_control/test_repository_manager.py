@@ -14,20 +14,40 @@ class TestRepositoryManager:
 
     @pytest.fixture
     def mock_provider_factory(self):
+        """
+        Mock Provider Factory.
+
+        """
         return MagicMock(spec=ProviderFactory)
 
     @pytest.fixture
     def mock_global_config(self):
+        """
+        Mock Global Config.
+
+        """
         return SourceControlGlobalConfig(
             default_credentials=None, default_remediation_strategy=None
         )
 
     @pytest.fixture
     def repository_manager(self, mock_global_config, mock_provider_factory):
+        """
+        Repository Manager.
+
+        Args:
+            mock_global_config: Description of mock_global_config.
+            mock_provider_factory: Description of mock_provider_factory.
+
+        """
         return RepositoryManager(mock_global_config, mock_provider_factory)
 
     @pytest.fixture
     def mock_provider(self):
+        """
+        Mock Provider.
+
+        """
         provider = AsyncMock()
         provider.__aenter__ = AsyncMock(return_value=provider)
         provider.__aexit__ = AsyncMock(return_value=None)

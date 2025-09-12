@@ -132,6 +132,10 @@ async def test_resilient_client_timeout():  # New test case
 
 
 def test_create_resilience_config():
+    """
+    Test Create Resilience Config.
+
+    """
     # Act
     prod_config = create_resilience_config("production")
     dev_config = create_resilience_config("development")

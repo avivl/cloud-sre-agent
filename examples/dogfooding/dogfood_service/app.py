@@ -395,6 +395,13 @@ def recursion_error():
     try:
 
         def infinite_recursion(n):
+            """
+            Infinite Recursion.
+
+            Args:
+                n: Description of n.
+
+            """
             return infinite_recursion(n + 1)
 
         result = infinite_recursion(0)

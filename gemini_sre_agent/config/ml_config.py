@@ -38,6 +38,14 @@ class ModelConfig(BaseConfig):
     @field_validator("name")
     @classmethod
     def validate_model_name(cls, v):
+        """
+        Validate Model Name.
+
+        Args:
+            cls: Description of cls.
+            v: Description of v.
+
+        """
         if not v or len(v.strip()) == 0:
             raise ValueError("Model name cannot be empty")
         return v.strip()

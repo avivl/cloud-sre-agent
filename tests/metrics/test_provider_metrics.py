@@ -7,6 +7,10 @@ from gemini_sre_agent.metrics.provider_metrics import ProviderMetrics
 
 
 def test_provider_metrics_initialization():
+    """
+    Test Provider Metrics Initialization.
+
+    """
     metrics = ProviderMetrics("test_provider")
     assert metrics.provider_id == "test_provider"
     assert metrics.request_count == 0
@@ -20,6 +24,10 @@ def test_provider_metrics_initialization():
 
 
 def test_record_successful_request():
+    """
+    Test Record Successful Request.
+
+    """
     metrics = ProviderMetrics("test_provider")
     metrics.record_request(
         latency_ms=100,
@@ -39,6 +47,14 @@ def test_record_successful_request():
 
 
 def test_record_failed_request():
+    """
+    Test Record Failed Request.
+
+    Raises:
+        ValueError: If input parameters are invalid.
+        RuntimeError: If operation fails.
+
+    """
     metrics = ProviderMetrics("test_provider")
     with freeze_time("2025-09-08 12:00:00"):
         metrics.record_request(
@@ -62,6 +78,10 @@ def test_record_failed_request():
 
 
 def test_health_scoring():
+    """
+    Test Health Scoring.
+
+    """
     metrics = ProviderMetrics("test_provider")
 
     # 90 successful requests

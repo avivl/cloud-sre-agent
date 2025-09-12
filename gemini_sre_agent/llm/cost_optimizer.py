@@ -156,6 +156,16 @@ class CostOptimizer:
         # Sort by performance score (assuming higher is better)
         # For now, we'll use a simple heuristic based on model name patterns
         def performance_score(model: ModelInfo) -> float:
+            """
+            Performance Score.
+
+            Args:
+                model: ModelInfo: Description of model: ModelInfo.
+
+            Returns:
+                float: Description of return value.
+
+            """
             score = 1.0
 
             # Prefer newer models
@@ -185,6 +195,16 @@ class CostOptimizer:
         """Select model with best cost/performance ratio."""
 
         def cost_performance_ratio(model: ModelInfo) -> float:
+            """
+            Cost Performance Ratio.
+
+            Args:
+                model: ModelInfo: Description of model: ModelInfo.
+
+            Returns:
+                float: Description of return value.
+
+            """
             # Calculate a simple cost/performance ratio
             # Lower cost and higher performance = better ratio
             performance_score = 1.0

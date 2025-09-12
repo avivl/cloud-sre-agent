@@ -15,6 +15,10 @@ def mock_metrics_manager():
 
 
 def test_alert_manager_initialization():
+    """
+    Test Alert Manager Initialization.
+
+    """
     config = {
         "alert_thresholds": {"health_score": 0.8},
         "notification_channels": ["slack"],
@@ -26,6 +30,13 @@ def test_alert_manager_initialization():
 
 
 def test_check_metrics_with_alerts(mock_metrics_manager):
+    """
+    Test Check Metrics With Alerts.
+
+    Args:
+        mock_metrics_manager: Description of mock_metrics_manager.
+
+    """
     config = {"alert_thresholds": {"health_score": 0.8}}
     alert_manager = AlertManager(config)
 
@@ -44,6 +55,13 @@ def test_check_metrics_with_alerts(mock_metrics_manager):
 
 
 def test_check_metrics_no_alerts(mock_metrics_manager):
+    """
+    Test Check Metrics No Alerts.
+
+    Args:
+        mock_metrics_manager: Description of mock_metrics_manager.
+
+    """
     config = {"alert_thresholds": {"health_score": 0.8}}
     alert_manager = AlertManager(config)
 

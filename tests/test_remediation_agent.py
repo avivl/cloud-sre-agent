@@ -9,12 +9,20 @@ from gemini_sre_agent.remediation_agent import RemediationAgent
 
 @pytest.fixture
 def mock_github():
+    """
+    Mock Github.
+
+    """
     with patch("gemini_sre_agent.remediation_agent.Github") as mock_github:
         yield mock_github
 
 
 @pytest.fixture
 def remediation_plan_with_code_iac():
+    """
+    Remediation Plan With Code Iac.
+
+    """
     return RemediationPlan(
         root_cause_analysis="The root cause is a simulated bug.",
         proposed_fix="Apply a simulated code patch.",
@@ -27,6 +35,10 @@ def new_feature():
 
 @pytest.fixture
 def remediation_plan_no_patches():
+    """
+    Remediation Plan No Patches.
+
+    """
     return RemediationPlan(
         root_cause_analysis="No code changes needed.",
         proposed_fix="Configuration update.",

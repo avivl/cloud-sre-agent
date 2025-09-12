@@ -20,6 +20,13 @@ def mock_config_manager():
 
 
 def test_metrics_manager_initialization(mock_config_manager):
+    """
+    Test Metrics Manager Initialization.
+
+    Args:
+        mock_config_manager: Description of mock_config_manager.
+
+    """
     manager = MetricsManager(mock_config_manager)
     assert manager.config_manager == mock_config_manager
     assert manager.provider_metrics == {}
@@ -44,6 +51,13 @@ async def test_record_provider_request(mock_config_manager):
 
 
 def test_get_provider_health(mock_config_manager):
+    """
+    Test Get Provider Health.
+
+    Args:
+        mock_config_manager: Description of mock_config_manager.
+
+    """
     manager = MetricsManager(mock_config_manager)
     assert manager.get_provider_health("non_existent_provider") == 1.0
 

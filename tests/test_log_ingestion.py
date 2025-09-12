@@ -7,11 +7,22 @@ from gemini_sre_agent.log_ingestion import LogIngestor
 
 @pytest.fixture
 def mock_logging_client():
+    """
+    Mock Logging Client.
+
+    """
     with patch("gemini_sre_agent.log_ingestion.LoggingServiceV2Client") as mock_client:
         yield mock_client
 
 
 def test_get_logs(mock_logging_client):
+    """
+    Test Get Logs.
+
+    Args:
+        mock_logging_client: Description of mock_logging_client.
+
+    """
     # Arrange
     mock_client_instance = mock_logging_client.return_value
     mock_client_instance.list_log_entries.return_value = [

@@ -150,6 +150,13 @@ agents: {}
         callback_config = None
 
         def test_callback(config):
+            """
+            Test Callback.
+
+            Args:
+                config: Description of config.
+
+            """
             nonlocal callback_called, callback_config
             callback_called = True
             callback_config = config

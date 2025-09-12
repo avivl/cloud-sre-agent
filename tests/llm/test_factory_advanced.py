@@ -38,6 +38,14 @@ class MockProvider(LLMProvider):
         return response_model()
 
     def generate_stream(self, prompt, model=None, **kwargs):
+        """
+        Generate Stream.
+
+        Args:
+            prompt: Description of prompt.
+            model: Description of model.
+
+        """
         async def _stream():
             yield "Mock"
 
@@ -47,12 +55,28 @@ class MockProvider(LLMProvider):
         return True
 
     def get_available_models(self):
+        """
+        Get Available Models.
+
+        """
         return ["mock-model"]
 
     def estimate_cost(self, prompt, model=None):
+        """
+        Estimate Cost.
+
+        Args:
+            prompt: Description of prompt.
+            model: Description of model.
+
+        """
         return 0.01
 
     def validate_config(self):
+        """
+        Validate Config.
+
+        """
         return True
 
 

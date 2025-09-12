@@ -225,6 +225,10 @@ class TestRepositoryAccessSecurity:
         retry_count = 0
 
         def mock_connection():
+            """
+            Mock Connection.
+
+            """
             nonlocal retry_count
             retry_count += 1
             if retry_count < 3:

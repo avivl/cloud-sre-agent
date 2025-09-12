@@ -53,6 +53,13 @@ class LogAccumulator:
         logger.info("[PATTERN_DETECTION] LogAccumulator stopped")
 
     def add_log(self, raw_log_data: Dict[str, Any]) -> None:
+        """
+        Add Log.
+
+        Args:
+            raw_log_data: Dict[str, Any]: Description of raw_log_data: Dict[str, Any].
+
+        """
         try:
             log_entry = LogEntry(
                 insert_id=raw_log_data.get("insertId", "unknown"), raw_data=raw_log_data

@@ -50,6 +50,13 @@ def populated_capability_database():
 
 
 def test_compare_models(populated_capability_database):
+    """
+    Test Compare Models.
+
+    Args:
+        populated_capability_database: Description of populated_capability_database.
+
+    """
     comparer = CapabilityComparer(populated_capability_database)
     model_ids = ["provider1/model_A", "provider2/model_B", "provider3/model_C"]
     results = comparer.compare_models(model_ids)
@@ -86,6 +93,13 @@ def test_compare_models(populated_capability_database):
 
 
 def test_find_best_model_for_capabilities(populated_capability_database):
+    """
+    Test Find Best Model For Capabilities.
+
+    Args:
+        populated_capability_database: Description of populated_capability_database.
+
+    """
     comparer = CapabilityComparer(populated_capability_database)
 
     # Test with capabilities supported by multiple models

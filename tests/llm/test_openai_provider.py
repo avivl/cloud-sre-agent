@@ -170,6 +170,13 @@ class TestOpenAIProvider:
             mock_tiktoken.get_encoding.return_value = mock_encoder
 
             def import_side_effect(name, *args, **kwargs):
+                """
+                Import Side Effect.
+
+                Args:
+                    name: Description of name.
+
+                """
                 if name == "tiktoken":
                     return mock_tiktoken
                 return __import__(name, *args, **kwargs)
@@ -186,6 +193,13 @@ class TestOpenAIProvider:
         with patch("builtins.__import__") as mock_import:
 
             def import_side_effect(name, *args, **kwargs):
+                """
+                Import Side Effect.
+
+                Args:
+                    name: Description of name.
+
+                """
                 if name == "tiktoken":
                     raise ImportError("No module named 'tiktoken'")
                 return __import__(name, *args, **kwargs)

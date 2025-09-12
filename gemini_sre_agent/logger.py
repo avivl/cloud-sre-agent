@@ -14,6 +14,13 @@ class JsonFormatter(logging.Formatter):
     """
 
     def format(self, record):
+        """
+        Format.
+
+        Args:
+            record: Description of record.
+
+        """
         log_record = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
             "level": record.levelname,

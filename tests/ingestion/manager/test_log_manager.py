@@ -61,6 +61,10 @@ class MockAdapter:
         return {"status": "healthy"}
 
     def get_config(self):
+        """
+        Get Config.
+
+        """
         return FileSystemConfig(
             name=self.name,
             type=SourceType.FILE_SYSTEM,

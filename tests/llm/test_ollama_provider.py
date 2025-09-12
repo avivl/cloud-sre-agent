@@ -113,6 +113,10 @@ class TestOllamaProvider:
         ]
 
         def mock_chat(*args, **kwargs):
+            """
+            Mock Chat.
+
+            """
             # Return a regular generator
             for chunk in mock_chunks:
                 yield chunk

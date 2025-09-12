@@ -236,6 +236,13 @@ class TestAuditTrailMonitoringTests:
 
         # Test audit trail accuracy
         def validate_audit_accuracy(log_entry):
+            """
+            Validate Audit Accuracy.
+
+            Args:
+                log_entry: Description of log_entry.
+
+            """
             # Check that timestamps are reasonable
             now = datetime.now()
             time_diff = abs((now - log_entry["timestamp"]).total_seconds())
@@ -310,6 +317,13 @@ class TestAuditTrailMonitoringTests:
 
         # Test checksum validation
         def validate_checksum(log_entry):
+            """
+            Validate Checksum.
+
+            Args:
+                log_entry: Description of log_entry.
+
+            """
             log_copy = log_entry.copy()
             stored_checksum = log_copy.pop("checksum")
             log_string = json.dumps(log_copy, default=str, sort_keys=True)
@@ -441,16 +455,37 @@ class TestAuditTrailMonitoringTests:
 
         # Test anonymization functions
         def anonymize_email(email):
+            """
+            Anonymize Email.
+
+            Args:
+                email: Description of email.
+
+            """
             if "@" in email:
                 local, domain = email.split("@", 1)
                 return f"{local[:2]}***@{domain}"
             return email
 
         def anonymize_ip(ip):
+            """
+            Anonymize Ip.
+
+            Args:
+                ip: Description of ip.
+
+            """
             parts = ip.split(".")
             return f"{parts[0]}.{parts[1]}.xxx.xxx"
 
         def anonymize_user_agent(ua):
+            """
+            Anonymize User Agent.
+
+            Args:
+                ua: Description of ua.
+
+            """
             if "Mozilla" in ua:
                 return "Mozilla/5.0 (***)"
             return ua

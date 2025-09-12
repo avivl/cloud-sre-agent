@@ -10,6 +10,10 @@ from gemini_sre_agent.log_subscriber import LogSubscriber
 
 @pytest.fixture
 def mock_pubsub_subscriber_client():
+    """
+    Mock Pubsub Subscriber Client.
+
+    """
     with patch(
         "gemini_sre_agent.log_subscriber.pubsub_v1.SubscriberClient"
     ) as MockSubscriberClient:
@@ -22,6 +26,10 @@ def mock_pubsub_subscriber_client():
 
 @pytest.fixture
 def mock_triage_callback():  # Removed async def, will return AsyncMock directly
+    """
+    Mock Triage Callback.
+
+    """
     # Return an AsyncMock directly
     mock = AsyncMock()
     return mock

@@ -130,6 +130,10 @@ class TestRetryHandler:
         call_count = 0
 
         def sync_retry_func():
+            """
+            Sync Retry Func.
+
+            """
             nonlocal call_count
             call_count += 1
             if call_count < 2:
@@ -146,6 +150,14 @@ class TestRetryHandler:
         call_count = 0
 
         def sync_fail_func():
+            """
+            Sync Fail Func.
+
+            Raises:
+                ValueError: If input parameters are invalid.
+                RuntimeError: If operation fails.
+
+            """
             nonlocal call_count
             call_count += 1
             raise ValueError("sync always fail")
@@ -333,6 +345,10 @@ class TestRetryHandler:
         call_count = 0
 
         def tenacity_sync_func():
+            """
+            Tenacity Sync Func.
+
+            """
             nonlocal call_count
             call_count += 1
             if call_count < 2:
@@ -349,6 +365,14 @@ class TestRetryHandler:
         call_count = 0
 
         def tenacity_sync_fail_func():
+            """
+            Tenacity Sync Fail Func.
+
+            Raises:
+                ValueError: If input parameters are invalid.
+                RuntimeError: If operation fails.
+
+            """
             nonlocal call_count
             call_count += 1
             raise ValueError("tenacity sync fail")
@@ -364,6 +388,10 @@ class TestRetryHandler:
         call_count = 0
 
         def tenacity_non_retryable_func():
+            """
+            Tenacity Non Retryable Func.
+
+            """
             nonlocal call_count
             call_count += 1
             raise RuntimeError("tenacity non-retryable")
@@ -401,6 +429,15 @@ class TestRetryHandler:
         """Test retry with synchronous function that takes arguments."""
 
         def sync_func_with_args(arg1, arg2, kwarg1=None):
+            """
+            Sync Func With Args.
+
+            Args:
+                arg1: Description of arg1.
+                arg2: Description of arg2.
+                kwarg1: Description of kwarg1.
+
+            """
             if arg1 == "fail":
                 raise ValueError("sync arg fail")
             return f"sync_{arg1}_{arg2}_{kwarg1}"

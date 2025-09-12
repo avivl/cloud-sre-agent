@@ -160,6 +160,10 @@ class TestFallbackManager:
         call_count = 0
 
         def sync_func(*args, **kwargs):
+            """
+            Sync Func.
+
+            """
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -183,6 +187,14 @@ class TestFallbackManager:
         call_count = 0
 
         def sync_fail_func(*args, **kwargs):
+            """
+            Sync Fail Func.
+
+            Raises:
+                ValueError: If input parameters are invalid.
+                RuntimeError: If operation fails.
+
+            """
             nonlocal call_count
             call_count += 1
             raise ValueError("sync always fail")

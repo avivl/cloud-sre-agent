@@ -114,6 +114,14 @@ class PerformanceRepositoryAnalyzer:
 
             # Process results and handle exceptions
             def safe_result(result, default):
+                """
+                Safe Result.
+
+                Args:
+                    result: Description of result.
+                    default: Description of default.
+
+                """
                 if isinstance(result, Exception):
                     self.logger.warning(f"Analysis task failed: {result}")
                     return default

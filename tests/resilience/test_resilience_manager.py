@@ -132,6 +132,13 @@ class TestResilienceManager:
 
         # Mock the function to return different functions based on provider
         def get_provider_func(provider):
+            """
+            Get Provider Func.
+
+            Args:
+                provider: Description of provider.
+
+            """
             if provider == "gemini":
                 return gemini_func
             elif provider == "openai":
@@ -373,6 +380,10 @@ class TestResilienceManager:
         """Test execution with synchronous functions."""
 
         def sync_func():
+            """
+            Sync Func.
+
+            """
             return "sync_success"
 
         result, provider = await resilience_manager.execute_with_resilience(
@@ -389,6 +400,10 @@ class TestResilienceManager:
         resilience_manager.clear_all_circuit_breakers()
 
         def sync_func():
+            """
+            Sync Func.
+
+            """
             raise ValueError("sync_error")
 
         # After circuit breaker opens, it should raise CircuitBreakerOpenException

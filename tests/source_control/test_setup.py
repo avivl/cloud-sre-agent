@@ -19,6 +19,10 @@ class TestSetupRepositorySystem:
 
     @pytest.fixture
     def mock_config(self):
+        """
+        Mock Config.
+
+        """
 
         return SourceControlGlobalConfig(
             default_credentials=None, default_remediation_strategy=None

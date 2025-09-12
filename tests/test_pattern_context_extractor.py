@@ -143,6 +143,13 @@ class TestTemporalAnalysis:
 
     @pytest.fixture
     def extractor(self) -> PatternContextExtractor:
+        """
+        Extractor.
+
+        Returns:
+            PatternContextExtractor: Description of return value.
+
+        """
         return PatternContextExtractor()
 
     @pytest.mark.asyncio
@@ -264,6 +271,13 @@ class TestServicePatternAnalysis:
 
     @pytest.fixture
     def extractor(self) -> PatternContextExtractor:
+        """
+        Extractor.
+
+        Returns:
+            PatternContextExtractor: Description of return value.
+
+        """
         return PatternContextExtractor()
 
     @pytest.mark.asyncio
@@ -363,6 +377,13 @@ class TestErrorPatternAnalysis:
 
     @pytest.fixture
     def extractor(self) -> PatternContextExtractor:
+        """
+        Extractor.
+
+        Returns:
+            PatternContextExtractor: Description of return value.
+
+        """
         return PatternContextExtractor()
 
     def test_error_type_classification(self, extractor):
@@ -457,6 +478,13 @@ class TestHistoricalContextAnalysis:
 
     @pytest.fixture
     def extractor(self) -> PatternContextExtractor:
+        """
+        Extractor.
+
+        Returns:
+            PatternContextExtractor: Description of return value.
+
+        """
         return PatternContextExtractor()
 
     @pytest.mark.asyncio
@@ -503,6 +531,13 @@ class TestCodeContextFormatting:
 
     @pytest.fixture
     def extractor(self) -> PatternContextExtractor:
+        """
+        Extractor.
+
+        Returns:
+            PatternContextExtractor: Description of return value.
+
+        """
         return PatternContextExtractor()
 
     def test_format_code_context(self, extractor):

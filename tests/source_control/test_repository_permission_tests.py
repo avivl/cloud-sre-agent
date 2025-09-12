@@ -298,6 +298,10 @@ class TestRepositoryPermissionTests:
 
         # Test that user cannot grant themselves admin access
         def attempt_permission_escalation():
+            """
+            Attempt Permission Escalation.
+
+            """
             if not user_permissions["admin"]:
                 # This should fail - users cannot escalate their own permissions
                 raise PermissionError("Permission escalation not allowed")
@@ -307,6 +311,10 @@ class TestRepositoryPermissionTests:
 
         # Test that user cannot grant themselves maintain access
         def attempt_maintain_escalation():
+            """
+            Attempt Maintain Escalation.
+
+            """
             if not user_permissions["maintain"] and not user_permissions["admin"]:
                 # This should fail - users cannot escalate their own permissions
                 raise PermissionError("Permission escalation not allowed")
@@ -325,6 +333,14 @@ class TestRepositoryPermissionTests:
         )
 
         def attempt_force_push(branch_name, is_protected):
+            """
+            Attempt Force Push.
+
+            Args:
+                branch_name: Description of branch_name.
+                is_protected: Description of is_protected.
+
+            """
             if is_protected:
                 raise PermissionError(
                     f"Force push to protected branch {branch_name} not allowed"
@@ -338,6 +354,14 @@ class TestRepositoryPermissionTests:
 
         # Test that protected branches cannot be deleted
         def attempt_branch_deletion(branch_name, is_protected):
+            """
+            Attempt Branch Deletion.
+
+            Args:
+                branch_name: Description of branch_name.
+                is_protected: Description of is_protected.
+
+            """
             if is_protected:
                 raise PermissionError(
                     f"Deletion of protected branch {branch_name} not allowed"
@@ -362,6 +386,13 @@ class TestRepositoryPermissionTests:
         }
 
         def attempt_pr_merge(review_status):
+            """
+            Attempt Pr Merge.
+
+            Args:
+                review_status: Description of review_status.
+
+            """
             if review_status["approved_reviews"] < review_status["required_reviews"]:
                 raise PermissionError(
                     f"PR merge blocked: {review_status['approved_reviews']}/{review_status['required_reviews']} reviews required"
@@ -383,6 +414,13 @@ class TestRepositoryPermissionTests:
         }
 
         def attempt_pr_merge_with_dismissed(review_status):
+            """
+            Attempt Pr Merge With Dismissed.
+
+            Args:
+                review_status: Description of review_status.
+
+            """
             if review_status["dismissed_reviews"] > 0:
                 raise PermissionError(
                     "PR merge blocked: dismissed reviews must be re-approved"
@@ -414,6 +452,14 @@ class TestRepositoryPermissionTests:
 
         # Test that only collaborators can access private repos
         def check_private_repo_access(user, repo):
+            """
+            Check Private Repo Access.
+
+            Args:
+                user: Description of user.
+                repo: Description of repo.
+
+            """
             if repo.is_private and user not in repo.additional_info.get(
                 "collaborators", []
             ):
@@ -446,6 +492,14 @@ class TestRepositoryPermissionTests:
 
         # Test that anyone can access public repos
         def check_public_repo_access(user, repo):
+            """
+            Check Public Repo Access.
+
+            Args:
+                user: Description of user.
+                repo: Description of repo.
+
+            """
             if not repo.is_private:
                 return True
             raise PermissionError(
@@ -533,6 +587,13 @@ class TestRepositoryPermissionTests:
 
         # Test invalid permission configuration
         def validate_permissions(permissions):
+            """
+            Validate Permissions.
+
+            Args:
+                permissions: Description of permissions.
+
+            """
             for value in permissions.values():
                 if not isinstance(value, bool):
                     raise ValueError("Invalid permission level")
@@ -548,6 +609,13 @@ class TestRepositoryPermissionTests:
 
         # Test missing required permissions
         def validate_required_permissions(permissions):
+            """
+            Validate Required Permissions.
+
+            Args:
+                permissions: Description of permissions.
+
+            """
             if not any(permissions.values()):
                 raise ValueError("At least one permission must be granted")
             return True
@@ -564,6 +632,13 @@ class TestRepositoryPermissionTests:
 
         # Test invalid review configuration
         def validate_review_config(config):
+            """
+            Validate Review Config.
+
+            Args:
+                config: Description of config.
+
+            """
             if config["required_approving_review_count"] < 0:
                 raise ValueError("Required approving review count must be positive")
             return True
@@ -618,6 +693,15 @@ class TestRepositoryPermissionTests:
 
         # Test rate limit enforcement
         def check_rate_limit(operation_type, current_usage, limit):
+            """
+            Check Rate Limit.
+
+            Args:
+                operation_type: Description of operation_type.
+                current_usage: Description of current_usage.
+                limit: Description of limit.
+
+            """
             if current_usage >= limit:
                 raise PermissionError(f"Rate limit exceeded for {operation_type}")
             return True

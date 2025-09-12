@@ -26,6 +26,13 @@ def mock_metrics_manager():
 
 
 def test_calculate_cost_efficiency(mock_metrics_manager):
+    """
+    Test Calculate Cost Efficiency.
+
+    Args:
+        mock_metrics_manager: Description of mock_metrics_manager.
+
+    """
     analytics = PerformanceAnalytics(mock_metrics_manager)
 
     # Test with a provider with successful requests

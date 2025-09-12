@@ -444,6 +444,14 @@ class TestProviderValidator:
         class ValidProvider(BaseProviderTemplate):
             @classmethod
             def validate_config(cls, config):
+                """
+                Validate Config.
+
+                Args:
+                    cls: Description of cls.
+                    config: Description of config.
+
+                """
                 super().validate_config(config)
 
             async def _make_api_request(self, request: LLMRequest) -> dict:

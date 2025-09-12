@@ -35,6 +35,16 @@ class ThresholdEvaluator:
         )
 
     def evaluate_window(self, window: TimeWindow) -> List[ThresholdResult]:
+        """
+        Evaluate Window.
+
+        Args:
+            window: TimeWindow: Description of window: TimeWindow.
+
+        Returns:
+            List[ThresholdResult]: Description of return value.
+
+        """
         results = []
         for config in self.threshold_configs:
             try:
