@@ -1,31 +1,22 @@
-# tests/conftest.py
-
-"""
-pytest configuration and fixtures for LLM testing framework.
-
-This module provides shared fixtures and configuration for all tests
-in the testing framework.
-"""
+"""Pytest configuration and shared fixtures for the reorganized test structure."""
 
 import asyncio
+import os
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, Generator
+from unittest.mock import Mock, patch
 
 import pytest
+from pytest_mock import MockerFixture
 
-# from gemini_sre_agent.llm.factory import LLMProviderFactory  # Imported when needed
-# from gemini_sre_agent.llm.model_registry import ModelRegistry  # Imported when needed
-from gemini_sre_agent.llm.cost_management_integration import IntegratedCostManager
-from gemini_sre_agent.llm.testing.framework import TestingFramework
-from gemini_sre_agent.llm.testing.mock_providers import (
-    MockCostManager,
-    MockModelRegistry,
-    MockProviderFactory,
-)
-
-# from typing import Dict, Any, Optional  # Imported when needed
+# Set test environment variables
+os.environ["TESTING"] = "true"
+os.environ["LOG_LEVEL"] = "DEBUG"
 
 
 @pytest.fixture(scope="session")
-def event_loop() -> None:
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create an instance of the default event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -33,286 +24,445 @@ def event_loop() -> None:
 
 
 @pytest.fixture
-def mock_provider_factory() -> None:
-    """Create a mock provider factory for testing."""
-    return MockProviderFactory()
+def temp_dir() -> Generator[Path, None, None]:
+    """Create a temporary directory for test files."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        yield Path(tmp_dir)
 
 
 @pytest.fixture
-def mock_model_registry() -> None:
-    """Create a mock model registry for testing."""
-    return MockModelRegistry()
-
-
-@pytest.fixture
-def mock_cost_manager() -> None:
-    """Create a mock cost manager for testing."""
-    return MockCostManager()
-
-
-@pytest.fixture
-def mock_integrated_cost_manager(
-    mock_cost_manager, mock_model_registry, mock_provider_factory
-):
-    """Create a mock integrated cost manager for testing."""
-    return IntegratedCostManager(
-        model_registry=mock_model_registry,
-        provider_factory=mock_provider_factory,
-        cost_manager=mock_cost_manager,
-    )
-
-
-@pytest.fixture
-def testing_framework(
-    mock_provider_factory, mock_model_registry, mock_integrated_cost_manager
-):
-    """Create a testing framework instance for testing."""
-    return TestingFramework(
-        provider_factory=mock_provider_factory,
-        model_registry=mock_model_registry,
-        cost_manager=mock_integrated_cost_manager,
-        enable_mock_testing=True,
-    )
-
-
-@pytest.fixture
-def sample_llm_request() -> None:
-    """Create a sample LLM request for testing."""
-    from gemini_sre_agent.llm.base import LLMRequest, ModelType
-
-    return LLMRequest(
-        prompt="This is a test prompt for unit testing.",
-        model_type=ModelType.SMART,
-        max_tokens=100,
-        temperature=0.7,
-    )
-
-
-@pytest.fixture
-def sample_llm_response() -> None:
-    """Create a sample LLM response for testing."""
-    from gemini_sre_agent.llm.base import LLMResponse, ModelType
-
-    return LLMResponse(
-        content="This is a test response from the mock provider.",
-        usage={
-            "input_tokens": 10,
-            "output_tokens": 15,
-            "total_tokens": 25,
+def mock_config() -> Dict[str, Any]:
+    """Mock configuration for testing."""
+    return {
+        "llm": {
+            "providers": {
+                "openai": {
+                    "api_key": "test-key",
+                    "model": "gpt-4",
+                    "temperature": 0.7
+                },
+                "anthropic": {
+                    "api_key": "test-key",
+                    "model": "claude-3-sonnet",
+                    "temperature": 0.7
+                }
+            },
+            "default_provider": "openai",
+            "timeout": 30,
+            "max_retries": 3
         },
-        model_type=ModelType.SMART,
-        provider="mock_openai",
-    )
-
-
-@pytest.fixture
-def test_data_config() -> None:
-    """Create test data configuration."""
-    return {
-        "min_length": 10,
-        "max_length": 1000,
-        "include_special_chars": True,
-        "include_numbers": True,
-        "include_unicode": False,
-        "language": "en",
+        "metrics": {
+            "enabled": True,
+            "collection_interval": 60,
+            "retention_days": 30
+        },
+        "resilience": {
+            "circuit_breaker": {
+                "failure_threshold": 5,
+                "recovery_timeout": 60
+            },
+            "retry": {
+                "max_attempts": 3,
+                "backoff_factor": 2
+            }
+        },
+        "security": {
+            "encryption": {
+                "enabled": True,
+                "algorithm": "AES-256"
+            },
+            "access_control": {
+                "enabled": True,
+                "default_permission": "read"
+            }
+        }
     }
 
 
 @pytest.fixture
-def benchmark_config() -> None:
-    """Create benchmark configuration."""
+def mock_llm_response() -> Dict[str, Any]:
+    """Mock LLM response for testing."""
     return {
-        "duration_seconds": 10,  # Short duration for testing
-        "concurrent_requests": 5,
-        "requests_per_second": None,
-        "warmup_requests": 2,
-        "cooldown_seconds": 1,
-        "timeout_seconds": 10,
-        "enable_memory_monitoring": False,  # Disable for testing
-        "enable_cpu_monitoring": False,  # Disable for testing
-        "enable_cost_tracking": True,
+        "content": "This is a test response",
+        "model": "gpt-4",
+        "provider": "openai",
+        "tokens_used": 100,
+        "cost_usd": 0.01,
+        "latency_ms": 500,
+        "quality_score": 0.95
     }
 
 
 @pytest.fixture
-def mock_provider_config() -> None:
-    """Create mock provider configuration."""
+def mock_agent_request() -> Dict[str, Any]:
+    """Mock agent request for testing."""
     return {
-        "response_time_ms": 50,
+        "agent_id": "test-agent",
+        "agent_type": "analysis",
+        "prompt": "Test prompt",
+        "context": {"test": "data"},
+        "max_tokens": 1000,
+        "temperature": 0.7,
+        "timeout_seconds": 30
+    }
+
+
+@pytest.fixture
+def mock_workflow_context() -> Dict[str, Any]:
+    """Mock workflow context for testing."""
+    return {
+        "workflow_id": "test-workflow",
+        "repository": "test/repo",
+        "branch": "main",
+        "commit_sha": "abc123",
+        "files_changed": ["test.py"],
+        "context_data": {"test": "context"}
+    }
+
+
+@pytest.fixture
+def mock_error_data() -> Dict[str, Any]:
+    """Mock error data for testing."""
+    return {
+        "error_type": "ValueError",
+        "error_message": "Test error message",
+        "traceback": "Traceback (most recent call last):\n  File \"test.py\", line 1, in <module>\n    raise ValueError('Test error')\nValueError: Test error",
+        "context": {
+            "file": "test.py",
+            "line": 1,
+            "function": "test_function"
+        },
+        "timestamp": "2024-01-01T00:00:00Z",
+        "severity": "error"
+    }
+
+
+@pytest.fixture
+def mock_metrics_data() -> Dict[str, Any]:
+    """Mock metrics data for testing."""
+    return {
+        "total_requests": 1000,
+        "successful_requests": 950,
+        "failed_requests": 50,
         "success_rate": 0.95,
-        "error_rate": 0.05,
-        "timeout_rate": 0.0,
-        "custom_responses": {
-            "test": "This is a custom test response",
-            "error": "This is a custom error response",
-        },
+        "avg_latency_ms": 500,
+        "p95_latency_ms": 800,
+        "p99_latency_ms": 1200,
+        "total_cost_usd": 10.50,
+        "total_tokens": 50000
     }
 
 
-# Pytest markers for different test types
-pytest_plugins = []
-
-
-def pytest_configure(config: str) -> None:
-    """Configure pytest with custom markers."""
-    config.addinivalue_line("markers", "unit: mark test as a unit test")
-    config.addinivalue_line("markers", "integration: mark test as an integration test")
-    config.addinivalue_line("markers", "performance: mark test as a performance test")
-    config.addinivalue_line("markers", "cost: mark test as a cost analysis test")
-    config.addinivalue_line("markers", "slow: mark test as slow running")
-    config.addinivalue_line("markers", "mock: mark test as using mock providers")
-    config.addinivalue_line(
-        "markers", "real: mark test as using real providers (requires API keys)"
-    )
-
-
-def pytest_collection_modifyitems(config: str, items: str) -> None:
-    """Modify test collection to add markers based on test names."""
-    for item in items:
-        # Add markers based on test file names
-        if "unit" in item.nodeid:
-            item.add_marker(pytest.mark.unit)
-        elif "integration" in item.nodeid:
-            item.add_marker(pytest.mark.integration)
-        elif "performance" in item.nodeid:
-            item.add_marker(pytest.mark.performance)
-        elif "cost" in item.nodeid:
-            item.add_marker(pytest.mark.cost)
-
-        # Add markers based on test function names
-        if "slow" in item.name:
-            item.add_marker(pytest.mark.slow)
-        if "mock" in item.name:
-            item.add_marker(pytest.mark.mock)
-        if "real" in item.name:
-            item.add_marker(pytest.mark.real)
-
-
-# Async test utilities
 @pytest.fixture
-async def async_test_runner():
-    """Fixture for running async tests."""
-
-    async def run_async_test(coro):
-        """Run an async test coroutine."""
-        return await coro
-
-    return run_async_test
-
-
-# Test data generators
-@pytest.fixture
-def test_prompts() -> None:
-    """Generate various test prompts."""
-    from gemini_sre_agent.llm.testing.test_data_generators import (
-        PromptType,
-        TestDataGenerator,
-    )
-
-    generator = TestDataGenerator()
-
+def mock_provider_health() -> Dict[str, Any]:
+    """Mock provider health data for testing."""
     return {
-        "simple": generator.generate_prompt(PromptType.SIMPLE),
-        "complex": generator.generate_prompt(PromptType.COMPLEX),
-        "technical": generator.generate_prompt(PromptType.TECHNICAL),
-        "creative": generator.generate_prompt(PromptType.CREATIVE),
-        "analytical": generator.generate_prompt(PromptType.ANALYTICAL),
-        "conversational": generator.generate_prompt(PromptType.CONVERSATIONAL),
-        "code_generation": generator.generate_prompt(PromptType.CODE_GENERATION),
-        "data_processing": generator.generate_prompt(PromptType.DATA_PROCESSING),
+        "provider": "openai",
+        "status": "healthy",
+        "last_check": "2024-01-01T00:00:00Z",
+        "check_count": 100,
+        "success_count": 95,
+        "failure_count": 5,
+        "success_rate": 0.95,
+        "avg_response_time_ms": 500,
+        "issues": []
     }
 
 
 @pytest.fixture
-def test_scenarios() -> None:
-    """Generate various test scenarios."""
-    from gemini_sre_agent.llm.testing.test_data_generators import (
-        TestDataGenerator,
-        TestScenario,
-    )
-
-    generator = TestDataGenerator()
-
+def mock_pattern_match() -> Dict[str, Any]:
+    """Mock pattern match data for testing."""
     return {
-        "normal": generator.generate_test_scenarios(TestScenario.NORMAL, 5),
-        "edge_case": generator.generate_test_scenarios(TestScenario.EDGE_CASE, 3),
-        "stress_test": generator.generate_test_scenarios(TestScenario.STRESS_TEST, 2),
-        "error_condition": generator.generate_test_scenarios(
-            TestScenario.ERROR_CONDITION, 3
-        ),
-        "performance_test": generator.generate_test_scenarios(
-            TestScenario.PERFORMANCE_TEST, 2
-        ),
+        "pattern_id": "test-pattern",
+        "pattern_type": "regex",
+        "confidence": 0.85,
+        "matched_text": "test error",
+        "start_position": 0,
+        "end_position": 10,
+        "context": "This is a test error message"
     }
 
 
-# Performance test utilities
 @pytest.fixture
-def performance_test_data() -> None:
-    """Generate performance test data."""
-    from gemini_sre_agent.llm.testing.test_data_generators import TestDataGenerator
-
-    generator = TestDataGenerator()
-
+def mock_classification_result() -> Dict[str, Any]:
+    """Mock classification result for testing."""
     return {
-        "latency": generator.generate_performance_test_data("latency", "small"),
-        "throughput": generator.generate_performance_test_data("throughput", "small"),
-        "concurrency": generator.generate_performance_test_data("concurrency", "small"),
-    }
-
-
-# Mock data for testing
-@pytest.fixture
-def mock_provider_stats() -> None:
-    """Mock provider statistics."""
-    return {
-        "mock_openai_fast": {
-            "provider_type": "openai",
-            "request_count": 100,
-            "total_tokens": 5000,
-            "average_tokens_per_request": 50,
-        },
-        "mock_anthropic_reliable": {
-            "provider_type": "anthropic",
-            "request_count": 80,
-            "total_tokens": 4000,
-            "average_tokens_per_request": 50,
-        },
-        "mock_google": {
-            "provider_type": "google",
-            "request_count": 60,
-            "total_tokens": 3000,
-            "average_tokens_per_request": 50,
-        },
+        "error_type": "ValueError",
+        "category": "validation",
+        "confidence": 0.90,
+        "suggested_actions": [
+            "Check input validation",
+            "Verify data types",
+            "Add error handling"
+        ],
+        "severity": "medium",
+        "patterns_matched": ["test-pattern-1", "test-pattern-2"]
     }
 
 
 @pytest.fixture
-def mock_cost_data() -> None:
+def mock_cost_data() -> Dict[str, Any]:
     """Mock cost data for testing."""
     return {
-        "total_cost": 0.15,
-        "request_count": 100,
-        "average_cost_per_request": 0.0015,
-        "cost_history": [
-            {"cost": 0.001, "timestamp": 1640995200, "request_count": 1},
-            {"cost": 0.002, "timestamp": 1640995260, "request_count": 2},
-            {"cost": 0.0015, "timestamp": 1640995320, "request_count": 3},
-        ],
+        "total_cost_usd": 150.75,
+        "daily_average": 5.02,
+        "cost_trend": "stable",
+        "breakdown": {
+            "input_tokens": 120.50,
+            "output_tokens": 30.25
+        },
+        "by_provider": {
+            "openai": 100.00,
+            "anthropic": 50.75
+        },
+        "by_model": {
+            "gpt-4": 80.00,
+            "claude-3-sonnet": 50.75
+        }
     }
 
 
-# Test environment setup
+@pytest.fixture
+def mock_alert() -> Dict[str, Any]:
+    """Mock alert data for testing."""
+    return {
+        "alert_id": "test-alert-1",
+        "type": "performance",
+        "severity": "warning",
+        "provider": "openai",
+        "message": "High error rate detected",
+        "details": {
+            "error_rate": 0.15,
+            "threshold": 0.10
+        },
+        "timestamp": "2024-01-01T00:00:00Z",
+        "status": "active"
+    }
+
+
+@pytest.fixture
+def mock_file_system(temp_dir: Path) -> Generator[Path, None, None]:
+    """Create a mock file system for testing."""
+    # Create test files
+    (temp_dir / "test_file.py").write_text("print('Hello, World!')")
+    (temp_dir / "test_config.json").write_text('{"test": "config"}')
+    (temp_dir / "test_log.txt").write_text("2024-01-01 INFO: Test log message")
+    
+    # Create subdirectories
+    (temp_dir / "subdir").mkdir()
+    (temp_dir / "subdir" / "nested_file.py").write_text("def test(): pass")
+    
+    yield temp_dir
+
+
+@pytest.fixture
+def mock_github_repo() -> Mock:
+    """Mock GitHub repository for testing."""
+    repo = Mock()
+    repo.name = "test-repo"
+    repo.full_name = "test-org/test-repo"
+    repo.owner.login = "test-org"
+    repo.default_branch = "main"
+    repo.html_url = "https://github.com/test-org/test-repo"
+    repo.clone_url = "https://github.com/test-org/test-repo.git"
+    return repo
+
+
+@pytest.fixture
+def mock_gitlab_project() -> Mock:
+    """Mock GitLab project for testing."""
+    project = Mock()
+    project.name = "test-project"
+    project.path_with_namespace = "test-group/test-project"
+    project.namespace.name = "test-group"
+    project.default_branch = "main"
+    project.web_url = "https://gitlab.com/test-group/test-project"
+    project.ssh_url_to_repo = "git@gitlab.com:test-group/test-project.git"
+    return project
+
+
+@pytest.fixture
+def mock_llm_provider() -> Mock:
+    """Mock LLM provider for testing."""
+    provider = Mock()
+    provider.name = "test-provider"
+    provider.model = "test-model"
+    provider.generate.return_value = "Test response"
+    provider.stream_generate.return_value = ["Test", " response"]
+    provider.estimate_cost.return_value = 0.01
+    provider.get_health.return_value = {"status": "healthy"}
+    return provider
+
+
+@pytest.fixture
+def mock_agent() -> Mock:
+    """Mock agent for testing."""
+    agent = Mock()
+    agent.agent_id = "test-agent"
+    agent.agent_type = "analysis"
+    agent.process.return_value = {"result": "test result"}
+    agent.get_status.return_value = "ready"
+    agent.get_metrics.return_value = {"requests": 100, "success_rate": 0.95}
+    return agent
+
+
+@pytest.fixture
+def mock_workflow() -> Mock:
+    """Mock workflow for testing."""
+    workflow = Mock()
+    workflow.workflow_id = "test-workflow"
+    workflow.status = "running"
+    workflow.execute.return_value = {"result": "workflow completed"}
+    workflow.get_progress.return_value = 0.75
+    workflow.get_metrics.return_value = {"duration_ms": 5000}
+    return workflow
+
+
+@pytest.fixture
+def mock_pattern_classifier() -> Mock:
+    """Mock pattern classifier for testing."""
+    classifier = Mock()
+    classifier.classify.return_value = {
+        "error_type": "ValueError",
+        "confidence": 0.85,
+        "category": "validation"
+    }
+    classifier.get_patterns.return_value = ["pattern1", "pattern2"]
+    classifier.get_confidence.return_value = 0.85
+    return classifier
+
+
+@pytest.fixture
+def mock_metrics_collector() -> Mock:
+    """Mock metrics collector for testing."""
+    collector = Mock()
+    collector.collect_metrics.return_value = {"requests": 100, "success_rate": 0.95}
+    collector.get_summary.return_value = {"total_requests": 1000}
+    collector.get_provider_metrics.return_value = {"openai": {"requests": 500}}
+    collector.get_model_metrics.return_value = {"gpt-4": {"requests": 300}}
+    return collector
+
+
+@pytest.fixture
+def mock_cost_manager() -> Mock:
+    """Mock cost manager for testing."""
+    manager = Mock()
+    manager.estimate_cost.return_value = 0.01
+    manager.get_total_cost.return_value = 150.75
+    manager.get_cost_breakdown.return_value = {"input": 100.0, "output": 50.75}
+    manager.get_cost_analytics.return_value = {"trend": "stable", "daily_avg": 5.02}
+    return manager
+
+
+@pytest.fixture
+def mock_resilience_manager() -> Mock:
+    """Mock resilience manager for testing."""
+    manager = Mock()
+    manager.circuit_breaker.is_open.return_value = False
+    manager.retry_handler.should_retry.return_value = True
+    manager.fallback_manager.get_fallback.return_value = "fallback_response"
+    manager.get_health.return_value = {"status": "healthy"}
+    return manager
+
+
+@pytest.fixture
+def mock_security_manager() -> Mock:
+    """Mock security manager for testing."""
+    manager = Mock()
+    manager.encrypt.return_value = "encrypted_data"
+    manager.decrypt.return_value = "decrypted_data"
+    manager.check_permission.return_value = True
+    manager.audit_log.return_value = True
+    manager.get_compliance_status.return_value = {"status": "compliant"}
+    return manager
+
+
+# Async fixtures
+@pytest.fixture
+async def async_mock_llm_provider() -> Mock:
+    """Async mock LLM provider for testing."""
+    provider = Mock()
+    provider.name = "test-provider"
+    provider.model = "test-model"
+    provider.generate = Mock(return_value="Test response")
+    provider.stream_generate = Mock(return_value=["Test", " response"])
+    provider.estimate_cost = Mock(return_value=0.01)
+    provider.get_health = Mock(return_value={"status": "healthy"})
+    return provider
+
+
+@pytest.fixture
+async def async_mock_agent() -> Mock:
+    """Async mock agent for testing."""
+    agent = Mock()
+    agent.agent_id = "test-agent"
+    agent.agent_type = "analysis"
+    agent.process = Mock(return_value={"result": "test result"})
+    agent.get_status = Mock(return_value="ready")
+    agent.get_metrics = Mock(return_value={"requests": 100, "success_rate": 0.95})
+    return agent
+
+
+# Test data fixtures
+@pytest.fixture
+def sample_log_entries() -> list[Dict[str, Any]]:
+    """Sample log entries for testing."""
+    return [
+        {
+            "timestamp": "2024-01-01T00:00:00Z",
+            "level": "ERROR",
+            "message": "ValueError: Invalid input",
+            "service": "test-service",
+            "traceback": "Traceback...",
+            "context": {"user_id": "123"}
+        },
+        {
+            "timestamp": "2024-01-01T00:01:00Z",
+            "level": "INFO",
+            "message": "Request processed successfully",
+            "service": "test-service",
+            "context": {"request_id": "req-123"}
+        }
+    ]
+
+
+@pytest.fixture
+def sample_error_patterns() -> list[Dict[str, Any]]:
+    """Sample error patterns for testing."""
+    return [
+        {
+            "pattern_id": "value-error-1",
+            "pattern_type": "regex",
+            "pattern": r"ValueError: (.+)",
+            "error_type": "ValueError",
+            "category": "validation",
+            "confidence": 0.9
+        },
+        {
+            "pattern_id": "connection-error-1",
+            "pattern_type": "keyword",
+            "pattern": "ConnectionError",
+            "error_type": "ConnectionError",
+            "category": "network",
+            "confidence": 0.8
+        }
+    ]
+
+
+# Cleanup fixtures
 @pytest.fixture(autouse=True)
-def setup_test_environment() -> None:
-    """Setup test environment before each test."""
-    # This runs before each test
+def cleanup_test_files():
+    """Clean up test files after each test."""
+    yield
+    # Add cleanup logic here if needed
     pass
 
 
-@pytest.fixture(autouse=True)
-def cleanup_test_environment() -> None:
-    """Cleanup test environment after each test."""
-    # This runs after each test
-    yield
-    # Cleanup code here if needed
+# Skip slow tests by default
+def pytest_collection_modifyitems(config, items):
+    """Modify test collection to skip slow tests by default."""
+    if not config.getoption("--runslow", default=False):
+        skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
