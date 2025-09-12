@@ -3,6 +3,8 @@ Enhanced Mirascope Integration with Advanced Prompt Management.
 
 This module provides comprehensive Mirascope integration with advanced features
 including prompt versioning, A/B testing, analytics, optimization, and team collaboration.
+
+This is now a coordination module that uses the modular Mirascope components.
 """
 
 import json
@@ -10,37 +12,37 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel
+
+from .mirascope_client import MirascopeClientManager, get_client_manager
+
+# Import the new modular components
+from .mirascope_config import (
+    ConfigurationManager,
+    ProviderConfig,
+    ProviderType,
+    get_config_manager,
+)
+from .mirascope_facade import (
+    MirascopeIntegrationFacade,
+    get_integration_facade,
+)
+from .mirascope_response import (
+    ProcessedResponse,
+    ResponseProcessor,
+    get_response_processor,
+)
 
 # Enhanced Mirascope imports with graceful fallback
 try:
     from mirascope.llm import Provider
 
-    try:
-        from mirascope.llm import CallResponse
-    except ImportError:
-        CallResponse = None
-
-    try:
-        # Try to import provider-specific classes if they exist
-        from mirascope.llm import Provider as AnthropicCall
-        from mirascope.llm import Provider as GoogleCall
-        from mirascope.llm import Provider as OpenAICall
-    except ImportError:
-        AnthropicCall = None
-        OpenAICall = None
-        GoogleCall = None
-
     MIRASCOPE_AVAILABLE = True
 except ImportError:
     MIRASCOPE_AVAILABLE = False
     Provider = None
-    CallResponse = None
-    AnthropicCall = None
-    OpenAICall = None
-    GoogleCall = None
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -135,15 +137,30 @@ class PromptData(BaseModel):
 
 
 class EnhancedPromptManager:
-    """Advanced prompt manager with comprehensive Mirascope integration."""
+    """Advanced prompt manager with comprehensive Mirascope integration.
 
-    def __init__(self, storage_path: str = "./prompts", enable_analytics: bool = True):
+    This is now a coordination module that uses the modular Mirascope components.
+    """
+
+    def __init__(
+        self,
+        storage_path: str = "./prompts",
+        enable_analytics: bool = True,
+        integration_facade: Optional[MirascopeIntegrationFacade] = None,
+    ):
         """Initialize the enhanced prompt manager."""
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
         self.prompts: Dict[str, PromptData] = {}
         self.analytics_enabled = enable_analytics
         self.analytics_data: Dict[str, List[Dict[str, Any]]] = {}
+
+        # Initialize modular components
+        self.integration_facade = integration_facade or get_integration_facade()
+        self.config_manager = get_config_manager()
+        self.client_manager = get_client_manager()
+        self.response_processor = get_response_processor()
+
         self._load_prompts()
 
         logger.info(
@@ -701,6 +718,112 @@ class EnhancedPromptManager:
             except Exception as e:
                 logger.error(f"Error saving analytics: {e}")
 
+    # Integration with modular components
+
+    async def generate_with_prompt(
+        self,
+        prompt_id: str,
+        variables: Optional[Dict[str, Any]] = None,
+        version: Optional[str] = None,
+        environment: str = "production",
+        provider: Optional[str] = None,
+        **kwargs: Any,
+    ) -> ProcessedResponse:
+        """Generate a response using a stored prompt."""
+        # Get the prompt
+        prompt_template = self.get_prompt(prompt_id, version, environment)
+
+        # Format the prompt with variables
+        if variables:
+            if isinstance(prompt_template, str):
+                formatted_prompt = prompt_template.format(**variables)
+            else:
+                # Handle Mirascope prompt objects
+                formatted_prompt = str(prompt_template)
+        else:
+            formatted_prompt = str(prompt_template)
+
+        # Generate response using integration facade
+        return await self.integration_facade.generate(
+            prompt=formatted_prompt, provider=provider, **kwargs
+        )
+
+    async def generate_structured_with_prompt(
+        self,
+        prompt_id: str,
+        response_model: Type[T],
+        variables: Optional[Dict[str, Any]] = None,
+        version: Optional[str] = None,
+        environment: str = "production",
+        provider: Optional[str] = None,
+        **kwargs: Any,
+    ) -> tuple[ProcessedResponse, Optional[T]]:
+        """Generate a structured response using a stored prompt."""
+        # Get the prompt
+        prompt_template = self.get_prompt(prompt_id, version, environment)
+
+        # Format the prompt with variables
+        if variables:
+            if isinstance(prompt_template, str):
+                formatted_prompt = prompt_template.format(**variables)
+            else:
+                formatted_prompt = str(prompt_template)
+        else:
+            formatted_prompt = str(prompt_template)
+
+        # Generate structured response using integration facade
+        return await self.integration_facade.generate_structured(
+            prompt=formatted_prompt,
+            response_model=response_model,
+            provider=provider,
+            **kwargs,
+        )
+
+    def get_integration_health(self) -> Dict[str, Any]:
+        """Get health status of the integration components."""
+        return self.integration_facade.get_health_status()
+
+    def get_integration_metrics(self) -> Dict[str, Any]:
+        """Get metrics from the integration components."""
+        return self.integration_facade.get_metrics()
+
+    def configure_provider(
+        self,
+        name: str,
+        provider_type: str,
+        api_key: str,
+        model: str = "gpt-3.5-turbo",
+        **kwargs: Any,
+    ) -> None:
+        """Configure a new provider."""
+        try:
+            provider_type_enum = ProviderType(provider_type)
+            provider_config = ProviderConfig(
+                provider_type=provider_type_enum, api_key=api_key, model=model, **kwargs
+            )
+            self.integration_facade.add_provider(name, provider_config)
+            logger.info(f"Configured provider: {name}")
+        except Exception as e:
+            logger.error(f"Failed to configure provider {name}: {e}")
+            raise
+
+    def remove_provider(self, name: str) -> bool:
+        """Remove a provider configuration."""
+        return self.integration_facade.remove_provider(name)
+
+    def export_analytics(self, file_path: str) -> bool:
+        """Export analytics data."""
+        return self.integration_facade.export_analytics(file_path)
+
+    def get_available_providers(self) -> List[str]:
+        """Get list of available providers."""
+        clients = self.client_manager.get_available_clients()
+        return [client.config.provider_type.value for client in clients]
+
+    def get_provider_health(self) -> Dict[str, Dict[str, Any]]:
+        """Get health status of all providers."""
+        return self.client_manager.get_client_health()
+
 
 # Global enhanced prompt manager instance
 enhanced_prompt_manager = EnhancedPromptManager()
@@ -709,3 +832,30 @@ enhanced_prompt_manager = EnhancedPromptManager()
 def get_enhanced_prompt_manager() -> EnhancedPromptManager:
     """Get the global enhanced prompt manager instance."""
     return enhanced_prompt_manager
+
+
+def create_enhanced_prompt_manager(
+    storage_path: str = "./prompts",
+    enable_analytics: bool = True,
+    integration_facade: Optional[MirascopeIntegrationFacade] = None,
+) -> EnhancedPromptManager:
+    """Create a new enhanced prompt manager instance."""
+    return EnhancedPromptManager(storage_path, enable_analytics, integration_facade)
+
+
+# Export all public classes and functions
+__all__ = [
+    "EnhancedPromptManager",
+    "PromptData",
+    "PromptVersion",
+    "PromptMetrics",
+    "get_enhanced_prompt_manager",
+    "create_enhanced_prompt_manager",
+    # Re-export modular components for convenience
+    "MirascopeIntegrationFacade",
+    "ConfigurationManager",
+    "MirascopeClientManager",
+    "ResponseProcessor",
+    "ProviderConfig",
+    "ProviderType",
+]
