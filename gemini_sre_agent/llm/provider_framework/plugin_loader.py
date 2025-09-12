@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/provider_framework/plugin_loader.py
+
 """
 Plugin Loader for External Provider Implementations.
 

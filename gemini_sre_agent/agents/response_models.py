@@ -1,3 +1,5 @@
+# gemini_sre_agent/agents/response_models.py
+
 """
 Comprehensive Pydantic response models for all agent types.
 
@@ -92,7 +94,8 @@ class BaseAgentResponse(BaseModel):
         default_factory=lambda: str(uuid4()), description="Unique request identifier"
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), description="Response timestamp"
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Response timestamp",
     )
     agent_id: str = Field(
         ..., description="Identifier of the agent that generated this response"

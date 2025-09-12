@@ -304,7 +304,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         return {
             "agent_type": "remediation_v2",
             "optimization_goal": self.optimization_goal.value,
-            "min_quality": getattr(self, 'min_quality', None),
+            "min_quality": getattr(self, "min_quality", None),
             "supported_tasks": [
                 "remediation_planning",
                 "code_patch_generation",

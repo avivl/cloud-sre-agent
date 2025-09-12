@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/provider_framework/auto_registry.py
+
 """
 Automatic Provider Registration System.
 

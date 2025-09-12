@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/strategy_implementations.py
+
 """
 Concrete strategy implementations for model selection.
 
@@ -16,20 +18,26 @@ Author: Gemini SRE Agent
 Created: 2024
 """
 
-from datetime import datetime, time as dt_time
-from typing import Dict, List, Optional, Any
 import time
+from datetime import datetime
+from datetime import time as dt_time
+from typing import List, Optional
 
-from .strategy_base import (
-    ModelSelectionStrategy, 
-    StrategyContext, 
-    StrategyResult,
-    OptimizationGoal
-)
-from .model_registry import ModelInfo
-from .model_scorer import ModelScorer, ModelScore, ScoringWeights, ScoringContext, ScoringDimension
 from .base import ModelType
 from .common.enums import ProviderType
+from .model_registry import ModelInfo
+from .model_scorer import (
+    ModelScore,
+    ModelScorer,
+    ScoringContext,
+    ScoringDimension,
+    ScoringWeights,
+)
+from .strategy_base import (
+    ModelSelectionStrategy,
+    StrategyContext,
+    StrategyResult,
+)
 
 
 class CostOptimizedStrategy(ModelSelectionStrategy):
@@ -37,7 +45,7 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
 
     def __init__(self, model_scorer: Optional[ModelScorer] = None):
         """Initialize the cost-optimized strategy.
-        
+
         Args:
             model_scorer: Optional model scorer instance
         """
@@ -47,14 +55,14 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
         self, candidates: List[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select the most cost-effective model from candidates.
-        
+
         Args:
             candidates: List of available models
             context: Strategy execution context
-            
+
         Returns:
             StrategyResult containing selected model and metadata
-            
+
         Raises:
             ValueError: If no models meet the constraints
         """
@@ -68,8 +76,7 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
 
         # Sort by cost (ascending) and select the cheapest
         sorted_candidates = sorted(
-            filtered_candidates, 
-            key=lambda x: x.cost_per_1k_tokens
+            filtered_candidates, key=lambda x: x.cost_per_1k_tokens
         )
         selected_model = sorted_candidates[0]
 
@@ -80,7 +87,9 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
 
         # Calculate cost savings
         most_expensive = max(filtered_candidates, key=lambda x: x.cost_per_1k_tokens)
-        cost_savings = most_expensive.cost_per_1k_tokens - selected_model.cost_per_1k_tokens
+        cost_savings = (
+            most_expensive.cost_per_1k_tokens - selected_model.cost_per_1k_tokens
+        )
 
         reasoning = f"Selected {selected_model.name} as the most cost-effective option (${selected_model.cost_per_1k_tokens:.4f}/1k tokens)"
 
@@ -99,31 +108,40 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
             },
         )
 
-    def _create_cost_score(self, model: ModelInfo) -> 'ModelScore':
+    def _create_cost_score(self, model: ModelInfo) -> "ModelScore":
         """Create a score focused on cost efficiency.
-        
+
         Args:
             model: Model to score
-            
+
         Returns:
             ModelScore with cost-focused scoring
         """
         # Invert cost to make lower costs score higher
         max_cost = 0.1  # Assume max cost for normalization
         cost_score = max(0, 1 - (model.cost_per_1k_tokens / max_cost))
-        
+
         return ModelScore(
             model_name=model.name,
             overall_score=cost_score,
             dimension_scores={
                 ScoringDimension.COST: cost_score,
-                ScoringDimension.PERFORMANCE: model.performance_score * 0.1,  # Low weight
-                ScoringDimension.RELIABILITY: model.reliability_score * 0.1,  # Low weight
+                ScoringDimension.PERFORMANCE: model.performance_score
+                * 0.1,  # Low weight
+                ScoringDimension.RELIABILITY: model.reliability_score
+                * 0.1,  # Low weight
                 ScoringDimension.SPEED: 0.5,  # Default speed score
                 ScoringDimension.QUALITY: 0.5,  # Default quality score
                 ScoringDimension.AVAILABILITY: 0.5,  # Default availability score
             },
-            weights=ScoringWeights(cost=1.0, performance=0.1, reliability=0.1, speed=0.1, quality=0.1, availability=0.1),
+            weights=ScoringWeights(
+                cost=1.0,
+                performance=0.1,
+                reliability=0.1,
+                speed=0.1,
+                quality=0.1,
+                availability=0.1,
+            ),
             context=ScoringContext(task_type=ModelType.FAST),
         )
 
@@ -133,7 +151,7 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
 
     def __init__(self, model_scorer: Optional[ModelScorer] = None):
         """Initialize the performance-optimized strategy.
-        
+
         Args:
             model_scorer: Optional model scorer instance
         """
@@ -143,14 +161,14 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
         self, candidates: List[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select the highest performing model from candidates.
-        
+
         Args:
             candidates: List of available models
             context: Strategy execution context
-            
+
         Returns:
             StrategyResult containing selected model and metadata
-            
+
         Raises:
             ValueError: If no models meet the constraints
         """
@@ -164,9 +182,7 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
 
         # Sort by performance score (descending) and select the best
         sorted_candidates = sorted(
-            filtered_candidates, 
-            key=lambda x: x.performance_score, 
-            reverse=True
+            filtered_candidates, key=lambda x: x.performance_score, reverse=True
         )
         selected_model = sorted_candidates[0]
 
@@ -191,12 +207,12 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
             },
         )
 
-    def _create_performance_score(self, model: ModelInfo) -> 'ModelScore':
+    def _create_performance_score(self, model: ModelInfo) -> "ModelScore":
         """Create a score focused on performance.
-        
+
         Args:
             model: Model to score
-            
+
         Returns:
             ModelScore with performance-focused scoring
         """
@@ -206,12 +222,20 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
             dimension_scores={
                 ScoringDimension.COST: model.cost_per_1k_tokens * 0.1,  # Low weight
                 ScoringDimension.PERFORMANCE: model.performance_score,
-                ScoringDimension.RELIABILITY: model.reliability_score * 0.2,  # Some weight
+                ScoringDimension.RELIABILITY: model.reliability_score
+                * 0.2,  # Some weight
                 ScoringDimension.SPEED: 0.5,  # Default speed score
                 ScoringDimension.QUALITY: 0.5,  # Default quality score
                 ScoringDimension.AVAILABILITY: 0.5,  # Default availability score
             },
-            weights=ScoringWeights(cost=0.1, performance=1.0, reliability=0.2, speed=0.2, quality=0.1, availability=0.1),
+            weights=ScoringWeights(
+                cost=0.1,
+                performance=1.0,
+                reliability=0.2,
+                speed=0.2,
+                quality=0.1,
+                availability=0.1,
+            ),
             context=ScoringContext(task_type=ModelType.SMART),
         )
 
@@ -221,7 +245,7 @@ class QualityOptimizedStrategy(ModelSelectionStrategy):
 
     def __init__(self, model_scorer: Optional[ModelScorer] = None):
         """Initialize the quality-optimized strategy.
-        
+
         Args:
             model_scorer: Optional model scorer instance
         """
@@ -231,14 +255,14 @@ class QualityOptimizedStrategy(ModelSelectionStrategy):
         self, candidates: List[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select the highest quality model from candidates.
-        
+
         Args:
             candidates: List of available models
             context: Strategy execution context
-            
+
         Returns:
             StrategyResult containing selected model and metadata
-            
+
         Raises:
             ValueError: If no models meet the constraints
         """
@@ -267,7 +291,9 @@ class QualityOptimizedStrategy(ModelSelectionStrategy):
         scoring_context = ScoringContext(
             task_type=ModelType.SMART,  # Use default model type
             provider_preference=(
-                ProviderType(context.provider_preference[0]) if context.provider_preference else None
+                ProviderType(context.provider_preference[0])
+                if context.provider_preference
+                else None
             ),
         )
 
@@ -289,7 +315,7 @@ class QualityOptimizedStrategy(ModelSelectionStrategy):
         )[:3]
         fallback_models = [m for m, s in fallback_models]
 
-        quality_score = score.quality_score if hasattr(score, 'quality_score') else 0.0
+        quality_score = score.quality_score if hasattr(score, "quality_score") else 0.0
         reasoning = f"Selected {selected_model.name} as the highest quality model (score: {quality_score:.3f}) within budget constraints"
 
         return StrategyResult(
@@ -313,7 +339,7 @@ class TimeBasedStrategy(ModelSelectionStrategy):
 
     def __init__(self, model_scorer: Optional[ModelScorer] = None):
         """Initialize the time-based strategy.
-        
+
         Args:
             model_scorer: Optional model scorer instance
         """
@@ -323,7 +349,7 @@ class TimeBasedStrategy(ModelSelectionStrategy):
 
     def _is_business_hours(self) -> bool:
         """Check if current time is within business hours.
-        
+
         Returns:
             True if within business hours, False otherwise
         """
@@ -334,14 +360,14 @@ class TimeBasedStrategy(ModelSelectionStrategy):
         self, candidates: List[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select model based on time of day and business requirements.
-        
+
         Args:
             candidates: List of available models
             context: Strategy execution context
-            
+
         Returns:
             StrategyResult containing selected model and metadata
-            
+
         Raises:
             ValueError: If no models meet the constraints
         """
@@ -383,7 +409,9 @@ class TimeBasedStrategy(ModelSelectionStrategy):
         scoring_context = ScoringContext(
             task_type=ModelType.SMART,  # Use default model type
             provider_preference=(
-                ProviderType(context.provider_preference[0]) if context.provider_preference else None
+                ProviderType(context.provider_preference[0])
+                if context.provider_preference
+                else None
             ),
         )
 
@@ -429,7 +457,7 @@ class HybridStrategy(ModelSelectionStrategy):
 
     def __init__(self, model_scorer: Optional[ModelScorer] = None):
         """Initialize the hybrid strategy.
-        
+
         Args:
             model_scorer: Optional model scorer instance
         """
@@ -440,7 +468,7 @@ class HybridStrategy(ModelSelectionStrategy):
 
     def _update_learning_weights(self, success: bool, latency_ms: float):
         """Update weights based on performance feedback.
-        
+
         Args:
             success: Whether the selection was successful
             latency_ms: Execution latency in milliseconds
@@ -465,14 +493,14 @@ class HybridStrategy(ModelSelectionStrategy):
         self, candidates: List[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select model using hybrid approach with learning.
-        
+
         Args:
             candidates: List of available models
             context: Strategy execution context
-            
+
         Returns:
             StrategyResult containing selected model and metadata
-            
+
         Raises:
             ValueError: If no models meet the constraints
         """
@@ -490,9 +518,15 @@ class HybridStrategy(ModelSelectionStrategy):
             if context.min_quality:
                 constraint_details.append(f"min_quality={context.min_quality}")
             if context.provider_preference:
-                constraint_details.append(f"provider_preference={context.provider_preference}")
-            
-            constraint_str = ", ".join(constraint_details) if constraint_details else "no specific constraints"
+                constraint_details.append(
+                    f"provider_preference={context.provider_preference}"
+                )
+
+            constraint_str = (
+                ", ".join(constraint_details)
+                if constraint_details
+                else "no specific constraints"
+            )
             raise ValueError(
                 f"No models meet the specified constraints ({constraint_str}). "
                 f"Available candidates: {[c.name for c in candidates]}. "
@@ -520,7 +554,9 @@ class HybridStrategy(ModelSelectionStrategy):
         scoring_context = ScoringContext(
             task_type=ModelType.SMART,  # Use default model type
             provider_preference=(
-                ProviderType(context.provider_preference[0]) if context.provider_preference else None
+                ProviderType(context.provider_preference[0])
+                if context.provider_preference
+                else None
             ),
         )
 

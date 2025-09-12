@@ -88,9 +88,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
             return ModelType.FAST
 
     def _prepare_text_prompt(
-        self, 
-        prompt: str, 
-        context: Optional[Dict[str, Any]] = None
+        self, prompt: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Prepare and enhance the text generation prompt.
@@ -144,16 +142,18 @@ Guidelines:
         try:
             # Prepare the enhanced prompt
             enhanced_prompt = self._prepare_text_prompt(prompt, context)
-            
+
             # Determine optimal model configuration
             task_context = {
                 "content_length": len(prompt),
-                "complexity": context.get("complexity", "medium") if context else "medium",
+                "complexity": (
+                    context.get("complexity", "medium") if context else "medium"
+                ),
                 "quality_requirement": self.min_quality,
             }
-            
+
             model_type = self._get_optimal_model_type(task_context)
-            
+
             # Generate text using the base agent
             response = await self.execute(
                 prompt_name="generate_text",
@@ -165,9 +165,9 @@ Guidelines:
                     **kwargs,
                 },
             )
-            
+
             return response
-            
+
         except Exception as e:
             logger.error(f"Text generation failed: {e}")
             return TextResponse(
@@ -195,19 +195,19 @@ Guidelines:
             TextResponse containing the summary
         """
         summary_length = max_length or min(len(text) // 4, 500)
-        
+
         prompt = f"""Summarize the following text in a {style} style (max {summary_length} characters):
 
 {text}
 
 Summary:"""
-        
+
         context = {
             "style": style,
             "max_length": summary_length,
             "task_type": "summarization",
         }
-        
+
         return await self.generate_text(prompt, context, **kwargs)
 
     async def generate_explanation(
@@ -234,13 +234,13 @@ Summary:"""
 {topic}
 
 Explanation:"""
-        
+
         context = {
             "level": level,
             "audience": audience,
             "task_type": "explanation",
         }
-        
+
         return await self.generate_text(prompt, context, **kwargs)
 
     def get_agent_capabilities(self) -> Dict[str, Any]:

@@ -1,3 +1,5 @@
+# gemini_sre_agent/resilience/circuit_breaker.py
+
 """Circuit breaker pattern implementation for resilience."""
 
 import asyncio

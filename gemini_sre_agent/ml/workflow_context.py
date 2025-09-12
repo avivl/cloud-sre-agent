@@ -10,7 +10,7 @@ logic for the workflow orchestrator. Extracted from unified_workflow_orchestrato
 import logging
 from typing import Any, Dict, List, Optional
 
-from .caching import ContextCache, RepositoryContextCache, IssuePatternCache
+from .caching import ContextCache, IssuePatternCache, RepositoryContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
 from .performance import (
     AsyncTask,
@@ -29,7 +29,7 @@ from .prompt_context_models import (
 class WorkflowContextManager:
     """
     Manages workflow context building and repository analysis.
-    
+
     This class handles all context-related operations including repository analysis,
     issue context extraction, and context caching with performance optimizations.
     """
@@ -42,7 +42,7 @@ class WorkflowContextManager:
     ):
         """
         Initialize the workflow context manager.
-        
+
         Args:
             cache: Context cache instance
             repo_path: Path to repository for analysis
@@ -52,21 +52,19 @@ class WorkflowContextManager:
         self.repo_path = repo_path
         self.performance_config = performance_config
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize specialized caches
         self.repo_cache = RepositoryContextCache(
             max_size_mb=50, default_ttl_seconds=3600
         )
-        self.pattern_cache = IssuePatternCache(
-            max_size_mb=30, default_ttl_seconds=1800
-        )
-        
+        self.pattern_cache = IssuePatternCache(max_size_mb=30, default_ttl_seconds=1800)
+
         # Initialize performance analyzer
         self.repo_analyzer = PerformanceRepositoryAnalyzer(self.repo_cache, repo_path)
-        
+
         # Initialize async optimizer
         self.async_optimizer = get_async_optimizer()
-        
+
         # Initialize enhanced agent (will be injected)
         self.enhanced_agent: Optional[EnhancedAnalysisAgent] = None
 
@@ -84,14 +82,14 @@ class WorkflowContextManager:
     ) -> PromptContext:
         """
         Build enhanced context with performance optimizations.
-        
+
         Args:
             triage_packet: Issue triage data
             historical_logs: Historical log data
             configs: Configuration data
             flow_id: Workflow identifier
             analysis_depth: Repository analysis depth
-            
+
         Returns:
             Enhanced prompt context
         """
@@ -146,7 +144,7 @@ class WorkflowContextManager:
                 generator_type = self.enhanced_agent._determine_generator_type(
                     issue_context
                 )
-            
+
             pattern_key = f"{issue_context.issue_type.value}:{flow_id}"
 
             cached_pattern = await self.pattern_cache.get_issue_pattern(
@@ -266,10 +264,10 @@ class WorkflowContextManager:
     async def get_cached_context(self, flow_id: str) -> Optional[PromptContext]:
         """
         Get cached context for a specific flow.
-        
+
         Args:
             flow_id: Workflow identifier
-            
+
         Returns:
             Cached context or None if not found
         """
@@ -279,30 +277,30 @@ class WorkflowContextManager:
             cached_pattern = await self.pattern_cache.get_issue_pattern(
                 "issue_context", pattern_key
             )
-            
+
             if cached_pattern:
                 # Try to get cached repository context
                 cached_repo_context = await self.repo_cache.get_repository_context(
                     str(self.repo_analyzer.repo_path), "standard"
                 )
-                
+
                 if cached_repo_context:
                     if isinstance(cached_repo_context, dict):
                         repo_context = RepositoryContext(**cached_repo_context)
                     else:
                         repo_context = cached_repo_context
-                    
+
                     if isinstance(cached_pattern, dict):
                         issue_context = IssueContext(**cached_pattern)
                     else:
                         issue_context = cached_pattern
-                    
+
                     return PromptContext(
                         issue_context=issue_context,
                         repository_context=repo_context,
                         generator_type="cached",
                     )
-            
+
             return None
         except Exception as e:
             self.logger.warning(f"Failed to get cached context: {e}")
@@ -311,14 +309,13 @@ class WorkflowContextManager:
     async def clear_context_cache(self, flow_id: Optional[str] = None) -> None:
         """
         Clear context cache for a specific flow or all flows.
-        
+
         Args:
             flow_id: Specific flow to clear, or None to clear all
         """
         try:
             if flow_id:
                 # Clear specific flow cache
-                pattern_key = f"issue_context:{flow_id}"
                 # Clear specific pattern - use clear method for now
                 await self.pattern_cache.clear()
                 self.logger.info(f"Cleared context cache for flow_id={flow_id}")
@@ -333,14 +330,14 @@ class WorkflowContextManager:
     async def get_cache_statistics(self) -> Dict[str, Any]:
         """
         Get cache statistics for monitoring.
-        
+
         Returns:
             Dictionary containing cache statistics
         """
         try:
             repo_stats = await self.repo_cache.get_stats()
             pattern_stats = await self.pattern_cache.get_stats()
-            
+
             return {
                 "repository_cache": {
                     "size_mb": repo_stats.get("current_size_bytes", 0) / (1024 * 1024),
@@ -348,7 +345,8 @@ class WorkflowContextManager:
                     "hit_rate": repo_stats.get("average_hit_rate", 0.0),
                 },
                 "pattern_cache": {
-                    "size_mb": pattern_stats.get("current_size_bytes", 0) / (1024 * 1024),
+                    "size_mb": pattern_stats.get("current_size_bytes", 0)
+                    / (1024 * 1024),
                     "max_size_mb": pattern_stats.get("max_size_mb", 0),
                     "hit_rate": pattern_stats.get("average_hit_rate", 0.0),
                 },
@@ -360,7 +358,7 @@ class WorkflowContextManager:
     async def health_check(self) -> str:
         """
         Perform health check on context manager components.
-        
+
         Returns:
             Health status string
         """
@@ -368,26 +366,26 @@ class WorkflowContextManager:
             # Check if essential components are available
             if not self.enhanced_agent:
                 return "degraded - enhanced agent not set"
-            
+
             # Check cache health
             repo_cache_health = "healthy"
             pattern_cache_health = "healthy"
-            
+
             try:
                 await self.repo_cache.get_repository_context("test", "standard")
             except Exception:
                 repo_cache_health = "degraded"
-            
+
             try:
                 await self.pattern_cache.get_issue_pattern("test", "test")
             except Exception:
                 pattern_cache_health = "degraded"
-            
+
             if repo_cache_health == "healthy" and pattern_cache_health == "healthy":
                 return "healthy"
             else:
                 return f"degraded - repo_cache: {repo_cache_health}, pattern_cache: {pattern_cache_health}"
-                
+
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
             return f"unhealthy - {str(e)}"

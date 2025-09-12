@@ -1,3 +1,5 @@
+# gemini_sre_agent/pattern_detector/time_window_accumulator.py
+
 """
 Time window accumulation logic.
 """

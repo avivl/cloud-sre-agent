@@ -1,3 +1,5 @@
+# gemini_sre_agent/source_control/metrics/core.py
+
 """
 Core metrics data structures and types.
 

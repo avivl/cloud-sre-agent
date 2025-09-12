@@ -1,3 +1,5 @@
+# gemini_sre_agent/security/__init__.py
+
 """Security and compliance module for the Gemini SRE Agent."""
 
 from .access_control import AccessController

@@ -12,26 +12,25 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from .core import ErrorClassification, ErrorType
-from .error_types import (
-    ErrorTypeRegistry,
-    get_error_metadata,
-)
 from .classification_algorithms import (
     BaseErrorClassifier,
     ClassificationResult,
     ClassifierFactory,
     TrainingData,
 )
-from .error_patterns import (
-    initialize_default_patterns,
-    get_best_error_match,
-)
 from .classification_metrics import (
     ClassificationMetricsCollector,
     MetricsSummary,
 )
-
+from .core import ErrorClassification, ErrorType
+from .error_patterns import (
+    get_best_error_match,
+    initialize_default_patterns,
+)
+from .error_types import (
+    ErrorTypeRegistry,
+    get_error_metadata,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +53,14 @@ class RefactoredErrorClassifier:
 
         # Initialize core components
         self.error_type_registry = ErrorTypeRegistry()
-        
+
         # Initialize classification algorithm
         self.classifier = self._initialize_classifier(algorithm, training_data)
-        
+
         # Initialize pattern matching
         if enable_patterns:
             initialize_default_patterns()
-        
+
         # Initialize metrics collection
         if enable_metrics:
             self.metrics_collector = ClassificationMetricsCollector("error_classifier")
@@ -71,12 +70,16 @@ class RefactoredErrorClassifier:
         # Backward compatibility classification rules
         self.classification_rules = self._initialize_legacy_rules()
 
-        self.logger.info(f"Initialized RefactoredErrorClassifier with algorithm: {algorithm}")
+        self.logger.info(
+            f"Initialized RefactoredErrorClassifier with algorithm: {algorithm}"
+        )
 
-    def _initialize_classifier(self, algorithm: str, training_data: Optional[TrainingData]) -> BaseErrorClassifier:
+    def _initialize_classifier(
+        self, algorithm: str, training_data: Optional[TrainingData]
+    ) -> BaseErrorClassifier:
         """Initialize the classification algorithm."""
         classifier = ClassifierFactory.create_classifier(algorithm)
-        
+
         # Train the classifier if training data is provided
         if training_data:
             classifier.fit(training_data)
@@ -84,7 +87,7 @@ class RefactoredErrorClassifier:
             # Use default training data based on error patterns
             default_training_data = self._create_default_training_data()
             classifier.fit(default_training_data)
-        
+
         return classifier
 
     def _create_default_training_data(self) -> TrainingData:
@@ -108,7 +111,7 @@ class RefactoredErrorClassifier:
             "Git command failed",
             "SSH key authentication failed",
         ]
-        
+
         error_types = [
             ErrorType.TIMEOUT_ERROR,
             ErrorType.NETWORK_ERROR,
@@ -127,10 +130,10 @@ class RefactoredErrorClassifier:
             ErrorType.LOCAL_GIT_ERROR,
             ErrorType.GITHUB_SSH_ERROR,
         ]
-        
+
         contexts = [{}] * len(error_messages)  # Empty contexts for simplicity
         labels = [error_type.value for error_type in error_types]
-        
+
         return TrainingData(
             error_messages=error_messages,
             error_types=error_types,
@@ -152,7 +155,7 @@ class RefactoredErrorClassifier:
         """Classify an error using the modular architecture."""
         start_time = time.time()
         error_message = str(error)
-        
+
         # Create context for classification
         context = {
             "exception_type": type(error).__name__,
@@ -214,21 +217,27 @@ class RefactoredErrorClassifier:
 
         # Get error metadata
         error_metadata = get_error_metadata(final_error_type.value)
-        
+
         # Create classification result
         classification = ErrorClassification(
             error_type=final_error_type,
             is_retryable=error_metadata.is_retryable if error_metadata else False,
             retry_delay=error_metadata.retry_delay if error_metadata else 0.0,
             max_retries=error_metadata.max_retries if error_metadata else 0,
-            should_open_circuit=self._should_open_circuit(final_error_type, error_metadata),
+            should_open_circuit=self._should_open_circuit(
+                final_error_type, error_metadata
+            ),
             details={
                 "error": error_message,
                 "exception_type": type(error).__name__,
                 "confidence": final_confidence,
                 "classification_source": classification_source,
-                "error_severity": error_metadata.severity.value if error_metadata else "unknown",
-                "error_category": error_metadata.category.value if error_metadata else "unknown",
+                "error_severity": (
+                    error_metadata.severity.value if error_metadata else "unknown"
+                ),
+                "error_category": (
+                    error_metadata.category.value if error_metadata else "unknown"
+                ),
                 "classification_time_ms": (time.time() - start_time) * 1000,
             },
         )
@@ -253,24 +262,24 @@ class RefactoredErrorClassifier:
     def _extract_error_attributes(self, error: Exception) -> Dict[str, Any]:
         """Extract attributes from an error for classification context."""
         attributes = {}
-        
+
         # Common attributes
         for attr in ["status", "code", "errno", "response", "reason"]:
             if hasattr(error, attr):
                 attributes[attr] = getattr(error, attr)
-        
+
         # HTTP-specific attributes
         if hasattr(error, "response"):
             response = error.response  # type: ignore
             if hasattr(response, "status_code"):
                 attributes["status_code"] = response.status_code
-        
+
         # Request-specific attributes
         if hasattr(error, "request"):
             request = error.request  # type: ignore
             if hasattr(request, "url"):
                 attributes["url"] = request.url
-        
+
         return attributes
 
     def _should_open_circuit(self, error_type: ErrorType, error_metadata: Any) -> bool:
@@ -290,7 +299,9 @@ class RefactoredErrorClassifier:
 
         return error_type not in non_circuit_opening_errors
 
-    def _classify_by_exception_type(self, error: Exception) -> Optional[ErrorClassification]:
+    def _classify_by_exception_type(
+        self, error: Exception
+    ) -> Optional[ErrorClassification]:
         """Legacy rule: classify by exception type."""
         error_type_mapping = {
             ConnectionError: ErrorType.NETWORK_ERROR,
@@ -306,22 +317,26 @@ class RefactoredErrorClassifier:
         if exception_type in error_type_mapping:
             error_type = error_type_mapping[exception_type]
             error_metadata = get_error_metadata(error_type.value)
-            
+
             return ErrorClassification(
                 error_type=error_type,
                 is_retryable=error_metadata.is_retryable if error_metadata else False,
                 retry_delay=error_metadata.retry_delay if error_metadata else 0.0,
                 max_retries=error_metadata.max_retries if error_metadata else 0,
-                should_open_circuit=self._should_open_circuit(error_type, error_metadata),
+                should_open_circuit=self._should_open_circuit(
+                    error_type, error_metadata
+                ),
                 details={"error": str(error), "source": "exception_type"},
             )
-        
+
         return None
 
-    def _classify_by_error_message(self, error: Exception) -> Optional[ErrorClassification]:
+    def _classify_by_error_message(
+        self, error: Exception
+    ) -> Optional[ErrorClassification]:
         """Legacy rule: classify by error message keywords."""
         error_str = str(error).lower()
-        
+
         keyword_mappings = {
             "timeout": ErrorType.TIMEOUT_ERROR,
             "connection": ErrorType.NETWORK_ERROR,
@@ -339,22 +354,32 @@ class RefactoredErrorClassifier:
         for keyword, error_type in keyword_mappings.items():
             if keyword in error_str:
                 error_metadata = get_error_metadata(error_type.value)
-                
+
                 return ErrorClassification(
                     error_type=error_type,
-                    is_retryable=error_metadata.is_retryable if error_metadata else False,
+                    is_retryable=(
+                        error_metadata.is_retryable if error_metadata else False
+                    ),
                     retry_delay=error_metadata.retry_delay if error_metadata else 0.0,
                     max_retries=error_metadata.max_retries if error_metadata else 0,
-                    should_open_circuit=self._should_open_circuit(error_type, error_metadata),
-                    details={"error": str(error), "source": "keyword", "keyword": keyword},
+                    should_open_circuit=self._should_open_circuit(
+                        error_type, error_metadata
+                    ),
+                    details={
+                        "error": str(error),
+                        "source": "keyword",
+                        "keyword": keyword,
+                    },
                 )
-        
+
         return None
 
-    def _classify_by_http_status(self, error: Exception) -> Optional[ErrorClassification]:
+    def _classify_by_http_status(
+        self, error: Exception
+    ) -> Optional[ErrorClassification]:
         """Legacy rule: classify by HTTP status code."""
         status = None
-        
+
         # Try to extract status code from different error types
         if hasattr(error, "status"):
             status = error.status  # type: ignore
@@ -376,18 +401,30 @@ class RefactoredErrorClassifier:
             }
 
             for status_range, error_type in status_mappings.items():
-                if (isinstance(status_range, range) and status in status_range) or status == status_range:
+                if (
+                    isinstance(status_range, range) and status in status_range
+                ) or status == status_range:
                     error_metadata = get_error_metadata(error_type.value)
-                    
+
                     return ErrorClassification(
                         error_type=error_type,
-                        is_retryable=error_metadata.is_retryable if error_metadata else False,
-                        retry_delay=error_metadata.retry_delay if error_metadata else 0.0,
+                        is_retryable=(
+                            error_metadata.is_retryable if error_metadata else False
+                        ),
+                        retry_delay=(
+                            error_metadata.retry_delay if error_metadata else 0.0
+                        ),
                         max_retries=error_metadata.max_retries if error_metadata else 0,
-                        should_open_circuit=self._should_open_circuit(error_type, error_metadata),
-                        details={"error": str(error), "source": "http_status", "status": status},
+                        should_open_circuit=self._should_open_circuit(
+                            error_type, error_metadata
+                        ),
+                        details={
+                            "error": str(error),
+                            "source": "http_status",
+                            "status": status,
+                        },
                     )
-        
+
         return None
 
     def get_performance_summary(self) -> Optional[Dict[str, Any]]:
@@ -418,7 +455,9 @@ class RefactoredErrorClassifier:
         """Retrain the classification algorithm with new data."""
         try:
             self.classifier.fit(training_data)
-            self.logger.info(f"Retrained {self.algorithm} classifier with {len(training_data.error_messages)} samples")
+            self.logger.info(
+                f"Retrained {self.algorithm} classifier with {len(training_data.error_messages)} samples"
+            )
         except Exception as e:
             self.logger.error(f"Failed to retrain classifier: {e}")
 
@@ -430,7 +469,9 @@ class RefactoredErrorClassifier:
             self.logger.error(f"Failed to score classifier: {e}")
             return 0.0
 
-    def predict_error_type(self, error_message: str, context: Optional[Dict[str, Any]] = None) -> ClassificationResult:
+    def predict_error_type(
+        self, error_message: str, context: Optional[Dict[str, Any]] = None
+    ) -> ClassificationResult:
         """Predict error type for a given error message."""
         try:
             return self.classifier.predict(error_message, context)
@@ -449,7 +490,9 @@ class RefactoredErrorClassifier:
         """Get list of available classification algorithms."""
         return ClassifierFactory.get_available_algorithms()
 
-    def switch_algorithm(self, algorithm: str, training_data: Optional[TrainingData] = None) -> None:
+    def switch_algorithm(
+        self, algorithm: str, training_data: Optional[TrainingData] = None
+    ) -> None:
         """Switch to a different classification algorithm."""
         try:
             self.algorithm = algorithm

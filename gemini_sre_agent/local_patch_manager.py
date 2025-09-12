@@ -1,3 +1,5 @@
+# gemini_sre_agent/local_patch_manager.py
+
 """
 Local Patch Manager for SRE Agent
 

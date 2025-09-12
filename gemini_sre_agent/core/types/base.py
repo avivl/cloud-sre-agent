@@ -7,17 +7,20 @@ This module defines fundamental type aliases, generic types, and type
 utilities used throughout the system.
 """
 
-from typing import Any, Dict, List, Optional, Protocol, TypeVar, Union
+from typing import Any, Dict, List, Protocol, TypeVar, Union
+
 from typing_extensions import TypeAlias
 
 # Generic type variables
-T = TypeVar('T')
-K = TypeVar('K')
-V = TypeVar('V')
-R = TypeVar('R')
+T = TypeVar("T")
+K = TypeVar("K")
+V = TypeVar("V")
+R = TypeVar("R")
 
 # Common type aliases
-JsonValue: TypeAlias = Union[str, int, float, bool, None, List['JsonValue'], Dict[str, 'JsonValue']]
+JsonValue: TypeAlias = Union[
+    str, int, float, bool, None, List["JsonValue"], Dict[str, "JsonValue"]
+]
 JsonDict: TypeAlias = Dict[str, JsonValue]
 JsonList: TypeAlias = List[JsonValue]
 
@@ -73,14 +76,15 @@ Content: TypeAlias = str
 ContentType: TypeAlias = str
 ContentEncoding: TypeAlias = str
 
+
 # Protocol definitions for structural typing
 class Serializable(Protocol):
     """Protocol for objects that can be serialized to JSON."""
-    
+
     def to_dict(self) -> JsonDict:
         """Convert object to dictionary representation."""
         ...
-    
+
     def to_json(self) -> str:
         """Convert object to JSON string."""
         ...
@@ -88,12 +92,12 @@ class Serializable(Protocol):
 
 class Deserializable(Protocol):
     """Protocol for objects that can be deserialized from JSON."""
-    
+
     @classmethod
     def from_dict(cls: type[T], data: JsonDict) -> T:
         """Create object from dictionary representation."""
         ...
-    
+
     @classmethod
     def from_json(cls: type[T], json_str: str) -> T:
         """Create object from JSON string."""
@@ -102,7 +106,7 @@ class Deserializable(Protocol):
 
 class Identifiable(Protocol):
     """Protocol for objects that have a unique identifier."""
-    
+
     @property
     def id(self) -> str:
         """Get the unique identifier."""
@@ -111,12 +115,12 @@ class Identifiable(Protocol):
 
 class Timestamped(Protocol):
     """Protocol for objects that have timestamps."""
-    
+
     @property
     def created_at(self) -> Timestamp:
         """Get creation timestamp."""
         ...
-    
+
     @property
     def updated_at(self) -> Timestamp:
         """Get last update timestamp."""
@@ -125,11 +129,11 @@ class Timestamped(Protocol):
 
 class Configurable(Protocol):
     """Protocol for objects that can be configured."""
-    
+
     def configure(self, config: ConfigDict) -> None:
         """Configure the object with given configuration."""
         ...
-    
+
     def get_config(self) -> ConfigDict:
         """Get current configuration."""
         ...
@@ -137,12 +141,12 @@ class Configurable(Protocol):
 
 class Stateful(Protocol):
     """Protocol for objects that maintain state."""
-    
+
     @property
     def state(self) -> str:
         """Get current state."""
         ...
-    
+
     def set_state(self, state: str) -> None:
         """Set new state."""
         ...
@@ -150,7 +154,7 @@ class Stateful(Protocol):
 
 class Loggable(Protocol):
     """Protocol for objects that can be logged."""
-    
+
     def get_log_context(self) -> LogContext:
         """Get logging context information."""
         ...
@@ -158,11 +162,11 @@ class Loggable(Protocol):
 
 class Validatable(Protocol):
     """Protocol for objects that can be validated."""
-    
+
     def validate(self) -> bool:
         """Validate the object."""
         ...
-    
+
     def get_validation_errors(self) -> List[str]:
         """Get validation errors if any."""
         ...
@@ -172,10 +176,10 @@ class Validatable(Protocol):
 def is_json_value(value: Any) -> bool:
     """
     Check if a value is a valid JSON value.
-    
+
     Args:
         value: Value to check
-        
+
     Returns:
         True if value is a valid JSON value, False otherwise
     """
@@ -193,38 +197,38 @@ def is_json_value(value: Any) -> bool:
 def ensure_json_value(value: Any) -> JsonValue:
     """
     Ensure a value is a valid JSON value, converting if necessary.
-    
+
     Args:
         value: Value to ensure
-        
+
     Returns:
         Valid JSON value
-        
+
     Raises:
         ValueError: If value cannot be converted to JSON value
     """
     if is_json_value(value):
         return value
-    
+
     # Try to convert common types
-    if hasattr(value, 'to_dict'):
+    if hasattr(value, "to_dict"):
         return value.to_dict()
-    if hasattr(value, '__dict__'):
+    if hasattr(value, "__dict__"):
         return {k: ensure_json_value(v) for k, v in value.__dict__.items()}
-    
+
     raise ValueError(f"Cannot convert {type(value)} to JSON value")
 
 
 def create_type_safe_dict(data: Dict[str, Any]) -> JsonDict:
     """
     Create a type-safe JSON dictionary from a regular dictionary.
-    
+
     Args:
         data: Dictionary to convert
-        
+
     Returns:
         Type-safe JSON dictionary
-        
+
     Raises:
         ValueError: If any value cannot be converted to JSON value
     """

@@ -1,3 +1,5 @@
+# gemini_sre_agent/pattern_detector/baseline_tracker.py
+
 """
 Baseline tracking for rate-based threshold evaluation.
 """

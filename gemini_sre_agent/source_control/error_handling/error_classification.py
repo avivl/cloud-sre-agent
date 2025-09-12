@@ -9,33 +9,30 @@ components for pattern detection, classification algorithms, and metrics collect
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from .core import ErrorClassification, ErrorType
-from .error_types import ErrorTypeMetadata, error_type_registry
 from .classification_algorithms import (
-    ClassificationStrategy,
-    ClassificationResult,
     BaseErrorClassifier,
-    RuleBasedClassifier,
-    PatternBasedClassifier,
+    ClassificationResult,
+    ClassificationStrategy,
     HybridClassifier,
-    ClassificationAlgorithmFactory,
+    PatternBasedClassifier,
+    RuleBasedClassifier,
     create_error_classification,
-)
-from .error_patterns import (
-    PatternMatcher,
-    PatternMatch,
-    PatternMatcherFactory,
-    pattern_registry,
-    initialize_default_patterns,
 )
 from .classification_metrics import (
     ClassificationMetricsCollector,
-    MetricsSummary,
     MetricsComparator,
+    MetricsSummary,
 )
-
+from .core import ErrorClassification, ErrorType
+from .error_patterns import (
+    PatternMatch,
+    PatternMatcher,
+    PatternMatcherFactory,
+    initialize_default_patterns,
+)
+from .error_types import error_type_registry
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +40,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ErrorClassifierConfig:
     """Configuration for the ErrorClassifier."""
-    
+
     strategy: ClassificationStrategy = ClassificationStrategy.HYBRID
     enable_pattern_matching: bool = True
     enable_metrics_collection: bool = True
@@ -60,30 +57,32 @@ class ErrorClassifier:
         """Initialize the error classifier with modular components."""
         self.config = config or ErrorClassifierConfig()
         self.logger = logging.getLogger("ErrorClassifier")
-        
+
         # Initialize classification algorithm
         self.classifier = self._create_classifier()
-        
+
         # Initialize pattern matching if enabled
         self.pattern_matcher = None
         if self.config.enable_pattern_matching:
             self.pattern_matcher = self._create_pattern_matcher()
-        
+
         # Initialize metrics collection if enabled
         self.metrics_collector = None
         if self.config.enable_metrics_collection:
             self.metrics_collector = ClassificationMetricsCollector("error_classifier")
-        
+
         # Initialize default patterns
         if self.config.enable_pattern_matching:
             initialize_default_patterns()
-        
-        self.logger.info(f"Initialized ErrorClassifier with strategy: {self.config.strategy}")
+
+        self.logger.info(
+            f"Initialized ErrorClassifier with strategy: {self.config.strategy}"
+        )
 
     def _create_classifier(self) -> BaseErrorClassifier:
         """Create the classification algorithm based on configuration."""
         algorithm_config = self.config.algorithm_config or {}
-        
+
         if self.config.strategy == ClassificationStrategy.RULE_BASED:
             return RuleBasedClassifier(**algorithm_config)
         elif self.config.strategy == ClassificationStrategy.PATTERN_BASED:
@@ -108,8 +107,9 @@ class ErrorClassifier:
     def classify_error(self, error: Exception) -> ErrorClassification:
         """Classify an error using the modular classification system."""
         import time
+
         start_time = time.time()
-        
+
         try:
             # Convert exception to string for pattern matching
             error_text = str(error)
@@ -118,26 +118,31 @@ class ErrorClassifier:
                 "error_module": getattr(error, "__module__", "unknown"),
                 "error_context": self._determine_error_context(error),
             }
-            
+
             # Try pattern-based classification first if enabled
             if self.pattern_matcher and self.config.enable_pattern_matching:
                 pattern_result = self._classify_with_patterns(error_text, error_context)
-                if pattern_result and pattern_result.confidence >= self.config.confidence_threshold:
-                    classification = self._convert_pattern_result_to_classification(pattern_result, error)
+                if (
+                    pattern_result
+                    and pattern_result.confidence >= self.config.confidence_threshold
+                ):
+                    classification = self._convert_pattern_result_to_classification(
+                        pattern_result, error
+                    )
                     self._record_metrics(error, classification, start_time)
                     return classification
-            
+
             # Fall back to algorithm-based classification
             classification = create_error_classification(error, self.config.strategy)
-            
+
             # Record metrics if enabled
             self._record_metrics(error, classification, start_time)
-            
+
             return classification
-            
+
         except Exception as e:
             self.logger.error(f"Error during classification: {e}")
-            
+
             # Return fallback classification
             if self.config.fallback_to_unknown:
                 fallback_classification = ErrorClassification(
@@ -153,11 +158,13 @@ class ErrorClassifier:
             else:
                 raise
 
-    def _classify_with_patterns(self, error_text: str, context: Dict[str, Any]) -> Optional[PatternMatch]:
+    def _classify_with_patterns(
+        self, error_text: str, context: Dict[str, Any]
+    ) -> Optional[PatternMatch]:
         """Classify error using pattern matching."""
         if not self.pattern_matcher:
             return None
-            
+
         try:
             matches = self.pattern_matcher.match(error_text, context)
             return matches[0] if matches else None
@@ -171,7 +178,7 @@ class ErrorClassifier:
         """Convert pattern match result to ErrorClassification."""
         # Get metadata for the error type
         metadata = error_type_registry.get_metadata(pattern_result.error_type.value)
-        
+
         if metadata:
             return ErrorClassification(
                 error_type=pattern_result.error_type,
@@ -208,8 +215,10 @@ class ErrorClassifier:
     ) -> ErrorClassification:
         """Convert ClassificationResult to ErrorClassification."""
         # Get metadata for the error type
-        metadata = error_type_registry.get_metadata(classification_result.error_type.value)
-        
+        metadata = error_type_registry.get_metadata(
+            classification_result.error_type.value
+        )
+
         if metadata:
             return ErrorClassification(
                 error_type=classification_result.error_type,
@@ -220,7 +229,11 @@ class ErrorClassifier:
                 details={
                     "error": str(error),
                     "confidence": classification_result.confidence,
-                    "strategy": classification_result.classification_strategy.value if hasattr(classification_result, 'classification_strategy') else "unknown",
+                    "strategy": (
+                        classification_result.classification_strategy.value
+                        if hasattr(classification_result, "classification_strategy")
+                        else "unknown"
+                    ),
                     "metadata": classification_result.metadata,
                 },
             )
@@ -235,54 +248,79 @@ class ErrorClassifier:
                 details={
                     "error": str(error),
                     "confidence": classification_result.confidence,
-                    "strategy": classification_result.classification_strategy.value if hasattr(classification_result, 'classification_strategy') else "unknown",
+                    "strategy": (
+                        classification_result.classification_strategy.value
+                        if hasattr(classification_result, "classification_strategy")
+                        else "unknown"
+                    ),
                 },
             )
 
     def _determine_error_context(self, error: Exception) -> str:
         """Determine the context of the error for better classification."""
         error_str = str(error).lower()
-        
+
         # Network-related context
-        if any(term in error_str for term in ["network", "connection", "timeout", "dns", "ssl"]):
+        if any(
+            term in error_str
+            for term in ["network", "connection", "timeout", "dns", "ssl"]
+        ):
             return "network"
-        
+
         # Authentication context
-        elif any(term in error_str for term in ["auth", "unauthorized", "forbidden", "credentials"]):
+        elif any(
+            term in error_str
+            for term in ["auth", "unauthorized", "forbidden", "credentials"]
+        ):
             return "authentication"
-        
+
         # File system context
-        elif any(term in error_str for term in ["file", "directory", "path", "permission", "disk"]):
+        elif any(
+            term in error_str
+            for term in ["file", "directory", "path", "permission", "disk"]
+        ):
             return "filesystem"
-        
+
         # API context
-        elif any(term in error_str for term in ["api", "http", "request", "response", "status"]):
+        elif any(
+            term in error_str
+            for term in ["api", "http", "request", "response", "status"]
+        ):
             return "api"
-        
+
         # Git context
-        elif any(term in error_str for term in ["git", "merge", "conflict", "branch", "commit"]):
+        elif any(
+            term in error_str
+            for term in ["git", "merge", "conflict", "branch", "commit"]
+        ):
             return "git"
-        
+
         # Provider context
-        elif any(term in error_str for term in ["github", "gitlab", "bitbucket", "azure"]):
+        elif any(
+            term in error_str for term in ["github", "gitlab", "bitbucket", "azure"]
+        ):
             return "provider"
-        
+
         return "unknown"
 
-    def _record_metrics(self, error: Exception, classification: ErrorClassification, start_time: float) -> None:
+    def _record_metrics(
+        self, error: Exception, classification: ErrorClassification, start_time: float
+    ) -> None:
         """Record metrics for the classification if enabled."""
         if not self.metrics_collector:
             return
-        
+
         try:
             import time
+
             prediction_time_ms = (time.time() - start_time) * 1000
-            
+
             # Create a mock ClassificationResult for metrics
             metadata = error_type_registry.get_metadata(classification.error_type.value)
             if metadata is None:
                 # Create fallback metadata
-                from .error_types import ErrorTypeMetadata, ErrorCategory, ErrorSeverity
+                from .error_types import ErrorCategory, ErrorSeverity, ErrorTypeMetadata
+
                 metadata = ErrorTypeMetadata(
                     category=ErrorCategory.UNKNOWN,
                     severity=ErrorSeverity.MEDIUM,
@@ -292,20 +330,24 @@ class ErrorClassifier:
                     should_open_circuit=classification.should_open_circuit,
                     description=f"Unknown {classification.error_type.value}",
                     keywords=[],
-                    patterns=[]
+                    patterns=[],
                 )
-            
+
             classification_result = ClassificationResult(
                 error_type=classification.error_type,
-                confidence=classification.details.get("confidence", 0.5) if classification.details else 0.5,
+                confidence=(
+                    classification.details.get("confidence", 0.5)
+                    if classification.details
+                    else 0.5
+                ),
                 metadata=metadata,
                 classification_strategy=ClassificationStrategy.HYBRID,
                 details={"message": f"Classified {type(error).__name__}"},
             )
-            
+
             # For metrics, we need a true label - use the error type if we can determine it
             true_label = self._infer_true_label(error)
-            
+
             self.metrics_collector.record_prediction(
                 true_label=true_label,
                 predicted_result=classification_result,
@@ -318,7 +360,7 @@ class ErrorClassifier:
         """Infer the true label for metrics (best effort)."""
         # This is a simplified approach - in practice, you'd want more sophisticated logic
         error_str = str(error).lower()
-        
+
         # Simple keyword-based inference
         if "timeout" in error_str:
             return ErrorType.TIMEOUT_ERROR
@@ -352,9 +394,11 @@ class ErrorClassifier:
         if self.metrics_collector:
             self.metrics_collector.reset_metrics()
 
-    def add_custom_pattern(self, pattern: Any, error_type: ErrorType, confidence: float = 1.0) -> None:
+    def add_custom_pattern(
+        self, pattern: Any, error_type: ErrorType, confidence: float = 1.0
+    ) -> None:
         """Add a custom pattern to the pattern matcher."""
-        if self.pattern_matcher and hasattr(self.pattern_matcher, 'add_pattern'):
+        if self.pattern_matcher and hasattr(self.pattern_matcher, "add_pattern"):
             self.pattern_matcher.add_pattern(pattern, error_type, confidence)
             self.logger.info(f"Added custom pattern for {error_type}: {pattern}")
 
@@ -365,14 +409,12 @@ class ErrorClassifier:
         return None
 
     def compare_with_original_classifier(
-        self, 
-        original_classifier: 'ErrorClassifier', 
-        test_errors: List[Exception]
+        self, original_classifier: "ErrorClassifier", test_errors: List[Exception]
     ) -> Optional[MetricsComparator]:
         """Compare performance with the original classifier."""
         if not self.metrics_collector:
             return None
-        
+
         # This would require implementing the comparison logic
         # For now, return None as this is a placeholder
         self.logger.info("Classifier comparison not yet implemented")
@@ -380,12 +422,16 @@ class ErrorClassifier:
 
 
 # Backward compatibility functions
-def create_error_classifier(config: Optional[ErrorClassifierConfig] = None) -> ErrorClassifier:
+def create_error_classifier(
+    config: Optional[ErrorClassifierConfig] = None,
+) -> ErrorClassifier:
     """Create an ErrorClassifier instance with the given configuration."""
     return ErrorClassifier(config)
 
 
-def classify_error(error: Exception, config: Optional[ErrorClassifierConfig] = None) -> ErrorClassification:
+def classify_error(
+    error: Exception, config: Optional[ErrorClassifierConfig] = None
+) -> ErrorClassification:
     """Classify an error using the default classifier configuration."""
     classifier = ErrorClassifier(config)
     return classifier.classify_error(error)

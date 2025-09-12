@@ -1,3 +1,5 @@
+# gemini_sre_agent/pattern_detector/models.py
+
 """
 Data models for the pattern detection system.
 """

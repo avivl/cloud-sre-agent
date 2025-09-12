@@ -1,3 +1,5 @@
+# gemini_sre_agent/ingestion/monitoring/monitoring_manager.py
+
 """
 Monitoring Manager - Centralized monitoring and observability system.
 

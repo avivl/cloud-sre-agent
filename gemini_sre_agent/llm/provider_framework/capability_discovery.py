@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/provider_framework/capability_discovery.py
+
 """
 Provider Capability Discovery System.
 

@@ -19,7 +19,7 @@ from .prompt_context_models import IssueContext, PromptContext
 class WorkflowAnalysisEngine:
     """
     Manages workflow analysis operations.
-    
+
     This class handles all analysis operations including enhanced analysis,
     fallback analysis, and root cause analysis with proper error handling
     and retry logic using existing resilience patterns.
@@ -28,13 +28,13 @@ class WorkflowAnalysisEngine:
     def __init__(self, performance_config: Optional[PerformanceConfig]):
         """
         Initialize the workflow analysis engine.
-        
+
         Args:
             performance_config: Performance configuration
         """
         self.performance_config = performance_config
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize enhanced agent (will be injected)
         self.enhanced_agent: Optional[EnhancedAnalysisAgent] = None
         self.cache: Optional[ContextCache] = None
@@ -57,21 +57,21 @@ class WorkflowAnalysisEngine:
     ) -> Dict[str, Any]:
         """
         Execute enhanced analysis with the enhanced analysis agent.
-        
+
         Args:
             triage_packet: Issue triage data
             historical_logs: Historical log data
             configs: Configuration data
             flow_id: Workflow identifier
             prompt_context: Enhanced prompt context
-            
+
         Returns:
             Analysis result
         """
         try:
             if not self.enhanced_agent:
                 raise ValueError("Enhanced agent not set")
-                
+
             # Use the enhanced analysis agent
             result = await self.enhanced_agent.analyze_issue(
                 triage_packet, historical_logs, configs, flow_id
@@ -103,13 +103,13 @@ class WorkflowAnalysisEngine:
     ) -> Dict[str, Any]:
         """
         Execute fallback analysis when enhanced analysis fails.
-        
+
         Args:
             triage_packet: Issue triage data
             historical_logs: Historical log data
             configs: Configuration data
             flow_id: Workflow identifier
-            
+
         Returns:
             Fallback analysis result
         """
@@ -204,17 +204,17 @@ except Exception as e:
     async def get_cached_analysis(self, flow_id: str) -> Optional[Dict[str, Any]]:
         """
         Get cached analysis result for a specific flow.
-        
+
         Args:
             flow_id: Workflow identifier
-            
+
         Returns:
             Cached analysis result or None if not found
         """
         try:
             if not self.cache:
                 return None
-                
+
             analysis_key = f"analysis:{flow_id}"
             return await self.cache.get(analysis_key)
         except Exception as e:
@@ -224,14 +224,14 @@ except Exception as e:
     async def clear_analysis_cache(self, flow_id: Optional[str] = None) -> None:
         """
         Clear analysis cache for a specific flow or all flows.
-        
+
         Args:
             flow_id: Specific flow to clear, or None to clear all
         """
         try:
             if not self.cache:
                 return
-                
+
             if flow_id:
                 analysis_key = f"analysis:{flow_id}"
                 await self.cache.delete(analysis_key)
@@ -245,14 +245,14 @@ except Exception as e:
     async def get_analysis_statistics(self) -> Dict[str, Any]:
         """
         Get analysis statistics for monitoring.
-        
+
         Returns:
             Dictionary containing analysis statistics
         """
         try:
             if not self.cache:
                 return {"cache_available": False}
-                
+
             cache_stats = await self.cache.get_stats()
             return {
                 "cache_available": True,
@@ -266,7 +266,7 @@ except Exception as e:
     async def health_check(self) -> str:
         """
         Perform health check on analysis engine components.
-        
+
         Returns:
             Health status string
         """
@@ -274,25 +274,25 @@ except Exception as e:
             # Check if essential components are available
             if not self.enhanced_agent:
                 return "degraded - enhanced agent not set"
-            
+
             if not self.cache:
                 return "degraded - cache not set"
-            
+
             # Test basic functionality
             try:
                 # Test fallback analysis with minimal data
                 test_triage = {"error_patterns": ["test"], "affected_files": []}
                 test_logs = []
                 result = self._analyze_root_cause_basic(test_triage, test_logs)
-                
+
                 if not result:
                     return "unhealthy - root cause analysis failed"
-                    
+
             except Exception as e:
                 return f"unhealthy - analysis test failed: {str(e)}"
-            
+
             return "healthy"
-                
+
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
             return f"unhealthy - {str(e)}"

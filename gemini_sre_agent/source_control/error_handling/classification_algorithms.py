@@ -9,12 +9,12 @@ enabling the use of various classification strategies and algorithms.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Protocol
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional, Protocol
 
 from .core import ErrorClassification, ErrorType
-from .error_types import ErrorTypeMetadata, ErrorCategory, ErrorSeverity
+from .error_types import ErrorCategory, ErrorSeverity, ErrorTypeMetadata
 
 
 def _get_metadata_or_fallback(error_type: ErrorType) -> ErrorTypeMetadata:
@@ -35,7 +35,7 @@ def _get_metadata_or_fallback(error_type: ErrorType) -> ErrorTypeMetadata:
         should_open_circuit=True,
         description=f"Unknown {error_type.value}",
         keywords=[],
-        patterns=[]
+        patterns=[],
     )
 
 
@@ -94,7 +94,9 @@ class BaseErrorClassifierImpl(ABC):
 
     def fit(self, X: List[Exception], y: List[ErrorType]) -> "BaseErrorClassifierImpl":
         """Fit the classifier to training data."""
-        self.logger.info(f"Fitting {self.strategy.value} classifier with {len(X)} samples")
+        self.logger.info(
+            f"Fitting {self.strategy.value} classifier with {len(X)} samples"
+        )
         # Most classifiers don't need explicit training, but this provides the interface
         self.is_fitted = True
         return self
@@ -124,7 +126,9 @@ class BaseErrorClassifierImpl(ABC):
             # Add small probabilities for other error types
             for error_type in ErrorType:
                 if error_type != result.error_type:
-                    prob_dict[error_type] = (1.0 - result.confidence) / (len(ErrorType) - 1)
+                    prob_dict[error_type] = (1.0 - result.confidence) / (
+                        len(ErrorType) - 1
+                    )
             results.append(prob_dict)
 
         return results
@@ -132,7 +136,9 @@ class BaseErrorClassifierImpl(ABC):
     def score(self, X: List[Exception], y: List[ErrorType]) -> float:
         """Return the mean accuracy on the given test data and labels."""
         predictions = self.predict(X)
-        correct = sum(1 for pred, actual in zip(predictions, y, strict=True) if pred == actual)
+        correct = sum(
+            1 for pred, actual in zip(predictions, y, strict=True) if pred == actual
+        )
         return correct / len(X) if X else 0.0
 
 
@@ -172,10 +178,12 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
             confidence=0.1,
             metadata=metadata,
             classification_strategy=self.strategy,
-            details={"error": str(error), "type": type(error).__name__}
+            details={"error": str(error), "type": type(error).__name__},
         )
 
-    def _classify_network_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_network_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify network-related errors."""
         if isinstance(error, (ConnectionError, OSError)):
             metadata = _get_metadata_or_fallback(ErrorType.NETWORK_ERROR)
@@ -184,11 +192,13 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
         return None
 
-    def _classify_timeout_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_timeout_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify timeout errors."""
         if isinstance(error, (TimeoutError,)):
             metadata = _get_metadata_or_fallback(ErrorType.TIMEOUT_ERROR)
@@ -197,21 +207,25 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
         return None
 
-    def _classify_rate_limit_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_rate_limit_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify rate limit errors."""
         error_str = str(error).lower()
-        if any(term in error_str for term in ["rate limit", "too many requests", "429"]):
+        if any(
+            term in error_str for term in ["rate limit", "too many requests", "429"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.RATE_LIMIT_ERROR)
             return ClassificationResult(
                 error_type=ErrorType.RATE_LIMIT_ERROR,
                 confidence=0.8,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
         return None
 
@@ -227,7 +241,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                         confidence=0.9,
                         metadata=metadata,
                         classification_strategy=self.strategy,
-                        details={"error": str(error), "status": status}
+                        details={"error": str(error), "status": status},
                     )
                 elif status == 404:
                     metadata = _get_metadata_or_fallback(ErrorType.NOT_FOUND_ERROR)
@@ -236,35 +250,46 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                         confidence=0.9,
                         metadata=metadata,
                         classification_strategy=self.strategy,
-                        details={"error": str(error), "status": status}
+                        details={"error": str(error), "status": status},
                     )
                 elif status in [401, 403]:
-                    error_type = ErrorType.AUTHENTICATION_ERROR if status == 401 else ErrorType.AUTHORIZATION_ERROR
+                    error_type = (
+                        ErrorType.AUTHENTICATION_ERROR
+                        if status == 401
+                        else ErrorType.AUTHORIZATION_ERROR
+                    )
                     metadata = _get_metadata_or_fallback(error_type)
                     return ClassificationResult(
                         error_type=error_type,
                         confidence=0.9,
                         metadata=metadata,
                         classification_strategy=self.strategy,
-                        details={"error": str(error), "status": status}
+                        details={"error": str(error), "status": status},
                     )
         return None
 
-    def _classify_authentication_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_authentication_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify authentication errors."""
         error_str = str(error).lower()
-        if any(term in error_str for term in ["unauthorized", "authentication", "invalid token", "401"]):
+        if any(
+            term in error_str
+            for term in ["unauthorized", "authentication", "invalid token", "401"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.AUTHENTICATION_ERROR)
             return ClassificationResult(
                 error_type=ErrorType.AUTHENTICATION_ERROR,
                 confidence=0.8,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
         return None
 
-    def _classify_validation_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_validation_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify validation errors."""
         if isinstance(error, (ValueError, TypeError)):
             metadata = _get_metadata_or_fallback(ErrorType.VALIDATION_ERROR)
@@ -273,11 +298,13 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
         return None
 
-    def _classify_provider_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_provider_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify provider-specific errors."""
         error_str = str(error).lower()
         error_type_name = type(error).__name__.lower()
@@ -296,17 +323,21 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
         return None
 
-    def _classify_github_errors(self, error: Exception, error_str: str) -> Optional[ClassificationResult]:
+    def _classify_github_errors(
+        self, error: Exception, error_str: str
+    ) -> Optional[ClassificationResult]:
         """Classify GitHub-specific errors."""
         # Rate limiting
-        if any(term in error_str for term in ["rate limit", "403", "too many requests"]):
+        if any(
+            term in error_str for term in ["rate limit", "403", "too many requests"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.GITHUB_RATE_LIMIT_ERROR)
             return ClassificationResult(
                 error_type=ErrorType.GITHUB_RATE_LIMIT_ERROR,
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "github"}
+                details={"error": str(error), "provider": "github"},
             )
 
         # 2FA required
@@ -317,7 +348,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "github"}
+                details={"error": str(error), "provider": "github"},
             )
 
         # SSH errors
@@ -328,7 +359,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.8,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "github"}
+                details={"error": str(error), "provider": "github"},
             )
 
         # General GitHub API errors
@@ -339,20 +370,24 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.7,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "github"}
+                details={"error": str(error), "provider": "github"},
             )
 
-    def _classify_gitlab_errors(self, error: Exception, error_str: str) -> Optional[ClassificationResult]:
+    def _classify_gitlab_errors(
+        self, error: Exception, error_str: str
+    ) -> Optional[ClassificationResult]:
         """Classify GitLab-specific errors."""
         # Rate limiting
-        if any(term in error_str for term in ["rate limit", "429", "too many requests"]):
+        if any(
+            term in error_str for term in ["rate limit", "429", "too many requests"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.GITLAB_RATE_LIMIT_ERROR)
             return ClassificationResult(
                 error_type=ErrorType.GITLAB_RATE_LIMIT_ERROR,
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "gitlab"}
+                details={"error": str(error), "provider": "gitlab"},
             )
 
         # General GitLab API errors
@@ -363,20 +398,25 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.7,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "gitlab"}
+                details={"error": str(error), "provider": "gitlab"},
             )
 
-    def _classify_local_git_errors(self, error: Exception, error_str: str) -> Optional[ClassificationResult]:
+    def _classify_local_git_errors(
+        self, error: Exception, error_str: str
+    ) -> Optional[ClassificationResult]:
         """Classify local Git errors."""
         # Repository not found
-        if any(term in error_str for term in ["not a git repository", "no such file", "repository"]):
+        if any(
+            term in error_str
+            for term in ["not a git repository", "no such file", "repository"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.LOCAL_REPOSITORY_NOT_FOUND)
             return ClassificationResult(
                 error_type=ErrorType.LOCAL_REPOSITORY_NOT_FOUND,
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "local"}
+                details={"error": str(error), "provider": "local"},
             )
 
         # General local Git errors
@@ -387,50 +427,61 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
                 confidence=0.7,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "provider": "local"}
+                details={"error": str(error), "provider": "local"},
             )
 
-    def _classify_file_system_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_file_system_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify file system errors."""
         error_str = str(error).lower()
 
         # File not found
-        if any(term in error_str for term in ["file not found", "no such file", "enoent"]):
+        if any(
+            term in error_str for term in ["file not found", "no such file", "enoent"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.FILE_NOT_FOUND_ERROR)
             return ClassificationResult(
                 error_type=ErrorType.FILE_NOT_FOUND_ERROR,
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
 
         # Permission denied
-        elif any(term in error_str for term in ["permission denied", "access denied", "eacces"]):
+        elif any(
+            term in error_str
+            for term in ["permission denied", "access denied", "eacces"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.PERMISSION_DENIED_ERROR)
             return ClassificationResult(
                 error_type=ErrorType.PERMISSION_DENIED_ERROR,
                 confidence=0.9,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
 
         return None
 
-    def _classify_security_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_security_errors(
+        self, error: Exception
+    ) -> Optional[ClassificationResult]:
         """Classify security-related errors."""
         error_str = str(error).lower()
 
         # SSL/TLS errors
-        if any(term in error_str for term in ["ssl", "tls", "certificate", "handshake"]):
+        if any(
+            term in error_str for term in ["ssl", "tls", "certificate", "handshake"]
+        ):
             metadata = _get_metadata_or_fallback(ErrorType.SSL_ERROR)
             return ClassificationResult(
                 error_type=ErrorType.SSL_ERROR,
                 confidence=0.8,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
 
         return None
@@ -440,14 +491,18 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
         error_str = str(error).lower()
 
         # Service unavailable
-        if any(term in error_str for term in ["service unavailable", "503", "unavailable"]):
-            metadata = _get_metadata_or_fallback(ErrorType.API_SERVICE_UNAVAILABLE_ERROR)
+        if any(
+            term in error_str for term in ["service unavailable", "503", "unavailable"]
+        ):
+            metadata = _get_metadata_or_fallback(
+                ErrorType.API_SERVICE_UNAVAILABLE_ERROR
+            )
             return ClassificationResult(
                 error_type=ErrorType.API_SERVICE_UNAVAILABLE_ERROR,
                 confidence=0.8,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error)}
+                details={"error": str(error)},
             )
 
         return None
@@ -490,7 +545,7 @@ class PatternBasedClassifier(BaseErrorClassifierImpl):
                 confidence=best_confidence,
                 metadata=metadata,
                 classification_strategy=self.strategy,
-                details={"error": str(error), "matched_patterns": matched_patterns}
+                details={"error": str(error), "matched_patterns": matched_patterns},
             )
 
         # Default to unknown error
@@ -500,10 +555,12 @@ class PatternBasedClassifier(BaseErrorClassifierImpl):
             confidence=0.1,
             metadata=metadata,
             classification_strategy=self.strategy,
-            details={"error": str(error)}
+            details={"error": str(error)},
         )
 
-    def _calculate_pattern_confidence(self, error_str: str, patterns: List[str]) -> float:
+    def _calculate_pattern_confidence(
+        self, error_str: str, patterns: List[str]
+    ) -> float:
         """Calculate confidence based on pattern matching."""
         if not patterns:
             return 0.0
@@ -534,9 +591,10 @@ class HybridClassifier(BaseErrorClassifierImpl):
         # Weighted combination
         if rule_result.error_type == pattern_result.error_type:
             # Both classifiers agree
-            combined_confidence = min(1.0,
-                rule_result.confidence * self.weights["rule"] +
-                pattern_result.confidence * self.weights["pattern"]
+            combined_confidence = min(
+                1.0,
+                rule_result.confidence * self.weights["rule"]
+                + pattern_result.confidence * self.weights["pattern"],
             )
             return ClassificationResult(
                 error_type=rule_result.error_type,
@@ -546,21 +604,22 @@ class HybridClassifier(BaseErrorClassifierImpl):
                 details={
                     "rule_confidence": rule_result.confidence,
                     "pattern_confidence": pattern_result.confidence,
-                    "combined_confidence": combined_confidence
-                }
+                    "combined_confidence": combined_confidence,
+                },
             )
         else:
             # Classifiers disagree, use rule-based result with lower confidence
             return ClassificationResult(
                 error_type=rule_result.error_type,
-                confidence=rule_result.confidence * 0.8,  # Reduce confidence due to disagreement
+                confidence=rule_result.confidence
+                * 0.8,  # Reduce confidence due to disagreement
                 metadata=rule_result.metadata,
                 classification_strategy=self.strategy,
                 details={
                     "rule_confidence": rule_result.confidence,
                     "pattern_confidence": pattern_result.confidence,
-                    "disagreement": True
-                }
+                    "disagreement": True,
+                },
             )
 
 
@@ -580,7 +639,9 @@ class ClassificationAlgorithmFactory:
             raise ValueError(f"Unsupported classification strategy: {strategy}")
 
     @staticmethod
-    def create_all_classifiers() -> Dict[ClassificationStrategy, BaseErrorClassifierImpl]:
+    def create_all_classifiers() -> (
+        Dict[ClassificationStrategy, BaseErrorClassifierImpl]
+    ):
         """Create all available classifiers."""
         return {
             strategy: ClassificationAlgorithmFactory.create_classifier(strategy)
@@ -588,7 +649,9 @@ class ClassificationAlgorithmFactory:
         }
 
 
-def create_error_classification(error: Exception, strategy: ClassificationStrategy = ClassificationStrategy.HYBRID) -> ErrorClassification:
+def create_error_classification(
+    error: Exception, strategy: ClassificationStrategy = ClassificationStrategy.HYBRID
+) -> ErrorClassification:
     """Convenience function to create ErrorClassification from Exception."""
     classifier = ClassificationAlgorithmFactory.create_classifier(strategy)
     result = classifier._classify_error(error)
@@ -599,5 +662,5 @@ def create_error_classification(error: Exception, strategy: ClassificationStrate
         retry_delay=result.metadata.retry_delay,
         max_retries=result.metadata.max_retries,
         should_open_circuit=result.metadata.should_open_circuit,
-        details=result.details
+        details=result.details,
     )

@@ -1,3 +1,5 @@
+# gemini_sre_agent/ingestion/adapters/__init__.py
+
 """
 Log source adapters for the ingestion system.
 

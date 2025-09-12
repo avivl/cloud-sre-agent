@@ -1,3 +1,5 @@
+# gemini_sre_agent/metrics/config.py
+
 from typing import Any, Dict
 
 from pydantic import BaseModel, Field

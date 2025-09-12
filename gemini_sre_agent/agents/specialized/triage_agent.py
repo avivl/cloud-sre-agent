@@ -199,7 +199,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         return {
             "agent_type": "triage",
             "optimization_goal": self.optimization_goal.value,
-            "min_performance": getattr(self, 'min_performance', 0.8),
+            "min_performance": getattr(self, "min_performance", 0.8),
             "supported_urgency_levels": ["low", "medium", "high", "critical"],
             "supported_tasks": [
                 "issue_triage",

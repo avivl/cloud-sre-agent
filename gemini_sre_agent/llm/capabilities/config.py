@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/capabilities/config.py
+
 """
 Configuration management for capability definitions.
 

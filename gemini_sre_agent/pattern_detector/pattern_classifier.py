@@ -1,3 +1,5 @@
+# gemini_sre_agent/pattern_detector/pattern_classifier.py
+
 """
 Lightweight pattern classification orchestrator.
 
@@ -24,7 +26,7 @@ class PatternClassifier:
     def __init__(
         self,
         confidence_scorer: Optional[ConfidenceScorer] = None,
-        ensemble_config: Optional[EnsembleConfig] = None
+        ensemble_config: Optional[EnsembleConfig] = None,
     ):
         self.logger = setup_logging()
         self.confidence_scorer = confidence_scorer or ConfidenceScorer()
@@ -32,11 +34,12 @@ class PatternClassifier:
 
         # Initialize the pattern ensemble
         self.pattern_ensemble = PatternEnsemble(
-            config=self.ensemble_config,
-            confidence_scorer=self.confidence_scorer
+            config=self.ensemble_config, confidence_scorer=self.confidence_scorer
         )
 
-        self.logger.info("[PATTERN_DETECTION] PatternClassifier initialized with ensemble")
+        self.logger.info(
+            "[PATTERN_DETECTION] PatternClassifier initialized with ensemble"
+        )
 
     def classify_patterns(
         self, window: TimeWindow, threshold_results: List[ThresholdResult]
@@ -71,7 +74,6 @@ class PatternClassifier:
         """Update the ensemble configuration."""
         self.ensemble_config = config
         self.pattern_ensemble = PatternEnsemble(
-            config=config,
-            confidence_scorer=self.confidence_scorer
+            config=config, confidence_scorer=self.confidence_scorer
         )
         self.logger.info("[PATTERN_DETECTION] Ensemble configuration updated")

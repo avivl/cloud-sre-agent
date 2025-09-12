@@ -17,7 +17,7 @@ from .prompt_context_models import PromptContext
 class WorkflowValidationEngine:
     """
     Manages workflow validation operations.
-    
+
     This class handles all validation operations including code validation,
     quality checks, and validation result processing with proper error handling.
     """
@@ -25,13 +25,13 @@ class WorkflowValidationEngine:
     def __init__(self, performance_config: Optional[PerformanceConfig]):
         """
         Initialize the workflow validation engine.
-        
+
         Args:
             performance_config: Performance configuration
         """
         self.performance_config = performance_config
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize validation pipeline (will be injected)
         self.validation_pipeline: Optional[Any] = None
 
@@ -44,17 +44,19 @@ class WorkflowValidationEngine:
     ) -> Dict[str, Any]:
         """
         Validate generated code for quality and correctness using the validation pipeline.
-        
+
         Args:
             analysis_result: Analysis result containing generated code
             prompt_context: Context for validation
-            
+
         Returns:
             Validation result
         """
         try:
             if not self.validation_pipeline:
-                self.logger.warning("Validation pipeline not set, using basic validation")
+                self.logger.warning(
+                    "Validation pipeline not set, using basic validation"
+                )
                 return await self._validate_python_code(
                     analysis_result.get("analysis", {}).get("code_patch", "")
                 )
@@ -126,10 +128,10 @@ class WorkflowValidationEngine:
     async def _validate_python_code(self, code: str) -> Dict[str, Any]:
         """
         Basic Python code validation as fallback.
-        
+
         Args:
             code: Python code to validate
-            
+
         Returns:
             Basic validation result
         """
@@ -210,7 +212,7 @@ class WorkflowValidationEngine:
     async def get_validation_statistics(self) -> Dict[str, Any]:
         """
         Get validation statistics for monitoring.
-        
+
         Returns:
             Dictionary containing validation statistics
         """
@@ -226,7 +228,7 @@ class WorkflowValidationEngine:
     async def health_check(self) -> str:
         """
         Perform health check on validation engine components.
-        
+
         Returns:
             Health status string
         """
@@ -234,21 +236,21 @@ class WorkflowValidationEngine:
             # Check if essential components are available
             if not self.validation_pipeline:
                 return "degraded - validation pipeline not set"
-            
+
             # Test basic functionality
             try:
                 # Test basic validation with minimal data
                 test_code = "print('test')"
                 result = await self._validate_python_code(test_code)
-                
+
                 if not result.get("is_valid", False):
                     return "unhealthy - basic validation failed"
-                    
+
             except Exception as e:
                 return f"unhealthy - validation test failed: {str(e)}"
-            
+
             return "healthy"
-                
+
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
             return f"unhealthy - {str(e)}"

@@ -1,3 +1,5 @@
+# gemini_sre_agent/ingestion/monitoring/__init__.py
+
 """
 Monitoring and observability components for the log ingestion system.
 

@@ -1,3 +1,5 @@
+# gemini_sre_agent/config/ingestion_config.py
+
 """
 Configuration management for the log ingestion system.
 

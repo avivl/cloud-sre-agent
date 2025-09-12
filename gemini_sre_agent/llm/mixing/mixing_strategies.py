@@ -10,14 +10,12 @@ voting, weighted aggregation, and hierarchical approaches.
 
 import asyncio
 import logging
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..base import LLMRequest, LLMResponse, ModelType
-from ..constants import MAX_CONCURRENT_REQUESTS
 
 logger = logging.getLogger(__name__)
 
@@ -63,14 +61,14 @@ class MixingStrategyExecutor(ABC):
     ) -> List[Optional[LLMResponse]]:
         """
         Execute models using the specific strategy.
-        
+
         Args:
             model_configs: List of model configurations
             prompt: Input prompt
             context: Optional context information
             provider_factory: Factory for creating providers
             semaphore: Semaphore for limiting concurrent requests
-            
+
         Returns:
             List of responses (may contain None for failed models)
         """
@@ -321,7 +319,7 @@ class HierarchicalStrategyExecutor(MixingStrategyExecutor):
         """Execute models hierarchically based on their specialization."""
         # Group models by specialization
         specialized_groups = self._group_by_specialization(model_configs)
-        
+
         results = []
         for specialization, configs in specialized_groups.items():
             if specialization:
@@ -346,13 +344,13 @@ class HierarchicalStrategyExecutor(MixingStrategyExecutor):
     ) -> Dict[Optional[str], List[ModelConfig]]:
         """Group model configurations by their specialization."""
         groups: Dict[Optional[str], List[ModelConfig]] = {}
-        
+
         for config in model_configs:
             specialization = config.specialized_for
             if specialization not in groups:
                 groups[specialization] = []
             groups[specialization].append(config)
-        
+
         return groups
 
 
@@ -372,19 +370,19 @@ class MixingStrategyFactory:
     def create_executor(cls, strategy: MixingStrategy) -> MixingStrategyExecutor:
         """
         Create a strategy executor for the given strategy.
-        
+
         Args:
             strategy: The mixing strategy to create an executor for
-            
+
         Returns:
             Strategy executor instance
-            
+
         Raises:
             ValueError: If the strategy is not supported
         """
         if strategy not in cls._executors:
             raise ValueError(f"Unsupported mixing strategy: {strategy}")
-        
+
         executor_class = cls._executors[strategy]
         return executor_class()
 
@@ -392,7 +390,7 @@ class MixingStrategyFactory:
     def get_supported_strategies(cls) -> List[MixingStrategy]:
         """
         Get list of supported mixing strategies.
-        
+
         Returns:
             List of supported strategies
         """
@@ -427,7 +425,7 @@ class StrategyPerformanceMonitor:
     ) -> None:
         """
         Record execution metrics for a strategy.
-        
+
         Args:
             strategy: The strategy that was executed
             execution_time: Time taken for execution in seconds
@@ -436,12 +434,12 @@ class StrategyPerformanceMonitor:
         metrics = self.strategy_metrics[strategy]
         metrics["total_executions"] += 1
         metrics["total_execution_time"] += execution_time
-        
+
         if success:
             metrics["successful_executions"] += 1
         else:
             metrics["failed_executions"] += 1
-        
+
         # Update derived metrics
         metrics["average_execution_time"] = (
             metrics["total_execution_time"] / metrics["total_executions"]
@@ -453,10 +451,10 @@ class StrategyPerformanceMonitor:
     def get_strategy_metrics(self, strategy: MixingStrategy) -> Dict[str, Any]:
         """
         Get metrics for a specific strategy.
-        
+
         Args:
             strategy: The strategy to get metrics for
-            
+
         Returns:
             Dictionary containing strategy metrics
         """
@@ -465,35 +463,41 @@ class StrategyPerformanceMonitor:
     def get_all_metrics(self) -> Dict[MixingStrategy, Dict[str, Any]]:
         """
         Get metrics for all strategies.
-        
+
         Returns:
             Dictionary containing metrics for all strategies
         """
-        return {strategy: metrics.copy() for strategy, metrics in self.strategy_metrics.items()}
+        return {
+            strategy: metrics.copy()
+            for strategy, metrics in self.strategy_metrics.items()
+        }
 
     def get_best_strategy(self) -> Optional[MixingStrategy]:
         """
         Get the best performing strategy based on success rate and execution time.
-        
+
         Returns:
             Best performing strategy or None if no data available
         """
-        if not any(metrics["total_executions"] > 0 for metrics in self.strategy_metrics.values()):
+        if not any(
+            metrics["total_executions"] > 0
+            for metrics in self.strategy_metrics.values()
+        ):
             return None
-        
+
         # Score strategies based on success rate and inverse execution time
         scored_strategies = []
         for strategy, metrics in self.strategy_metrics.items():
             if metrics["total_executions"] > 0:
                 # Higher success rate is better, lower execution time is better
                 score = (
-                    metrics["success_rate"] * 0.7 + 
-                    (100 - metrics["average_execution_time"] * 10) * 0.3
+                    metrics["success_rate"] * 0.7
+                    + (100 - metrics["average_execution_time"] * 10) * 0.3
                 )
                 scored_strategies.append((strategy, score))
-        
+
         if not scored_strategies:
             return None
-        
+
         # Return strategy with highest score
         return max(scored_strategies, key=lambda x: x[1])[0]

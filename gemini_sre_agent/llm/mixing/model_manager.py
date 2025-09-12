@@ -10,9 +10,9 @@ configuration management, health monitoring, and circuit breaker patterns.
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from ..base import ModelType
 from ..constants import MAX_MODEL_CONFIGS
@@ -90,7 +90,7 @@ class ModelManager:
     ):
         """
         Initialize the model manager.
-        
+
         Args:
             provider_factory: Factory for creating providers
             model_registry: Registry for model information
@@ -99,18 +99,18 @@ class ModelManager:
         self.provider_factory = provider_factory
         self.model_registry = model_registry
         self._semaphore = asyncio.Semaphore(max_concurrent_requests)
-        
+
         # Model health tracking
         self.model_health: Dict[str, ModelHealth] = {}
         self.circuit_breakers: Dict[str, CircuitBreakerState] = {}
-        
+
         # Specialized model configurations
         self.specialized_configs: Dict[TaskType, List[ModelConfig]] = {}
         self._initialize_specialized_configs()
-        
+
         # Performance tracking
         self.performance_metrics: Dict[str, Dict[str, Any]] = {}
-        
+
         logger.info("ModelManager initialized with specialized configurations")
 
     def _initialize_specialized_configs(self) -> None:
@@ -340,42 +340,44 @@ class ModelManager:
     def get_specialized_configs(self, task_type: TaskType) -> List[ModelConfig]:
         """
         Get specialized model configurations for a task type.
-        
+
         Args:
             task_type: Type of task to get configurations for
-            
+
         Returns:
             List of model configurations
         """
         return self.specialized_configs.get(task_type, []).copy()
 
-    def get_available_models(self, task_type: Optional[TaskType] = None) -> List[ModelConfig]:
+    def get_available_models(
+        self, task_type: Optional[TaskType] = None
+    ) -> List[ModelConfig]:
         """
         Get available model configurations.
-        
+
         Args:
             task_type: Optional task type to filter by
-            
+
         Returns:
             List of available model configurations
         """
         if task_type:
             return self.get_specialized_configs(task_type)
-        
+
         # Return all configurations
         all_configs = []
         for configs in self.specialized_configs.values():
             all_configs.extend(configs)
-        
+
         return all_configs
 
     def validate_configs(self, configs: List[ModelConfig]) -> None:
         """
         Validate model configuration list.
-        
+
         Args:
             configs: List of model configurations to validate
-            
+
         Raises:
             ValueError: If configurations are invalid
         """
@@ -389,27 +391,27 @@ class ModelManager:
         for config in configs:
             if not config.provider or not config.model:
                 raise ValueError("Provider and model must be specified")
-            
+
             if config.weight <= 0:
                 raise ValueError("Model weight must be positive")
-            
+
             if config.max_tokens <= 0:
                 raise ValueError("Max tokens must be positive")
-            
+
             if config.temperature < 0 or config.temperature > 2:
                 raise ValueError("Temperature must be between 0 and 2")
-            
+
             if config.timeout <= 0:
                 raise ValueError("Timeout must be positive")
 
     def get_model_key(self, provider: str, model: str) -> str:
         """
         Get a unique key for a model.
-        
+
         Args:
             provider: Model provider
             model: Model name
-            
+
         Returns:
             Unique model key
         """
@@ -418,16 +420,16 @@ class ModelManager:
     def check_model_health(self, provider: str, model: str) -> ModelHealth:
         """
         Check the health status of a model.
-        
+
         Args:
             provider: Model provider
             model: Model name
-            
+
         Returns:
             Model health status
         """
         model_key = self.get_model_key(provider, model)
-        
+
         if model_key not in self.model_health:
             self.model_health[model_key] = ModelHealth(
                 provider=provider,
@@ -435,7 +437,7 @@ class ModelManager:
                 is_healthy=True,
                 last_check=time.time(),
             )
-        
+
         return self.model_health[model_key]
 
     def update_model_health(
@@ -448,7 +450,7 @@ class ModelManager:
     ) -> None:
         """
         Update model health status.
-        
+
         Args:
             provider: Model provider
             model: Model name
@@ -457,7 +459,7 @@ class ModelManager:
             error: Error message if request failed
         """
         model_key = self.get_model_key(provider, model)
-        
+
         if model_key not in self.model_health:
             self.model_health[model_key] = ModelHealth(
                 provider=provider,
@@ -465,20 +467,22 @@ class ModelManager:
                 is_healthy=True,
                 last_check=time.time(),
             )
-        
+
         health = self.model_health[model_key]
         health.last_check = time.time()
-        
+
         if success:
             health.consecutive_failures = 0
             health.last_error = None
             health.is_healthy = True
-            
+
             # Update response time average
             if health.response_time_avg == 0:
                 health.response_time_avg = response_time
             else:
-                health.response_time_avg = (health.response_time_avg + response_time) / 2
+                health.response_time_avg = (
+                    health.response_time_avg + response_time
+                ) / 2
         else:
             health.consecutive_failures += 1
             health.last_error = error
@@ -487,49 +491,49 @@ class ModelManager:
     def is_circuit_breaker_open(self, provider: str, model: str) -> bool:
         """
         Check if circuit breaker is open for a model.
-        
+
         Args:
             provider: Model provider
             model: Model name
-            
+
         Returns:
             True if circuit breaker is open
         """
         model_key = self.get_model_key(provider, model)
-        
+
         if model_key not in self.circuit_breakers:
             return False
-        
+
         breaker = self.circuit_breakers[model_key]
-        
+
         # Check if we should retry
         if breaker.is_open and time.time() > breaker.next_retry_time:
             breaker.is_open = False
             breaker.failure_count = 0
             logger.info(f"Circuit breaker closed for {model_key}")
-        
+
         return breaker.is_open
 
     def record_circuit_breaker_failure(self, provider: str, model: str) -> None:
         """
         Record a failure for circuit breaker.
-        
+
         Args:
             provider: Model provider
             model: Model name
         """
         model_key = self.get_model_key(provider, model)
-        
+
         if model_key not in self.circuit_breakers:
             self.circuit_breakers[model_key] = CircuitBreakerState(
                 provider=provider,
                 model=model,
             )
-        
+
         breaker = self.circuit_breakers[model_key]
         breaker.failure_count += 1
         breaker.last_failure_time = time.time()
-        
+
         if breaker.failure_count >= breaker.failure_threshold:
             breaker.is_open = True
             breaker.next_retry_time = time.time() + breaker.recovery_timeout
@@ -538,53 +542,55 @@ class ModelManager:
     def record_circuit_breaker_success(self, provider: str, model: str) -> None:
         """
         Record a success for circuit breaker.
-        
+
         Args:
             provider: Model provider
             model: Model name
         """
         model_key = self.get_model_key(provider, model)
-        
+
         if model_key in self.circuit_breakers:
             breaker = self.circuit_breakers[model_key]
             breaker.failure_count = 0
             breaker.is_open = False
 
-    def get_healthy_models(self, task_type: Optional[TaskType] = None) -> List[ModelConfig]:
+    def get_healthy_models(
+        self, task_type: Optional[TaskType] = None
+    ) -> List[ModelConfig]:
         """
         Get healthy model configurations.
-        
+
         Args:
             task_type: Optional task type to filter by
-            
+
         Returns:
             List of healthy model configurations
         """
         configs = self.get_available_models(task_type)
         healthy_configs = []
-        
+
         for config in configs:
-            model_key = self.get_model_key(config.provider, config.model)
-            
+            self.get_model_key(config.provider, config.model)
+
             # Check if circuit breaker is open
             if self.is_circuit_breaker_open(config.provider, config.model):
                 continue
-            
+
             # Check health status
             health = self.check_model_health(config.provider, config.model)
             if health.is_healthy:
                 healthy_configs.append(config)
-        
+
         return healthy_configs
 
     def get_performance_metrics(self, provider: str, model: str) -> Dict[str, Any]:
         """
         Get performance metrics for a model.
-        
+
         Args:
             provider: Model provider
             model: Model name
-            
+
         Returns:
             Dictionary containing performance metrics
         """
@@ -600,7 +606,7 @@ class ModelManager:
     ) -> None:
         """
         Update performance metrics for a model.
-        
+
         Args:
             provider: Model provider
             model: Model name
@@ -608,7 +614,7 @@ class ModelManager:
             success: Whether the execution was successful
         """
         model_key = self.get_model_key(provider, model)
-        
+
         if model_key not in self.performance_metrics:
             self.performance_metrics[model_key] = {
                 "total_requests": 0,
@@ -618,16 +624,16 @@ class ModelManager:
                 "average_execution_time": 0.0,
                 "success_rate": 0.0,
             }
-        
+
         metrics = self.performance_metrics[model_key]
         metrics["total_requests"] += 1
         metrics["total_execution_time"] += execution_time
-        
+
         if success:
             metrics["successful_requests"] += 1
         else:
             metrics["failed_requests"] += 1
-        
+
         # Update derived metrics
         metrics["average_execution_time"] = (
             metrics["total_execution_time"] / metrics["total_requests"]
@@ -639,7 +645,7 @@ class ModelManager:
     def get_semaphore(self) -> asyncio.Semaphore:
         """
         Get the semaphore for limiting concurrent requests.
-        
+
         Returns:
             Semaphore instance
         """
@@ -648,7 +654,7 @@ class ModelManager:
     def get_all_health_status(self) -> Dict[str, ModelHealth]:
         """
         Get health status for all models.
-        
+
         Returns:
             Dictionary containing health status for all models
         """
@@ -657,7 +663,7 @@ class ModelManager:
     def get_all_circuit_breaker_status(self) -> Dict[str, CircuitBreakerState]:
         """
         Get circuit breaker status for all models.
-        
+
         Returns:
             Dictionary containing circuit breaker status for all models
         """

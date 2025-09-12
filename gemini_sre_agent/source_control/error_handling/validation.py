@@ -1,3 +1,5 @@
+# gemini_sre_agent/source_control/error_handling/validation.py
+
 """
 Configuration validation for error handling system.
 

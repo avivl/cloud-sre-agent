@@ -1,3 +1,5 @@
+# gemini_sre_agent/source_control/providers/local/local_provider.py
+
 """Local filesystem provider with Git integration and patch generation capabilities."""
 
 from pathlib import Path

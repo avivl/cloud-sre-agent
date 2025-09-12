@@ -1,3 +1,5 @@
+# gemini_sre_agent/source_control/metrics/__init__.py
+
 """
 Metrics collection and analysis package.
 

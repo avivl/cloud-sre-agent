@@ -1,3 +1,5 @@
+# gemini_sre_agent/agents/agent_models.py
+
 """
 Main coordination module for agent models.
 
@@ -13,12 +15,8 @@ The module is organized as follows:
 - Module-level utilities and factory functions are provided
 """
 
-from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from uuid import uuid4
-
-from pydantic import BaseModel, Field, field_validator
+from typing import Any, Dict
 
 # ============================================================================
 # Common Enums and Base Models
@@ -88,92 +86,67 @@ class ActionType(str, Enum):
 # from .request_models import *
 
 # Import from response_models
-from .response_models import (
-    # Base models
-    BaseAgentResponse,
-    ValidationError,
-    
-    # Response models
-    TriageResult,
-    AnalysisResult,
-    RemediationPlan,
-    HealthCheckResponse,
-    TextResponse,
-    CodeResponse,
-    
-    # Supporting models
-    AnalysisFinding,
-    RootCauseAnalysis,
-    RemediationStep,
-    ComponentHealth,
-    ResourceUtilization,
-    
-    # Factory functions
-    create_triage_result,
-    create_analysis_result,
-    create_remediation_plan,
-    create_health_check_response,
-    
-    # Registry and utilities
+from .response_models import (  # Base models; Response models; Supporting models; Factory functions; Registry and utilities
     AGENT_RESPONSE_MODELS,
+    AnalysisFinding,
+    AnalysisResult,
+    BaseAgentResponse,
+    CodeResponse,
+    ComponentHealth,
+    HealthCheckResponse,
+    RemediationPlan,
+    RemediationStep,
+    ResourceUtilization,
+    RootCauseAnalysis,
+    TextResponse,
+    TriageResult,
+    ValidationError,
+    create_analysis_result,
+    create_health_check_response,
+    create_remediation_plan,
+    create_triage_result,
     get_response_model,
     validate_response_model,
 )
 
 # Import from state_models
+from .state_models import StateTransition  # State enums; State models; State utilities
 from .state_models import (
-    # State enums
-    AgentState,
-    WorkflowState,
-    StateTransition as StateTransitionEnum,
-    
-    # State models
-    StateSnapshot,
-    StateTransition,
     AgentExecutionContext,
     AgentExecutionMetrics,
     AgentExecutionState,
-    WorkflowStep,
-    WorkflowContext,
+    AgentState,
     ConversationHistory,
     PersistentAgentData,
-    
-    # State utilities
     StateManager,
+    StateSnapshot,
+    WorkflowContext,
+    WorkflowState,
+    WorkflowStep,
 )
 
 # Import from validation_models
-from .validation_models import (
-    # Validation error models
-    ValidationWarning,
+from .validation_models import (  # Validation error models; Validation schemas; Validation utilities; Custom validators; Validation decorators
+    CodeAnalysisValidationSchema,
+    LogValidationSchema,
+    MetricValidationSchema,
+    ValidationRegistry,
     ValidationResult,
     ValidationSeverity,
-    
-    # Validation schemas
-    MetricValidationSchema,
-    LogValidationSchema,
-    CodeAnalysisValidationSchema,
-    
-    # Validation utilities
     ValidationUtils,
-    ValidationRegistry,
-    
-    # Custom validators
+    ValidationWarning,
+    validate_confidence,
     validate_confidence_score,
     validate_confidence_threshold,
-    validate_severity_level,
-    validate_positive_number,
-    validate_non_empty_string,
-    validate_uuid_format,
-    validate_timestamp,
     validate_enum_value,
-    
-    # Validation decorators
-    validate_with_schema,
-    validate_confidence,
+    validate_non_empty_string,
+    validate_positive_number,
     validate_severity,
+    validate_severity_level,
+    validate_timestamp,
+    validate_uuid_format,
+    validate_with_schema,
 )
-
 
 # ============================================================================
 # Module-level Utilities
@@ -208,22 +181,18 @@ def get_all_validation_models() -> Dict[str, type]:
 
 
 def create_agent_response(
-    agent_type: str,
-    agent_id: str,
-    status: StatusCode = StatusCode.SUCCESS,
-    **kwargs
+    agent_type: str, agent_id: str, status: StatusCode = StatusCode.SUCCESS, **kwargs
 ) -> BaseAgentResponse:
     """Create an agent response using the appropriate model."""
     model_class = get_response_model(agent_type)
     return model_class(
-        agent_type=agent_type,
-        agent_id=agent_id,
-        status=status,
-        **kwargs
+        agent_type=agent_type, agent_id=agent_id, status=status, **kwargs
     )
 
 
-def validate_agent_data(data: Dict[str, Any], data_type: str = "agent_response") -> ValidationResult:
+def validate_agent_data(
+    data: Dict[str, Any], data_type: str = "agent_response"
+) -> ValidationResult:
     """Validate agent data using the appropriate validator."""
     if data_type == "agent_response":
         return ValidationUtils.validate_agent_response_data(data)
@@ -240,30 +209,26 @@ def validate_agent_data(data: Dict[str, Any], data_type: str = "agent_response")
 __all__ = [
     # Common enums
     "StatusCode",
-    "SeverityLevel", 
+    "SeverityLevel",
     "ConfidenceLevel",
     "IssueCategory",
     "ActionType",
-    
     # Base models
     "BaseAgentResponse",
     "ValidationError",
-    
     # Response models
     "TriageResult",
-    "AnalysisResult", 
+    "AnalysisResult",
     "RemediationPlan",
     "HealthCheckResponse",
     "TextResponse",
     "CodeResponse",
-    
     # Supporting response models
     "AnalysisFinding",
     "RootCauseAnalysis",
     "RemediationStep",
     "ComponentHealth",
     "ResourceUtilization",
-    
     # State models
     "AgentState",
     "WorkflowState",
@@ -271,13 +236,12 @@ __all__ = [
     "StateSnapshot",
     "StateTransition",
     "AgentExecutionContext",
-    "AgentExecutionMetrics", 
+    "AgentExecutionMetrics",
     "AgentExecutionState",
     "WorkflowStep",
     "WorkflowContext",
     "ConversationHistory",
     "PersistentAgentData",
-    
     # Validation models
     "ValidationWarning",
     "ValidationResult",
@@ -285,26 +249,22 @@ __all__ = [
     "MetricValidationSchema",
     "LogValidationSchema",
     "CodeAnalysisValidationSchema",
-    
     # Factory functions
     "create_triage_result",
     "create_analysis_result",
     "create_remediation_plan",
     "create_health_check_response",
     "create_agent_response",
-    
     # Registry and utilities
     "AGENT_RESPONSE_MODELS",
     "get_response_model",
     "validate_response_model",
     "get_all_response_models",
-    "get_all_state_models", 
+    "get_all_state_models",
     "get_all_validation_models",
     "validate_agent_data",
-    
     # State utilities
     "StateManager",
-    
     # Validation utilities
     "ValidationUtils",
     "ValidationRegistry",

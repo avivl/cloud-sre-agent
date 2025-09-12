@@ -1,3 +1,5 @@
+# gemini_sre_agent/source_control/providers/gitlab/gitlab_models.py
+
 """GitLab-specific models and data structures."""
 
 from dataclasses import dataclass

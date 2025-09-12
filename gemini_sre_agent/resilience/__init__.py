@@ -1,3 +1,5 @@
+# gemini_sre_agent/resilience/__init__.py
+
 """Resilience patterns and error handling module for the Gemini SRE Agent."""
 
 from .circuit_breaker import CircuitBreaker, CircuitState

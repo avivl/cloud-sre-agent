@@ -3,7 +3,7 @@
 """
 Classification metrics and performance measurement for error classification.
 
-This module provides comprehensive metrics collection and analysis for 
+This module provides comprehensive metrics collection and analysis for
 classification performance including confusion matrices, accuracy metrics,
 and classification reports.
 """
@@ -16,9 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .core import ErrorType
 from .classification_algorithms import ClassificationResult
-
+from .core import ErrorType
 
 logger = logging.getLogger(__name__)
 
@@ -70,12 +69,24 @@ class ConfusionMatrix:
             return {"precision": 0.0, "recall": 0.0, "f1_score": 0.0}
 
         tp = self.matrix.get((error_type, error_type), 0)
-        fp = sum(self.matrix.get((other, error_type), 0) for other in self.classes if other != error_type)
-        fn = sum(self.matrix.get((error_type, other), 0) for other in self.classes if other != error_type)
+        fp = sum(
+            self.matrix.get((other, error_type), 0)
+            for other in self.classes
+            if other != error_type
+        )
+        fn = sum(
+            self.matrix.get((error_type, other), 0)
+            for other in self.classes
+            if other != error_type
+        )
 
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        f1_score = (
+            2 * (precision * recall) / (precision + recall)
+            if (precision + recall) > 0
+            else 0.0
+        )
 
         return {
             "precision": precision,
@@ -119,8 +130,12 @@ class PerformanceMetrics:
     average_confidence: float = 0.0
     average_prediction_time_ms: float = 0.0
     total_prediction_time_ms: float = 0.0
-    classification_counts: Dict[ErrorType, int] = field(default_factory=lambda: defaultdict(int))
-    confidence_by_type: Dict[ErrorType, List[float]] = field(default_factory=lambda: defaultdict(list))
+    classification_counts: Dict[ErrorType, int] = field(
+        default_factory=lambda: defaultdict(int)
+    )
+    confidence_by_type: Dict[ErrorType, List[float]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
 
 @dataclass
@@ -141,15 +156,15 @@ class ClassificationMetricsCollector:
         """Initialize the metrics collector."""
         self.name = name
         self.logger = logging.getLogger(f"ClassificationMetricsCollector.{name}")
-        
+
         # Metrics storage
         self.confusion_matrix = ConfusionMatrix()
         self.performance_metrics = PerformanceMetrics()
         self.prediction_history: List[Tuple[ErrorType, ErrorType, float, float]] = []
-        
+
         # Time tracking
         self.start_time = time.time()
-        
+
         self.logger.info(f"Initialized metrics collector: {name}")
 
     def record_prediction(
@@ -179,16 +194,23 @@ class ClassificationMetricsCollector:
 
         # Update running averages
         total_conf = (
-            self.performance_metrics.average_confidence * (self.performance_metrics.total_predictions - 1) + 
-            confidence
+            self.performance_metrics.average_confidence
+            * (self.performance_metrics.total_predictions - 1)
+            + confidence
         )
-        self.performance_metrics.average_confidence = total_conf / self.performance_metrics.total_predictions
+        self.performance_metrics.average_confidence = (
+            total_conf / self.performance_metrics.total_predictions
+        )
 
         total_time = self.performance_metrics.total_prediction_time_ms
-        self.performance_metrics.average_prediction_time_ms = total_time / self.performance_metrics.total_predictions
+        self.performance_metrics.average_prediction_time_ms = (
+            total_time / self.performance_metrics.total_predictions
+        )
 
         # Store prediction history
-        self.prediction_history.append((true_label, predicted_label, confidence, prediction_time_ms))
+        self.prediction_history.append(
+            (true_label, predicted_label, confidence, prediction_time_ms)
+        )
 
         self.logger.debug(
             f"Recorded prediction: {true_label} -> {predicted_label} "
@@ -248,7 +270,7 @@ class ClassificationMetricsCollector:
 
         # Calculate overall precision, recall, F1 (micro-averaged)
         total_tp = sum(
-            self.confusion_matrix.matrix.get((cls, cls), 0) 
+            self.confusion_matrix.matrix.get((cls, cls), 0)
             for cls in self.confusion_matrix.classes
         )
         total_fp = sum(
@@ -259,9 +281,15 @@ class ClassificationMetricsCollector:
         )
         total_fn = total_fp  # In multi-class, FP for one class is FN for others
 
-        precision = total_tp / (total_tp + total_fp) if (total_tp + total_fp) > 0 else 0.0
+        precision = (
+            total_tp / (total_tp + total_fp) if (total_tp + total_fp) > 0 else 0.0
+        )
         recall = total_tp / (total_tp + total_fn) if (total_tp + total_fn) > 0 else 0.0
-        f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        f1_score = (
+            2 * (precision * recall) / (precision + recall)
+            if (precision + recall) > 0
+            else 0.0
+        )
 
         return ClassificationMetrics(
             accuracy=accuracy,
@@ -282,10 +310,13 @@ class ClassificationMetricsCollector:
     def get_performance_summary(self) -> Dict[str, Any]:
         """Get a comprehensive performance summary."""
         classification_metrics = self.calculate_classification_metrics()
-        
+
         # Calculate confidence statistics by type
         confidence_stats = {}
-        for error_type, confidences in self.performance_metrics.confidence_by_type.items():
+        for (
+            error_type,
+            confidences,
+        ) in self.performance_metrics.confidence_by_type.items():
             if confidences:
                 confidence_stats[error_type.value] = {
                     "mean": np.mean(confidences),
@@ -302,7 +333,9 @@ class ClassificationMetricsCollector:
         for error_type, count in self.performance_metrics.classification_counts.items():
             prediction_distribution[error_type.value] = {
                 "count": count,
-                "percentage": (count / total_predictions * 100) if total_predictions > 0 else 0.0,
+                "percentage": (
+                    (count / total_predictions * 100) if total_predictions > 0 else 0.0
+                ),
             }
 
         return {
@@ -329,25 +362,40 @@ class ClassificationMetricsCollector:
             "confidence_statistics": confidence_stats,
             "prediction_distribution": prediction_distribution,
             "per_class_metrics": {
-                error_type.value: metrics 
+                error_type.value: metrics
                 for error_type, metrics in classification_metrics.per_class_metrics.items()
             },
             "confusion_matrix": {
-                "classes": [cls.value for cls in classification_metrics.confusion_matrix.classes] if classification_metrics.confusion_matrix else [],
-                "matrix": classification_metrics.confusion_matrix.get_matrix_array().tolist() if classification_metrics.confusion_matrix else [],
+                "classes": (
+                    [
+                        cls.value
+                        for cls in classification_metrics.confusion_matrix.classes
+                    ]
+                    if classification_metrics.confusion_matrix
+                    else []
+                ),
+                "matrix": (
+                    classification_metrics.confusion_matrix.get_matrix_array().tolist()
+                    if classification_metrics.confusion_matrix
+                    else []
+                ),
             },
             "collection_metadata": {
                 "collector_name": self.name,
                 "collection_start_time": self.start_time,
                 "collection_duration_s": time.time() - self.start_time,
-                "num_classes": len(classification_metrics.confusion_matrix.classes) if classification_metrics.confusion_matrix else 0,
+                "num_classes": (
+                    len(classification_metrics.confusion_matrix.classes)
+                    if classification_metrics.confusion_matrix
+                    else 0
+                ),
             },
         }
 
     def generate_classification_report(self) -> str:
         """Generate a detailed classification report."""
         classification_metrics = self.calculate_classification_metrics()
-        
+
         report_lines = [
             f"\nClassification Report - {self.name}",
             "=" * 60,
@@ -379,10 +427,12 @@ class ClassificationMetricsCollector:
         ]
 
         # Add per-class metrics table
-        report_lines.extend([
-            f"{'Class':<30} {'Precision':<10} {'Recall':<10} {'F1-Score':<10} {'Support':<10}",
-            "-" * 70,
-        ])
+        report_lines.extend(
+            [
+                f"{'Class':<30} {'Precision':<10} {'Recall':<10} {'F1-Score':<10} {'Support':<10}",
+                "-" * 70,
+            ]
+        )
 
         for error_type, metrics in classification_metrics.per_class_metrics.items():
             class_name = error_type.value
@@ -395,16 +445,20 @@ class ClassificationMetricsCollector:
                 f"{class_name:<30} {precision:<10.4f} {recall:<10.4f} {f1_score:<10.4f} {support:<10d}"
             )
 
-        report_lines.extend([
-            "",
-            "Confusion Matrix:",
-            "-" * 60,
-        ])
+        report_lines.extend(
+            [
+                "",
+                "Confusion Matrix:",
+                "-" * 60,
+            ]
+        )
 
         # Add confusion matrix
         if classification_metrics.confusion_matrix:
             matrix = classification_metrics.confusion_matrix.get_matrix_array()
-            classes = [cls.value for cls in classification_metrics.confusion_matrix.classes]
+            classes = [
+                cls.value for cls in classification_metrics.confusion_matrix.classes
+            ]
         else:
             matrix = np.array([])
             classes = []
@@ -428,7 +482,7 @@ class ClassificationMetricsCollector:
     def export_metrics(self, algorithm_name: str) -> MetricsSummary:
         """Export metrics as a structured summary."""
         classification_metrics = self.calculate_classification_metrics()
-        
+
         return MetricsSummary(
             timestamp=time.time(),
             classification_metrics=classification_metrics,
@@ -453,23 +507,26 @@ class ClassificationMetricsCollector:
     def get_top_errors(self, n: int = 5) -> List[Tuple[ErrorType, ErrorType, int]]:
         """Get the top N most common classification errors."""
         error_counts = defaultdict(int)
-        
+
         for true_label, pred_label, _, _ in self.prediction_history:
             if true_label != pred_label:
                 error_counts[(true_label, pred_label)] += 1
-        
+
         # Sort by count (descending)
         sorted_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)
-        
-        return [(true_label, pred_label, count) for (true_label, pred_label), count in sorted_errors[:n]]
+
+        return [
+            (true_label, pred_label, count)
+            for (true_label, pred_label), count in sorted_errors[:n]
+        ]
 
     def get_confidence_statistics(self) -> Dict[str, float]:
         """Get overall confidence statistics."""
         if not self.prediction_history:
             return {}
-        
+
         confidences = [conf for _, _, conf, _ in self.prediction_history]
-        
+
         return {
             "mean": float(np.mean(confidences)),
             "std": float(np.std(confidences)),
@@ -484,9 +541,9 @@ class ClassificationMetricsCollector:
         """Get timing statistics."""
         if not self.prediction_history:
             return {}
-        
+
         times = [time_ms for _, _, _, time_ms in self.prediction_history]
-        
+
         return {
             "mean_ms": float(np.mean(times)),
             "std_ms": float(np.std(times)),
@@ -515,14 +572,14 @@ class MetricsComparator:
     def compare_algorithms(self, metric: str = "f1_score") -> List[Tuple[str, float]]:
         """Compare algorithms by a specific metric."""
         results = []
-        
+
         for algorithm_name, summary in self.metrics_summaries.items():
             classification_metrics = summary.classification_metrics
-            
+
             if hasattr(classification_metrics, metric):
                 value = getattr(classification_metrics, metric)
                 results.append((algorithm_name, value))
-        
+
         # Sort by metric value (descending)
         results.sort(key=lambda x: x[1], reverse=True)
         return results
@@ -536,46 +593,58 @@ class MetricsComparator:
         """Generate a comparison report for all algorithms."""
         if not self.metrics_summaries:
             return "No metrics available for comparison."
-        
+
         report_lines = [
             "\nAlgorithm Comparison Report",
             "=" * 50,
             "",
         ]
-        
+
         # Comparison table
-        metrics_to_compare = ["accuracy", "precision", "recall", "f1_score", "macro_f1_score"]
-        
+        metrics_to_compare = [
+            "accuracy",
+            "precision",
+            "recall",
+            "f1_score",
+            "macro_f1_score",
+        ]
+
         # Header
         header = f"{'Algorithm':<20}"
         for metric in metrics_to_compare:
             header += f"{metric.replace('_', ' ').title():<12}"
         report_lines.append(header)
         report_lines.append("-" * (20 + len(metrics_to_compare) * 12))
-        
+
         # Algorithm rows
         for algorithm_name, summary in self.metrics_summaries.items():
             classification_metrics = summary.classification_metrics
-            
+
             row = f"{algorithm_name:<20}"
             for metric in metrics_to_compare:
                 value = getattr(classification_metrics, metric, 0.0)
                 row += f"{value:<12.4f}"
             report_lines.append(row)
-        
+
         # Best performers
-        report_lines.extend([
-            "",
-            "Best Performers:",
-            "-" * 30,
-        ])
-        
+        report_lines.extend(
+            [
+                "",
+                "Best Performers:",
+                "-" * 30,
+            ]
+        )
+
         for metric in metrics_to_compare:
             best = self.get_best_algorithm(metric)
             if best:
-                best_value = getattr(self.metrics_summaries[best].classification_metrics, metric, 0.0)
-                report_lines.append(f"{metric.replace('_', ' ').title():<15}: {best} ({best_value:.4f})")
-        
+                best_value = getattr(
+                    self.metrics_summaries[best].classification_metrics, metric, 0.0
+                )
+                report_lines.append(
+                    f"{metric.replace('_', ' ').title():<15}: {best} ({best_value:.4f})"
+                )
+
         return "\n".join(report_lines)
 
 
@@ -586,11 +655,13 @@ def calculate_metrics_from_predictions(
 ) -> MetricsSummary:
     """Calculate metrics from lists of predictions."""
     collector = ClassificationMetricsCollector(f"batch_{algorithm_name}")
-    
-    for true_label, predicted_result in zip(true_labels, predicted_results, strict=True):
+
+    for true_label, predicted_result in zip(
+        true_labels, predicted_results, strict=True
+    ):
         # Assume 1ms prediction time for batch calculations
         collector.record_prediction(true_label, predicted_result, 1.0)
-    
+
     return collector.export_metrics(algorithm_name)
 
 
@@ -600,11 +671,11 @@ def compare_classifier_performance(
 ) -> MetricsComparator:
     """Compare performance of multiple classifiers."""
     comparator = MetricsComparator()
-    
+
     for algorithm_name, predicted_results in predictions_by_algorithm.items():
         metrics_summary = calculate_metrics_from_predictions(
             true_labels, predicted_results, algorithm_name
         )
         comparator.add_metrics(algorithm_name, metrics_summary)
-    
+
     return comparator

@@ -19,7 +19,7 @@ from .prompt_context_models import IssueContext, IssueType, PromptContext
 class WorkflowGenerationEngine:
     """
     Manages workflow code generation operations.
-    
+
     This class handles all code generation operations including enhanced code
     generation, specialized generator enhancement, and basic code patch generation
     with proper error handling and caching.
@@ -28,13 +28,13 @@ class WorkflowGenerationEngine:
     def __init__(self, performance_config: Optional[PerformanceConfig]):
         """
         Initialize the workflow generation engine.
-        
+
         Args:
             performance_config: Performance configuration
         """
         self.performance_config = performance_config
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize enhanced agent (will be injected)
         self.enhanced_agent: Optional[EnhancedAnalysisAgent] = None
         self.cache: Optional[ContextCache] = None
@@ -55,12 +55,12 @@ class WorkflowGenerationEngine:
     ) -> str:
         """
         Generate enhanced code using specialized generators.
-        
+
         Args:
             analysis_result: Analysis result from enhanced agent
             prompt_context: Enhanced prompt context
             enable_specialized_generators: Whether to use specialized generators
-            
+
         Returns:
             Generated code
         """
@@ -93,18 +93,18 @@ class WorkflowGenerationEngine:
     ) -> str:
         """
         Enhance code using specialized generators.
-        
+
         Args:
             base_code: Base generated code
             prompt_context: Enhanced prompt context
-            
+
         Returns:
             Enhanced code
         """
         try:
             if not self.enhanced_agent:
                 return base_code
-                
+
             if not hasattr(self.enhanced_agent, "code_generator_factory"):
                 return base_code
 
@@ -154,11 +154,11 @@ class WorkflowGenerationEngine:
     ) -> str:
         """
         Generate basic code patch for fallback scenarios.
-        
+
         Args:
             issue_context: Issue context information
             proposed_fix: Proposed fix description
-            
+
         Returns:
             Basic code patch
         """
@@ -187,17 +187,17 @@ except Exception as e:
     async def get_cached_generation(self, flow_id: str) -> Optional[str]:
         """
         Get cached generation result for a specific flow.
-        
+
         Args:
             flow_id: Workflow identifier
-            
+
         Returns:
             Cached generation result or None if not found
         """
         try:
             if not self.cache:
                 return None
-                
+
             generation_key = f"generation:{flow_id}"
             return await self.cache.get(generation_key)
         except Exception as e:
@@ -207,7 +207,7 @@ except Exception as e:
     async def cache_generation(self, flow_id: str, generated_code: str) -> None:
         """
         Cache generation result for a specific flow.
-        
+
         Args:
             flow_id: Workflow identifier
             generated_code: Generated code to cache
@@ -215,7 +215,7 @@ except Exception as e:
         try:
             if not self.cache or not self.performance_config:
                 return
-                
+
             generation_key = f"generation:{flow_id}"
             await self.cache.set(
                 generation_key,
@@ -229,14 +229,14 @@ except Exception as e:
     async def clear_generation_cache(self, flow_id: Optional[str] = None) -> None:
         """
         Clear generation cache for a specific flow or all flows.
-        
+
         Args:
             flow_id: Specific flow to clear, or None to clear all
         """
         try:
             if not self.cache:
                 return
-                
+
             if flow_id:
                 generation_key = f"generation:{flow_id}"
                 await self.cache.delete(generation_key)
@@ -250,23 +250,23 @@ except Exception as e:
     async def get_generation_statistics(self) -> Dict[str, Any]:
         """
         Get generation statistics for monitoring.
-        
+
         Returns:
             Dictionary containing generation statistics
         """
         try:
             if not self.cache:
                 return {"cache_available": False}
-                
+
             cache_stats = await self.cache.get_stats()
             return {
                 "cache_available": True,
                 "cache_stats": cache_stats,
                 "enhanced_agent_available": self.enhanced_agent is not None,
                 "specialized_generators_available": (
-                    self.enhanced_agent is not None and
-                    hasattr(self.enhanced_agent, "code_generator_factory") and
-                    self.enhanced_agent.code_generator_factory is not None
+                    self.enhanced_agent is not None
+                    and hasattr(self.enhanced_agent, "code_generator_factory")
+                    and self.enhanced_agent.code_generator_factory is not None
                 ),
             }
         except Exception as e:
@@ -276,7 +276,7 @@ except Exception as e:
     async def health_check(self) -> str:
         """
         Perform health check on generation engine components.
-        
+
         Returns:
             Health status string
         """
@@ -284,10 +284,10 @@ except Exception as e:
             # Check if essential components are available
             if not self.enhanced_agent:
                 return "degraded - enhanced agent not set"
-            
+
             if not self.cache:
                 return "degraded - cache not set"
-            
+
             # Test basic functionality
             try:
                 # Test basic code generation with minimal data
@@ -300,19 +300,19 @@ except Exception as e:
                     related_services=["test"],
                     temporal_context={"test": "test"},
                     user_impact="test",
-                    business_impact="test"
+                    business_impact="test",
                 )
                 test_fix = "Test fix"
                 result = self.generate_basic_code_patch(test_issue_context, test_fix)
-                
+
                 if not result:
                     return "unhealthy - basic code generation failed"
-                    
+
             except Exception as e:
                 return f"unhealthy - generation test failed: {str(e)}"
-            
+
             return "healthy"
-                
+
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
             return f"unhealthy - {str(e)}"

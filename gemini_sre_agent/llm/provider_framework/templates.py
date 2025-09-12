@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/provider_framework/templates.py
+
 """
 Pre-built Provider Templates for Common Patterns.
 

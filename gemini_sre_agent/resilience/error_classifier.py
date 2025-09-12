@@ -1,3 +1,5 @@
+# gemini_sre_agent/resilience/error_classifier.py
+
 """Error classification system for different error types."""
 
 import logging

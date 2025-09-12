@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/strategy_manager.py
+
 """
 Strategy manager for model selection using the Strategy pattern.
 
@@ -42,51 +44,48 @@ Created: 2024
 
 # Import all strategy functionality from specialized modules
 from .strategy_base import (
-    OptimizationGoal,
-    StrategyContext,
-    StrategyResult,
-    ScoringWeights,
-    ScoringContext,
     ModelScore,
     ModelSelectionStrategy,
+    OptimizationGoal,
+    ScoringContext,
+    ScoringWeights,
+    StrategyContext,
+    StrategyResult,
 )
 from .strategy_implementations import (
     CostOptimizedStrategy,
+    HybridStrategy,
     PerformanceOptimizedStrategy,
     QualityOptimizedStrategy,
     TimeBasedStrategy,
-    HybridStrategy,
 )
-from .strategy_selector import StrategyManager
 from .strategy_metrics import (
-    StrategyMetrics,
     PerformanceSnapshot,
+    StrategyMetrics,
     StrategyMetricsCollector,
     StrategyPerformanceAnalyzer,
     StrategyRecommendationEngine,
 )
+from .strategy_selector import StrategyManager
 
 # Re-export everything for backward compatibility
 __all__ = [
     # Base classes and types
     "OptimizationGoal",
-    "StrategyContext", 
+    "StrategyContext",
     "StrategyResult",
     "ScoringWeights",
     "ScoringContext",
     "ModelScore",
     "ModelSelectionStrategy",
-    
     # Strategy implementations
     "CostOptimizedStrategy",
-    "PerformanceOptimizedStrategy", 
+    "PerformanceOptimizedStrategy",
     "QualityOptimizedStrategy",
     "TimeBasedStrategy",
     "HybridStrategy",
-    
     # Main manager
     "StrategyManager",
-    
     # Metrics and monitoring
     "StrategyMetrics",
     "PerformanceSnapshot",
@@ -100,9 +99,10 @@ from typing import Optional
 
 _default_manager: Optional[StrategyManager] = None
 
+
 def get_default_strategy_manager() -> StrategyManager:
     """Get the default strategy manager instance.
-    
+
     Returns:
         Default StrategyManager instance
     """
@@ -110,6 +110,7 @@ def get_default_strategy_manager() -> StrategyManager:
     if _default_manager is None:
         _default_manager = StrategyManager()
     return _default_manager
+
 
 def reset_default_strategy_manager():
     """Reset the default strategy manager instance."""

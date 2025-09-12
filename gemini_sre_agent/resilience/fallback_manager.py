@@ -1,3 +1,5 @@
+# gemini_sre_agent/resilience/fallback_manager.py
+
 """Fallback manager for automatic provider switching."""
 
 import asyncio

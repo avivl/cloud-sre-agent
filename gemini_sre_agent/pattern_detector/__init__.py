@@ -1,3 +1,5 @@
+# gemini_sre_agent/pattern_detector/__init__.py
+
 """
 Pattern Detection System
 """

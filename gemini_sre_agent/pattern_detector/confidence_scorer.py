@@ -1,3 +1,5 @@
+# gemini_sre_agent/pattern_detector/confidence_scorer.py
+
 """
 Advanced confidence scoring system.
 """

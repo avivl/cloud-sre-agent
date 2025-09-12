@@ -1,3 +1,5 @@
+# gemini_sre_agent/legacy_config.py
+
 import re  # Added for regex validation
 from typing import List, Optional
 

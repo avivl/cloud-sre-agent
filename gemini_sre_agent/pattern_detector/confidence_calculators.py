@@ -1,3 +1,5 @@
+# gemini_sre_agent/pattern_detector/confidence_calculators.py
+
 """
 Confidence calculation components for pattern detection.
 
@@ -22,12 +24,9 @@ from .models import (
 
 class ConfidenceCalculator(Protocol):
     """Protocol for confidence calculators."""
-    
+
     def calculate_factor(
-        self, 
-        window: TimeWindow, 
-        logs: List[LogEntry], 
-        context: Dict[str, Any]
+        self, window: TimeWindow, logs: List[LogEntry], context: Dict[str, Any]
     ) -> float:
         """Calculate a specific confidence factor."""
         ...
@@ -35,16 +34,13 @@ class ConfidenceCalculator(Protocol):
 
 class BaseConfidenceCalculator(ABC):
     """Base class for confidence calculators."""
-    
+
     def __init__(self):
         self.logger = None  # Will be set by the parent scorer
-    
+
     @abstractmethod
     def calculate_factor(
-        self, 
-        window: TimeWindow, 
-        logs: List[LogEntry], 
-        context: Dict[str, Any]
+        self, window: TimeWindow, logs: List[LogEntry], context: Dict[str, Any]
     ) -> float:
         """Calculate a specific confidence factor."""
         pass
@@ -52,16 +48,13 @@ class BaseConfidenceCalculator(ABC):
 
 class TemporalConfidenceCalculator(BaseConfidenceCalculator):
     """Calculator for temporal confidence factors."""
-    
+
     def calculate_factor(
-        self, 
-        window: TimeWindow, 
-        logs: List[LogEntry], 
-        context: Dict[str, Any]
+        self, window: TimeWindow, logs: List[LogEntry], context: Dict[str, Any]
     ) -> float:
         """Calculate temporal confidence factors."""
         factor_type = context.get("factor_type")
-        
+
         if factor_type == ConfidenceFactors.TIME_CONCENTRATION:
             return self._calculate_time_concentration(logs, window)
         elif factor_type == ConfidenceFactors.TIME_CORRELATION:
@@ -73,7 +66,7 @@ class TemporalConfidenceCalculator(BaseConfidenceCalculator):
             return 1.0 if self._check_gradual_onset(logs) else 0.0
         else:
             return 0.0
-    
+
     def _calculate_time_concentration(
         self, logs: List[LogEntry], window: TimeWindow
     ) -> float:
@@ -84,7 +77,7 @@ class TemporalConfidenceCalculator(BaseConfidenceCalculator):
         error_span = (timestamps[-1] - timestamps[0]).total_seconds()
         window_span = window.duration_minutes * 60
         return 1.0 - (error_span / window_span) if window_span > 0 else 1.0
-    
+
     def _calculate_time_correlation(self, logs: List[LogEntry]) -> float:
         """Calculate temporal correlation between errors."""
         if len(logs) < 2:
@@ -94,7 +87,7 @@ class TemporalConfidenceCalculator(BaseConfidenceCalculator):
         if total_span == 0:
             return 1.0
         return max(0.0, 1.0 - (total_span / 120.0))
-    
+
     def _check_rapid_onset(self, logs: List[LogEntry], threshold_seconds: int) -> bool:
         """Check if errors occurred rapidly."""
         if not logs:
@@ -102,7 +95,7 @@ class TemporalConfidenceCalculator(BaseConfidenceCalculator):
         timestamps = sorted([log.timestamp for log in logs])
         time_span = (timestamps[-1] - timestamps[0]).total_seconds()
         return time_span <= threshold_seconds
-    
+
     def _check_gradual_onset(self, logs: List[LogEntry]) -> bool:
         """Check if errors occurred gradually over time."""
         if len(logs) < 3:
@@ -124,16 +117,13 @@ class TemporalConfidenceCalculator(BaseConfidenceCalculator):
 
 class ServiceConfidenceCalculator(BaseConfidenceCalculator):
     """Calculator for service-related confidence factors."""
-    
+
     def calculate_factor(
-        self, 
-        window: TimeWindow, 
-        logs: List[LogEntry], 
-        context: Dict[str, Any]
+        self, window: TimeWindow, logs: List[LogEntry], context: Dict[str, Any]
     ) -> float:
         """Calculate service-related confidence factors."""
         factor_type = context.get("factor_type")
-        
+
         if factor_type == ConfidenceFactors.SERVICE_COUNT:
             services = list({log.service_name for log in logs if log.service_name})
             return min(1.0, len(services) / 5.0)
@@ -143,7 +133,7 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
             return self._calculate_cross_service_correlation(logs)
         else:
             return 0.0
-    
+
     def _calculate_service_distribution(self, logs: List[LogEntry]) -> float:
         """Calculate how evenly distributed errors are across services."""
         if not logs:
@@ -163,7 +153,7 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
         variance = sum((count - mean_count) ** 2 for count in counts) / len(counts)
         cv = (variance**0.5) / mean_count
         return max(0.0, 1.0 - cv)
-    
+
     def _calculate_cross_service_correlation(self, logs: List[LogEntry]) -> float:
         """Calculate correlation between errors across different services."""
         if not logs:
@@ -172,7 +162,7 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
         if len(service_timestamps) < 2:
             return 0.0
         return self._calculate_service_correlations(service_timestamps)
-    
+
     def _group_logs_by_service(self, logs: List[LogEntry]) -> Dict[str, List[datetime]]:
         """Group log timestamps by service name."""
         service_timestamps = {}
@@ -182,7 +172,7 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
                     service_timestamps[log.service_name] = []
                 service_timestamps[log.service_name].append(log.timestamp)
         return service_timestamps
-    
+
     def _calculate_service_correlations(
         self, service_timestamps: Dict[str, List[datetime]]
     ) -> float:
@@ -190,7 +180,7 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
         services = list(service_timestamps.keys())
         total_correlations = 0
         correlation_sum = 0.0
-        
+
         for i in range(len(services)):
             for j in range(i + 1, len(services)):
                 correlation = self._calculate_pair_correlation(
@@ -198,9 +188,9 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
                 )
                 correlation_sum += correlation
                 total_correlations += 1
-        
+
         return correlation_sum / total_correlations if total_correlations > 0 else 0.0
-    
+
     def _calculate_pair_correlation(
         self, times_a: List[datetime], times_b: List[datetime]
     ) -> float:
@@ -210,7 +200,7 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
             for time_b in times_b:
                 if abs((time_a - time_b).total_seconds()) <= 30:
                     correlation += 1
-        
+
         if times_a and times_b:
             return correlation / (len(times_a) * len(times_b))
         return 0.0
@@ -218,16 +208,13 @@ class ServiceConfidenceCalculator(BaseConfidenceCalculator):
 
 class ErrorConfidenceCalculator(BaseConfidenceCalculator):
     """Calculator for error-related confidence factors."""
-    
+
     def calculate_factor(
-        self, 
-        window: TimeWindow, 
-        logs: List[LogEntry], 
-        context: Dict[str, Any]
+        self, window: TimeWindow, logs: List[LogEntry], context: Dict[str, Any]
     ) -> float:
         """Calculate error-related confidence factors."""
         factor_type = context.get("factor_type")
-        
+
         if factor_type == ConfidenceFactors.ERROR_FREQUENCY:
             return min(1.0, len(logs) / 20.0)
         elif factor_type == ConfidenceFactors.ERROR_SEVERITY:
@@ -238,7 +225,7 @@ class ErrorConfidenceCalculator(BaseConfidenceCalculator):
             return self._calculate_message_similarity(logs)
         else:
             return 0.0
-    
+
     def _calculate_severity_factor(self, logs: List[LogEntry]) -> float:
         """Calculate severity-weighted confidence factor."""
         if not logs:
@@ -255,7 +242,7 @@ class ErrorConfidenceCalculator(BaseConfidenceCalculator):
             severity = log.severity.upper() if log.severity else "INFO"
             total_weight += severity_weights.get(severity, 0.5)
         return min(1.0, total_weight / len(logs))
-    
+
     def _calculate_error_consistency(self, logs: List[LogEntry]) -> float:
         """Calculate consistency of error types."""
         if not logs:
@@ -268,7 +255,7 @@ class ErrorConfidenceCalculator(BaseConfidenceCalculator):
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
         most_common_count = max(severity_counts.values())
         return most_common_count / len(severities)
-    
+
     def _calculate_message_similarity(self, logs: List[LogEntry]) -> float:
         """Calculate similarity between error messages."""
         if not logs:
@@ -296,16 +283,13 @@ class ErrorConfidenceCalculator(BaseConfidenceCalculator):
 
 class ContextualConfidenceCalculator(BaseConfidenceCalculator):
     """Calculator for contextual confidence factors."""
-    
+
     def calculate_factor(
-        self, 
-        window: TimeWindow, 
-        logs: List[LogEntry], 
-        context: Dict[str, Any]
+        self, window: TimeWindow, logs: List[LogEntry], context: Dict[str, Any]
     ) -> float:
         """Calculate contextual confidence factors."""
         factor_type = context.get("factor_type")
-        
+
         if factor_type == ConfidenceFactors.BASELINE_DEVIATION:
             return context.get("baseline_deviation", 0.5)
         elif factor_type == ConfidenceFactors.TREND_ANALYSIS:
@@ -324,7 +308,7 @@ class ContextualConfidenceCalculator(BaseConfidenceCalculator):
 
 class ConfidenceScoreProcessor:
     """Processor for confidence score calculation and rule application."""
-    
+
     def __init__(self):
         self.calculators = {
             "temporal": TemporalConfidenceCalculator(),
@@ -332,7 +316,7 @@ class ConfidenceScoreProcessor:
             "error": ErrorConfidenceCalculator(),
             "contextual": ContextualConfidenceCalculator(),
         }
-    
+
     def calculate_raw_factors(
         self,
         window: TimeWindow,
@@ -341,7 +325,7 @@ class ConfidenceScoreProcessor:
     ) -> Dict[str, float]:
         """Calculate all raw confidence factors."""
         factors = {}
-        
+
         # Temporal factors
         temporal_context = {**context, "factor_type": None}
         for factor_type in [
@@ -354,7 +338,7 @@ class ConfidenceScoreProcessor:
             factors[factor_type] = self.calculators["temporal"].calculate_factor(
                 window, logs, temporal_context
             )
-        
+
         # Service factors
         service_context = {**context, "factor_type": None}
         for factor_type in [
@@ -366,7 +350,7 @@ class ConfidenceScoreProcessor:
             factors[factor_type] = self.calculators["service"].calculate_factor(
                 window, logs, service_context
             )
-        
+
         # Error factors
         error_context = {**context, "factor_type": None}
         for factor_type in [
@@ -379,7 +363,7 @@ class ConfidenceScoreProcessor:
             factors[factor_type] = self.calculators["error"].calculate_factor(
                 window, logs, error_context
             )
-        
+
         # Contextual factors
         contextual_context = {**context, "factor_type": None}
         for factor_type in [
@@ -394,9 +378,9 @@ class ConfidenceScoreProcessor:
             factors[factor_type] = self.calculators["contextual"].calculate_factor(
                 window, logs, contextual_context
             )
-        
+
         return factors
-    
+
     def apply_confidence_rules(
         self,
         raw_factors: Dict[str, float],
@@ -406,7 +390,7 @@ class ConfidenceScoreProcessor:
         factor_scores = {}
         weighted_sum = 0.0
         total_weight = 0.0
-        
+
         for rule in rules:
             if rule.factor_type in raw_factors:
                 raw_value = raw_factors[rule.factor_type]
@@ -419,12 +403,12 @@ class ConfidenceScoreProcessor:
                 factor_scores[rule.factor_type] = weighted_contribution
                 weighted_sum += weighted_contribution
                 total_weight += rule.weight
-        
+
         overall_score = (weighted_sum / total_weight) if total_weight > 0 else 0.0
         overall_score = max(0.0, min(1.0, overall_score))
-        
+
         return factor_scores, weighted_sum, total_weight
-    
+
     def _apply_decay_function(self, value: float, rule: ConfidenceRule) -> float:
         """Apply decay function to a confidence factor value."""
         if not rule.decay_function:
@@ -439,7 +423,7 @@ class ConfidenceScoreProcessor:
             base = rule.parameters.get("base", math.e)
             return math.log(1 + value) / math.log(1 + base)
         return value
-    
+
     def determine_confidence_level(self, score: float) -> str:
         """Determine confidence level from score."""
         if score >= 0.9:
@@ -452,7 +436,7 @@ class ConfidenceScoreProcessor:
             return "LOW"
         else:
             return "VERY_LOW"
-    
+
     def generate_explanation(
         self,
         pattern_type: str,
@@ -481,7 +465,7 @@ class ConfidenceScoreProcessor:
 
 class ConfidenceRuleFactory:
     """Factory for creating confidence rules for different pattern types."""
-    
+
     @staticmethod
     def get_default_confidence_rules() -> Dict[str, List[ConfidenceRule]]:
         """Get default confidence rules for all pattern types."""

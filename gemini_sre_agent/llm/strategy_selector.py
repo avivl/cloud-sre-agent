@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/strategy_selector.py
+
 """
 Strategy selector and manager for model selection strategies.
 
@@ -13,24 +15,24 @@ Author: Gemini SRE Agent
 Created: 2024
 """
 
-from typing import Dict, List, Optional, Any
 import logging
+from typing import Any, Dict, List, Optional
 
+from .model_registry import ModelInfo
+from .model_scorer import ModelScorer
 from .strategy_base import (
-    ModelSelectionStrategy, 
-    StrategyContext, 
+    ModelSelectionStrategy,
+    OptimizationGoal,
+    StrategyContext,
     StrategyResult,
-    OptimizationGoal
 )
 from .strategy_implementations import (
     CostOptimizedStrategy,
+    HybridStrategy,
     PerformanceOptimizedStrategy,
     QualityOptimizedStrategy,
     TimeBasedStrategy,
-    HybridStrategy
 )
-from .model_registry import ModelInfo
-from .model_scorer import ModelScorer
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ class StrategyManager:
 
     def __init__(self, model_scorer: Optional[ModelScorer] = None):
         """Initialize the strategy manager.
-        
+
         Args:
             model_scorer: Optional model scorer instance
         """
@@ -83,15 +85,15 @@ class StrategyManager:
         context: StrategyContext,
     ) -> StrategyResult:
         """Select model using specified strategy.
-        
+
         Args:
             candidates: List of available models
             goal: Optimization goal to use
             context: Strategy execution context
-            
+
         Returns:
             StrategyResult containing selected model and metadata
-            
+
         Raises:
             ValueError: If unknown optimization goal
         """
@@ -123,7 +125,7 @@ class StrategyManager:
 
     def add_strategy(self, goal: OptimizationGoal, strategy: ModelSelectionStrategy):
         """Add or replace a strategy.
-        
+
         Args:
             goal: Optimization goal for the strategy
             strategy: Strategy implementation
@@ -142,7 +144,7 @@ class StrategyManager:
 
     def remove_strategy(self, goal: OptimizationGoal):
         """Remove a strategy.
-        
+
         Args:
             goal: Optimization goal to remove strategy for
         """
@@ -152,7 +154,7 @@ class StrategyManager:
 
     def get_available_strategies(self) -> List[OptimizationGoal]:
         """Get list of available strategies.
-        
+
         Returns:
             List of available optimization goals
         """
@@ -160,13 +162,13 @@ class StrategyManager:
 
     def get_strategy_performance(self, goal: OptimizationGoal) -> Dict[str, float]:
         """Get performance metrics for a specific strategy.
-        
+
         Args:
             goal: Optimization goal to get metrics for
-            
+
         Returns:
             Dictionary containing performance metrics
-            
+
         Raises:
             ValueError: If unknown optimization goal
         """
@@ -184,7 +186,7 @@ class StrategyManager:
 
     def get_all_performance_metrics(self) -> Dict[str, Dict[str, float]]:
         """Get performance metrics for all strategies.
-        
+
         Returns:
             Dictionary mapping strategy names to their performance metrics
         """
@@ -195,7 +197,7 @@ class StrategyManager:
 
     def get_usage_statistics(self) -> Dict[str, int]:
         """Get usage statistics for all strategies.
-        
+
         Returns:
             Dictionary mapping strategy names to usage counts
         """
@@ -205,7 +207,7 @@ class StrategyManager:
         self, goal: OptimizationGoal, success: bool, latency_ms: float
     ):
         """Update performance metrics for a strategy based on actual usage.
-        
+
         Args:
             goal: Optimization goal to update
             success: Whether the selection was successful
@@ -254,22 +256,22 @@ class StrategyManager:
 
     def health_check(self) -> Dict[str, Any]:
         """Perform health check on the strategy manager.
-        
+
         Returns:
             Dictionary containing health status and metrics
         """
         available_strategies = len(self._strategies)
         total_usage = sum(self._strategy_usage_stats.values())
-        
+
         # Calculate overall success rate
         total_successful = sum(
-            metrics["successful_selections"] 
+            metrics["successful_selections"]
             for metrics in self._strategy_performance.values()
         )
         overall_success_rate = (
             total_successful / max(1, total_usage) if total_usage > 0 else 0.0
         )
-        
+
         return {
             "status": "healthy",
             "available_strategies": available_strategies,
@@ -282,61 +284,71 @@ class StrategyManager:
                     "performance": self._strategy_performance.get(goal.value, {}),
                 }
                 for goal in OptimizationGoal
-            }
+            },
         }
 
     def get_strategy_recommendations(
         self, context: StrategyContext
     ) -> List[OptimizationGoal]:
         """Get recommended strategies based on context.
-        
+
         Args:
             context: Strategy execution context
-            
+
         Returns:
             List of recommended optimization goals in order of preference
         """
         recommendations = []
-        
+
         # Business hours recommendation
         if context.business_hours_only:
-            recommendations.extend([
-                OptimizationGoal.QUALITY,
-                OptimizationGoal.PERFORMANCE,
-                OptimizationGoal.HYBRID
-            ])
+            recommendations.extend(
+                [
+                    OptimizationGoal.QUALITY,
+                    OptimizationGoal.PERFORMANCE,
+                    OptimizationGoal.HYBRID,
+                ]
+            )
         else:
             # Cost-sensitive recommendation
             if context.max_cost and context.max_cost < 0.01:
-                recommendations.extend([
-                    OptimizationGoal.COST,
-                    OptimizationGoal.TIME_BASED,
-                    OptimizationGoal.HYBRID
-                ])
+                recommendations.extend(
+                    [
+                        OptimizationGoal.COST,
+                        OptimizationGoal.TIME_BASED,
+                        OptimizationGoal.HYBRID,
+                    ]
+                )
             # Performance-critical recommendation
             elif context.min_performance and context.min_performance > 0.8:
-                recommendations.extend([
-                    OptimizationGoal.PERFORMANCE,
-                    OptimizationGoal.QUALITY,
-                    OptimizationGoal.HYBRID
-                ])
+                recommendations.extend(
+                    [
+                        OptimizationGoal.PERFORMANCE,
+                        OptimizationGoal.QUALITY,
+                        OptimizationGoal.HYBRID,
+                    ]
+                )
             # Quality-focused recommendation
             elif context.min_quality and context.min_quality > 0.8:
-                recommendations.extend([
-                    OptimizationGoal.QUALITY,
-                    OptimizationGoal.PERFORMANCE,
-                    OptimizationGoal.HYBRID
-                ])
+                recommendations.extend(
+                    [
+                        OptimizationGoal.QUALITY,
+                        OptimizationGoal.PERFORMANCE,
+                        OptimizationGoal.HYBRID,
+                    ]
+                )
             # Default balanced recommendation
             else:
-                recommendations.extend([
-                    OptimizationGoal.HYBRID,
-                    OptimizationGoal.TIME_BASED,
-                    OptimizationGoal.PERFORMANCE,
-                    OptimizationGoal.COST,
-                    OptimizationGoal.QUALITY
-                ])
-        
+                recommendations.extend(
+                    [
+                        OptimizationGoal.HYBRID,
+                        OptimizationGoal.TIME_BASED,
+                        OptimizationGoal.PERFORMANCE,
+                        OptimizationGoal.COST,
+                        OptimizationGoal.QUALITY,
+                    ]
+                )
+
         # Filter to only available strategies
         available = self.get_available_strategies()
         return [goal for goal in recommendations if goal in available]

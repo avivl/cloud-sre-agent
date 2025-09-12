@@ -1,3 +1,5 @@
+# gemini_sre_agent/agents/validation_models.py
+
 """
 Comprehensive validation models and utilities for agent data validation.
 
@@ -8,11 +10,17 @@ severity levels, and comprehensive error reporting.
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, Callable, TypeVar, Generic
+from typing import Any, Callable, Dict, List, Optional, Union
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator, ValidationError as PydanticValidationError
-from pydantic.validators import str_validator
+from pydantic import (
+    BaseModel,
+    Field,
+)
+from pydantic import ValidationError as PydanticValidationError
+from pydantic import (
+    field_validator,
+)
 
 # ============================================================================
 # Validation Error Models
@@ -33,7 +41,8 @@ class ValidationError(BaseModel):
         default_factory=dict, description="Additional context for the error"
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), description="Error timestamp"
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Error timestamp",
     )
 
     class Config:
@@ -50,7 +59,8 @@ class ValidationWarning(BaseModel):
     code: Optional[str] = Field(None, description="Warning code")
     suggestion: Optional[str] = Field(None, description="Suggested fix")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), description="Warning timestamp"
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Warning timestamp",
     )
 
     class Config:
@@ -74,9 +84,7 @@ class ValidationResult(BaseModel):
     validation_time_ms: float = Field(
         ..., description="Time taken for validation in milliseconds"
     )
-    validator_used: Optional[str] = Field(
-        None, description="Validator that was used"
-    )
+    validator_used: Optional[str] = Field(None, description="Validator that was used")
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Validation metadata"
     )
@@ -118,7 +126,9 @@ def validate_confidence_threshold(value: float, threshold: float = 0.3) -> float
     """Validate confidence score meets minimum threshold."""
     validated_value = validate_confidence_score(value)
     if validated_value < threshold:
-        raise ValueError(f"Confidence score {validated_value} below threshold {threshold}")
+        raise ValueError(
+            f"Confidence score {validated_value} below threshold {threshold}"
+        )
     return validated_value
 
 
@@ -159,7 +169,7 @@ def validate_timestamp(value: Union[str, datetime]) -> datetime:
         return value
     if isinstance(value, str):
         try:
-            return datetime.fromisoformat(value.replace('Z', '+00:00'))
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
         except ValueError:
             raise ValueError("Invalid timestamp format")
     raise ValueError("Timestamp must be a string or datetime object")
@@ -190,11 +200,10 @@ class MetricValidationSchema(BaseModel):
     value: Union[int, float] = Field(..., description="Metric value")
     unit: Optional[str] = Field(None, description="Metric unit")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), description="Metric timestamp"
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Metric timestamp",
     )
-    tags: Dict[str, str] = Field(
-        default_factory=dict, description="Metric tags"
-    )
+    tags: Dict[str, str] = Field(default_factory=dict, description="Metric tags")
 
     @field_validator("name")
     @classmethod
@@ -221,9 +230,7 @@ class LogValidationSchema(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc), description="Log timestamp"
     )
     source: Optional[str] = Field(None, description="Log source")
-    context: Dict[str, Any] = Field(
-        default_factory=dict, description="Log context"
-    )
+    context: Dict[str, Any] = Field(default_factory=dict, description="Log context")
 
     @field_validator("level")
     @classmethod
@@ -283,6 +290,7 @@ class CodeAnalysisValidationSchema(BaseModel):
 
 def validate_with_schema(schema_class: type) -> Callable:
     """Decorator to validate function arguments with a Pydantic schema."""
+
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             try:
@@ -291,25 +299,31 @@ def validate_with_schema(schema_class: type) -> Callable:
                 return func(*args, **validated_data.model_dump())
             except PydanticValidationError as e:
                 raise ValueError(f"Validation failed: {e}")
+
         return wrapper
+
     return decorator
 
 
 def validate_confidence(func: Callable) -> Callable:
     """Decorator to validate confidence parameters."""
+
     def wrapper(*args, **kwargs):
-        if 'confidence' in kwargs:
-            kwargs['confidence'] = validate_confidence_score(kwargs['confidence'])
+        if "confidence" in kwargs:
+            kwargs["confidence"] = validate_confidence_score(kwargs["confidence"])
         return func(*args, **kwargs)
+
     return wrapper
 
 
 def validate_severity(func: Callable) -> Callable:
     """Decorator to validate severity parameters."""
+
     def wrapper(*args, **kwargs):
-        if 'severity' in kwargs:
-            kwargs['severity'] = validate_severity_level(kwargs['severity'])
+        if "severity" in kwargs:
+            kwargs["severity"] = validate_severity_level(kwargs["severity"])
         return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -332,47 +346,55 @@ class ValidationUtils:
         required_fields = ["agent_id", "agent_type", "status"]
         for field in required_fields:
             if field not in data:
-                errors.append(ValidationError(
-                    field=field,
-                    message=f"Required field '{field}' is missing",
-                    severity=ValidationSeverity.ERROR
-                ))
+                errors.append(
+                    ValidationError(
+                        field=field,
+                        message=f"Required field '{field}' is missing",
+                        severity=ValidationSeverity.ERROR,
+                    )
+                )
 
         # Confidence score validation
         if "confidence" in data:
             try:
                 validate_confidence_score(data["confidence"])
             except ValueError as e:
-                errors.append(ValidationError(
-                    field="confidence",
-                    message=str(e),
-                    value=data["confidence"],
-                    severity=ValidationSeverity.ERROR
-                ))
+                errors.append(
+                    ValidationError(
+                        field="confidence",
+                        message=str(e),
+                        value=data["confidence"],
+                        severity=ValidationSeverity.ERROR,
+                    )
+                )
 
         # Severity level validation
         if "severity" in data:
             try:
                 validate_severity_level(data["severity"])
             except ValueError as e:
-                errors.append(ValidationError(
-                    field="severity",
-                    message=str(e),
-                    value=data["severity"],
-                    severity=ValidationSeverity.ERROR
-                ))
+                errors.append(
+                    ValidationError(
+                        field="severity",
+                        message=str(e),
+                        value=data["severity"],
+                        severity=ValidationSeverity.ERROR,
+                    )
+                )
 
         # Timestamp validation
         if "timestamp" in data:
             try:
                 validate_timestamp(data["timestamp"])
             except ValueError as e:
-                errors.append(ValidationError(
-                    field="timestamp",
-                    message=str(e),
-                    value=data["timestamp"],
-                    severity=ValidationSeverity.ERROR
-                ))
+                errors.append(
+                    ValidationError(
+                        field="timestamp",
+                        message=str(e),
+                        value=data["timestamp"],
+                        severity=ValidationSeverity.ERROR,
+                    )
+                )
 
         # Calculate validation time
         end_time = datetime.now(timezone.utc)
@@ -384,7 +406,7 @@ class ValidationUtils:
             warnings=warnings,
             validated_data=data if len(errors) == 0 else None,
             validation_time_ms=validation_time_ms,
-            validator_used="agent_response_validator"
+            validator_used="agent_response_validator",
         )
 
     @staticmethod
@@ -398,36 +420,44 @@ class ValidationUtils:
         required_fields = ["workflow_id", "workflow_name", "workflow_type"]
         for field in required_fields:
             if field not in data:
-                errors.append(ValidationError(
-                    field=field,
-                    message=f"Required field '{field}' is missing",
-                    severity=ValidationSeverity.ERROR
-                ))
+                errors.append(
+                    ValidationError(
+                        field=field,
+                        message=f"Required field '{field}' is missing",
+                        severity=ValidationSeverity.ERROR,
+                    )
+                )
 
         # Steps validation
         if "steps" in data:
             if not isinstance(data["steps"], list):
-                errors.append(ValidationError(
-                    field="steps",
-                    message="Steps must be a list",
-                    value=data["steps"],
-                    severity=ValidationSeverity.ERROR
-                ))
+                errors.append(
+                    ValidationError(
+                        field="steps",
+                        message="Steps must be a list",
+                        value=data["steps"],
+                        severity=ValidationSeverity.ERROR,
+                    )
+                )
             else:
                 for i, step in enumerate(data["steps"]):
                     if not isinstance(step, dict):
-                        errors.append(ValidationError(
-                            field=f"steps[{i}]",
-                            message="Step must be a dictionary",
-                            value=step,
-                            severity=ValidationSeverity.ERROR
-                        ))
+                        errors.append(
+                            ValidationError(
+                                field=f"steps[{i}]",
+                                message="Step must be a dictionary",
+                                value=step,
+                                severity=ValidationSeverity.ERROR,
+                            )
+                        )
                     elif "step_id" not in step:
-                        errors.append(ValidationError(
-                            field=f"steps[{i}].step_id",
-                            message="Step ID is required",
-                            severity=ValidationSeverity.ERROR
-                        ))
+                        errors.append(
+                            ValidationError(
+                                field=f"steps[{i}].step_id",
+                                message="Step ID is required",
+                                severity=ValidationSeverity.ERROR,
+                            )
+                        )
 
         # Calculate validation time
         end_time = datetime.now(timezone.utc)
@@ -439,11 +469,13 @@ class ValidationUtils:
             warnings=warnings,
             validated_data=data if len(errors) == 0 else None,
             validation_time_ms=validation_time_ms,
-            validator_used="workflow_validator"
+            validator_used="workflow_validator",
         )
 
     @staticmethod
-    def aggregate_validation_results(results: List[ValidationResult]) -> ValidationResult:
+    def aggregate_validation_results(
+        results: List[ValidationResult],
+    ) -> ValidationResult:
         """Aggregate multiple validation results into one."""
         all_errors = []
         all_warnings = []
@@ -463,7 +495,7 @@ class ValidationUtils:
             warnings=all_warnings,
             validated_data=None,  # Cannot aggregate validated data
             validation_time_ms=total_time,
-            validator_used=", ".join(validators_used) if validators_used else None
+            validator_used=", ".join(validators_used) if validators_used else None,
         )
 
     @staticmethod
@@ -472,15 +504,11 @@ class ValidationUtils:
         message: str,
         value: Any = None,
         code: str = None,
-        severity: str = "error"
+        severity: str = "error",
     ) -> ValidationError:
         """Create a validation error with standard format."""
         return ValidationError(
-            field=field,
-            message=message,
-            value=value,
-            code=code,
-            severity=severity
+            field=field, message=message, value=value, code=code, severity=severity
         )
 
     @staticmethod
@@ -489,15 +517,11 @@ class ValidationUtils:
         message: str,
         value: Any = None,
         code: str = None,
-        suggestion: str = None
+        suggestion: str = None,
     ) -> ValidationWarning:
         """Create a validation warning with standard format."""
         return ValidationWarning(
-            field=field,
-            message=message,
-            value=value,
-            code=code,
-            suggestion=suggestion
+            field=field, message=message, value=value, code=code, suggestion=suggestion
         )
 
 

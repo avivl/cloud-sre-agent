@@ -17,17 +17,16 @@ from ..constants import MAX_CONCURRENT_REQUESTS, MAX_PROMPT_LENGTH
 from ..cost_management_integration import IntegratedCostManager
 from ..factory import LLMProviderFactory
 from ..model_registry import ModelRegistry
-
+from .context_manager import ContextManager
 from .mixing_strategies import (
     MixingStrategy,
     MixingStrategyFactory,
     StrategyPerformanceMonitor,
 )
 from .model_manager import ModelManager, TaskType
-from .context_manager import ContextManager
 from .performance_optimizer import (
-    PerformanceOptimizer,
     OptimizationStrategy,
+    PerformanceOptimizer,
 )
 
 logger = logging.getLogger(__name__)
@@ -179,19 +178,23 @@ class RefactoredModelMixer:
         self.cost_manager = cost_manager
 
         # Initialize modular components
-        self.model_manager = ModelManager(provider_factory, model_registry, max_concurrent_requests)
+        self.model_manager = ModelManager(
+            provider_factory, model_registry, max_concurrent_requests
+        )
         self.context_manager = ContextManager()
         self.performance_optimizer = PerformanceOptimizer()
         self.strategy_factory = MixingStrategyFactory()
         self.strategy_monitor = StrategyPerformanceMonitor()
-        
+
         # Initialize supporting components
         self.task_decomposer = TaskDecomposer(model_registry)
         self.result_aggregator = ResultAggregator()
 
         # Enable optimizations by default
         self.performance_optimizer.enable_optimization(OptimizationStrategy.CACHING)
-        self.performance_optimizer.enable_optimization(OptimizationStrategy.LOAD_BALANCING)
+        self.performance_optimizer.enable_optimization(
+            OptimizationStrategy.LOAD_BALANCING
+        )
 
         logger.info("RefactoredModelMixer initialized with modular architecture")
 
@@ -213,6 +216,7 @@ class RefactoredModelMixer:
     def _contains_injection_patterns(self, prompt: str) -> bool:
         """Check for common injection patterns."""
         import re
+
         dangerous_patterns = [
             r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>",
             r"javascript:",
@@ -234,6 +238,7 @@ class RefactoredModelMixer:
     def _sanitize_prompt(self, prompt: str) -> str:
         """Sanitize prompt by removing or escaping dangerous content."""
         import re
+
         # Remove null bytes and control characters
         sanitized = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", prompt)
 
@@ -375,7 +380,9 @@ class RefactoredModelMixer:
         execution_time_ms = execution_time * 1000
 
         # Update strategy performance
-        self.strategy_monitor.record_execution(strategy, execution_time, len(valid_results) > 0)
+        self.strategy_monitor.record_execution(
+            strategy, execution_time, len(valid_results) > 0
+        )
 
         return MixingResult(
             primary_result=(

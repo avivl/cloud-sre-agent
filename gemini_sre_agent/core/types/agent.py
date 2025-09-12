@@ -7,7 +7,8 @@ This module defines type aliases and protocols specific to agent operations,
 including request/response types, state management, and agent coordination.
 """
 
-from typing import Any, Dict, List, Optional, Protocol, TypeVar, Union
+from typing import Any, Dict, List, Optional, Protocol, TypeVar
+
 from typing_extensions import TypeAlias
 
 from .base import (
@@ -16,7 +17,6 @@ from .base import (
     AgentStatus,
     ConfigDict,
     Content,
-    JsonDict,
     Priority,
     RequestId,
     SessionId,
@@ -25,9 +25,9 @@ from .base import (
 )
 
 # Agent-specific type variables
-AgentT = TypeVar('AgentT', bound='BaseAgent')
-RequestT = TypeVar('RequestT', bound='AgentRequest')
-ResponseT = TypeVar('ResponseT', bound='AgentResponse')
+AgentT = TypeVar("AgentT", bound="BaseAgent")
+RequestT = TypeVar("RequestT", bound="AgentRequest")
+ResponseT = TypeVar("ResponseT", bound="AgentResponse")
 
 # Request/Response types
 RequestType: TypeAlias = str  # 'triage', 'analysis', 'remediation'
@@ -65,55 +65,58 @@ CoordinationEvent: TypeAlias = str
 # Workflow types
 WorkflowId: TypeAlias = str
 WorkflowStep: TypeAlias = str
-WorkflowStatus: TypeAlias = str  # 'pending', 'running', 'completed', 'failed', 'cancelled'
+WorkflowStatus: TypeAlias = (
+    str  # 'pending', 'running', 'completed', 'failed', 'cancelled'
+)
+
 
 # Agent protocols
 class BaseAgent(Protocol):
     """Base protocol for all agents."""
-    
+
     @property
     def agent_id(self) -> AgentId:
         """Get the agent's unique identifier."""
         ...
-    
+
     @property
     def agent_name(self) -> AgentName:
         """Get the agent's name."""
         ...
-    
+
     @property
     def status(self) -> AgentStatus:
         """Get the agent's current status."""
         ...
-    
-    def process(self, request: 'AgentRequest') -> 'AgentResponse':
+
+    def process(self, request: "AgentRequest") -> "AgentResponse":
         """Process a request and return a response."""
         ...
 
 
 class AgentRequest(Protocol):
     """Protocol for agent requests."""
-    
+
     @property
     def request_id(self) -> RequestId:
         """Get the request's unique identifier."""
         ...
-    
+
     @property
     def request_type(self) -> RequestType:
         """Get the request type."""
         ...
-    
+
     @property
     def content(self) -> Content:
         """Get the request content."""
         ...
-    
+
     @property
     def context(self) -> AgentContext:
         """Get the request context."""
         ...
-    
+
     @property
     def priority(self) -> Priority:
         """Get the request priority."""
@@ -122,32 +125,32 @@ class AgentRequest(Protocol):
 
 class AgentResponse(Protocol):
     """Protocol for agent responses."""
-    
+
     @property
     def response_id(self) -> str:
         """Get the response's unique identifier."""
         ...
-    
+
     @property
     def request_id(self) -> RequestId:
         """Get the associated request ID."""
         ...
-    
+
     @property
     def response_type(self) -> ResponseType:
         """Get the response type."""
         ...
-    
+
     @property
     def content(self) -> ResponseContent:
         """Get the response content."""
         ...
-    
+
     @property
     def confidence(self) -> ResponseConfidence:
         """Get the response confidence score."""
         ...
-    
+
     @property
     def metadata(self) -> ResponseMetadata:
         """Get the response metadata."""
@@ -156,19 +159,19 @@ class AgentResponse(Protocol):
 
 class StatefulAgent(Protocol):
     """Protocol for agents that maintain state."""
-    
+
     def get_state(self, key: StateKey) -> Optional[StateValue]:
         """Get state value by key."""
         ...
-    
+
     def set_state(self, key: StateKey, value: StateValue) -> None:
         """Set state value by key."""
         ...
-    
+
     def clear_state(self, key: StateKey) -> None:
         """Clear state value by key."""
         ...
-    
+
     def get_state_snapshot(self) -> StateSnapshot:
         """Get complete state snapshot."""
         ...
@@ -176,11 +179,11 @@ class StatefulAgent(Protocol):
 
 class ConfigurableAgent(Protocol):
     """Protocol for agents that can be configured."""
-    
+
     def configure(self, config: ConfigDict) -> None:
         """Configure the agent."""
         ...
-    
+
     def get_config(self) -> ConfigDict:
         """Get current configuration."""
         ...
@@ -188,11 +191,11 @@ class ConfigurableAgent(Protocol):
 
 class LoggableAgent(Protocol):
     """Protocol for agents that support logging."""
-    
+
     def log(self, level: str, message: str, **kwargs: Any) -> None:
         """Log a message."""
         ...
-    
+
     def get_log_context(self) -> Dict[str, Any]:
         """Get logging context."""
         ...
@@ -201,24 +204,30 @@ class LoggableAgent(Protocol):
 # Specialized agent types
 class TriageAgent(BaseAgent, Protocol):
     """Protocol for triage agents."""
-    
-    def triage_log(self, log_content: Content, context: AgentContext) -> 'TriageResponse':
+
+    def triage_log(
+        self, log_content: Content, context: AgentContext
+    ) -> "TriageResponse":
         """Triage a log entry."""
         ...
 
 
 class AnalysisAgent(BaseAgent, Protocol):
     """Protocol for analysis agents."""
-    
-    def analyze_patterns(self, data: Content, context: AgentContext) -> 'AnalysisResponse':
+
+    def analyze_patterns(
+        self, data: Content, context: AgentContext
+    ) -> "AnalysisResponse":
         """Analyze patterns in data."""
         ...
 
 
 class RemediationAgent(BaseAgent, Protocol):
     """Protocol for remediation agents."""
-    
-    def generate_remediation(self, issue: Content, context: AgentContext) -> 'RemediationResponse':
+
+    def generate_remediation(
+        self, issue: Content, context: AgentContext
+    ) -> "RemediationResponse":
         """Generate remediation actions."""
         ...
 
@@ -226,17 +235,17 @@ class RemediationAgent(BaseAgent, Protocol):
 # Response type definitions
 class TriageResponse(Protocol):
     """Protocol for triage responses."""
-    
+
     @property
     def priority(self) -> Priority:
         """Get the triage priority."""
         ...
-    
+
     @property
     def category(self) -> str:
         """Get the issue category."""
         ...
-    
+
     @property
     def severity(self) -> str:
         """Get the issue severity."""
@@ -245,17 +254,17 @@ class TriageResponse(Protocol):
 
 class AnalysisResponse(Protocol):
     """Protocol for analysis responses."""
-    
+
     @property
     def patterns(self) -> List[Dict[str, Any]]:
         """Get detected patterns."""
         ...
-    
+
     @property
     def insights(self) -> List[str]:
         """Get analysis insights."""
         ...
-    
+
     @property
     def recommendations(self) -> List[str]:
         """Get recommendations."""
@@ -264,17 +273,17 @@ class AnalysisResponse(Protocol):
 
 class RemediationResponse(Protocol):
     """Protocol for remediation responses."""
-    
+
     @property
     def actions(self) -> List[Dict[str, Any]]:
         """Get remediation actions."""
         ...
-    
+
     @property
     def estimated_impact(self) -> str:
         """Get estimated impact."""
         ...
-    
+
     @property
     def risk_level(self) -> str:
         """Get risk level."""
@@ -290,38 +299,35 @@ def create_agent_context(
 ) -> AgentContext:
     """
     Create a standardized agent context.
-    
+
     Args:
         user_id: User identifier
         session_id: Session identifier
         tenant_id: Tenant identifier
         **kwargs: Additional context data
-        
+
     Returns:
         Standardized agent context
     """
-    context: AgentContext = {
-        'timestamp': Timestamp,
-        **kwargs
-    }
-    
+    context: AgentContext = {"timestamp": Timestamp, **kwargs}
+
     if user_id:
-        context['user_id'] = user_id
+        context["user_id"] = user_id
     if session_id:
-        context['session_id'] = session_id
+        context["session_id"] = session_id
     if tenant_id:
-        context['tenant_id'] = tenant_id
-    
+        context["tenant_id"] = tenant_id
+
     return context
 
 
 def validate_agent_request(request: AgentRequest) -> bool:
     """
     Validate an agent request.
-    
+
     Args:
         request: Request to validate
-        
+
     Returns:
         True if valid, False otherwise
     """
@@ -332,15 +338,15 @@ def validate_agent_request(request: AgentRequest) -> bool:
         _ = request.content
         _ = request.context
         _ = request.priority
-        
+
         # Validate priority range
         if not (1 <= request.priority <= 10):
             return False
-        
+
         # Validate request type
-        if request.request_type not in ['triage', 'analysis', 'remediation']:
+        if request.request_type not in ["triage", "analysis", "remediation"]:
             return False
-        
+
         return True
     except (AttributeError, TypeError):
         return False
@@ -349,10 +355,10 @@ def validate_agent_request(request: AgentRequest) -> bool:
 def validate_agent_response(response: AgentResponse) -> bool:
     """
     Validate an agent response.
-    
+
     Args:
         response: Response to validate
-        
+
     Returns:
         True if valid, False otherwise
     """
@@ -364,15 +370,15 @@ def validate_agent_response(response: AgentResponse) -> bool:
         _ = response.content
         _ = response.confidence
         _ = response.metadata
-        
+
         # Validate confidence range
         if not (0.0 <= response.confidence <= 1.0):
             return False
-        
+
         # Validate response type
-        if response.response_type not in ['success', 'error', 'partial']:
+        if response.response_type not in ["success", "error", "partial"]:
             return False
-        
+
         return True
     except (AttributeError, TypeError):
         return False

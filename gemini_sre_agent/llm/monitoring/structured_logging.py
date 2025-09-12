@@ -1,3 +1,5 @@
+# gemini_sre_agent/llm/monitoring/structured_logging.py
+
 """
 Structured Logging System for LLM Operations.
 
