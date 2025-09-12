@@ -13,7 +13,7 @@ class LogIngestor:
     A class responsible for ingesting logs from Google Cloud Logging.
     """
 
-    def __init__(self, project_id: str):
+    def __init__(self, project_id: str) -> None:
         """
         Initializes the LogIngestor with a GCP project ID.
 

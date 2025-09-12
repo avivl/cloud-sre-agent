@@ -90,7 +90,7 @@ def _get_error_category(error_type: str) -> str:
 
 
 @app.route("/")
-def health_check():
+def health_check() -> None:
     """Health check endpoint."""
     return jsonify(
         {
@@ -103,7 +103,7 @@ def health_check():
 
 
 @app.route("/error/division")
-def division_error():
+def division_error() -> None:
     """Trigger ZeroDivisionError - Mathematical error."""
     try:
         # Intentional division by zero
@@ -123,7 +123,7 @@ def division_error():
 
 
 @app.route("/error/memory")
-def memory_error():
+def memory_error() -> None:
     """Trigger MemoryError - Resource error with safety limits."""
     allocated_chunks = []
     try:
@@ -153,7 +153,7 @@ def memory_error():
 
 
 @app.route("/error/timeout")
-def timeout_error():
+def timeout_error() -> None:
     """Trigger TimeoutError - Network error simulation."""
     try:
         # Simulate network timeout
@@ -175,7 +175,7 @@ def timeout_error():
 
 
 @app.route("/error/json")
-def json_error():
+def json_error() -> None:
     """Trigger JSONDecodeError - Data serialization error."""
     try:
         # Intentional JSON parsing error
@@ -196,7 +196,7 @@ def json_error():
 
 
 @app.route("/error/file")
-def file_error():
+def file_error() -> None:
     """Trigger FileNotFoundError - Filesystem error."""
     try:
         # Try to read a non-existent file
@@ -217,7 +217,7 @@ def file_error():
 
 
 @app.route("/error/permission")
-def permission_error():
+def permission_error() -> None:
     """Trigger PermissionError - Security error."""
     try:
         # Try to write to a protected directory
@@ -238,7 +238,7 @@ def permission_error():
 
 
 @app.route("/error/connection")
-def connection_error():
+def connection_error() -> None:
     """Trigger ConnectionError - Network connectivity error."""
     try:
         import socket
@@ -264,7 +264,7 @@ def connection_error():
 
 
 @app.route("/error/validation")
-def validation_error():
+def validation_error() -> None:
     """Trigger ValueError - Data validation error."""
     try:
         # Try to convert invalid string to int
@@ -285,7 +285,7 @@ def validation_error():
 
 
 @app.route("/error/key")
-def key_error():
+def key_error() -> None:
     """Trigger KeyError - Missing dictionary key error."""
     try:
         data = {"name": "test", "version": "1.0"}
@@ -306,7 +306,7 @@ def key_error():
 
 
 @app.route("/error/attribute")
-def attribute_error():
+def attribute_error() -> None:
     """Trigger AttributeError - Code structure error."""
     try:
         # Try to call non-existent method
@@ -327,7 +327,7 @@ def attribute_error():
 
 
 @app.route("/error/import")
-def import_error():
+def import_error() -> None:
     """Trigger ImportError - Dependency error."""
     try:
         # Try to import non-existent module
@@ -348,7 +348,7 @@ def import_error():
 
 
 @app.route("/error/type")
-def type_error():
+def type_error() -> None:
     """Trigger TypeError - Type mismatch error."""
     try:
         # Try to add string and integer
@@ -369,7 +369,7 @@ def type_error():
 
 
 @app.route("/error/index")
-def index_error():
+def index_error() -> None:
     """Trigger IndexError - Array access error."""
     try:
         # Try to access non-existent array index
@@ -390,11 +390,11 @@ def index_error():
 
 
 @app.route("/error/recursion")
-def recursion_error():
+def recursion_error() -> None:
     """Trigger RecursionError - Infinite recursion error."""
     try:
 
-        def infinite_recursion(n):
+        def infinite_recursion(n: str) -> None:
             """
             Infinite Recursion.
 
@@ -420,7 +420,7 @@ def recursion_error():
 
 
 @app.route("/error/database")
-def database_error():
+def database_error() -> None:
     """Trigger database-like error simulation."""
     try:
         # Simulate database connection failure
@@ -440,7 +440,7 @@ def database_error():
 
 
 @app.route("/error/rate_limit")
-def rate_limit_error():
+def rate_limit_error() -> None:
     """Trigger rate limiting error simulation."""
     try:
         # Simulate rate limiting
@@ -460,7 +460,7 @@ def rate_limit_error():
 
 
 @app.route("/status")
-def status():
+def status() -> None:
     """Service status endpoint for monitoring."""
     return jsonify(
         {

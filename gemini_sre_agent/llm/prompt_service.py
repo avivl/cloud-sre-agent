@@ -195,7 +195,7 @@ class LLMPromptService:
 class MirascopeIntegratedLLMService:
     """Integrated LLM service with Mirascope prompt management."""
 
-    def __init__(self, llm_service, prompt_manager: PromptManager):
+    def __init__(self, llm_service: str, prompt_manager: PromptManager) -> None:
         """Initialize the integrated LLM service."""
         self.llm_service = llm_service
         self.prompt_manager = prompt_manager

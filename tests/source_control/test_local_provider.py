@@ -18,7 +18,7 @@ from gemini_sre_agent.source_control.providers.local_provider import LocalProvid
 
 
 @pytest.fixture
-def temp_dir():
+def temp_dir() -> None:
     """Create a temporary directory for testing."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
@@ -26,7 +26,7 @@ def temp_dir():
 
 
 @pytest.fixture
-def git_temp_dir():
+def git_temp_dir() -> None:
     """Create a temporary Git repository for testing."""
     temp_dir = tempfile.mkdtemp()
     repo = git.Repo.init(temp_dir)
@@ -43,7 +43,7 @@ def git_temp_dir():
 
 
 @pytest.fixture
-def local_provider_factory(temp_dir):
+def local_provider_factory(temp_dir: str) -> None:
     """Create a LocalProvider factory for a non-Git directory."""
 
     def _create_provider():
@@ -56,7 +56,7 @@ def local_provider_factory(temp_dir):
 
 
 @pytest.fixture
-def git_provider_factory(git_temp_dir):
+def git_provider_factory(git_temp_dir: str) -> None:
     """Create a LocalProvider factory for a Git directory."""
 
     def _create_provider():

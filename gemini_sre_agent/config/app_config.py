@@ -26,7 +26,7 @@ class ServiceConfig(BaseConfig):
 
     @field_validator("project_id")
     @classmethod
-    def validate_project_id(cls, v):
+    def validate_project_id(cls: str, v: str) -> None:
         """
         Validate Project Id.
 
@@ -41,7 +41,7 @@ class ServiceConfig(BaseConfig):
 
     @field_validator("subscription_id")
     @classmethod
-    def validate_subscription_id(cls, v):
+    def validate_subscription_id(cls: str, v: str) -> None:
         """
         Validate Subscription Id.
 
@@ -168,7 +168,7 @@ class AppConfig(BaseConfig):
 
     @field_validator("services")
     @classmethod
-    def validate_services(cls, v):
+    def validate_services(cls: str, v: str) -> None:
         """Validate service configurations."""
         if not v:
             raise ValueError("At least one service must be configured")
@@ -181,7 +181,7 @@ class AppConfig(BaseConfig):
 
     @field_validator("services")
     @classmethod
-    def validate_services_with_source_control(cls, v):
+    def validate_services_with_source_control(cls: str, v: str) -> None:
         """Validate service configurations and source control settings."""
         for service in v:
             if service.source_control and service.source_control.repositories:

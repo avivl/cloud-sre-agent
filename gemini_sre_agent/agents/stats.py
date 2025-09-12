@@ -40,7 +40,7 @@ class AgentStats:
         if prompt_name:
             self.prompt_usage[prompt_name] += 1
 
-    def record_error(self, model: str, error: str, prompt_name: Optional[str] = None):
+    def record_error(self, model: str, error: str, prompt_name: Optional[str] = None) -> None:
         """Record a failed agent execution."""
         self.request_count += 1
         self.error_count += 1
@@ -66,7 +66,7 @@ class AgentStats:
             },
         }
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all statistics."""
         self.request_count = 0
         self.success_count = 0

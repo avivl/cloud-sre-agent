@@ -36,7 +36,7 @@ class StrategyConfig:
 class PromptCache:
     """Simple in-memory cache for generated prompts."""
 
-    def __init__(self, ttl_seconds: int = 3600):
+    def __init__(self, ttl_seconds: int = 3600) -> None:
         """
         Initialize prompt cache.
 
@@ -82,7 +82,7 @@ class PromptCache:
 class AdaptivePromptStrategy:
     """Adaptive strategy for choosing prompt generation approach."""
 
-    def __init__(self, config: StrategyConfig):
+    def __init__(self, config: StrategyConfig) -> None:
         """
         Initialize adaptive prompt strategy.
 

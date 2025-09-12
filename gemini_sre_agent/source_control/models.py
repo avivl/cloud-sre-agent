@@ -60,7 +60,7 @@ class BranchInfo:
     is_protected: bool = False
     last_commit: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.last_commit is None:
             self.last_commit = datetime.now()
 
@@ -76,7 +76,7 @@ class FileInfo:
     is_binary: bool = False
     encoding: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.last_modified is None:
             self.last_modified = datetime.now()
 
@@ -94,7 +94,7 @@ class CommitInfo:
     date: datetime
     parents: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.parents is None:
             self.parents = []
 
@@ -113,7 +113,7 @@ class IssueInfo:
     labels: Optional[List[str]] = None
     assignees: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.labels is None:
             self.labels = []
         if self.assignees is None:
@@ -133,7 +133,7 @@ class RemediationResult:
     error_details: Optional[str] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.additional_info is None:
             self.additional_info = {}
 
@@ -149,7 +149,7 @@ class OperationResult:
     error_details: Optional[str] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.additional_info is None:
             self.additional_info = {}
 
@@ -164,7 +164,7 @@ class BatchOperation:
     content: Optional[str] = None
     additional_params: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.additional_params is None:
             self.additional_params = {}
 
@@ -180,7 +180,7 @@ class ConflictInfo:
     conflict_details: Optional[Dict[str, Any]] = None
     details: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.conflict_files is None:
             self.conflict_files = []
         if self.conflict_details is None:
@@ -202,7 +202,7 @@ class ProviderHealth:
     warnings: Optional[List[str]] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.last_check is None:
             self.last_check = datetime.now()
         if self.warnings is None:
@@ -226,7 +226,7 @@ class ProviderCapabilities:
     supported_patch_formats: Optional[List[PatchFormat]] = None
     supported_encodings: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.supported_patch_formats is None:
             self.supported_patch_formats = [PatchFormat.UNIFIED]
         if self.supported_encodings is None:

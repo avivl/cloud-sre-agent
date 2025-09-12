@@ -6,7 +6,7 @@ from gemini_sre_agent.metrics.enums import ErrorCategory
 from gemini_sre_agent.metrics.provider_metrics import ProviderMetrics
 
 
-def test_provider_metrics_initialization():
+def test_provider_metrics_initialization() -> None:
     """
     Test Provider Metrics Initialization.
 
@@ -23,7 +23,7 @@ def test_provider_metrics_initialization():
     assert metrics.health_score == 1.0
 
 
-def test_record_successful_request():
+def test_record_successful_request() -> None:
     """
     Test Record Successful Request.
 
@@ -46,7 +46,7 @@ def test_record_successful_request():
     assert metrics.health_score > 0.9
 
 
-def test_record_failed_request():
+def test_record_failed_request() -> None:
     """
     Test Record Failed Request.
 
@@ -77,7 +77,7 @@ def test_record_failed_request():
         assert metrics.health_score < 1.0
 
 
-def test_health_scoring():
+def test_health_scoring() -> None:
     """
     Test Health Scoring.
 

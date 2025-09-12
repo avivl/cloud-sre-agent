@@ -385,7 +385,7 @@ class PerformanceMonitor:
     with automatic aggregation and analysis capabilities.
     """
 
-    def __init__(self, cache: Optional[PerformanceCache] = None):
+    def __init__(self, cache: Optional[PerformanceCache] = None) -> None:
         """Initialize the performance monitor."""
         self.cache = cache or PerformanceCache()
         self.logger = logging.getLogger(f"{__name__}.PerformanceMonitor")

@@ -20,7 +20,7 @@ from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
 
 
 @pytest.fixture
-def mock_llm_config():
+def mock_llm_config() -> None:
     """Create a mock LLM configuration for testing."""
     return LLMConfig(
         providers={
@@ -35,7 +35,7 @@ def mock_llm_config():
 
 
 @pytest.fixture
-def sample_logs():
+def sample_logs() -> None:
     """Sample log entries for testing."""
     return [
         "2024-01-15 10:30:15 ERROR [ServiceA] Database connection failed: timeout after 30s",
@@ -184,7 +184,7 @@ class TestEnhancedRemediationAgent:
 class TestLegacyAdapters:
     """Test legacy adapter functionality."""
 
-    def test_triage_adapter_initialization(self, mock_llm_config):
+    def test_triage_adapter_initialization(self, mock_llm_config: str) -> None:
         """Test triage adapter initialization."""
         adapter = LegacyTriageAgentAdapter(
             project_id="test-project",
@@ -198,7 +198,7 @@ class TestLegacyAdapters:
         assert adapter.triage_model == "test-model"
         assert adapter.use_enhanced is True
 
-    def test_analysis_adapter_initialization(self, mock_llm_config):
+    def test_analysis_adapter_initialization(self, mock_llm_config: str) -> None:
         """Test analysis adapter initialization."""
         adapter = LegacyAnalysisAgentAdapter(
             project_id="test-project",
@@ -210,7 +210,7 @@ class TestLegacyAdapters:
         assert adapter.project_id == "test-project"
         assert adapter.use_enhanced is True
 
-    def test_remediation_adapter_initialization(self, mock_llm_config):
+    def test_remediation_adapter_initialization(self, mock_llm_config: str) -> None:
         """Test remediation adapter initialization."""
         adapter = LegacyRemediationAgentAdapter(
             github_token="test-token",

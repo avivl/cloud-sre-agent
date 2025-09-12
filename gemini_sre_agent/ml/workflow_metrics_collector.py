@@ -138,7 +138,7 @@ class WorkflowMetricsCollector:
             self.logger.error(f"Failed to get performance insights: {e}")
             return {"error": str(e)}
 
-    def add_workflow_result(self, result: Any):
+    def add_workflow_result(self, result: Any) -> None:
         """Add a workflow result to the history."""
         self.workflow_history.append(result)
 
@@ -146,7 +146,7 @@ class WorkflowMetricsCollector:
         """Get workflow execution history."""
         return self.workflow_history.copy()
 
-    def reset_workflow_history(self):
+    def reset_workflow_history(self) -> None:
         """Reset workflow execution history."""
         self.workflow_history.clear()
         self.logger.info("Workflow history reset")

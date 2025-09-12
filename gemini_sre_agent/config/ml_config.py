@@ -37,7 +37,7 @@ class ModelConfig(BaseConfig):
 
     @field_validator("name")
     @classmethod
-    def validate_model_name(cls, v):
+    def validate_model_name(cls: str, v: str) -> None:
         """
         Validate Model Name.
 
@@ -129,7 +129,7 @@ class MLConfig(BaseConfig):
 
     @field_validator("models")
     @classmethod
-    def validate_required_models(cls, v):
+    def validate_required_models(cls: str, v: str) -> None:
         """Validate that required models are configured."""
         required_models = [
             ModelType.TRIAGE,

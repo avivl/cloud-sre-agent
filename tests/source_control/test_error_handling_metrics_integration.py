@@ -17,24 +17,24 @@ class TestErrorHandlingMetrics:
     """Test cases for ErrorHandlingMetrics."""
 
     @pytest.fixture
-    def mock_metrics_collector(self):
+    def mock_metrics_collector(self) -> None:
         """Create a mock MetricsCollector."""
         collector = MagicMock()
         collector.record_metric = AsyncMock()
         return collector
 
     @pytest.fixture
-    def error_handling_metrics(self, mock_metrics_collector):
+    def error_handling_metrics(self, mock_metrics_collector: str) -> None:
         """Create an ErrorHandlingMetrics instance for testing."""
         return ErrorHandlingMetrics(mock_metrics_collector)
 
-    def test_error_handling_metrics_initialization(self, mock_metrics_collector):
+    def test_error_handling_metrics_initialization(self, mock_metrics_collector: str) -> None:
         """Test ErrorHandlingMetrics initialization."""
         metrics = ErrorHandlingMetrics(mock_metrics_collector)
         assert metrics.metrics_collector == mock_metrics_collector
         assert metrics.logger.name == "ErrorHandlingMetrics"
 
-    def test_error_handling_metrics_initialization_default_collector(self):
+    def test_error_handling_metrics_initialization_default_collector(self) -> None:
         """Test ErrorHandlingMetrics initialization with default collector."""
         metrics = ErrorHandlingMetrics()
         assert metrics.metrics_collector is not None
@@ -234,19 +234,19 @@ class TestErrorHandlingMetrics:
         # Should be called three times: health check count, response time histogram, error count
         assert mock_metrics_collector.record_metric.call_count == 3
 
-    def test_get_error_rate_by_provider(self, error_handling_metrics):
+    def test_get_error_rate_by_provider(self, error_handling_metrics: str) -> None:
         """Test getting error rate by provider."""
         # This method currently returns 0.0 as a placeholder
         rate = error_handling_metrics.get_error_rate_by_provider("github", 5)
         assert rate == 0.0
 
-    def test_get_circuit_breaker_health(self, error_handling_metrics):
+    def test_get_circuit_breaker_health(self, error_handling_metrics: str) -> None:
         """Test getting circuit breaker health."""
         # This method currently returns empty dict as a placeholder
         health = error_handling_metrics.get_circuit_breaker_health("test_circuit")
         assert health == {}
 
-    def test_get_operation_metrics(self, error_handling_metrics):
+    def test_get_operation_metrics(self, error_handling_metrics: str) -> None:
         """Test getting operation metrics."""
         # This method currently returns empty dict as a placeholder
         metrics = error_handling_metrics.get_operation_metrics(

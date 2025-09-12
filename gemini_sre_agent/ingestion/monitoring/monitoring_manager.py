@@ -67,7 +67,7 @@ class MonitoringManager:
     - Alerting and notification management
     """
 
-    def __init__(self, config: Optional[MonitoringConfig] = None):
+    def __init__(self, config: Optional[MonitoringConfig] = None) -> None:
         """
         Initialize the monitoring manager.
 

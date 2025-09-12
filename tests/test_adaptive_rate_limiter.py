@@ -42,7 +42,7 @@ class TestAdaptiveRateLimiter:
         mock_tracker.check_budget = AsyncMock(return_value=True)
         return mock_tracker
 
-    def test_initialization(self, rate_limiter: AdaptiveRateLimiter):
+    def test_initialization(self, rate_limiter: AdaptiveRateLimiter) -> None:
         """Test AdaptiveRateLimiter initialization."""
         assert rate_limiter.consecutive_errors == 0
         assert rate_limiter.current_backoff_seconds == 1
@@ -52,7 +52,7 @@ class TestAdaptiveRateLimiter:
         assert rate_limiter.successful_requests == 0
         assert rate_limiter.total_requests == 0
 
-    def test_initialization_with_default_config(self):
+    def test_initialization_with_default_config(self) -> None:
         """Test initialization with default configuration."""
         rate_limiter = AdaptiveRateLimiter()
         assert rate_limiter.config.max_consecutive_errors == 3
@@ -242,7 +242,7 @@ class TestAdaptiveRateLimiter:
         assert rate_limiter.circuit_state == CircuitState.HALF_OPEN
         assert rate_limiter.last_recovery_attempt == later_time
 
-    def test_exponential_backoff(self, rate_limiter: AdaptiveRateLimiter):
+    def test_exponential_backoff(self, rate_limiter: AdaptiveRateLimiter) -> None:
         """Test exponential backoff calculation."""
         rate_limiter.current_backoff_seconds = 2
         rate_limiter._update_backoff()
@@ -255,7 +255,7 @@ class TestAdaptiveRateLimiter:
         rate_limiter._update_backoff()
         assert rate_limiter.current_backoff_seconds == 5
 
-    def test_rate_limit_expiration(self, rate_limiter: AdaptiveRateLimiter):
+    def test_rate_limit_expiration(self, rate_limiter: AdaptiveRateLimiter) -> None:
         """Test that rate limit expires after duration."""
         # Set rate limit as active but expired
         rate_limiter.rate_limit_hit = True
@@ -264,7 +264,7 @@ class TestAdaptiveRateLimiter:
         assert rate_limiter._is_rate_limit_active() is False
         assert rate_limiter._get_rate_limit_reset_seconds() == 0
 
-    def test_rate_limit_reset_calculation(self, rate_limiter: AdaptiveRateLimiter):
+    def test_rate_limit_reset_calculation(self, rate_limiter: AdaptiveRateLimiter) -> None:
         """Test rate limit reset time calculation."""
         # Set rate limit as recently active
         rate_limiter.rate_limit_hit = True
@@ -274,7 +274,7 @@ class TestAdaptiveRateLimiter:
         reset_seconds = rate_limiter._get_rate_limit_reset_seconds()
         assert 25 <= reset_seconds <= 35  # Should be around 30 seconds
 
-    def test_get_status_metrics(self, rate_limiter: AdaptiveRateLimiter):
+    def test_get_status_metrics(self, rate_limiter: AdaptiveRateLimiter) -> None:
         """Test status metrics retrieval."""
         # Set up some state
         rate_limiter.total_requests = 10
@@ -292,7 +292,7 @@ class TestAdaptiveRateLimiter:
         assert status["success_rate_pct"] == 80.0
         assert status["rate_limit_active"] is False
 
-    def test_rate_limit_active_status(self, rate_limiter: AdaptiveRateLimiter):
+    def test_rate_limit_active_status(self, rate_limiter: AdaptiveRateLimiter) -> None:
         """Test rate limit active status in metrics."""
         # Set active rate limit
         rate_limiter.rate_limit_hit = True
@@ -324,7 +324,7 @@ class TestAdaptiveRateLimiter:
         )
         assert result is False
 
-    def test_success_rate_calculation_edge_cases(self):
+    def test_success_rate_calculation_edge_cases(self) -> None:
         """Test success rate calculation with edge cases."""
         from gemini_sre_agent.ml.rate_limiter_config import RateLimiterMetrics
 
@@ -340,7 +340,7 @@ class TestAdaptiveRateLimiter:
         # Partial success
         assert RateLimiterMetrics.calculate_success_rate(7, 10) == 70.0
 
-    def test_critical_override_logic(self):
+    def test_critical_override_logic(self) -> None:
         """Test critical override decision logic."""
         from gemini_sre_agent.ml.rate_limiter_config import RateLimiterMetrics
 
@@ -360,7 +360,7 @@ class TestAdaptiveRateLimiter:
         metrics = RateLimiterMetrics(success_rate=0.9)
         assert RateLimiterMetrics.should_allow_critical_override(metrics) is True
 
-    def test_rate_limit_skip_logic(self):
+    def test_rate_limit_skip_logic(self) -> None:
         """Test rate limit skip decision logic."""
         from gemini_sre_agent.ml.rate_limiter_config import RateLimiterMetrics
 

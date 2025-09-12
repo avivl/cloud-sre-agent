@@ -24,7 +24,7 @@ from gemini_sre_agent.llm.error_handler import (
 class TestErrorCategory:
     """Test error categorization functionality."""
 
-    def test_error_categorization(self):
+    def test_error_categorization(self) -> None:
         """Test error categorization based on patterns."""
         config = ErrorHandlerConfig()
         handler = EnhancedErrorHandler(config)
@@ -239,7 +239,7 @@ class TestEnhancedErrorHandler:
 class TestErrorHandlerConfig:
     """Test error handler configuration."""
 
-    def test_default_config(self):
+    def test_default_config(self) -> None:
         """Test default configuration values."""
         config = ErrorHandlerConfig()
 
@@ -249,7 +249,7 @@ class TestErrorHandlerConfig:
         assert config.circuit_breaker_config.failure_threshold == 5
         assert config.deduplication_config.enabled is True
 
-    def test_custom_config(self):
+    def test_custom_config(self) -> None:
         """Test custom configuration values."""
         config = ErrorHandlerConfig(
             max_retries=5, retry_delay_base=2.0, retry_delay_max=60.0

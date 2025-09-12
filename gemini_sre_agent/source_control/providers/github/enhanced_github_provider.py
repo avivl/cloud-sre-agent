@@ -34,7 +34,7 @@ from .github_utils import GitHubUtils
 class EnhancedGitHubProvider(EnhancedBaseSourceControlProvider):
     """Enhanced GitHub provider with comprehensive error handling."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]: str) -> None:
         """Initialize the enhanced GitHub provider."""
         super().__init__(config)
 

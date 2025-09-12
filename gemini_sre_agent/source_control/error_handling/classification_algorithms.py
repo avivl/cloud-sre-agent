@@ -82,7 +82,7 @@ class BaseErrorClassifier(Protocol):
 class BaseErrorClassifierImpl(ABC):
     """Abstract base class for error classification algorithms."""
 
-    def __init__(self, strategy: ClassificationStrategy):
+    def __init__(self, strategy: ClassificationStrategy) -> None:
         self.strategy = strategy
         self.logger = logging.getLogger(self.__class__.__name__)
         self.is_fitted = False
@@ -145,7 +145,7 @@ class BaseErrorClassifierImpl(ABC):
 class RuleBasedClassifier(BaseErrorClassifierImpl):
     """Rule-based error classifier using predefined classification rules."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ClassificationStrategy.RULE_BASED)
         self.classification_rules = self._initialize_rules()
 
@@ -511,7 +511,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 class PatternBasedClassifier(BaseErrorClassifierImpl):
     """Pattern-based error classifier using keyword and regex matching."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ClassificationStrategy.PATTERN_BASED)
         self.pattern_matchers = self._initialize_pattern_matchers()
 
@@ -576,7 +576,7 @@ class PatternBasedClassifier(BaseErrorClassifierImpl):
 class HybridClassifier(BaseErrorClassifierImpl):
     """Hybrid classifier combining rule-based and pattern-based approaches."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ClassificationStrategy.HYBRID)
         self.rule_classifier = RuleBasedClassifier()
         self.pattern_classifier = PatternBasedClassifier()

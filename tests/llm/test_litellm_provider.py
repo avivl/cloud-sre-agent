@@ -28,7 +28,7 @@ class TestLiteLLMProvider:
     """Test the LiteLLMProvider implementation."""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Create a mock provider configuration."""
         return LLMProviderConfig(
             provider="openai",
@@ -43,18 +43,18 @@ class TestLiteLLMProvider:
         )
 
     @pytest.fixture
-    def provider(self, mock_config):
+    def provider(self, mock_config: str) -> None:
         """Create a LiteLLMProvider instance."""
         with patch("gemini_sre_agent.llm.litellm_provider.litellm"):
             return LiteLLMProvider(mock_config)
 
-    def test_provider_initialization(self, provider, mock_config):
+    def test_provider_initialization(self, provider: str, mock_config: str) -> None:
         """Test provider initialization."""
         assert provider.config == mock_config
         assert not provider.is_initialized
         assert provider.provider_name == "openai"
 
-    def test_configure_litellm(self, provider):
+    def test_configure_litellm(self, provider: str) -> None:
         """Test LiteLLM configuration."""
         with patch("gemini_sre_agent.llm.litellm_provider.litellm") as mock_litellm:
             provider._configure_litellm()
@@ -135,21 +135,21 @@ class TestLiteLLMProvider:
             assert result is True
             mock_generate.assert_called_once_with(prompt="Hello", max_tokens=10)
 
-    def test_get_available_models(self, provider):
+    def test_get_available_models(self, provider: str) -> None:
         """Test getting available models."""
         models = provider.get_available_models()
         assert "gpt-3.5-turbo" in models
 
-    def test_estimate_cost(self, provider):
+    def test_estimate_cost(self, provider: str) -> None:
         """Test cost estimation."""
         cost = provider.estimate_cost("Hello world", "gpt-3.5-turbo")
         assert cost > 0
 
-    def test_validate_config_valid(self, provider):
+    def test_validate_config_valid(self, provider: str) -> None:
         """Test configuration validation with valid config."""
         assert provider.validate_config() is True
 
-    def test_validate_config_invalid(self):
+    def test_validate_config_invalid(self) -> None:
         """Test configuration validation with invalid config."""
         invalid_config = LLMProviderConfig(
             provider="openai",
@@ -163,7 +163,7 @@ class TestLiteLLMProvider:
         provider = LiteLLMProvider(invalid_config)
         assert provider.validate_config() is False
 
-    def test_validate_config_no_models(self):
+    def test_validate_config_no_models(self) -> None:
         """Test configuration validation with no models."""
         config = LLMProviderConfig(provider="openai", api_key="test-key", models={})
         provider = LiteLLMProvider(config)

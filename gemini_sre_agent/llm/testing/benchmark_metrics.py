@@ -22,7 +22,7 @@ from .benchmark_models import (
 class MetricsCollector:
     """Collects and analyzes benchmark metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metrics collector."""
         self.results: List[BenchmarkResult] = []
 

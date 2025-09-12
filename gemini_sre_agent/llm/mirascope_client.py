@@ -95,7 +95,7 @@ class ClientResponse:
     cost_usd: Optional[float] = None
     metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -103,7 +103,7 @@ class ClientResponse:
 class BaseProviderClient(ABC):
     """Abstract base class for provider clients."""
 
-    def __init__(self, config: ProviderConfig):
+    def __init__(self, config: ProviderConfig) -> None:
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._client: Optional[Any] = None
@@ -327,7 +327,7 @@ class ClientFactory:
 class MirascopeClientManager:
     """Manages multiple provider clients with fallback and load balancing."""
 
-    def __init__(self, config_manager=None):
+    def __init__(self, config_manager: Optional[str] = None) -> None:
         """Initialize client manager."""
         if config_manager is None:
             from .mirascope_config import get_config_manager

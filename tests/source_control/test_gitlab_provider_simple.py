@@ -12,7 +12,7 @@ class TestGitLabProviderSimple:
     """Simple test cases for GitLab Provider."""
 
     @pytest.fixture
-    def gitlab_provider(self):
+    def gitlab_provider(self) -> None:
         """Create a GitLab provider with mocked dependencies."""
         config = GitLabRepositoryConfig(
             name="test-gitlab-repo",

@@ -14,7 +14,7 @@ from .prompt_context_models import IssueContext, IssueType, RepositoryContext
 class EnhancedCodeGenerationAgent:
     """Enhanced analysis agent with integrated code generation capabilities"""
 
-    def __init__(self, config: EnhancedCodeGenerationConfig):
+    def __init__(self, config: EnhancedCodeGenerationConfig) -> None:
         self.config = config
         self.enhanced_analysis_agent = EnhancedAnalysisAgent(
             EnhancedAnalysisConfig(
@@ -233,7 +233,7 @@ class EnhancedCodeGenerationAgent:
             "generator_details": self.code_generator_factory.get_all_generators_info(),
         }
 
-    def reset_learning_data(self):
+    def reset_learning_data(self) -> None:
         """Reset learning data (useful for testing or starting fresh)"""
         self.learning.reset_learning_data()
 

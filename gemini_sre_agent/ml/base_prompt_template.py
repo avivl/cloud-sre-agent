@@ -18,7 +18,7 @@ from .prompt_context_models import PromptContext
 class BasePromptTemplate(ABC):
     """Base class for dynamic prompt templates."""
 
-    def __init__(self, template_name: str):
+    def __init__(self, template_name: str) -> None:
         """
         Initialize the prompt template.
 

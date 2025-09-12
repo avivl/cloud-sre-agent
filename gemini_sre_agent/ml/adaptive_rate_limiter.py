@@ -23,7 +23,7 @@ class AdaptiveRateLimiter:
     cost tracking systems.
     """
 
-    def __init__(self, config: Optional[RateLimiterConfig] = None):
+    def __init__(self, config: Optional[RateLimiterConfig] = None) -> None:
         """
         Initialize the adaptive rate limiter.
 
@@ -243,7 +243,7 @@ class AdaptiveRateLimiter:
             "daily_cost": self.daily_cost,
         }
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset all statistics and state."""
         self.consecutive_errors = 0
         self.current_backoff_seconds = self.config.base_backoff_seconds
@@ -400,7 +400,7 @@ class AdaptiveRateLimiter:
         return getattr(self, "_last_recovery_attempt", None)
 
     @last_recovery_attempt.setter
-    def last_recovery_attempt(self, value: Optional[float]):
+    def last_recovery_attempt(self, value: Optional[float]) -> None:
         """Set last recovery attempt time."""
         self._last_recovery_attempt = value
 
@@ -410,7 +410,7 @@ class AdaptiveRateLimiter:
         return self._last_rate_limit_time
 
     @last_rate_limit_time.setter
-    def last_rate_limit_time(self, value):
+    def last_rate_limit_time(self, value: str) -> None:
         """Set last rate limit time, accepting datetime or float."""
         if value is None:
             self._last_rate_limit_time = None
@@ -425,7 +425,7 @@ class AdaptiveRateLimiter:
         return self._circuit_opened_at
 
     @circuit_opened_at.setter
-    def circuit_opened_at(self, value):
+    def circuit_opened_at(self, value: str) -> None:
         """Set circuit opened time, accepting datetime or float."""
         if value is None:
             self._circuit_opened_at = None

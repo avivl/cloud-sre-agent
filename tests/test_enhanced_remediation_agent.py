@@ -20,13 +20,13 @@ class TestEnhancedRemediationAgent:
     """Test cases for EnhancedRemediationAgent."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def mock_remediation_plan(self):
+    def mock_remediation_plan(self) -> None:
         """Create a mock remediation plan for testing."""
         return RemediationPlan(
             root_cause_analysis="Test root cause analysis",
@@ -35,7 +35,7 @@ class TestEnhancedRemediationAgent:
         )
 
     @pytest.fixture
-    def source_control_config(self, temp_dir):
+    def source_control_config(self, temp_dir: str) -> None:
         """Create a source control configuration for testing."""
         return SourceControlGlobalConfig(
             max_concurrent_operations=2,
@@ -43,7 +43,7 @@ class TestEnhancedRemediationAgent:
         )
 
     @pytest.fixture
-    def enhanced_agent(self, source_control_config):
+    def enhanced_agent(self, source_control_config: str) -> None:
         """Create an enhanced remediation agent for testing."""
         return EnhancedRemediationAgent(
             source_control_config=source_control_config,
@@ -221,13 +221,13 @@ class TestRemediationAgentAdapter:
     """Test cases for RemediationAgentAdapter (backward compatibility)."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def mock_remediation_plan(self):
+    def mock_remediation_plan(self) -> None:
         """Create a mock remediation plan for testing."""
         return RemediationPlan(
             root_cause_analysis="Test root cause analysis",
@@ -371,7 +371,7 @@ class TestIntegration:
     """Integration tests for the enhanced remediation system."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class GrokProvider(LLMProvider):
     """xAI Grok provider implementation."""
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.api_key = config.api_key
         self.base_url = (

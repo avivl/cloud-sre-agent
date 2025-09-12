@@ -128,7 +128,7 @@ class DetectionAlgorithm(Protocol[T]):
 class BaseDetectionAlgorithm(ABC, Generic[T]):
     """Base class for detection algorithms."""
 
-    def __init__(self, config: DetectionAlgorithmConfig):
+    def __init__(self, config: DetectionAlgorithmConfig) -> None:
         """Initialize the detection algorithm."""
         self.config = config
         self.logger = logging.getLogger(f"DetectionAlgorithm.{self.__class__.__name__}")
@@ -155,7 +155,7 @@ class BaseDetectionAlgorithm(ABC, Generic[T]):
 class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects cascade failure patterns in system logs."""
 
-    def __init__(self, config: Optional[CascadeFailureConfig] = None):
+    def __init__(self, config: Optional[CascadeFailureConfig] = None) -> None:
         """Initialize the cascade failure detector."""
         super().__init__(config or CascadeFailureConfig())
         self.cascade_config: CascadeFailureConfig = self.config  # type: ignore
@@ -309,7 +309,7 @@ class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects service degradation patterns in system logs."""
 
-    def __init__(self, config: Optional[ServiceDegradationConfig] = None):
+    def __init__(self, config: Optional[ServiceDegradationConfig] = None) -> None:
         """Initialize the service degradation detector."""
         super().__init__(config or ServiceDegradationConfig())
         self.degradation_config: ServiceDegradationConfig = self.config  # type: ignore
@@ -462,7 +462,7 @@ class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
 class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects traffic spike patterns in system logs."""
 
-    def __init__(self, config: Optional[TrafficSpikeConfig] = None):
+    def __init__(self, config: Optional[TrafficSpikeConfig] = None) -> None:
         """Initialize the traffic spike detector."""
         super().__init__(config or TrafficSpikeConfig())
         self.spike_config = self.config
@@ -604,7 +604,7 @@ class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
 class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects configuration issue patterns in system logs."""
 
-    def __init__(self, config: Optional[ConfigurationIssueConfig] = None):
+    def __init__(self, config: Optional[ConfigurationIssueConfig] = None) -> None:
         """Initialize the configuration issue detector."""
         super().__init__(config or ConfigurationIssueConfig())
         self.config_issue_config: ConfigurationIssueConfig = self.config  # type: ignore
@@ -779,7 +779,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
 class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects dependency failure patterns in system logs."""
 
-    def __init__(self, config: Optional[DependencyFailureConfig] = None):
+    def __init__(self, config: Optional[DependencyFailureConfig] = None) -> None:
         """Initialize the dependency failure detector."""
         super().__init__(config or DependencyFailureConfig())
         self.dependency_config: DependencyFailureConfig = self.config  # type: ignore
@@ -962,7 +962,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects resource exhaustion patterns in system logs."""
 
-    def __init__(self, config: Optional[ResourceExhaustionConfig] = None):
+    def __init__(self, config: Optional[ResourceExhaustionConfig] = None) -> None:
         """Initialize the resource exhaustion detector."""
         super().__init__(config or ResourceExhaustionConfig())
         self.resource_config: ResourceExhaustionConfig = self.config  # type: ignore

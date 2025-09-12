@@ -76,7 +76,7 @@ class ServiceResult:
     error_message: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -96,7 +96,7 @@ class ServiceMetrics:
     operation_counts: Optional[Dict[ServiceOperation, int]] = None
     last_updated: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.model_usage_counts is None:
             self.model_usage_counts = {}
         if self.provider_usage_counts is None:
@@ -278,7 +278,7 @@ class BaseLLMService(ABC):
             "performance_cache_stats": self.performance_monitor.get_cache_stats(),
         }
 
-    def reset_metrics(self):
+    def reset_metrics(self) -> None:
         """Reset all service metrics."""
         self._service_metrics = ServiceMetrics()
         self._selection_stats.clear()

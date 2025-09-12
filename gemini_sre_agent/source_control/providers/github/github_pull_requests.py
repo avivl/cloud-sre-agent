@@ -19,7 +19,7 @@ from ...models import ProviderCapabilities
 class GitHubPullRequests:
     """Handles pull request operations for GitHub."""
 
-    def __init__(self, client: Github, repo: Repository, logger: logging.Logger):
+    def __init__(self, client: Github, repo: Repository, logger: logging.Logger) -> None:
         """Initialize pull request operations with GitHub client and repository."""
         self.client = client
         self.repo = repo

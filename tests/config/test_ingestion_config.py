@@ -31,7 +31,7 @@ from gemini_sre_agent.config.ingestion_config import (
 class TestSourceConfigs:
     """Test individual source configuration classes."""
 
-    def test_gcp_pubsub_config(self):
+    def test_gcp_pubsub_config(self) -> None:
         """Test GCP Pub/Sub configuration."""
         config = GCPPubSubConfig(
             name="test-pubsub",
@@ -59,7 +59,7 @@ class TestSourceConfigs:
         assert config.config["project_id"] == "test-project"
         assert config.config["subscription_id"] == "test-subscription"
 
-    def test_gcp_logging_config(self):
+    def test_gcp_logging_config(self) -> None:
         """Test GCP Logging configuration."""
         config = GCPLoggingConfig(
             name="test-logging",
@@ -78,7 +78,7 @@ class TestSourceConfigs:
         assert config.poll_interval == 60
         assert config.max_results == 200
 
-    def test_file_system_config(self):
+    def test_file_system_config(self) -> None:
         """Test file system configuration."""
         config = FileSystemConfig(
             name="test-filesystem",
@@ -100,7 +100,7 @@ class TestSourceConfigs:
         assert config.buffer_size == 500
         assert config.max_memory_mb == 50
 
-    def test_aws_cloudwatch_config(self):
+    def test_aws_cloudwatch_config(self) -> None:
         """Test AWS CloudWatch configuration."""
         config = AWSCloudWatchConfig(
             name="test-cloudwatch",
@@ -122,7 +122,7 @@ class TestSourceConfigs:
         assert config.poll_interval == 45
         assert config.max_events == 300
 
-    def test_kubernetes_config(self):
+    def test_kubernetes_config(self) -> None:
         """Test Kubernetes configuration."""
         config = KubernetesConfig(
             name="test-k8s",
@@ -144,7 +144,7 @@ class TestSourceConfigs:
         assert config.poll_interval == 30
         assert config.max_logs == 200
 
-    def test_syslog_config(self):
+    def test_syslog_config(self) -> None:
         """Test Syslog configuration."""
         config = SyslogConfig(
             name="test-syslog",
@@ -168,7 +168,7 @@ class TestSourceConfigs:
 class TestGlobalConfig:
     """Test global configuration."""
 
-    def test_default_global_config(self):
+    def test_default_global_config(self) -> None:
         """Test default global configuration values."""
         config = GlobalConfig()
 
@@ -186,7 +186,7 @@ class TestGlobalConfig:
         assert config.drop_oldest_on_full is True
         assert config.buffer_strategy == BufferStrategy.MEMORY
 
-    def test_custom_global_config(self):
+    def test_custom_global_config(self) -> None:
         """Test custom global configuration values."""
         config = GlobalConfig(
             max_throughput=1000,
@@ -222,7 +222,7 @@ class TestGlobalConfig:
 class TestIngestionConfig:
     """Test the main ingestion configuration class."""
 
-    def test_empty_config(self):
+    def test_empty_config(self) -> None:
         """Test empty configuration."""
         config = IngestionConfig()
 
@@ -230,7 +230,7 @@ class TestIngestionConfig:
         assert isinstance(config.global_config, GlobalConfig)
         assert config.schema_version == "1.0.0"
 
-    def test_config_with_sources(self):
+    def test_config_with_sources(self) -> None:
         """Test configuration with sources."""
         sources = [
             GCPPubSubConfig(
@@ -253,7 +253,7 @@ class TestIngestionConfig:
         assert config.get_source_by_name("file-source") is not None
         assert config.get_source_by_name("nonexistent") is None
 
-    def test_get_enabled_sources(self):
+    def test_get_enabled_sources(self) -> None:
         """Test getting enabled sources sorted by priority."""
         sources = [
             GCPPubSubConfig(
@@ -287,7 +287,7 @@ class TestIngestionConfig:
         assert enabled_sources[0].name == "high-priority"  # priority 5
         assert enabled_sources[1].name == "medium-priority"  # priority 10
 
-    def test_validation_success(self):
+    def test_validation_success(self) -> None:
         """Test successful configuration validation."""
         sources = [
             GCPPubSubConfig(
@@ -307,7 +307,7 @@ class TestIngestionConfig:
 
         assert errors == []
 
-    def test_validation_errors(self):
+    def test_validation_errors(self) -> None:
         """Test configuration validation with errors."""
         sources = [
             GCPPubSubConfig(
@@ -332,7 +332,7 @@ class TestIngestionConfig:
         assert any("retry_delay must be non-negative" in error for error in errors)
         assert any("timeout must be positive" in error for error in errors)
 
-    def test_duplicate_source_names(self):
+    def test_duplicate_source_names(self) -> None:
         """Test validation with duplicate source names."""
         sources = [
             GCPPubSubConfig(
@@ -354,7 +354,7 @@ class TestIngestionConfig:
         assert len(errors) > 0
         assert any("Duplicate source names found" in error for error in errors)
 
-    def test_global_config_validation_errors(self):
+    def test_global_config_validation_errors(self) -> None:
         """Test global configuration validation errors."""
         global_config = GlobalConfig(
             max_throughput=0,  # Invalid
@@ -389,7 +389,7 @@ class TestIngestionConfig:
 class TestIngestionConfigManager:
     """Test the configuration manager."""
 
-    def test_load_json_config(self):
+    def test_load_json_config(self) -> None:
         """Test loading configuration from JSON file."""
         config_data = {
             "schema_version": "1.0.0",
@@ -481,7 +481,7 @@ class TestIngestionConfigManager:
         finally:
             Path(temp_file).unlink()
 
-    def test_load_yaml_config(self):
+    def test_load_yaml_config(self) -> None:
         """Test loading configuration from YAML file."""
         config_data = {
             "schema_version": "1.0.0",
@@ -545,14 +545,14 @@ class TestIngestionConfigManager:
         finally:
             Path(temp_file).unlink()
 
-    def test_load_config_file_not_found(self):
+    def test_load_config_file_not_found(self) -> None:
         """Test loading configuration from non-existent file."""
         manager = IngestionConfigManager()
 
         with pytest.raises(Exception):  # Should raise ConfigError
             manager.load_config("/nonexistent/file.json")
 
-    def test_load_config_unsupported_format(self):
+    def test_load_config_unsupported_format(self) -> None:
         """Test loading configuration from unsupported file format."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("This is not a valid config file")
@@ -567,7 +567,7 @@ class TestIngestionConfigManager:
         finally:
             Path(temp_file).unlink()
 
-    def test_validate_config(self):
+    def test_validate_config(self) -> None:
         """Test configuration validation through manager."""
         config_data = {
             "schema_version": "1.0.0",
@@ -618,7 +618,7 @@ class TestIngestionConfigManager:
         finally:
             Path(temp_file).unlink()
 
-    def test_save_config(self):
+    def test_save_config(self) -> None:
         """Test saving configuration to file."""
         sources = [
             GCPPubSubConfig(
@@ -646,7 +646,7 @@ class TestIngestionConfigManager:
         finally:
             Path(temp_file).unlink()
 
-    def test_save_config_yaml(self):
+    def test_save_config_yaml(self) -> None:
         """Test saving configuration to YAML file."""
         sources = [
             FileSystemConfig(
@@ -673,7 +673,7 @@ class TestIngestionConfigManager:
         finally:
             Path(temp_file).unlink()
 
-    def test_save_config_unsupported_format(self):
+    def test_save_config_unsupported_format(self) -> None:
         """Test saving configuration to unsupported file format."""
         config = IngestionConfig()
 
@@ -689,7 +689,7 @@ class TestIngestionConfigManager:
         finally:
             Path(temp_file).unlink()
 
-    def test_get_config(self):
+    def test_get_config(self) -> None:
         """Test getting current configuration."""
         manager = IngestionConfigManager()
 
@@ -719,7 +719,7 @@ class TestIngestionConfigManager:
 class TestEnums:
     """Test enum classes."""
 
-    def test_source_type_enum(self):
+    def test_source_type_enum(self) -> None:
         """Test SourceType enum values."""
         assert SourceType.GCP_PUBSUB == "gcp_pubsub"
         assert SourceType.GCP_LOGGING == "gcp_logging"
@@ -728,13 +728,13 @@ class TestEnums:
         assert SourceType.KUBERNETES == "kubernetes"
         assert SourceType.SYSLOG == "syslog"
 
-    def test_buffer_strategy_enum(self):
+    def test_buffer_strategy_enum(self) -> None:
         """Test BufferStrategy enum values."""
         assert BufferStrategy.DIRECT == "direct"
         assert BufferStrategy.MEMORY == "memory"
         assert BufferStrategy.EXTERNAL == "external"
 
-    def test_health_check_status_enum(self):
+    def test_health_check_status_enum(self) -> None:
         """Test HealthCheckStatus enum values."""
         assert HealthCheckStatus.HEALTHY == "healthy"
         assert HealthCheckStatus.UNHEALTHY == "unhealthy"

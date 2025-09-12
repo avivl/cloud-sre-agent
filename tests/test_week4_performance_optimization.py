@@ -31,12 +31,12 @@ class TestIssuePatternCache:
     """Test cases for IssuePatternCache class."""
 
     @pytest.fixture
-    def pattern_cache(self):
+    def pattern_cache(self) -> None:
         """Create an IssuePatternCache instance."""
         return IssuePatternCache()
 
     @pytest.fixture
-    def sample_pattern_data(self):
+    def sample_pattern_data(self) -> None:
         """Sample pattern data for testing."""
         return {
             "pattern_type": "database_error",
@@ -142,12 +142,12 @@ class TestRepositoryContextCache:
     """Test cases for RepositoryContextCache class."""
 
     @pytest.fixture
-    def repo_cache(self):
+    def repo_cache(self) -> None:
         """Create a RepositoryContextCache instance."""
         return RepositoryContextCache()
 
     @pytest.fixture
-    def sample_repo_context(self):
+    def sample_repo_context(self) -> None:
         """Sample repository context data."""
         return {
             "architecture": "microservices",
@@ -252,13 +252,13 @@ class TestModelSelectionOptimization:
     """Test cases for model selection optimization."""
 
     @pytest.fixture
-    def strategy(self):
+    def strategy(self) -> None:
         """Create an AdaptivePromptStrategy instance."""
         config = StrategyConfig()
         return AdaptivePromptStrategy(config)
 
     @pytest.fixture
-    def high_complexity_context(self):
+    def high_complexity_context(self) -> None:
         """High complexity task context."""
         from gemini_sre_agent.ml.prompt_context_models import TaskContext
 
@@ -275,7 +275,7 @@ class TestModelSelectionOptimization:
         )
 
     @pytest.fixture
-    def low_complexity_context(self):
+    def low_complexity_context(self) -> None:
         """Low complexity task context."""
         from gemini_sre_agent.ml.prompt_context_models import TaskContext
 
@@ -291,7 +291,7 @@ class TestModelSelectionOptimization:
             cost_sensitivity=0.8,
         )
 
-    def test_high_complexity_model_selection(self, strategy, high_complexity_context):
+    def test_high_complexity_model_selection(self, strategy: str, high_complexity_context: str) -> None:
         """Test model selection for high complexity tasks."""
         # Meta-prompt strategy
         model = strategy.select_model(high_complexity_context, "meta_prompt")
@@ -301,7 +301,7 @@ class TestModelSelectionOptimization:
         model = strategy.select_model(high_complexity_context, "context_aware")
         assert model == "gemini-1.5-pro-001"
 
-    def test_low_complexity_model_selection(self, strategy, low_complexity_context):
+    def test_low_complexity_model_selection(self, strategy: str, low_complexity_context: str) -> None:
         """Test model selection for low complexity tasks."""
         # Meta-prompt strategy
         model = strategy.select_model(low_complexity_context, "meta_prompt")
@@ -311,7 +311,7 @@ class TestModelSelectionOptimization:
         model = strategy.select_model(low_complexity_context, "static_template")
         assert model == "gemini-1.5-flash-001"
 
-    def test_medium_complexity_model_selection(self, strategy):
+    def test_medium_complexity_model_selection(self, strategy: str) -> None:
         """Test model selection for medium complexity tasks."""
         from gemini_sre_agent.ml.prompt_context_models import TaskContext
 
@@ -335,7 +335,7 @@ class TestModelSelectionOptimization:
         model = strategy.select_model(medium_context, "hybrid")
         assert model == "gemini-1.5-pro-001"
 
-    def test_model_selection_stats(self, strategy):
+    def test_model_selection_stats(self, strategy: str) -> None:
         """Test model selection statistics."""
         stats = strategy.get_model_selection_stats()
 
@@ -350,7 +350,7 @@ class TestPerformanceMonitor:
     """Test cases for PerformanceMonitor class."""
 
     @pytest.fixture
-    def monitor(self):
+    def monitor(self) -> None:
         """Create a PerformanceMonitor instance."""
         return PerformanceMonitor(
             max_metrics_per_operation=100,
@@ -446,7 +446,7 @@ class TestPerformanceMonitor:
         # Note: This depends on the monitoring loop timing
         # In a real test, we might need to trigger the analysis manually
 
-    def test_monitor_stats(self, monitor):
+    def test_monitor_stats(self, monitor: str) -> None:
         """Test monitor statistics."""
         stats = monitor.get_monitor_stats()
 

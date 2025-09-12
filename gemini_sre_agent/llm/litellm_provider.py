@@ -45,7 +45,7 @@ class LiteLLMProvider(LLMProvider):
     multiple LLM providers through a single implementation.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         if not LITELLM_AVAILABLE:
             raise ImportError(
                 "LiteLLM is not available. Please install: pip install litellm"

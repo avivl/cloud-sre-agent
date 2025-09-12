@@ -26,18 +26,18 @@ class TestLocalFileOperationsConfig:
     """Test LocalFileOperations with configuration support."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield Path(temp_dir)
 
     @pytest.fixture
-    def mock_logger(self):
+    def mock_logger(self) -> None:
         """Create a mock logger."""
         return MagicMock()
 
     @pytest.fixture
-    def default_config(self):
+    def default_config(self) -> None:
         """Create default configuration."""
         return SubOperationConfig(
             operation_name="file_operations",
@@ -48,7 +48,7 @@ class TestLocalFileOperationsConfig:
         )
 
     @pytest.fixture
-    def mock_error_handling_components(self):
+    def mock_error_handling_components(self) -> None:
         """Create mock error handling components."""
         resilient_manager = MagicMock()
         resilient_manager.execute_with_retry = AsyncMock()
@@ -70,13 +70,13 @@ class TestLocalFileOperationsConfig:
             config=default_config,
         )
 
-    def test_initialization_with_config(self, file_operations, default_config):
+    def test_initialization_with_config(self, file_operations: str, default_config: str) -> None:
         """Test initialization with configuration."""
         assert file_operations.config == default_config
         assert file_operations.provider_type == "local"
         assert file_operations.operation_name == "file_operations"
 
-    def test_initialization_without_config(self, temp_dir, mock_logger):
+    def test_initialization_without_config(self, temp_dir: str, mock_logger: str) -> None:
         """Test initialization without configuration (should create default)."""
         file_ops = LocalFileOperations(
             root_path=temp_dir,
@@ -278,7 +278,7 @@ class TestLocalFileOperationsConfig:
 
         assert result is True
 
-    def test_performance_stats(self, file_operations):
+    def test_performance_stats(self, file_operations: str) -> None:
         """Test performance statistics tracking."""
         # Simulate some operations
         file_operations._operation_count = 5
@@ -294,7 +294,7 @@ class TestLocalFileOperationsConfig:
         assert stats["error_rate"] == 0.2
         assert stats["average_duration"] == 0.5
 
-    def test_config_update(self, file_operations):
+    def test_config_update(self, file_operations: str) -> None:
         """Test configuration update."""
         new_config = SubOperationConfig(
             operation_name="file_operations",
@@ -309,7 +309,7 @@ class TestLocalFileOperationsConfig:
         assert file_operations.config.file_operation_timeout == 90.0
         assert file_operations.config.log_level == "DEBUG"
 
-    def test_health_status(self, file_operations):
+    def test_health_status(self, file_operations: str) -> None:
         """Test health status reporting."""
         health_status = file_operations.get_health_status()
 

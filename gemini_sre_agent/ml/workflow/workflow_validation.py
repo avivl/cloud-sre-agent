@@ -383,7 +383,7 @@ class WorkflowValidationEngine(ProcessableComponent[Dict[str, Any], ValidationRe
         """
         self._state[key] = value
 
-    def get_state(self, key: str, default: Any = None) -> Any:
+    def get_state(self, key: str, default: Any : Optional[str] = None) -> Any:
         """
         Get a state value.
 

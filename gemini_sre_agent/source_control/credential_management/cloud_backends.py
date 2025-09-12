@@ -184,7 +184,7 @@ class AWSSecretsBackend(CredentialBackend):
 class AzureKeyVaultBackend(CredentialBackend):
     """Credential backend using Azure Key Vault."""
 
-    def __init__(self, vault_url: str, credential: Optional[Any] = None):
+    def __init__(self, vault_url: str, credential: Optional[Any] = None) -> None:
         self.vault_url = vault_url
         self.credential = credential
         self.logger = logging.getLogger("AzureKeyVaultBackend")

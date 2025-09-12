@@ -14,7 +14,7 @@ from gemini_sre_agent.llm.provider import LLMProvider
 
 
 @pytest.fixture
-def mock_llm_provider():
+def mock_llm_provider() -> None:
     """Fixture for a mocked LLMProvider."""
     mock_provider = AsyncMock(spec=LLMProvider)
     mock_provider.provider_name = "gemini"
@@ -69,7 +69,7 @@ def mock_llm_provider():
 
 
 @pytest.fixture
-def mock_llm_providers(mock_llm_provider):
+def mock_llm_providers(mock_llm_provider: str) -> None:
     """Fixture for a dictionary of mocked LLMProviders."""
     return {"gemini": mock_llm_provider}
 

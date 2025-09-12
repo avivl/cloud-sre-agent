@@ -32,7 +32,7 @@ class LoaderResult:
 class BaseConfigLoader:
     """Base class for configuration loaders."""
 
-    def __init__(self, source: str, priority: int = 0):
+    def __init__(self, source: str, priority: int = 0) -> None:
         """
         Initialize the loader.
 
@@ -66,7 +66,7 @@ class BaseConfigLoader:
 class EnvironmentConfigLoader(BaseConfigLoader):
     """Loader for environment variable configuration."""
 
-    def __init__(self, prefix: str = "LLM_", priority: int = 2):
+    def __init__(self, prefix: str = "LLM_", priority: int = 2) -> None:
         """
         Initialize environment loader.
 
@@ -250,7 +250,7 @@ class EnvironmentConfigLoader(BaseConfigLoader):
 class FileConfigLoader(BaseConfigLoader):
     """Loader for file-based configuration (YAML/JSON)."""
 
-    def __init__(self, file_path: Union[str, Path], priority: int = 1):
+    def __init__(self, file_path: Union[str, Path]: str, priority: int = 1) -> None:
         """
         Initialize file loader.
 
@@ -323,7 +323,7 @@ class FileConfigLoader(BaseConfigLoader):
 class ProgrammaticConfigLoader(BaseConfigLoader):
     """Loader for programmatically provided configuration."""
 
-    def __init__(self, config_data: Dict[str, Any], priority: int = 3):
+    def __init__(self, config_data: Dict[str, Any]: str, priority: int = 3) -> None:
         """
         Initialize programmatic loader.
 
@@ -358,7 +358,7 @@ class ProgrammaticConfigLoader(BaseConfigLoader):
 class ConfigLoaderManager:
     """Manager for multiple configuration loaders."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the loader manager."""
         self.loaders: List[BaseConfigLoader] = []
         self._results: List[LoaderResult] = []

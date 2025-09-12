@@ -42,7 +42,7 @@ class ModelConfig(BaseModel):
 
     @field_validator("name")
     @classmethod
-    def validate_name(cls, v):
+    def validate_name(cls: str, v: str) -> None:
         """
         Validate Name.
 
@@ -57,7 +57,7 @@ class ModelConfig(BaseModel):
 
     @field_validator("capabilities")
     @classmethod
-    def validate_capabilities(cls, v):
+    def validate_capabilities(cls: str, v: str) -> None:
         """
         Validate Capabilities.
 
@@ -99,7 +99,7 @@ class LLMProviderConfig(BaseModel):
 
     @field_validator("api_key")
     @classmethod
-    def validate_api_key(cls, v, info):
+    def validate_api_key(cls: str, v: str, info: str) -> None:
         """
         Validate Api Key.
 
@@ -121,7 +121,7 @@ class LLMProviderConfig(BaseModel):
 
     @field_validator("region")
     @classmethod
-    def validate_region(cls, v, info):
+    def validate_region(cls: str, v: str, info: str) -> None:
         """
         Validate Region.
 
@@ -138,7 +138,7 @@ class LLMProviderConfig(BaseModel):
 
     @field_validator("models")
     @classmethod
-    def validate_models(cls, v):
+    def validate_models(cls: str, v: str) -> None:
         """
         Validate Models.
 
@@ -157,7 +157,7 @@ class LLMProviderConfig(BaseModel):
 
     @field_validator("model_type_mappings")
     @classmethod
-    def validate_model_type_mappings(cls, v):
+    def validate_model_type_mappings(cls: str, v: str) -> None:
         """
         Validate Model Type Mappings.
 
@@ -182,7 +182,7 @@ class LLMProviderConfig(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_provider_config(self):
+    def validate_provider_config(self) -> None:
         """Post-init validation for provider configuration."""
         # Validate that model_type_mappings reference existing models
         if self.model_type_mappings:
@@ -239,7 +239,7 @@ class AgentLLMConfig(BaseModel):
 
     @field_validator("primary_provider")
     @classmethod
-    def validate_primary_provider(cls, v):
+    def validate_primary_provider(cls: str, v: str) -> None:
         """
         Validate Primary Provider.
 
@@ -254,7 +254,7 @@ class AgentLLMConfig(BaseModel):
 
     @field_validator("fallback_provider")
     @classmethod
-    def validate_fallback_provider(cls, v):
+    def validate_fallback_provider(cls: str, v: str) -> None:
         """
         Validate Fallback Provider.
 
@@ -269,7 +269,7 @@ class AgentLLMConfig(BaseModel):
 
     @field_validator("model_overrides")
     @classmethod
-    def validate_model_overrides(cls, v):
+    def validate_model_overrides(cls: str, v: str) -> None:
         """
         Validate Model Overrides.
 
@@ -296,7 +296,7 @@ class AgentLLMConfig(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_agent_config(self):
+    def validate_agent_config(self) -> None:
         """Post-init validation for agent configuration."""
         # Validate that fallback provider is different from primary provider
         if self.fallback_provider and self.fallback_provider == self.primary_provider:
@@ -399,7 +399,7 @@ class CostConfig(BaseModel):
 
     @field_validator("budget_limits")
     @classmethod
-    def validate_budget_limits(cls, v):
+    def validate_budget_limits(cls: str, v: str) -> None:
         """
         Validate Budget Limits.
 
@@ -419,7 +419,7 @@ class CostConfig(BaseModel):
 
     @field_validator("cost_alerts")
     @classmethod
-    def validate_cost_alerts(cls, v):
+    def validate_cost_alerts(cls: str, v: str) -> None:
         """
         Validate Cost Alerts.
 
@@ -437,7 +437,7 @@ class CostConfig(BaseModel):
 
     @field_validator("budget_period")
     @classmethod
-    def validate_budget_period(cls, v):
+    def validate_budget_period(cls: str, v: str) -> None:
         """
         Validate Budget Period.
 
@@ -452,7 +452,7 @@ class CostConfig(BaseModel):
 
     @field_validator("enforcement_policy")
     @classmethod
-    def validate_enforcement_policy(cls, v):
+    def validate_enforcement_policy(cls: str, v: str) -> None:
         """
         Validate Enforcement Policy.
 
@@ -469,7 +469,7 @@ class CostConfig(BaseModel):
 
     @field_validator("optimization_strategy")
     @classmethod
-    def validate_optimization_strategy(cls, v):
+    def validate_optimization_strategy(cls: str, v: str) -> None:
         """
         Validate Optimization Strategy.
 
@@ -486,7 +486,7 @@ class CostConfig(BaseModel):
 
     @field_validator("cost_weight", "performance_weight", "quality_weight")
     @classmethod
-    def validate_weights(cls, v):
+    def validate_weights(cls: str, v: str) -> None:
         """
         Validate Weights.
 
@@ -500,7 +500,7 @@ class CostConfig(BaseModel):
         return v
 
     @model_validator(mode='after')
-    def validate_weights_sum(self):
+    def validate_weights_sum(self) -> None:
         """Ensure optimization weights sum to approximately 1.0."""
         total_weight = self.cost_weight + self.performance_weight + self.quality_weight
         if not 0.95 <= total_weight <= 1.05:  # Allow small floating point errors
@@ -533,7 +533,7 @@ class ResilienceConfig(BaseModel):
 
     @field_validator("retry_delay")
     @classmethod
-    def validate_retry_delay(cls, v):
+    def validate_retry_delay(cls: str, v: str) -> None:
         """
         Validate Retry Delay.
 
@@ -579,7 +579,7 @@ class LLMConfig(BaseModel):
 
     @field_validator("default_provider")
     @classmethod
-    def validate_default_provider(cls, v, info):
+    def validate_default_provider(cls: str, v: str, info: str) -> None:
         """
         Validate Default Provider.
 
@@ -603,7 +603,7 @@ class LLMConfig(BaseModel):
 
     @field_validator("providers")
     @classmethod
-    def validate_providers(cls, v):
+    def validate_providers(cls: str, v: str) -> None:
         """
         Validate Providers.
 
@@ -630,7 +630,7 @@ class LLMConfig(BaseModel):
 
     @field_validator("agents")
     @classmethod
-    def validate_agents(cls, v, info):
+    def validate_agents(cls: str, v: str, info: str) -> None:
         """
         Validate Agents.
 
@@ -665,7 +665,7 @@ class LLMConfig(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def set_default_configs(self):
+    def set_default_configs(self) -> None:
         """Set default configurations if not provided."""
         if self.cost_config is None:
             self.cost_config = CostConfig(

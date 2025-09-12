@@ -16,7 +16,7 @@ class TestProviderFactory:
     """Test the ProviderFactory class."""
 
     @pytest.fixture
-    def credential_manager(self):
+    def credential_manager(self) -> None:
         """
         Credential Manager.
 
@@ -24,7 +24,7 @@ class TestProviderFactory:
         return MagicMock(spec=CredentialManager)
 
     @pytest.fixture
-    def factory(self, credential_manager):
+    def factory(self, credential_manager: str) -> None:
         """
         Factory.
 
@@ -35,7 +35,7 @@ class TestProviderFactory:
         return ProviderFactory(credential_manager)
 
     @pytest.fixture
-    def mock_github_provider_class(self):
+    def mock_github_provider_class(self) -> None:
         """
         Mock Github Provider Class.
 
@@ -143,7 +143,7 @@ class TestProviderFactory:
         # Verify the provider was created
         mock_local_provider_class.assert_called_once_with(repo_config.model_dump())
 
-    def test_register_provider(self, factory):
+    def test_register_provider(self, factory: str) -> None:
         """Test registering a provider."""
         mock_provider_class = MagicMock()
         factory.register_provider("test", mock_provider_class)
@@ -151,7 +151,7 @@ class TestProviderFactory:
         assert "test" in factory.provider_registry
         assert factory.provider_registry["test"] == mock_provider_class
 
-    def test_register_providers_from_modules(self, factory):
+    def test_register_providers_from_modules(self, factory: str) -> None:
         """Test registering providers from modules."""
         # This is a placeholder test since the actual implementation
         # would require importing modules dynamically

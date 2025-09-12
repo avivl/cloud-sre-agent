@@ -237,7 +237,7 @@ def print_provider_test_results(results: Dict[str, Any]) -> None:
             print(f"    • Supports tools: {capabilities.get('supports_tools', False)}")
 
 
-def main():
+def main() -> None:
     """Main function."""
     parser = argparse.ArgumentParser(description="Validate LLM configuration files")
     parser.add_argument("config_file", type=Path, help="Path to configuration file")

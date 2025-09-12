@@ -175,7 +175,7 @@ class AgentExecutionMetrics(BaseModel):
 
     @field_validator("duration_ms", mode="before")
     @classmethod
-    def calculate_duration(cls, v, info):
+    def calculate_duration(cls: str, v: str, info: str) -> None:
         """Calculate duration from start and end times."""
         if hasattr(info, "data"):
             data = info.data

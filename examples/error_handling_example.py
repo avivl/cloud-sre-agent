@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class ErrorHandlingExample:
     """Comprehensive error handling examples for LLM operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the error handling example."""
         self.provider_factory = LLMProviderFactory()
         self.model_mixer: Optional[ModelMixer] = None

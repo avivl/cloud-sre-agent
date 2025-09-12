@@ -20,7 +20,7 @@ from gemini_sre_agent.ml.schemas import PatternContext
 class TestGeminiResponseCacheInit:
     """Test GeminiResponseCache initialization."""
 
-    def test_init_default_params(self):
+    def test_init_default_params(self) -> None:
         """Test initialization with default parameters."""
         cache = GeminiResponseCache()
 
@@ -30,7 +30,7 @@ class TestGeminiResponseCacheInit:
         assert cache.cache == {}
         assert cache.access_times == {}
 
-    def test_init_custom_params(self):
+    def test_init_custom_params(self) -> None:
         """Test initialization with custom parameters."""
         cache = GeminiResponseCache(
             max_cache_size=500, ttl_hours=12, similarity_threshold=0.7
@@ -45,7 +45,7 @@ class TestGeminiResponseCacheHashing:
     """Test context hashing functionality."""
 
     @pytest.fixture
-    def sample_context(self):
+    def sample_context(self) -> None:
         """Create sample PatternContext for testing."""
         return PatternContext(
             primary_service="api-service",
@@ -60,7 +60,7 @@ class TestGeminiResponseCacheHashing:
             recent_commits=["abc123", "def456"],
         )
 
-    def test_compute_context_hash(self, sample_context):
+    def test_compute_context_hash(self, sample_context: str) -> None:
         """Test context hash computation."""
         cache = GeminiResponseCache()
         hash1 = cache._compute_context_hash(sample_context)
@@ -70,7 +70,7 @@ class TestGeminiResponseCacheHashing:
         assert hash1 == hash2
         assert len(hash1) == 16  # SHA256 truncated to 16 chars
 
-    def test_compute_context_hash_different_contexts(self):
+    def test_compute_context_hash_different_contexts(self) -> None:
         """Test that different contexts produce different hashes."""
         cache = GeminiResponseCache()
 
@@ -85,7 +85,7 @@ class TestGeminiResponseCacheHashing:
         hash2 = cache._compute_context_hash(context2)
         assert hash1 != hash2
 
-    def test_compute_context_hash_none_values(self):
+    def test_compute_context_hash_none_values(self) -> None:
         """Test hash computation with None values."""
         cache = GeminiResponseCache()
         context = PatternContext()  # All fields None/empty
@@ -98,7 +98,7 @@ class TestGeminiResponseCacheHashing:
 class TestGeminiResponseCacheSimilarity:
     """Test similarity computation functionality."""
 
-    def test_compute_similarity_identical_contexts(self):
+    def test_compute_similarity_identical_contexts(self) -> None:
         """Test similarity computation with identical contexts."""
         cache = GeminiResponseCache()
 
@@ -111,7 +111,7 @@ class TestGeminiResponseCacheSimilarity:
         similarity = cache._compute_similarity(context, context)
         assert similarity == 1.0
 
-    def test_compute_similarity_different_contexts(self):
+    def test_compute_similarity_different_contexts(self) -> None:
         """Test similarity computation with different contexts."""
         cache = GeminiResponseCache()
 
@@ -130,7 +130,7 @@ class TestGeminiResponseCacheSimilarity:
         assert 0.0 <= similarity <= 1.0
         assert similarity < 1.0  # Should be different
 
-    def test_compute_similarity_partial_overlap(self):
+    def test_compute_similarity_partial_overlap(self) -> None:
         """Test similarity computation with partial service overlap."""
         cache = GeminiResponseCache()
 
@@ -146,7 +146,7 @@ class TestGeminiResponseCacheSimilarity:
         similarity = cache._compute_similarity(context1, context2)
         assert 0.0 < similarity < 1.0  # Partial similarity
 
-    def test_compare_dict_fields_identical(self):
+    def test_compare_dict_fields_identical(self) -> None:
         """Test dictionary field comparison with identical dicts."""
         cache = GeminiResponseCache()
 
@@ -156,7 +156,7 @@ class TestGeminiResponseCacheSimilarity:
         similarity = cache._compare_dict_fields(dict1, dict2)
         assert similarity == 1.0
 
-    def test_compare_dict_fields_different(self):
+    def test_compare_dict_fields_different(self) -> None:
         """Test dictionary field comparison with different dicts."""
         cache = GeminiResponseCache()
 
@@ -166,7 +166,7 @@ class TestGeminiResponseCacheSimilarity:
         similarity = cache._compare_dict_fields(dict1, dict2)
         assert similarity == 0.0
 
-    def test_compare_dict_fields_none_values(self):
+    def test_compare_dict_fields_none_values(self) -> None:
         """Test dictionary field comparison with None values."""
         cache = GeminiResponseCache()
 
@@ -179,12 +179,12 @@ class TestGeminiResponseCacheCaching:
     """Test caching and retrieval functionality."""
 
     @pytest.fixture
-    def cache(self):
+    def cache(self) -> None:
         """Create cache instance for testing."""
         return GeminiResponseCache(max_cache_size=10, ttl_hours=1)
 
     @pytest.fixture
-    def sample_context(self):
+    def sample_context(self) -> None:
         """Create sample context for testing."""
         return PatternContext(
             primary_service="api-service",
@@ -193,7 +193,7 @@ class TestGeminiResponseCacheCaching:
         )
 
     @pytest.fixture
-    def sample_response(self):
+    def sample_response(self) -> None:
         """Create sample response for testing."""
         return GeminiResponse(
             success=True,
@@ -297,7 +297,7 @@ class TestGeminiResponseCacheTTL:
     """Test TTL (time-to-live) functionality."""
 
     @pytest.fixture
-    def short_ttl_cache(self):
+    def short_ttl_cache(self) -> None:
         """Create cache with short TTL for testing."""
         return GeminiResponseCache(ttl_hours=0.001)  # ~3.6 seconds
 
@@ -370,7 +370,7 @@ class TestGeminiResponseCacheStats:
     """Test cache statistics functionality."""
 
     @pytest.fixture
-    def cache_with_data(self):
+    def cache_with_data(self) -> None:
         """Create cache with some test data."""
         cache = GeminiResponseCache(max_cache_size=100, ttl_hours=24)
         return cache
@@ -410,13 +410,13 @@ class TestGeminiResponseCacheStats:
         }
         assert stats["oldest_entry_age_hours"] >= 0.0
 
-    def test_get_oldest_entry_age_hours_empty_cache(self):
+    def test_get_oldest_entry_age_hours_empty_cache(self) -> None:
         """Test oldest entry age calculation with empty cache."""
         cache = GeminiResponseCache()
         age = cache._get_oldest_entry_age_hours()
         assert age == 0.0
 
-    def test_get_oldest_entry_age_hours_with_entries(self):
+    def test_get_oldest_entry_age_hours_with_entries(self) -> None:
         """Test oldest entry age calculation with entries."""
         cache = GeminiResponseCache()
 
@@ -436,7 +436,7 @@ class TestGeminiResponseCacheStats:
 class TestGeminiResponseCacheEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_empty_affected_services_handling(self):
+    def test_empty_affected_services_handling(self) -> None:
         """Test handling of empty/None affected_services."""
         cache = GeminiResponseCache()
 
@@ -450,7 +450,7 @@ class TestGeminiResponseCacheEdgeCases:
         assert isinstance(hash1, str)
         assert isinstance(hash2, str)
 
-    def test_json_serialization_edge_cases(self):
+    def test_json_serialization_edge_cases(self) -> None:
         """Test JSON serialization of complex context data."""
         cache = GeminiResponseCache()
 

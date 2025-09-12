@@ -34,7 +34,7 @@ class OptimizationResult:
 class CostOptimizer:
     """Intelligent cost optimization for model selection."""
 
-    def __init__(self, cost_manager: DynamicCostManager, model_registry: ModelRegistry):
+    def __init__(self, cost_manager: DynamicCostManager, model_registry: ModelRegistry) -> None:
         self.cost_manager = cost_manager
         self.model_registry = model_registry
 

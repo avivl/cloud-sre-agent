@@ -15,7 +15,7 @@ from gemini_sre_agent.llm.providers.openai_provider import OpenAIProvider
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> None:
     """Create a mock configuration for OpenAI provider."""
     return LLMProviderConfig(
         provider="openai",
@@ -36,7 +36,7 @@ def mock_config():
 
 
 @pytest.fixture
-def provider(mock_config):
+def provider(mock_config: str) -> None:
     """Create an OpenAI provider instance."""
     return OpenAIProvider(mock_config)
 
@@ -44,7 +44,7 @@ def provider(mock_config):
 class TestOpenAIProvider:
     """Test cases for OpenAI provider."""
 
-    def test_provider_initialization(self, provider, mock_config):
+    def test_provider_initialization(self, provider: str, mock_config: str) -> None:
         """Test provider initialization."""
         assert provider.api_key == "sk-test123456789"
         assert str(provider.base_url) == "https://api.openai.com/v1"
@@ -52,7 +52,7 @@ class TestOpenAIProvider:
         assert provider.model == "default"  # Base class sets to "default"
         assert provider.provider_name == "openai"
 
-    def test_get_available_models(self, provider):
+    def test_get_available_models(self, provider: str) -> None:
         """Test getting available models."""
         models = provider.get_available_models()
 
@@ -160,7 +160,7 @@ class TestOpenAIProvider:
             input="Test text",
         )
 
-    def test_token_count_with_tiktoken(self, provider):
+    def test_token_count_with_tiktoken(self, provider: str) -> None:
         """Test token counting with tiktoken."""
         with patch("builtins.__import__") as mock_import:
             # Mock tiktoken module
@@ -169,7 +169,7 @@ class TestOpenAIProvider:
             mock_encoder.encode.return_value = [1, 2, 3, 4, 5]
             mock_tiktoken.get_encoding.return_value = mock_encoder
 
-            def import_side_effect(name, *args, **kwargs):
+            def import_side_effect(name: str, *args: str, **kwargs: str) -> None:
                 """
                 Import Side Effect.
 
@@ -188,11 +188,11 @@ class TestOpenAIProvider:
             assert result == 5
             mock_tiktoken.get_encoding.assert_called_once_with("cl100k_base")
 
-    def test_token_count_fallback(self, provider):
+    def test_token_count_fallback(self, provider: str) -> None:
         """Test token counting fallback when tiktoken is not available."""
         with patch("builtins.__import__") as mock_import:
 
-            def import_side_effect(name, *args, **kwargs):
+            def import_side_effect(name: str, *args: str, **kwargs: str) -> None:
                 """
                 Import Side Effect.
 
@@ -211,7 +211,7 @@ class TestOpenAIProvider:
             # Should use approximation: 5 words * 1.3 = 6.5 -> 6
             assert result == 6
 
-    def test_cost_estimate(self, provider):
+    def test_cost_estimate(self, provider: str) -> None:
         """Test cost estimation."""
         cost = provider.cost_estimate(1000, 500)
 
@@ -222,12 +222,12 @@ class TestOpenAIProvider:
         expected_cost = (1000 / 1000) * 0.0025 + (500 / 1000) * 0.01
         assert cost == expected_cost
 
-    def test_validate_config_valid(self, mock_config):
+    def test_validate_config_valid(self, mock_config: str) -> None:
         """Test configuration validation with valid config."""
         # Should not raise any exception
         OpenAIProvider.validate_config(mock_config)
 
-    def test_validate_config_invalid_key(self):
+    def test_validate_config_invalid_key(self) -> None:
         """Test configuration validation with invalid API key."""
         config = LLMProviderConfig(
             provider="openai",
@@ -242,12 +242,12 @@ class TestOpenAIProvider:
         with pytest.raises(ValueError, match="OpenAI API key must start with 'sk-'"):
             OpenAIProvider.validate_config(config)
 
-    def test_validate_config_missing_key(self):
+    def test_validate_config_missing_key(self) -> None:
         """Test configuration validation with missing API key."""
 
         # Create a mock config object that bypasses Pydantic validation
         class MockConfig:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.api_key = None
 
         config = MockConfig()
@@ -255,7 +255,7 @@ class TestOpenAIProvider:
         with pytest.raises(ValueError, match="OpenAI API key is required"):
             OpenAIProvider.validate_config(config)
 
-    def test_convert_messages_to_openai_format(self, provider):
+    def test_convert_messages_to_openai_format(self, provider: str) -> None:
         """Test message format conversion."""
         messages = [
             {"role": "system", "content": "You are a helpful assistant"},
@@ -275,7 +275,7 @@ class TestOpenAIProvider:
 
         assert result == expected
 
-    def test_extract_usage(self, provider):
+    def test_extract_usage(self, provider: str) -> None:
         """Test usage extraction from response."""
         # Test with usage object
         mock_usage = MagicMock()
@@ -286,17 +286,17 @@ class TestOpenAIProvider:
 
         assert result == {"input_tokens": 10, "output_tokens": 5}
 
-    def test_extract_usage_none(self, provider):
+    def test_extract_usage_none(self, provider: str) -> None:
         """Test usage extraction with None usage."""
         result = provider._extract_usage(None)
 
         assert result == {"input_tokens": 0, "output_tokens": 0}
 
-    def test_supports_streaming(self, provider):
+    def test_supports_streaming(self, provider: str) -> None:
         """Test streaming support."""
         assert provider.supports_streaming() is True
 
-    def test_supports_tools(self, provider):
+    def test_supports_tools(self, provider: str) -> None:
         """Test tool calling support."""
         assert provider.supports_tools() is True
 

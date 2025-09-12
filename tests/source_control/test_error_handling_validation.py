@@ -20,11 +20,11 @@ class TestErrorHandlingConfigValidator:
     """Test cases for ErrorHandlingConfigValidator."""
 
     @pytest.fixture
-    def validator(self):
+    def validator(self) -> None:
         """Create a validator instance for testing."""
         return ErrorHandlingConfigValidator()
 
-    def test_validate_circuit_breaker_config_valid(self, validator):
+    def test_validate_circuit_breaker_config_valid(self, validator: str) -> None:
         """Test validation of valid circuit breaker config."""
         config = CircuitBreakerConfig(
             failure_threshold=5,
@@ -37,7 +37,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_circuit_breaker_config_invalid_thresholds(self, validator):
+    def test_validate_circuit_breaker_config_invalid_thresholds(self, validator: str) -> None:
         """Test validation of circuit breaker config with invalid thresholds."""
         config = CircuitBreakerConfig(
             failure_threshold=0,  # Invalid: too low
@@ -57,7 +57,7 @@ class TestErrorHandlingConfigValidator:
         )
         assert any("timeout must be positive" in error for error in errors)
 
-    def test_validate_circuit_breaker_config_extreme_values(self, validator):
+    def test_validate_circuit_breaker_config_extreme_values(self, validator: str) -> None:
         """Test validation of circuit breaker config with extreme values."""
         config = CircuitBreakerConfig(
             failure_threshold=2000,  # Too high
@@ -80,7 +80,7 @@ class TestErrorHandlingConfigValidator:
         )
         assert any("timeout should not exceed 300 seconds" in error for error in errors)
 
-    def test_validate_operation_circuit_breaker_config_valid(self, validator):
+    def test_validate_operation_circuit_breaker_config_valid(self, validator: str) -> None:
         """Test validation of valid operation circuit breaker config."""
         config = OperationCircuitBreakerConfig()
 
@@ -104,7 +104,7 @@ class TestErrorHandlingConfigValidator:
             for error in errors
         )
 
-    def test_validate_retry_config_valid(self, validator):
+    def test_validate_retry_config_valid(self, validator: str) -> None:
         """Test validation of valid retry config."""
         config = RetryConfig(
             max_retries=3,
@@ -118,7 +118,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_retry_config_invalid_values(self, validator):
+    def test_validate_retry_config_invalid_values(self, validator: str) -> None:
         """Test validation of retry config with invalid values."""
         config = RetryConfig(
             max_retries=-1,  # Invalid: negative
@@ -138,7 +138,7 @@ class TestErrorHandlingConfigValidator:
         )
         assert any("jitter must be a boolean" in error for error in errors)
 
-    def test_validate_retry_config_logical_errors(self, validator):
+    def test_validate_retry_config_logical_errors(self, validator: str) -> None:
         """Test validation of retry config with logical errors."""
         config = RetryConfig(
             max_retries=3,
@@ -154,7 +154,7 @@ class TestErrorHandlingConfigValidator:
             "base_delay should be less than max_delay" in error for error in errors
         )
 
-    def test_validate_retry_config_max_delay_too_low(self, validator):
+    def test_validate_retry_config_max_delay_too_low(self, validator: str) -> None:
         """Test validation of retry config with max_delay too low for retry count."""
         config = RetryConfig(
             max_retries=5,
@@ -170,43 +170,43 @@ class TestErrorHandlingConfigValidator:
         assert not is_valid
         assert any("max_delay" in error and "too low" in error for error in errors)
 
-    def test_validate_error_type_valid_string(self, validator):
+    def test_validate_error_type_valid_string(self, validator: str) -> None:
         """Test validation of valid error type as string."""
         is_valid, errors = validator.validate_error_type("network_error")
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_error_type_valid_enum(self, validator):
+    def test_validate_error_type_valid_enum(self, validator: str) -> None:
         """Test validation of valid error type as enum."""
         is_valid, errors = validator.validate_error_type(ErrorType.NETWORK_ERROR)
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_error_type_invalid(self, validator):
+    def test_validate_error_type_invalid(self, validator: str) -> None:
         """Test validation of invalid error type."""
         is_valid, errors = validator.validate_error_type("invalid_error")
         assert not is_valid
         assert any("Invalid error type: invalid_error" in error for error in errors)
 
-    def test_validate_circuit_state_valid_string(self, validator):
+    def test_validate_circuit_state_valid_string(self, validator: str) -> None:
         """Test validation of valid circuit state as string."""
         is_valid, errors = validator.validate_circuit_state("closed")
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_circuit_state_valid_enum(self, validator):
+    def test_validate_circuit_state_valid_enum(self, validator: str) -> None:
         """Test validation of valid circuit state as enum."""
         is_valid, errors = validator.validate_circuit_state(CircuitState.CLOSED)
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_circuit_state_invalid(self, validator):
+    def test_validate_circuit_state_invalid(self, validator: str) -> None:
         """Test validation of invalid circuit state."""
         is_valid, errors = validator.validate_circuit_state("invalid_state")
         assert not is_valid
         assert any("Invalid circuit state: invalid_state" in error for error in errors)
 
-    def test_validate_health_check_config_valid(self, validator):
+    def test_validate_health_check_config_valid(self, validator: str) -> None:
         """Test validation of valid health check config."""
         config = {
             "enabled": True,
@@ -219,7 +219,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_health_check_config_invalid(self, validator):
+    def test_validate_health_check_config_invalid(self, validator: str) -> None:
         """Test validation of invalid health check config."""
         config = {
             "enabled": "yes",  # Invalid: not boolean
@@ -235,7 +235,7 @@ class TestErrorHandlingConfigValidator:
         assert any("timeout should not exceed 60 seconds" in error for error in errors)
         assert any("Invalid provider: invalid_provider" in error for error in errors)
 
-    def test_validate_metrics_config_valid(self, validator):
+    def test_validate_metrics_config_valid(self, validator: str) -> None:
         """Test validation of valid metrics config."""
         config = {
             "enabled": True,
@@ -247,7 +247,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_metrics_config_invalid(self, validator):
+    def test_validate_metrics_config_invalid(self, validator: str) -> None:
         """Test validation of invalid metrics config."""
         config = {
             "enabled": "true",  # Invalid: not boolean
@@ -277,7 +277,7 @@ class TestErrorHandlingConfigValidator:
                 for error in errors
             )
 
-    def test_validate_graceful_degradation_config_valid(self, validator):
+    def test_validate_graceful_degradation_config_valid(self, validator: str) -> None:
         """Test validation of valid graceful degradation config."""
         config = {
             "enabled": True,
@@ -295,7 +295,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_graceful_degradation_config_invalid(self, validator):
+    def test_validate_graceful_degradation_config_invalid(self, validator: str) -> None:
         """Test validation of invalid graceful degradation config."""
         config = {
             "enabled": "yes",  # Invalid: not boolean
@@ -316,7 +316,7 @@ class TestErrorHandlingConfigValidator:
             for error in errors
         )
 
-    def test_validate_error_handling_config_valid(self, validator):
+    def test_validate_error_handling_config_valid(self, validator: str) -> None:
         """Test validation of valid complete error handling config."""
         config = {
             "circuit_breaker": {
@@ -349,7 +349,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_error_handling_config_invalid(self, validator):
+    def test_validate_error_handling_config_invalid(self, validator: str) -> None:
         """Test validation of invalid complete error handling config."""
         config = {
             "circuit_breaker": "invalid",  # Invalid: not dict
@@ -365,7 +365,7 @@ class TestErrorHandlingConfigValidator:
             "health_checks: enabled must be a boolean" in error for error in errors
         )
 
-    def test_get_default_config(self, validator):
+    def test_get_default_config(self, validator: str) -> None:
         """Test getting default configuration."""
         config = validator.get_default_config()
 
@@ -381,7 +381,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_and_fix_config_complete(self, validator):
+    def test_validate_and_fix_config_complete(self, validator: str) -> None:
         """Test validation and fixing of complete config."""
         config = {
             "circuit_breaker": {
@@ -409,7 +409,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_and_fix_config_empty(self, validator):
+    def test_validate_and_fix_config_empty(self, validator: str) -> None:
         """Test validation and fixing of empty config."""
         config = {}
 
@@ -423,7 +423,7 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_and_fix_config_partial(self, validator):
+    def test_validate_and_fix_config_partial(self, validator: str) -> None:
         """Test validation and fixing of partial config."""
         config = {
             "circuit_breaker": {

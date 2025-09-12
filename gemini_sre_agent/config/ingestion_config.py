@@ -77,7 +77,7 @@ class GCPPubSubConfig(SourceConfig):
     project_id: str = ""
     subscription_id: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type = SourceType.GCP_PUBSUB
         self.config = {
             "project_id": self.project_id,
@@ -100,7 +100,7 @@ class GCPLoggingConfig(SourceConfig):
     max_results: int = 1000
     project_id: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type = SourceType.GCP_LOGGING
         self.config = {
             "project_id": self.project_id,
@@ -122,7 +122,7 @@ class FileSystemConfig(SourceConfig):
     max_memory_mb: int = 100
     file_path: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.source_type = SourceType.FILE_SYSTEM
         self.type = SourceType.FILE_SYSTEM  # Keep for backward compatibility
         self.config = {
@@ -146,7 +146,7 @@ class AWSCloudWatchConfig(SourceConfig):
     max_events: int = 1000
     log_group_name: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type = SourceType.AWS_CLOUDWATCH
         self.config = {
             "log_group_name": self.log_group_name,
@@ -171,7 +171,7 @@ class KubernetesConfig(SourceConfig):
     max_pods: int = 100
     tail_lines: int = 100
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type = SourceType.KUBERNETES
         self.config = {
             "namespace": self.namespace,
@@ -195,7 +195,7 @@ class SyslogConfig(SourceConfig):
     facility: int = 16  # local0
     severity: int = 6  # info
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type = SourceType.SYSLOG
         self.config = {
             "host": self.host,
@@ -305,7 +305,7 @@ class IngestionConfig:
 class IngestionConfigManager:
     """Manager for ingestion configuration loading and validation."""
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: Optional[Union[str, Path]]: Optional[str] = None) -> None:
         """Initialize the config manager."""
         self.config_path = Path(config_path) if config_path else None
         self._config: Optional[IngestionConfig] = None

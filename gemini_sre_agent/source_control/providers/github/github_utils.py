@@ -19,7 +19,7 @@ from ...models import ProviderHealth
 class GitHubUtils:
     """Utility functions for GitHub operations."""
 
-    def __init__(self, client: Github, repo: Repository, logger: logging.Logger):
+    def __init__(self, client: Github, repo: Repository, logger: logging.Logger) -> None:
         """Initialize utilities with GitHub client and repository."""
         self.client = client
         self.repo = repo

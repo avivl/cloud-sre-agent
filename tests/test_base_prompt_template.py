@@ -42,13 +42,13 @@ class ConcretePromptTemplate(BasePromptTemplate):
 class TestBasePromptTemplate:
     """Test BasePromptTemplate abstract base class."""
 
-    def test_abstract_class_cannot_be_instantiated(self):
+    def test_abstract_class_cannot_be_instantiated(self) -> None:
         """Test that BasePromptTemplate cannot be instantiated directly."""
         # This test is skipped as the abstract class can be instantiated
         # when all abstract methods are implemented
         pass
 
-    def test_concrete_implementation_works(self):
+    def test_concrete_implementation_works(self) -> None:
         """Test that concrete implementation works correctly."""
         template = ConcretePromptTemplate("test_template")
 
@@ -56,7 +56,7 @@ class TestBasePromptTemplate:
         assert template.system_prompt == "You are a test AI assistant."
         assert template.user_prompt_template == "Test task: {test_variable}"
 
-    def test_generate_prompt_success(self):
+    def test_generate_prompt_success(self) -> None:
         """Test successful prompt generation."""
         template = ConcretePromptTemplate("test_template")
 
@@ -96,7 +96,7 @@ class TestBasePromptTemplate:
         assert "You are a test AI assistant." in prompt
         assert "Test task: test_value" in prompt
 
-    def test_generate_prompt_with_validation_feedback(self):
+    def test_generate_prompt_with_validation_feedback(self) -> None:
         """Test prompt generation with validation feedback."""
         template = ConcretePromptTemplate("test_template")
 
@@ -143,7 +143,7 @@ class TestBasePromptTemplate:
         assert "good" in prompt
         assert "passed" in prompt
 
-    def test_generate_prompt_error_handling(self):
+    def test_generate_prompt_error_handling(self) -> None:
         """Test error handling in prompt generation."""
         template = ConcretePromptTemplate("test_template")
 
@@ -154,7 +154,7 @@ class TestBasePromptTemplate:
             with pytest.raises(ValueError, match="Failed to generate prompt"):
                 template.generate_prompt(Mock())
 
-    def test_validate_context_success(self):
+    def test_validate_context_success(self) -> None:
         """Test successful context validation."""
         template = ConcretePromptTemplate("test_template")
 
@@ -191,7 +191,7 @@ class TestBasePromptTemplate:
 
         assert template.validate_context(prompt_context) is True
 
-    def test_validate_context_failure(self):
+    def test_validate_context_failure(self) -> None:
         """Test context validation failure."""
         template = ConcretePromptTemplate("test_template")
 
@@ -204,7 +204,7 @@ class TestBasePromptTemplate:
 
         assert template.validate_context(prompt_context) is False
 
-    def test_get_template_info(self):
+    def test_get_template_info(self) -> None:
         """Test getting template information."""
         template = ConcretePromptTemplate("test_template")
 
@@ -221,7 +221,7 @@ class TestBasePromptTemplate:
 class TestGenericErrorPromptTemplate:
     """Test GenericErrorPromptTemplate implementation."""
 
-    def test_generic_template_creation(self):
+    def test_generic_template_creation(self) -> None:
         """Test creating a generic error prompt template."""
         template = GenericErrorPromptTemplate("generic")
 
@@ -229,7 +229,7 @@ class TestGenericErrorPromptTemplate:
         assert "expert SRE Analysis Agent" in template.system_prompt
         assert "ISSUE ANALYSIS REQUEST" in template.user_prompt_template
 
-    def test_generic_template_context_variables(self):
+    def test_generic_template_context_variables(self) -> None:
         """Test context variable extraction for generic template."""
         template = GenericErrorPromptTemplate("generic")
 
@@ -278,7 +278,7 @@ class TestGenericErrorPromptTemplate:
         assert "db.py" in context_vars["affected_files"]
         assert "user_service" in context_vars["related_services"]
 
-    def test_generic_template_prompt_generation(self):
+    def test_generic_template_prompt_generation(self) -> None:
         """Test full prompt generation with generic template."""
         template = GenericErrorPromptTemplate("generic")
 
@@ -326,7 +326,7 @@ class TestGenericErrorPromptTemplate:
         assert "java" in prompt
         assert "api.py" in prompt
 
-    def test_generic_template_with_empty_context(self):
+    def test_generic_template_with_empty_context(self) -> None:
         """Test generic template with minimal context."""
         template = GenericErrorPromptTemplate("generic")
 
@@ -369,7 +369,7 @@ class TestGenericErrorPromptTemplate:
         assert "unknown" in prompt
         assert "1/10" in prompt
 
-    def test_generic_template_validation(self):
+    def test_generic_template_validation(self) -> None:
         """Test context validation for generic template."""
         template = GenericErrorPromptTemplate("generic")
 

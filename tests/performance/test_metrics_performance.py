@@ -18,7 +18,7 @@ from gemini_sre_agent.source_control.metrics.core import MetricType
 class MockMetricsCollector:
     """Mock metrics collector that simulates real collection behavior."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics: List[Dict[str, Any]] = []
         self.record_calls = 0
         self.total_time = 0.0
@@ -60,12 +60,12 @@ class TestMetricsPerformance:
     """Performance tests for metrics collection."""
 
     @pytest.fixture
-    def mock_collector(self):
+    def mock_collector(self) -> None:
         """Create a mock metrics collector."""
         return MockMetricsCollector()
 
     @pytest.fixture
-    def metrics(self, mock_collector):
+    def metrics(self, mock_collector: str) -> None:
         """Create ErrorHandlingMetrics instance."""
         return ErrorHandlingMetrics(mock_collector)
 
@@ -329,7 +329,7 @@ class TestMetricsPerformance:
 
         # Create a metrics collector that sometimes fails
         class FailingMetricsCollector:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.call_count = 0
                 self.success_count = 0
 
@@ -386,7 +386,7 @@ class TestMetricsPerformance:
             f"Successful metrics: {failing_collector.success_count}/{failing_collector.call_count}"
         )
 
-    def test_metrics_collector_overhead(self, mock_collector):
+    def test_metrics_collector_overhead(self, mock_collector: str) -> None:
         """Test the overhead of the mock metrics collector itself."""
 
         # Test direct calls to mock collector

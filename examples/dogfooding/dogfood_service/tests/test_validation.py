@@ -23,12 +23,12 @@ from app import app
 class TestFixValidation(unittest.TestCase):
     """Test validation of generated fixes."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.app = app.test_client()
         self.app.testing = True
 
-    def test_division_fix_validation(self):
+    def test_division_fix_validation(self) -> None:
         """Test that a division fix prevents division by zero."""
         # This would test a fixed version of the division endpoint
         # For now, we test that the current endpoint properly handles the error
@@ -42,7 +42,7 @@ class TestFixValidation(unittest.TestCase):
         data = json.loads(response.data)
         self.assertIn("error", data)
 
-    def test_memory_fix_validation(self):
+    def test_memory_fix_validation(self) -> None:
         """Test that a memory fix prevents memory exhaustion."""
         response = self.app.get("/error/memory")
         self.assertEqual(response.status_code, 500)
@@ -53,7 +53,7 @@ class TestFixValidation(unittest.TestCase):
         data = json.loads(response.data)
         self.assertIn("error", data)
 
-    def test_timeout_fix_validation(self):
+    def test_timeout_fix_validation(self) -> None:
         """Test that a timeout fix implements proper timeout handling."""
         response = self.app.get("/error/timeout")
         self.assertEqual(response.status_code, 408)
@@ -64,7 +64,7 @@ class TestFixValidation(unittest.TestCase):
         data = json.loads(response.data)
         self.assertIn("error", data)
 
-    def test_json_fix_validation(self):
+    def test_json_fix_validation(self) -> None:
         """Test that a JSON fix implements proper JSON validation."""
         response = self.app.get("/error/json")
         self.assertEqual(response.status_code, 400)
@@ -75,7 +75,7 @@ class TestFixValidation(unittest.TestCase):
         data = json.loads(response.data)
         self.assertIn("error", data)
 
-    def test_health_check_after_fixes(self):
+    def test_health_check_after_fixes(self) -> None:
         """Test that health check still works after applying fixes."""
         response = self.app.get("/")
         self.assertEqual(response.status_code, 200)
@@ -83,7 +83,7 @@ class TestFixValidation(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(data["status"], "healthy")
 
-    def test_status_endpoint_after_fixes(self):
+    def test_status_endpoint_after_fixes(self) -> None:
         """Test that status endpoint still works after applying fixes."""
         response = self.app.get("/status")
         self.assertEqual(response.status_code, 200)
@@ -95,12 +95,12 @@ class TestFixValidation(unittest.TestCase):
 class TestRegressionPrevention(unittest.TestCase):
     """Test that fixes don't introduce regressions."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.app = app.test_client()
         self.app.testing = True
 
-    def test_no_new_errors_introduced(self):
+    def test_no_new_errors_introduced(self) -> None:
         """Test that fixes don't introduce new error types."""
         # Test all endpoints to ensure no new errors
         endpoints = [
@@ -120,7 +120,7 @@ class TestRegressionPrevention(unittest.TestCase):
                 f"Endpoint {endpoint} returned unexpected status",
             )
 
-    def test_service_metadata_unchanged(self):
+    def test_service_metadata_unchanged(self) -> None:
         """Test that service metadata remains consistent."""
         response = self.app.get("/")
         data = json.loads(response.data)
@@ -129,7 +129,7 @@ class TestRegressionPrevention(unittest.TestCase):
         self.assertEqual(data["version"], "1.0.0")
         self.assertEqual(data["status"], "healthy")
 
-    def test_logging_structure_preserved(self):
+    def test_logging_structure_preserved(self) -> None:
         """Test that logging structure is preserved after fixes."""
         # This would test that the log structure remains consistent
         # after applying fixes to the service
@@ -145,12 +145,12 @@ class TestRegressionPrevention(unittest.TestCase):
 class TestPerformanceAfterFixes(unittest.TestCase):
     """Test performance characteristics after applying fixes."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.app = app.test_client()
         self.app.testing = True
 
-    def test_response_times_acceptable(self):
+    def test_response_times_acceptable(self) -> None:
         """Test that response times remain acceptable after fixes."""
         import time
 
@@ -163,7 +163,7 @@ class TestPerformanceAfterFixes(unittest.TestCase):
         self.assertLess(response_time, 1.0, "Health check response too slow")
         self.assertEqual(response.status_code, 200)
 
-    def test_memory_usage_controlled(self):
+    def test_memory_usage_controlled(self) -> None:
         """Test that memory usage remains controlled after fixes."""
         # This would test memory usage patterns
         # For now, we just verify the service responds
@@ -178,12 +178,12 @@ class TestPerformanceAfterFixes(unittest.TestCase):
 class TestIntegrationAfterFixes(unittest.TestCase):
     """Test integration aspects after applying fixes."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.app = app.test_client()
         self.app.testing = True
 
-    def test_all_endpoints_accessible(self):
+    def test_all_endpoints_accessible(self) -> None:
         """Test that all endpoints remain accessible after fixes."""
         endpoints = [
             "/",
@@ -201,7 +201,7 @@ class TestIntegrationAfterFixes(unittest.TestCase):
                 response.status_code, 404, f"Endpoint {endpoint} not found after fixes"
             )
 
-    def test_json_responses_valid(self):
+    def test_json_responses_valid(self) -> None:
         """Test that all JSON responses remain valid after fixes."""
         endpoints = [
             "/",

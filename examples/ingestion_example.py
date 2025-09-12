@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 class LogProcessor:
     """Example log processor that handles incoming log entries with Hyx resilience."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.processed_count = 0
         # Initialize Hyx resilience client
         self.resilience_config = create_resilience_config("development")

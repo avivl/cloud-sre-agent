@@ -29,7 +29,7 @@ class TestGeminiEnhancedPatternDetectorInit:
         "gemini_sre_agent.ml.gemini_enhanced_pattern_detector.GeminiPatternClassifier"
     )
     @patch("gemini_sre_agent.ml.gemini_enhanced_pattern_detector.PatternClassifier")
-    def test_successful_init(self, mock_pattern_classifier, mock_gemini_classifier):
+    def test_successful_init(self, mock_pattern_classifier: str, mock_gemini_classifier: str) -> None:
         """Test successful detector initialization."""
         detector = GeminiEnhancedPatternDetector(gemini_api_key="test_key")
 
@@ -121,7 +121,7 @@ class TestGeminiEnhancedPatternDetectorClassification:
     """Test pattern classification functionality."""
 
     @pytest.fixture
-    def sample_window(self):
+    def sample_window(self) -> None:
         """Create sample time window with logs."""
         start_time = datetime.now(timezone.utc)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -148,7 +148,7 @@ class TestGeminiEnhancedPatternDetectorClassification:
         return window
 
     @pytest.fixture
-    def sample_threshold_results(self):
+    def sample_threshold_results(self) -> None:
         """Create sample threshold results."""
         return [
             ThresholdResult(
@@ -162,7 +162,7 @@ class TestGeminiEnhancedPatternDetectorClassification:
         ]
 
     @pytest.fixture
-    def sample_gemini_pattern(self):
+    def sample_gemini_pattern(self) -> None:
         """Create sample Gemini pattern match."""
         return PatternMatch(
             pattern_type=PatternType.CASCADE_FAILURE,
@@ -176,7 +176,7 @@ class TestGeminiEnhancedPatternDetectorClassification:
         )
 
     @pytest.fixture
-    def sample_rule_pattern(self):
+    def sample_rule_pattern(self) -> None:
         """Create sample rule-based pattern match."""
         return PatternMatch(
             pattern_type=PatternType.CASCADE_FAILURE,

@@ -25,7 +25,7 @@ from gemini_sre_agent.ingestion.interfaces.core import (
 class TestLogEntry:
     """Test LogEntry model."""
 
-    def test_log_entry_creation(self):
+    def test_log_entry_creation(self) -> None:
         """Test creating a LogEntry."""
         log_entry = LogEntry(
             id="test-123",
@@ -44,7 +44,7 @@ class TestLogEntry:
         assert log_entry.flow_id == "flow-123"
         assert log_entry.metadata == {"key": "value"}
 
-    def test_log_entry_defaults(self):
+    def test_log_entry_defaults(self) -> None:
         """Test LogEntry with default values."""
         log_entry = LogEntry(
             id="test-456",
@@ -65,7 +65,7 @@ class TestLogEntry:
 class TestSourceHealth:
     """Test SourceHealth model."""
 
-    def test_source_health_creation(self):
+    def test_source_health_creation(self) -> None:
         """Test creating a SourceHealth."""
         health = SourceHealth(
             is_healthy=True,
@@ -79,7 +79,7 @@ class TestSourceHealth:
         assert health.error_count == 0
         assert health.metrics["success_count"] == 100
 
-    def test_source_health_defaults(self):
+    def test_source_health_defaults(self) -> None:
         """Test SourceHealth with default values."""
         health = SourceHealth(is_healthy=False)
 
@@ -91,16 +91,16 @@ class TestLogManager:
     """Test LogManager functionality."""
 
     @pytest.fixture
-    def mock_callback(self):
+    def mock_callback(self) -> None:
         """Create a mock callback function."""
         return AsyncMock()
 
     @pytest.fixture
-    def log_manager(self, mock_callback):
+    def log_manager(self, mock_callback: str) -> None:
         """Create a LogManager instance."""
         return LogManager(callback=mock_callback)
 
-    def test_log_manager_creation(self, mock_callback):
+    def test_log_manager_creation(self, mock_callback: str) -> None:
         """Test creating a LogManager."""
         manager = LogManager(callback=mock_callback)
 
@@ -108,7 +108,7 @@ class TestLogManager:
         assert manager.sources == {}
         assert manager.running is False
 
-    def test_log_manager_creation_without_callback(self):
+    def test_log_manager_creation_without_callback(self) -> None:
         """Test creating a LogManager without callback."""
         manager = LogManager()
 
@@ -317,13 +317,13 @@ class TestFileSystemAdapter:
     """Test FileSystemAdapter functionality."""
 
     @pytest.fixture
-    def temp_log_dir(self):
+    def temp_log_dir(self) -> None:
         """Create a temporary directory for test logs."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield Path(temp_dir)
 
     @pytest.fixture
-    def fs_config(self, temp_log_dir):
+    def fs_config(self, temp_log_dir: str) -> None:
         """Create a FileSystemConfig for testing."""
         return FileSystemConfig(
             name="test-fs-adapter",
@@ -336,11 +336,11 @@ class TestFileSystemAdapter:
         )
 
     @pytest.fixture
-    def fs_adapter(self, fs_config):
+    def fs_adapter(self, fs_config: str) -> None:
         """Create a FileSystemAdapter for testing."""
         return FileSystemAdapter(fs_config)
 
-    def test_fs_adapter_creation(self, fs_adapter, fs_config):
+    def test_fs_adapter_creation(self, fs_adapter: str, fs_config: str) -> None:
         """Test creating a FileSystemAdapter."""
         assert fs_adapter.config == fs_config
         assert fs_adapter.name == "test-fs-adapter"
@@ -473,7 +473,7 @@ class TestIntegration:
     """Integration tests for the ingestion system."""
 
     @pytest.fixture
-    def temp_log_dir(self):
+    def temp_log_dir(self) -> None:
         """Create a temporary directory for test logs."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield Path(temp_dir)

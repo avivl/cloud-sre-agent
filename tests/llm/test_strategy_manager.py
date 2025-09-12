@@ -27,7 +27,7 @@ from gemini_sre_agent.llm.strategy_manager import (
 
 
 @pytest.fixture
-def mock_model_info():
+def mock_model_info() -> None:
     """Create mock model info for testing."""
     return [
         ModelInfo(
@@ -78,7 +78,7 @@ def mock_model_info():
 
 
 @pytest.fixture
-def mock_model_scorer():
+def mock_model_scorer() -> None:
     """Create mock model scorer."""
     scorer = MagicMock()
     scorer.score_model.return_value = ModelScore(
@@ -99,13 +99,13 @@ def mock_model_scorer():
 
 
 @pytest.fixture
-def strategy_manager(mock_model_scorer):
+def strategy_manager(mock_model_scorer: str) -> None:
     """Create StrategyManager instance for testing."""
     return StrategyManager(mock_model_scorer)
 
 
 @pytest.fixture
-def strategy_context():
+def strategy_context() -> None:
     """Create StrategyContext for testing."""
     return StrategyContext(
         task_type=ModelType.FAST,
@@ -119,7 +119,7 @@ def strategy_context():
 class TestStrategyManager:
     """Test StrategyManager functionality."""
 
-    def test_initialization(self, strategy_manager):
+    def test_initialization(self, strategy_manager: str) -> None:
         """Test StrategyManager initialization."""
         assert len(strategy_manager._strategies) == 5
         assert OptimizationGoal.COST in strategy_manager._strategies
@@ -221,7 +221,7 @@ class TestStrategyManager:
         assert len(result.fallback_models) <= 3
         assert "hybrid" in result.reasoning.lower()
 
-    def test_select_model_with_custom_weights(self, strategy_manager, mock_model_info):
+    def test_select_model_with_custom_weights(self, strategy_manager: str, mock_model_info: str) -> None:
         """Test model selection with custom weights."""
         context = StrategyContext(
             task_type=ModelType.FAST,
@@ -242,7 +242,7 @@ class TestStrategyManager:
         assert isinstance(result, StrategyResult)
         assert result.metadata["weights_used"]["cost"] == 0.5
 
-    def test_add_strategy(self, strategy_manager):
+    def test_add_strategy(self, strategy_manager: str) -> None:
         """Test adding a custom strategy."""
         custom_strategy = MagicMock()
         custom_strategy.name = "custom_test"
@@ -251,13 +251,13 @@ class TestStrategyManager:
 
         assert strategy_manager._strategies[OptimizationGoal.COST] == custom_strategy
 
-    def test_remove_strategy(self, strategy_manager):
+    def test_remove_strategy(self, strategy_manager: str) -> None:
         """Test removing a strategy."""
         strategy_manager.remove_strategy(OptimizationGoal.COST)
 
         assert OptimizationGoal.COST not in strategy_manager._strategies
 
-    def test_get_available_strategies(self, strategy_manager):
+    def test_get_available_strategies(self, strategy_manager: str) -> None:
         """Test getting available strategies."""
         strategies = strategy_manager.get_available_strategies()
 
@@ -265,7 +265,7 @@ class TestStrategyManager:
         assert OptimizationGoal.COST in strategies
         assert OptimizationGoal.PERFORMANCE in strategies
 
-    def test_get_strategy_performance(self, strategy_manager):
+    def test_get_strategy_performance(self, strategy_manager: str) -> None:
         """Test getting strategy performance metrics."""
         performance = strategy_manager.get_strategy_performance(OptimizationGoal.COST)
 
@@ -274,7 +274,7 @@ class TestStrategyManager:
         assert "average_score" in performance
         assert "average_latency" in performance
 
-    def test_get_all_performance_metrics(self, strategy_manager):
+    def test_get_all_performance_metrics(self, strategy_manager: str) -> None:
         """Test getting all performance metrics."""
         all_metrics = strategy_manager.get_all_performance_metrics()
 
@@ -282,7 +282,7 @@ class TestStrategyManager:
         for goal in OptimizationGoal:
             assert goal.value in all_metrics
 
-    def test_get_usage_statistics(self, strategy_manager):
+    def test_get_usage_statistics(self, strategy_manager: str) -> None:
         """Test getting usage statistics."""
         stats = strategy_manager.get_usage_statistics()
 
@@ -291,14 +291,14 @@ class TestStrategyManager:
             assert goal.value in stats
             assert stats[goal.value] == 0  # Initially zero
 
-    def test_update_strategy_performance(self, strategy_manager):
+    def test_update_strategy_performance(self, strategy_manager: str) -> None:
         """Test updating strategy performance."""
         strategy_manager.update_strategy_performance(OptimizationGoal.COST, True, 100.0)
 
         # Should not raise an exception
         assert True
 
-    def test_reset_statistics(self, strategy_manager):
+    def test_reset_statistics(self, strategy_manager: str) -> None:
         """Test resetting statistics."""
         # Use a strategy to generate some stats
         mock_models = [MagicMock()]
@@ -326,7 +326,7 @@ class TestStrategyManager:
                 mock_model_info, "unknown_goal", strategy_context
             )
 
-    def test_no_candidates_meet_constraints(self, strategy_manager, strategy_context):
+    def test_no_candidates_meet_constraints(self, strategy_manager: str, strategy_context: str) -> None:
         """Test handling when no candidates meet constraints."""
         # Create models that don't meet constraints
         expensive_model = MagicMock()
@@ -347,14 +347,14 @@ class TestStrategyManager:
 class TestCostOptimizedStrategy:
     """Test CostOptimizedStrategy functionality."""
 
-    def test_initialization(self, mock_model_scorer):
+    def test_initialization(self, mock_model_scorer: str) -> None:
         """Test CostOptimizedStrategy initialization."""
         strategy = CostOptimizedStrategy(mock_model_scorer)
 
         assert strategy.name == "cost_optimized"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer, mock_model_info, strategy_context):
+    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
         """Test cost-optimized model selection."""
         strategy = CostOptimizedStrategy(mock_model_scorer)
 
@@ -366,7 +366,7 @@ class TestCostOptimizedStrategy:
         assert result.execution_time_ms < 10
         assert "cheapest" in result.reasoning.lower()
 
-    def test_performance_update(self, mock_model_scorer):
+    def test_performance_update(self, mock_model_scorer: str) -> None:
         """Test performance metrics update."""
         strategy = CostOptimizedStrategy(mock_model_scorer)
 
@@ -383,14 +383,14 @@ class TestCostOptimizedStrategy:
 class TestPerformanceOptimizedStrategy:
     """Test PerformanceOptimizedStrategy functionality."""
 
-    def test_initialization(self, mock_model_scorer):
+    def test_initialization(self, mock_model_scorer: str) -> None:
         """Test PerformanceOptimizedStrategy initialization."""
         strategy = PerformanceOptimizedStrategy(mock_model_scorer)
 
         assert strategy.name == "performance_optimized"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer, mock_model_info, strategy_context):
+    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
         """Test performance-optimized model selection."""
         strategy = PerformanceOptimizedStrategy(mock_model_scorer)
 
@@ -405,14 +405,14 @@ class TestPerformanceOptimizedStrategy:
 class TestQualityOptimizedStrategy:
     """Test QualityOptimizedStrategy functionality."""
 
-    def test_initialization(self, mock_model_scorer):
+    def test_initialization(self, mock_model_scorer: str) -> None:
         """Test QualityOptimizedStrategy initialization."""
         strategy = QualityOptimizedStrategy(mock_model_scorer)
 
         assert strategy.name == "quality_optimized"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer, mock_model_info, strategy_context):
+    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
         """Test quality-optimized model selection."""
         strategy = QualityOptimizedStrategy(mock_model_scorer)
 
@@ -427,7 +427,7 @@ class TestQualityOptimizedStrategy:
 class TestTimeBasedStrategy:
     """Test TimeBasedStrategy functionality."""
 
-    def test_initialization(self, mock_model_scorer):
+    def test_initialization(self, mock_model_scorer: str) -> None:
         """Test TimeBasedStrategy initialization."""
         strategy = TimeBasedStrategy(mock_model_scorer)
 
@@ -435,7 +435,7 @@ class TestTimeBasedStrategy:
         assert strategy.model_scorer == mock_model_scorer
 
     @patch("gemini_sre_agent.llm.strategy_manager.datetime")
-    def test_is_business_hours(self, mock_datetime, mock_model_scorer):
+    def test_is_business_hours(self, mock_datetime: str, mock_model_scorer: str) -> None:
         """Test business hours detection."""
         strategy = TimeBasedStrategy(mock_model_scorer)
 
@@ -466,14 +466,14 @@ class TestTimeBasedStrategy:
 class TestHybridStrategy:
     """Test HybridStrategy functionality."""
 
-    def test_initialization(self, mock_model_scorer):
+    def test_initialization(self, mock_model_scorer: str) -> None:
         """Test HybridStrategy initialization."""
         strategy = HybridStrategy(mock_model_scorer)
 
         assert strategy.name == "hybrid"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer, mock_model_info, strategy_context):
+    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
         """Test hybrid model selection."""
         strategy = HybridStrategy(mock_model_scorer)
 
@@ -484,7 +484,7 @@ class TestHybridStrategy:
         assert result.execution_time_ms < 10
         assert "hybrid" in result.reasoning.lower()
 
-    def test_learning_weights_update(self, mock_model_scorer):
+    def test_learning_weights_update(self, mock_model_scorer: str) -> None:
         """Test learning weights update."""
         strategy = HybridStrategy(mock_model_scorer)
 
@@ -495,7 +495,7 @@ class TestHybridStrategy:
         assert strategy._learning_weights.performance > 0.0
         assert strategy._learning_weights.speed > 0.0
 
-    def test_select_model_with_custom_weights(self, mock_model_scorer, mock_model_info):
+    def test_select_model_with_custom_weights(self, mock_model_scorer: str, mock_model_info: str) -> None:
         """Test hybrid selection with custom weights."""
         strategy = HybridStrategy(mock_model_scorer)
         context = StrategyContext(
@@ -518,7 +518,7 @@ class TestHybridStrategy:
 class TestStrategyContext:
     """Test StrategyContext functionality."""
 
-    def test_initialization_defaults(self):
+    def test_initialization_defaults(self) -> None:
         """Test StrategyContext initialization with defaults."""
         context = StrategyContext()
 
@@ -532,7 +532,7 @@ class TestStrategyContext:
         assert context.custom_weights is None
         assert context.metadata == {}
 
-    def test_initialization_with_values(self):
+    def test_initialization_with_values(self) -> None:
         """Test StrategyContext initialization with values."""
         weights = ScoringWeights()
         context = StrategyContext(
@@ -561,7 +561,7 @@ class TestStrategyContext:
 class TestStrategyResult:
     """Test StrategyResult functionality."""
 
-    def test_initialization(self, mock_model_info):
+    def test_initialization(self, mock_model_info: str) -> None:
         """Test StrategyResult initialization."""
         model = mock_model_info[0]
         score = ModelScore(
@@ -597,7 +597,7 @@ class TestStrategyResult:
         assert result.reasoning == "Test reasoning"
         assert result.metadata == {"test": "value"}
 
-    def test_initialization_defaults(self, mock_model_info):
+    def test_initialization_defaults(self, mock_model_info: str) -> None:
         """Test StrategyResult initialization with defaults."""
         model = mock_model_info[0]
         score = ModelScore(
@@ -634,7 +634,7 @@ class TestStrategyResult:
 class TestOptimizationGoal:
     """Test OptimizationGoal enum."""
 
-    def test_enum_values(self):
+    def test_enum_values(self) -> None:
         """Test OptimizationGoal enum values."""
         assert OptimizationGoal.COST == "cost"
         assert OptimizationGoal.PERFORMANCE == "performance"
@@ -642,7 +642,7 @@ class TestOptimizationGoal:
         assert OptimizationGoal.TIME_BASED == "time_based"
         assert OptimizationGoal.HYBRID == "hybrid"
 
-    def test_enum_membership(self):
+    def test_enum_membership(self) -> None:
         """Test OptimizationGoal enum membership."""
         assert "cost" in [goal.value for goal in OptimizationGoal]
         assert "performance" in [goal.value for goal in OptimizationGoal]

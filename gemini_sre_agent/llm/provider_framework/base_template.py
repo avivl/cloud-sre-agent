@@ -26,7 +26,7 @@ class BaseProviderTemplate(LLMProvider):
     new providers to be implemented with < 50 lines of code.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         """Initialize the provider with configuration."""
         super().__init__(config)
         self.api_key = config.api_key
@@ -189,6 +189,6 @@ class BaseProviderTemplate(LLMProvider):
             finish_reason=choice.get("finish_reason", "stop"),
         )
 
-    def _get_provider_specific_config(self, key: str, default: Any = None) -> Any:
+    def _get_provider_specific_config(self, key: str, default: Any : Optional[str] = None) -> Any:
         """Get provider-specific configuration value."""
         return self.provider_specific.get(key, default)

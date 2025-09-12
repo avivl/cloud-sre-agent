@@ -24,7 +24,7 @@ from ..monitoring_dashboard import MonitoringDashboard
 class GitHubAPIFallbackStrategy(FallbackStrategyBase):
     """Fallback strategy for GitHub API errors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="github_api_fallback", priority=1)
 
     async def can_handle(
@@ -56,7 +56,7 @@ class GitHubAPIFallbackStrategy(FallbackStrategyBase):
 class DatabaseFallbackStrategy(FallbackStrategyBase):
     """Fallback strategy for database errors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="database_fallback", priority=1)
 
     async def can_handle(
@@ -88,7 +88,7 @@ class DatabaseFallbackStrategy(FallbackStrategyBase):
 class AdvancedErrorHandlingExample:
     """Comprehensive example of advanced error handling usage."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("AdvancedErrorHandlingExample")
         self.setup_logging()
 
@@ -98,7 +98,7 @@ class AdvancedErrorHandlingExample:
         self.self_healing_manager: Optional[SelfHealingManager] = None
         self.dashboard: Optional[MonitoringDashboard] = None
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         """Setup logging configuration."""
         logging.basicConfig(
             level=logging.INFO,

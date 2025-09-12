@@ -31,7 +31,7 @@ from .local_git_operations import LocalGitOperations
 class LocalProvider(BaseSourceControlProvider):
     """Provider for local filesystem operations with Git integration and patch generation capabilities."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]: str) -> None:
         """Initialize the local provider with configuration."""
         super().__init__(config)
         # Convert config dict back to LocalRepositoryConfig for type safety

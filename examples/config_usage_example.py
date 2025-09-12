@@ -19,7 +19,7 @@ from gemini_sre_agent.config import (
 )
 
 
-def main():
+def main() -> None:
     """Demonstrate configuration system usage."""
     print("🔧 Enhanced Configuration Management System Demo")
     print("=" * 50)

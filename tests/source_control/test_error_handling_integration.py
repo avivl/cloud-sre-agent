@@ -31,7 +31,7 @@ class TestErrorHandlingIntegration:
     """Test error handling integration across providers."""
 
     @pytest.fixture
-    def mock_github_config(self):
+    def mock_github_config(self) -> None:
         """Mock GitHub configuration."""
         return {
             "provider": "github",
@@ -55,7 +55,7 @@ class TestErrorHandlingIntegration:
         }
 
     @pytest.fixture
-    def mock_gitlab_config(self):
+    def mock_gitlab_config(self) -> None:
         """Mock GitLab configuration."""
         return {
             "provider": "gitlab",
@@ -80,7 +80,7 @@ class TestErrorHandlingIntegration:
         }
 
     @pytest.fixture
-    def mock_local_config(self):
+    def mock_local_config(self) -> None:
         """Mock Local configuration."""
         return {
             "provider": "local",
@@ -103,7 +103,7 @@ class TestErrorHandlingIntegration:
             },
         }
 
-    def test_get_provider_config(self):
+    def test_get_provider_config(self) -> None:
         """Test getting provider-specific configurations."""
         # Test GitHub config
         github_config = get_provider_config("github")
@@ -130,7 +130,7 @@ class TestErrorHandlingIntegration:
         unknown_config = get_provider_config("unknown")
         assert unknown_config == github_config
 
-    def test_create_provider_error_handling_with_preset(self):
+    def test_create_provider_error_handling_with_preset(self) -> None:
         """Test creating error handling components with provider presets."""
         # Test GitHub
         github_components = create_provider_error_handling_with_preset("github")

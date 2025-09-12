@@ -132,7 +132,7 @@ class ServiceRegistry:
 class ServiceHealthChecker:
     """Health checker for monitoring service status."""
 
-    def __init__(self, check_interval: int = 30):
+    def __init__(self, check_interval: int = 30) -> None:
         self.check_interval = check_interval
         self.health_checks: Dict[str, asyncio.Task] = {}
         self.logger = logging.getLogger(__name__)

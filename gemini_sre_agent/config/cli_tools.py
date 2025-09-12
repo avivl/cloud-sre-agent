@@ -15,7 +15,7 @@ from .manager import ConfigManager
 
 
 @click.group()
-def config_cli():
+def config_cli() -> None:
     """Gemini SRE Agent Configuration Management CLI."""
     pass
 
@@ -25,7 +25,7 @@ def config_cli():
 @click.option(
     "--environment", "-e", default="development", help="Environment to validate against"
 )
-def validate(config_file: str, environment: str):
+def validate(config_file: str, environment: str) -> None:
     """Validate configuration file against schema."""
     try:
         manager = ConfigManager()
@@ -60,7 +60,7 @@ def validate(config_file: str, environment: str):
 @click.argument("old_config_file", type=click.Path(exists=True))
 @click.argument("new_config_file", type=click.Path())
 @click.option("--backup/--no-backup", default=True, help="Create backup of old config")
-def migrate(old_config_file: str, new_config_file: str, backup: bool):
+def migrate(old_config_file: str, new_config_file: str, backup: bool) -> None:
     """Migrate old configuration format to new format."""
     try:
         # Load old configuration
@@ -98,7 +98,7 @@ def migrate(old_config_file: str, new_config_file: str, backup: bool):
     help="Environment to generate template for",
 )
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def generate_template(environment: str, output: str):
+def generate_template(environment: str, output: str) -> None:
     """Generate configuration template for specified environment."""
     try:
         template = ConfigDevUtils.generate_config_template(AppConfig, environment)
@@ -121,7 +121,7 @@ def generate_template(environment: str, output: str):
 @click.option(
     "--format", "output_format", type=click.Choice(["yaml", "json"]), default="yaml"
 )
-def diff(config_file1: str, config_file2: str, output_format: str):
+def diff(config_file1: str, config_file2: str, output_format: str) -> None:
     """Compare two configuration files and show differences."""
     try:
         # Load and validate first configuration file
@@ -159,7 +159,7 @@ def diff(config_file1: str, config_file2: str, output_format: str):
 @config_cli.command()
 @click.argument("config_file", type=click.Path(exists=True))
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def export_env(config_file: str, output: str):
+def export_env(config_file: str, output: str) -> None:
     """Export configuration as environment variables."""
     try:
         manager = ConfigManager()

@@ -25,7 +25,7 @@ class WorkflowGenerationEngine:
     with proper error handling and caching.
     """
 
-    def __init__(self, performance_config: Optional[PerformanceConfig]):
+    def __init__(self, performance_config: Optional[PerformanceConfig]) -> None:
         """
         Initialize the workflow generation engine.
 

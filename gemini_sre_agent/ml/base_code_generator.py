@@ -20,14 +20,14 @@ from .prompt_context_models import IssueContext, PromptContext
 class BaseCodeGenerator(ABC):
     """Base class for all code generators"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.context: Optional[PromptContext] = None
         self.validation_rules: List[ValidationRule] = []
         self.code_patterns: List[CodePattern] = []
         self.generator_id: str = str(uuid.uuid4())
         self.generation_count: int = 0
 
-    def set_context(self, context: PromptContext):
+    def set_context(self, context: PromptContext) -> None:
         """Set the context for code generation"""
         self.context = context
         self._load_domain_specific_patterns()
@@ -171,7 +171,7 @@ class BaseCodeGenerator(ABC):
             return description
 
     @property
-    def logger(self):
+    def logger(self) -> None:
         """Get logger for this generator"""
         import logging
 

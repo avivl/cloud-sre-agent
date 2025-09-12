@@ -25,7 +25,7 @@ class WorkflowAnalysisEngine:
     and retry logic using existing resilience patterns.
     """
 
-    def __init__(self, performance_config: Optional[PerformanceConfig]):
+    def __init__(self, performance_config: Optional[PerformanceConfig]) -> None:
         """
         Initialize the workflow analysis engine.
 

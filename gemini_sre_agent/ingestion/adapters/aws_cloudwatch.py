@@ -35,7 +35,7 @@ except ImportError:
 class AWSCloudWatchAdapter(LogIngestionInterface):
     """Adapter for AWS CloudWatch Logs."""
 
-    def __init__(self, config: AWSCloudWatchConfig):
+    def __init__(self, config: AWSCloudWatchConfig) -> None:
         if not AWS_AVAILABLE:
             raise ImportError("boto3 is required for AWS CloudWatch adapter")
 

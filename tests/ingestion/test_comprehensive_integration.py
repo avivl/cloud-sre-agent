@@ -24,18 +24,18 @@ class TestComprehensiveIntegration:
     """Comprehensive integration tests for the log ingestion system."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def log_manager(self):
+    def log_manager(self) -> None:
         """Create a test LogManager instance."""
         return LogManager()
 
     @pytest.fixture
-    def file_system_config(self, temp_dir):
+    def file_system_config(self, temp_dir: str) -> None:
         """Create a file system configuration."""
         return FileSystemConfig(
             name="test_file_system",
@@ -49,12 +49,12 @@ class TestComprehensiveIntegration:
         )
 
     @pytest.fixture
-    def file_system_adapter(self, file_system_config):
+    def file_system_adapter(self, file_system_config: str) -> None:
         """Create a file system adapter."""
         return FileSystemAdapter(file_system_config)
 
     @pytest.fixture
-    def memory_queue(self):
+    def memory_queue(self) -> None:
         """Create a memory queue."""
         config = QueueConfig(
             max_size=1000,

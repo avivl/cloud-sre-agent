@@ -21,7 +21,7 @@ class TestAuditTrailMonitoringTests:
     """Test audit trail functionality and security monitoring."""
 
     @pytest.fixture
-    def mock_github_provider(self):
+    def mock_github_provider(self) -> None:
         """Create a mock GitHub provider for testing."""
         credentials = CredentialConfig(token_env="GITHUB_TOKEN")
         repo_config = GitHubRepositoryConfig(
@@ -34,7 +34,7 @@ class TestAuditTrailMonitoringTests:
         provider.repo = MagicMock()
         return provider
 
-    def test_logging_validation_comprehensive(self, mock_github_provider):
+    def test_logging_validation_comprehensive(self, mock_github_provider: str) -> None:
         """Test comprehensive logging validation for all operations."""
         # Test different types of operations that should be logged
         operations = [
@@ -86,7 +86,7 @@ class TestAuditTrailMonitoringTests:
             assert isinstance(operation["success"], bool)
             assert isinstance(operation["details"], dict)
 
-    def test_security_event_tracking_comprehensive(self, mock_github_provider):
+    def test_security_event_tracking_comprehensive(self, mock_github_provider: str) -> None:
         """Test comprehensive security event tracking."""
         # Test different types of security events
         security_events = [
@@ -149,7 +149,7 @@ class TestAuditTrailMonitoringTests:
             assert event["severity"] in ["low", "medium", "high", "critical"]
             assert isinstance(event["timestamp"], datetime)
 
-    def test_compliance_testing_gdpr(self, mock_github_provider):
+    def test_compliance_testing_gdpr(self, mock_github_provider: str) -> None:
         """Test GDPR compliance for audit trails."""
         # Test GDPR compliance requirements
         gdpr_requirements = {
@@ -204,7 +204,7 @@ class TestAuditTrailMonitoringTests:
         assert retention_policy["archive_after_days"] == 30
         assert retention_policy["delete_after_days"] == 90
 
-    def test_compliance_testing_sox(self, mock_github_provider):
+    def test_compliance_testing_sox(self, mock_github_provider: str) -> None:
         """Test SOX compliance for audit trails."""
         # Test SOX compliance requirements
         sox_requirements = {
@@ -235,7 +235,7 @@ class TestAuditTrailMonitoringTests:
             assert field in complete_audit_log
 
         # Test audit trail accuracy
-        def validate_audit_accuracy(log_entry):
+        def validate_audit_accuracy(log_entry: str) -> None:
             """
             Validate Audit Accuracy.
 
@@ -261,7 +261,7 @@ class TestAuditTrailMonitoringTests:
         assert timeliness_requirements["log_processing_delay_seconds"] <= 30
         assert timeliness_requirements["alert_generation_delay_seconds"] <= 60
 
-    def test_compliance_testing_hipaa(self, mock_github_provider):
+    def test_compliance_testing_hipaa(self, mock_github_provider: str) -> None:
         """Test HIPAA compliance for audit trails."""
         # Test HIPAA compliance requirements
         hipaa_requirements = {
@@ -299,7 +299,7 @@ class TestAuditTrailMonitoringTests:
         assert technical_safeguards["integrity"] is True
         assert technical_safeguards["transmission_security"] is True
 
-    def test_audit_log_integrity_validation(self, mock_github_provider):
+    def test_audit_log_integrity_validation(self, mock_github_provider: str) -> None:
         """Test comprehensive audit log integrity validation."""
         # Test checksum generation
         audit_log = {
@@ -316,7 +316,7 @@ class TestAuditTrailMonitoringTests:
         audit_log["checksum"] = checksum
 
         # Test checksum validation
-        def validate_checksum(log_entry):
+        def validate_checksum(log_entry: str) -> None:
             """
             Validate Checksum.
 
@@ -337,7 +337,7 @@ class TestAuditTrailMonitoringTests:
         tampered_log["user"] = "attacker"
         assert validate_checksum(tampered_log) is False
 
-    def test_security_monitoring_alerting(self, mock_github_provider):
+    def test_security_monitoring_alerting(self, mock_github_provider: str) -> None:
         """Test security monitoring and alerting capabilities."""
         # Test different alert types
         alert_types = {
@@ -377,7 +377,7 @@ class TestAuditTrailMonitoringTests:
             assert config["threshold"] > 0
             assert config["time_window_minutes"] > 0
 
-    def test_audit_log_retention_and_archival(self, mock_github_provider):
+    def test_audit_log_retention_and_archival(self, mock_github_provider: str) -> None:
         """Test audit log retention and archival policies."""
         # Test retention policies for different log types
         retention_policies = {
@@ -411,7 +411,7 @@ class TestAuditTrailMonitoringTests:
             assert policy["archive_after_days"] <= policy["retention_days"]
             assert policy["retention_days"] <= policy["delete_after_days"]
 
-    def test_audit_log_search_and_analysis(self, mock_github_provider):
+    def test_audit_log_search_and_analysis(self, mock_github_provider: str) -> None:
         """Test audit log search and analysis capabilities."""
         # Test search capabilities
         search_capabilities = {
@@ -441,7 +441,7 @@ class TestAuditTrailMonitoringTests:
         for enabled in analysis_capabilities.values():
             assert isinstance(enabled, bool)
 
-    def test_audit_log_privacy_protection(self, mock_github_provider):
+    def test_audit_log_privacy_protection(self, mock_github_provider: str) -> None:
         """Test audit log privacy protection mechanisms."""
         # Test data anonymization
         sensitive_log = {
@@ -454,7 +454,7 @@ class TestAuditTrailMonitoringTests:
         }
 
         # Test anonymization functions
-        def anonymize_email(email):
+        def anonymize_email(email: str) -> None:
             """
             Anonymize Email.
 
@@ -467,7 +467,7 @@ class TestAuditTrailMonitoringTests:
                 return f"{local[:2]}***@{domain}"
             return email
 
-        def anonymize_ip(ip):
+        def anonymize_ip(ip: str) -> None:
             """
             Anonymize Ip.
 
@@ -478,7 +478,7 @@ class TestAuditTrailMonitoringTests:
             parts = ip.split(".")
             return f"{parts[0]}.{parts[1]}.xxx.xxx"
 
-        def anonymize_user_agent(ua):
+        def anonymize_user_agent(ua: str) -> None:
             """
             Anonymize User Agent.
 
@@ -501,7 +501,7 @@ class TestAuditTrailMonitoringTests:
         anonymized_ua = anonymize_user_agent(sensitive_log["user_agent"])
         assert "***" in anonymized_ua
 
-    def test_audit_log_export_and_reporting(self, mock_github_provider):
+    def test_audit_log_export_and_reporting(self, mock_github_provider: str) -> None:
         """Test audit log export and reporting capabilities."""
         # Test export formats
         export_formats = {
@@ -529,7 +529,7 @@ class TestAuditTrailMonitoringTests:
         for enabled in reporting_capabilities.values():
             assert isinstance(enabled, bool)
 
-    def test_audit_log_performance_monitoring(self, mock_github_provider):
+    def test_audit_log_performance_monitoring(self, mock_github_provider: str) -> None:
         """Test audit log performance monitoring."""
         # Test performance metrics
         performance_metrics = {
@@ -559,7 +559,7 @@ class TestAuditTrailMonitoringTests:
             assert isinstance(threshold, (int, float))
             assert threshold > 0
 
-    def test_audit_log_error_handling(self, mock_github_provider):
+    def test_audit_log_error_handling(self, mock_github_provider: str) -> None:
         """Test audit log error handling and recovery."""
         # Test error scenarios
         error_scenarios = [

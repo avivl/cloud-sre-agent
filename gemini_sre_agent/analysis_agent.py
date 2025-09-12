@@ -36,7 +36,7 @@ class AnalysisAgent:
     to generate remediation plans.
     """
 
-    def __init__(self, project_id: str, location: str, analysis_model: str):
+    def __init__(self, project_id: str, location: str, analysis_model: str) -> None:
         """
         Initializes the AnalysisAgent with GCP project, location, and the analysis model to use.
 

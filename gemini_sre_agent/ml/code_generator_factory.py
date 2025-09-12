@@ -9,7 +9,7 @@ from .prompt_context_models import IssueType
 class CodeGeneratorFactory:
     """Factory for creating specialized code generators"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.generators: Dict[IssueType, BaseCodeGenerator] = {}
         self._initialize_generators()
 
@@ -131,7 +131,7 @@ class CodeGeneratorFactory:
             for issue_type, generator in self.generators.items()
         }
 
-    def register_generator(self, issue_type: IssueType, generator: BaseCodeGenerator):
+    def register_generator(self, issue_type: IssueType, generator: BaseCodeGenerator) -> None:
         """Register a new generator for an issue type"""
         self.generators[issue_type] = generator
 

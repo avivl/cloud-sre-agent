@@ -58,7 +58,7 @@ class BudgetStatus:
 class BudgetManager:
     """Manages budget tracking, enforcement, and alerts."""
 
-    def __init__(self, config: BudgetConfig):
+    def __init__(self, config: BudgetConfig) -> None:
         self.config = config
         self.usage_records: List[UsageRecord] = []
         self.budget_alerts: List[BudgetAlert] = []

@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class QueuedFileSystemAdapter(LogIngestionInterface):
     """Enhanced file system adapter with memory queue for log buffering."""
 
-    def __init__(self, config: FileSystemConfig):
+    def __init__(self, config: FileSystemConfig) -> None:
         self.config = config
         self.file_path = config.file_path
         self.file_pattern = config.file_pattern

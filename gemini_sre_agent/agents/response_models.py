@@ -167,7 +167,7 @@ class TriageResult(BaseAgentResponse):
 
     @field_validator("confidence_level", mode="before")
     @classmethod
-    def set_confidence_level(cls, v, info):
+    def set_confidence_level(cls: str, v: str, info: str) -> None:
         """Set confidence level based on confidence score."""
         if hasattr(info, "data") and "confidence" in info.data:
             confidence = info.data["confidence"]
@@ -185,7 +185,7 @@ class TriageResult(BaseAgentResponse):
 
     @field_validator("confidence")
     @classmethod
-    def check_confidence_threshold(cls, v):
+    def check_confidence_threshold(cls: str, v: str) -> None:
         """Validate confidence score meets minimum threshold."""
         if v < 0.3:
             raise ValueError("Confidence score below acceptable threshold (0.3)")
@@ -279,7 +279,7 @@ class AnalysisResult(BaseAgentResponse):
 
     @field_validator("overall_confidence")
     @classmethod
-    def check_confidence_threshold(cls, v):
+    def check_confidence_threshold(cls: str, v: str) -> None:
         """Validate overall confidence meets minimum threshold."""
         if v < 0.4:
             raise ValueError("Overall confidence below acceptable threshold (0.4)")
@@ -375,7 +375,7 @@ class RemediationPlan(BaseAgentResponse):
 
     @field_validator("steps")
     @classmethod
-    def validate_step_order(cls, v):
+    def validate_step_order(cls: str, v: str) -> None:
         """Validate that steps are in proper order and have unique IDs."""
         if not v:
             raise ValueError("Remediation plan must have at least one step")
@@ -394,7 +394,7 @@ class RemediationPlan(BaseAgentResponse):
 
     @field_validator("automated_steps", "manual_steps", mode="before")
     @classmethod
-    def calculate_step_counts(cls, v, info):
+    def calculate_step_counts(cls: str, v: str, info: str) -> None:
         """Calculate automated and manual step counts."""
         if hasattr(info, "data") and "steps" in info.data:
             steps = info.data["steps"]
@@ -500,7 +500,7 @@ class HealthCheckResponse(BaseAgentResponse):
 
     @field_validator("health_score", mode="before")
     @classmethod
-    def calculate_health_score(cls, v, info):
+    def calculate_health_score(cls: str, v: str, info: str) -> None:
         """Calculate health score based on component statuses."""
         if hasattr(info, "data") and "components" in info.data:
             components = info.data["components"]
@@ -546,7 +546,7 @@ class TextResponse(BaseAgentResponse):
 
     @field_validator("word_count", "character_count", mode="before")
     @classmethod
-    def calculate_counts(cls, v, info):
+    def calculate_counts(cls: str, v: str, info: str) -> None:
         """Calculate word and character counts from text."""
         if hasattr(info, "data") and "text" in info.data:
             text = info.data["text"]
@@ -601,7 +601,7 @@ class CodeResponse(BaseAgentResponse):
 
     @field_validator("line_count", mode="before")
     @classmethod
-    def calculate_line_count(cls, v, info):
+    def calculate_line_count(cls: str, v: str, info: str) -> None:
         """Calculate line count from code."""
         if hasattr(info, "data") and "code" in info.data:
             code = info.data["code"]

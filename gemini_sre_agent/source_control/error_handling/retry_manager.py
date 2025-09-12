@@ -19,7 +19,7 @@ from .metrics_integration import ErrorHandlingMetrics
 class RetryManager:
     """Manages retry logic with exponential backoff and jitter."""
 
-    def __init__(self, config: RetryConfig, metrics: Optional[ErrorHandlingMetrics] = None):
+    def __init__(self, config: RetryConfig, metrics: Optional[ErrorHandlingMetrics] = None) -> None:
         self.config = config
         self.logger = logging.getLogger("RetryManager")
         self.error_classifier = ErrorClassifier()

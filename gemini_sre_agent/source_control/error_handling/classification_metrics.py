@@ -152,7 +152,7 @@ class MetricsSummary:
 class ClassificationMetricsCollector:
     """Collector for classification performance metrics."""
 
-    def __init__(self, name: str = "metrics_collector"):
+    def __init__(self, name: str = "metrics_collector") -> None:
         """Initialize the metrics collector."""
         self.name = name
         self.logger = logging.getLogger(f"ClassificationMetricsCollector.{name}")
@@ -559,7 +559,7 @@ class ClassificationMetricsCollector:
 class MetricsComparator:
     """Compare metrics between different classification algorithms."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the metrics comparator."""
         self.logger = logging.getLogger("MetricsComparator")
         self.metrics_summaries: Dict[str, MetricsSummary] = {}

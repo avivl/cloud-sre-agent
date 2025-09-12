@@ -23,7 +23,7 @@ from gemini_sre_agent.ml.validation_config import (
 class TestLogQualityValidator:
     """Test suite for LogQualityValidator class."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures for each test method."""
         self.validator = LogQualityValidator()
         self.base_time = datetime.now()
@@ -53,7 +53,7 @@ class TestLogQualityValidator:
             logs=logs,
         )
 
-    def test_validator_initialization_default_thresholds(self):
+    def test_validator_initialization_default_thresholds(self) -> None:
         """Test validator initialization with default thresholds."""
         validator = LogQualityValidator()
         assert validator.thresholds.min_completeness == 0.80
@@ -61,7 +61,7 @@ class TestLogQualityValidator:
         assert validator.thresholds.min_consistency == 0.70
         assert validator.thresholds.max_duplicate_ratio == 0.30
 
-    def test_validator_initialization_custom_thresholds(self):
+    def test_validator_initialization_custom_thresholds(self) -> None:
         """Test validator initialization with custom thresholds."""
         custom_thresholds = QualityThresholds(
             min_completeness=0.90,
@@ -73,7 +73,7 @@ class TestLogQualityValidator:
         assert validator.thresholds.min_completeness == 0.90
         assert validator.thresholds.max_noise_ratio == 0.10
 
-    def test_empty_log_assessment(self):
+    def test_empty_log_assessment(self) -> None:
         """Test quality assessment with empty logs."""
         empty_window = self.create_test_window([])
         metrics = self.validator.assess_log_quality(empty_window)
@@ -81,7 +81,7 @@ class TestLogQualityValidator:
         expected = ValidationMetrics.empty_metrics()
         assert metrics == expected
 
-    def test_perfect_quality_logs(self):
+    def test_perfect_quality_logs(self) -> None:
         """Test quality assessment with perfect logs."""
         perfect_logs = [
             self.create_test_log(f"service-{i}", f"Error message {i}", "ERROR")
@@ -97,7 +97,7 @@ class TestLogQualityValidator:
         assert metrics["passes_threshold"] is True
         assert metrics["total_logs_analyzed"] == 10
 
-    def test_completeness_calculation(self):
+    def test_completeness_calculation(self) -> None:
         """Test completeness calculation with missing fields."""
         logs = [
             self.create_test_log("service-1", "Complete log", "ERROR"),  # Complete
@@ -116,7 +116,7 @@ class TestLogQualityValidator:
         # 2 complete out of 5 logs = 0.4 completeness
         assert metrics["completeness"] == 0.4
 
-    def test_noise_ratio_calculation(self):
+    def test_noise_ratio_calculation(self) -> None:
         """Test noise ratio calculation with various log types."""
         logs = [
             self.create_test_log(
@@ -137,7 +137,7 @@ class TestLogQualityValidator:
         # 3 noisy out of 5 logs = 0.6 noise ratio
         assert metrics["noise_ratio"] == 0.6
 
-    def test_consistency_calculation(self):
+    def test_consistency_calculation(self) -> None:
         """Test consistency calculation with message patterns."""
         logs = [
             self.create_test_log(
@@ -158,7 +158,7 @@ class TestLogQualityValidator:
         # 4 similar "Connection failed" patterns out of 5 = 0.8 consistency
         assert metrics["consistency"] == 0.8
 
-    def test_duplicate_ratio_calculation(self):
+    def test_duplicate_ratio_calculation(self) -> None:
         """Test duplicate ratio calculation."""
         logs = [
             self.create_test_log("service-1", "Unique message", "ERROR"),
@@ -173,7 +173,7 @@ class TestLogQualityValidator:
         # 2 duplicate occurrences out of 5 logs = 0.4 duplicate ratio
         assert metrics["duplicate_ratio"] == 0.4
 
-    def test_validation_passes_all_thresholds(self):
+    def test_validation_passes_all_thresholds(self) -> None:
         """Test validation passes when all thresholds are met."""
         # Create high-quality logs that meet all thresholds
         logs = [
@@ -186,7 +186,7 @@ class TestLogQualityValidator:
 
         assert self.validator.validate_for_processing(window) is True
 
-    def test_validation_fails_completeness(self):
+    def test_validation_fails_completeness(self) -> None:
         """Test validation fails when completeness threshold is not met."""
         # Most logs missing essential fields
         logs = [
@@ -201,7 +201,7 @@ class TestLogQualityValidator:
         # Completeness = 0.2, below threshold of 0.8
         assert self.validator.validate_for_processing(window) is False
 
-    def test_validation_fails_noise_ratio(self):
+    def test_validation_fails_noise_ratio(self) -> None:
         """Test validation fails when noise ratio exceeds threshold."""
         # Mostly noisy logs
         logs = [
@@ -216,7 +216,7 @@ class TestLogQualityValidator:
         # Noise ratio = 0.8, above threshold of 0.2
         assert self.validator.validate_for_processing(window) is False
 
-    def test_validation_fails_consistency(self):
+    def test_validation_fails_consistency(self) -> None:
         """Test validation fails when consistency is too low."""
         # Very inconsistent messages with truly different patterns
         logs = [
@@ -239,7 +239,7 @@ class TestLogQualityValidator:
         assert metrics["consistency"] == 0.2
         assert self.validator.validate_for_processing(window) is False
 
-    def test_validation_fails_duplicate_ratio(self):
+    def test_validation_fails_duplicate_ratio(self) -> None:
         """Test validation fails when duplicate ratio exceeds threshold."""
         # Too many duplicates
         duplicate_message = "Same error message repeated"
@@ -263,7 +263,7 @@ class TestLogQualityValidator:
         # Duplicate ratio = 0.6 (3 extra duplicates / 5 total), above threshold of 0.3
         assert self.validator.validate_for_processing(window) is False
 
-    def test_quality_recommendations_poor_completeness(self):
+    def test_quality_recommendations_poor_completeness(self) -> None:
         """Test quality recommendations for poor completeness."""
         logs = [LogEntry(self.base_time) for _ in range(5)]  # All incomplete
         window = self.create_test_window(logs)
@@ -276,7 +276,7 @@ class TestLogQualityValidator:
         assert completeness_rec is not None
         assert "service_name, error_message, and severity" in completeness_rec
 
-    def test_quality_recommendations_high_noise(self):
+    def test_quality_recommendations_high_noise(self) -> None:
         """Test quality recommendations for high noise ratio."""
         logs = [
             self.create_test_log("service", "X", "DEBUG") for _ in range(5)
@@ -289,7 +289,7 @@ class TestLogQualityValidator:
         assert noise_rec is not None
         assert "DEBUG/TRACE" in noise_rec
 
-    def test_quality_recommendations_low_consistency(self):
+    def test_quality_recommendations_low_consistency(self) -> None:
         """Test quality recommendations for low consistency."""
         # Use truly different message patterns to get low consistency
         logs = [
@@ -309,7 +309,7 @@ class TestLogQualityValidator:
         assert consistency_rec is not None
         assert "standardize log formats" in consistency_rec
 
-    def test_quality_recommendations_high_duplicates(self):
+    def test_quality_recommendations_high_duplicates(self) -> None:
         """Test quality recommendations for high duplicate ratio."""
         logs = [
             self.create_test_log("service", "Same message", "ERROR") for _ in range(5)
@@ -324,7 +324,7 @@ class TestLogQualityValidator:
         assert duplicate_rec is not None
         assert "deduplication or rate limiting" in duplicate_rec
 
-    def test_quality_recommendations_good_quality(self):
+    def test_quality_recommendations_good_quality(self) -> None:
         """Test quality recommendations for good quality logs."""
         logs = [
             self.create_test_log(f"service-{i % 2}", f"Error pattern {i}", "ERROR")
@@ -337,7 +337,7 @@ class TestLogQualityValidator:
         assert len(recommendations) == 1
         assert "meets all thresholds" in recommendations[0]
 
-    def test_pattern_extraction_normalization(self):
+    def test_pattern_extraction_normalization(self) -> None:
         """Test message pattern extraction and normalization."""
         validator = self.validator
 
@@ -366,7 +366,7 @@ class TestLogQualityValidator:
         )
         assert ip_pattern1 == ip_pattern2  # Both should use IP placeholder
 
-    def test_noisy_log_detection(self):
+    def test_noisy_log_detection(self) -> None:
         """Test noisy log detection logic."""
         validator = self.validator
 
@@ -394,7 +394,7 @@ class TestLogQualityValidator:
         good_log = self.create_test_log("service", "Proper error message", "ERROR")
         assert validator._is_noisy_log(good_log) is False
 
-    def test_overall_quality_calculation(self):
+    def test_overall_quality_calculation(self) -> None:
         """Test overall quality score calculation."""
         # Create mixed quality logs
         logs = [
@@ -421,7 +421,7 @@ class TestLogQualityValidator:
 class TestValidationConfig:
     """Test suite for validation configuration classes."""
 
-    def test_log_entry_creation(self):
+    def test_log_entry_creation(self) -> None:
         """Test LogEntry creation and post_init."""
         timestamp = datetime.now()
         log_entry = LogEntry(timestamp=timestamp, service_name="test-service")
@@ -430,7 +430,7 @@ class TestValidationConfig:
         assert log_entry.service_name == "test-service"
         assert log_entry.metadata == {}  # Should be initialized in post_init
 
-    def test_quality_thresholds_defaults(self):
+    def test_quality_thresholds_defaults(self) -> None:
         """Test QualityThresholds default values."""
         thresholds = QualityThresholds()
 
@@ -440,7 +440,7 @@ class TestValidationConfig:
         assert thresholds.max_duplicate_ratio == 0.30
         assert thresholds.overall_quality_threshold == 0.75
 
-    def test_time_window_creation(self):
+    def test_time_window_creation(self) -> None:
         """Test TimeWindow creation and validation."""
         start_time = datetime.now()
         end_time = start_time + timedelta(hours=1)
@@ -454,7 +454,7 @@ class TestValidationConfig:
         assert window.duration_seconds == 3600.0  # 1 hour
         assert window.log_count == 1
 
-    def test_time_window_invalid_times(self):
+    def test_time_window_invalid_times(self) -> None:
         """Test TimeWindow validation with invalid time range."""
         start_time = datetime.now()
         end_time = start_time - timedelta(hours=1)  # End before start
@@ -462,7 +462,7 @@ class TestValidationConfig:
         with pytest.raises(ValueError, match="start_time must be before end_time"):
             TimeWindow(start_time=start_time, end_time=end_time, logs=[])
 
-    def test_validation_metrics_helpers(self):
+    def test_validation_metrics_helpers(self) -> None:
         """Test ValidationMetrics helper methods."""
         # Test empty metrics
         empty = ValidationMetrics.empty_metrics()
@@ -481,7 +481,7 @@ class TestValidationConfig:
         assert ValidationMetrics.categorize_quality_level(0.60) == "POOR"
         assert ValidationMetrics.categorize_quality_level(0.30) == "CRITICAL"
 
-    def test_validation_rules_helpers(self):
+    def test_validation_rules_helpers(self) -> None:
         """Test ValidationRules helper methods."""
         timestamp = datetime.now()
 

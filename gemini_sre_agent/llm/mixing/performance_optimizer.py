@@ -104,7 +104,7 @@ class CacheEntry:
 class PerformanceCache:
     """Cache for performance optimization."""
 
-    def __init__(self, max_size: int = 1000, default_ttl: float = 3600.0):
+    def __init__(self, max_size: int = 1000, default_ttl: float = 3600.0) -> None:
         """
         Initialize the performance cache.
 
@@ -220,7 +220,7 @@ class PerformanceCache:
 class LoadBalancer:
     """Load balancer for distributing requests across models."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the load balancer."""
         self.model_weights: Dict[str, float] = {}
         self.model_performance: Dict[str, PerformanceMetrics] = {}

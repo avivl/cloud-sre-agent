@@ -8,12 +8,12 @@ import pytest
 class TestEnhancedCodeGenerationConfig:
     """Test the configuration class for enhanced code generation agent"""
 
-    def test_config_initialization(self):
+    def test_config_initialization(self) -> None:
         """Test config initialization with default values"""
 
         # Mock the config class
         class MockConfig:
-            def __init__(self, project_id, location, main_model, **kwargs):
+            def __init__(self, project_id: str, location: str, main_model: str, **kwargs: str) -> None:
                 self.project_id = project_id
                 self.location = location
                 self.main_model = main_model
@@ -38,12 +38,12 @@ class TestEnhancedCodeGenerationConfig:
         assert config.enable_learning is True
         assert config.human_review_threshold == 7.0
 
-    def test_config_custom_values(self):
+    def test_config_custom_values(self) -> None:
         """Test config initialization with custom values"""
 
         # Mock the config class
         class MockConfig:
-            def __init__(self, project_id, location, main_model, **kwargs):
+            def __init__(self, project_id: str, location: str, main_model: str, **kwargs: str) -> None:
                 self.project_id = project_id
                 self.location = location
                 self.main_model = main_model
@@ -77,12 +77,12 @@ class TestEnhancedCodeGenerationConfig:
 class TestEnhancedCodeGenerationAgent:
     """Test the enhanced code generation agent"""
 
-    def test_agent_initialization(self):
+    def test_agent_initialization(self) -> None:
         """Test agent initialization"""
 
         # Mock the agent class
         class MockAgent:
-            def __init__(self, config):
+            def __init__(self, config: str) -> None:
                 self.config = config
                 self.code_generator_factory = Mock()
                 self.generation_history = []
@@ -100,16 +100,16 @@ class TestEnhancedCodeGenerationAgent:
         assert agent.generation_history == []
         assert agent.learning_data == {}
 
-    def test_generation_history_management(self):
+    def test_generation_history_management(self) -> None:
         """Test generation history management"""
 
         # Mock the agent class
         class MockAgent:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.generation_history = []
                 self.learning_data = {}
 
-            def add_generation_record(self, record):
+            def add_generation_record(self, record: str) -> None:
                 """
                 Add Generation Record.
 
@@ -121,14 +121,14 @@ class TestEnhancedCodeGenerationAgent:
                 if len(self.generation_history) > 1000:
                     self.generation_history = self.generation_history[-1000:]
 
-            def get_history_count(self):
+            def get_history_count(self) -> None:
                 """
                 Get History Count.
 
                 """
                 return len(self.generation_history)
 
-            def reset_history(self):
+            def reset_history(self) -> None:
                 """
                 Reset History.
 
@@ -156,15 +156,15 @@ class TestEnhancedCodeGenerationAgent:
         assert agent.get_history_count() == 0
         assert agent.learning_data == {}
 
-    def test_learning_data_management(self):
+    def test_learning_data_management(self) -> None:
         """Test learning data management"""
 
         # Mock the agent class
         class MockAgent:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.learning_data = {}
 
-            def update_learning_data(self, domain, success, quality_score):
+            def update_learning_data(self, domain: str, success: str, quality_score: str) -> None:
                 """
                 Update Learning Data.
 
@@ -196,7 +196,7 @@ class TestEnhancedCodeGenerationAgent:
                     new_total / domain_data["total_generations"]
                 )
 
-            def get_domain_stats(self, domain):
+            def get_domain_stats(self, domain: str) -> None:
                 """
                 Get Domain Stats.
 
@@ -230,16 +230,16 @@ class TestEnhancedCodeGenerationAgent:
         assert api_stats["successful_generations"] == 1
         assert api_stats["average_quality_score"] == 7.5
 
-    def test_quality_threshold_logic(self):
+    def test_quality_threshold_logic(self) -> None:
         """Test quality threshold logic"""
 
         # Mock the agent class
         class MockAgent:
-            def __init__(self, human_review_threshold=7.0):
+            def __init__(self, human_review_threshold: float = 7.0) -> None:
                 self.config = Mock()
                 self.config.human_review_threshold = human_review_threshold
 
-            def check_requires_human_review(self, quality_score, critical_issues_count):
+            def check_requires_human_review(self, quality_score: str, critical_issues_count: str) -> None:
                 """
                 Check Requires Human Review.
 
@@ -272,15 +272,15 @@ class TestEnhancedCodeGenerationAgent:
         assert agent2.check_requires_human_review(8.0, 0) is True
         assert agent2.check_requires_human_review(9.0, 0) is False
 
-    def test_statistics_calculation(self):
+    def test_statistics_calculation(self) -> None:
         """Test statistics calculation"""
 
         # Mock the agent class
         class MockAgent:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.generation_history = []
 
-            def add_generation_record(self, record):
+            def add_generation_record(self, record: str) -> None:
                 """
                 Add Generation Record.
 
@@ -290,7 +290,7 @@ class TestEnhancedCodeGenerationAgent:
                 """
                 self.generation_history.append(record)
 
-            def calculate_statistics(self):
+            def calculate_statistics(self) -> None:
                 """
                 Calculate Statistics.
 

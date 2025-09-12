@@ -21,7 +21,7 @@ except ImportError:
 class BaseMonitor:
     """Base class for system monitors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the monitor."""
         self.monitoring = False
 
@@ -42,7 +42,7 @@ class BaseMonitor:
 class MemoryMonitor(BaseMonitor):
     """Monitor memory usage during benchmarks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize memory monitor."""
         super().__init__()
         if not PSUTIL_AVAILABLE:
@@ -73,7 +73,7 @@ class MemoryMonitor(BaseMonitor):
 class CPUMonitor(BaseMonitor):
     """Monitor CPU usage during benchmarks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize CPU monitor."""
         super().__init__()
         if not PSUTIL_AVAILABLE:
@@ -102,7 +102,7 @@ class CPUMonitor(BaseMonitor):
 class SystemMonitor:
     """Combined system monitoring for benchmarks."""
 
-    def __init__(self, enable_memory: bool = True, enable_cpu: bool = True):
+    def __init__(self, enable_memory: bool = True, enable_cpu: bool = True) -> None:
         """Initialize system monitor."""
         self.memory_monitor: Optional[MemoryMonitor] = None
         self.cpu_monitor: Optional[CPUMonitor] = None

@@ -36,7 +36,7 @@ from gemini_sre_agent.source_control.providers.sub_operation_config import (
 class ProviderManager:
     """Manages multiple source control providers with error handling."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
         self.providers: Dict[str, Any] = {}
         self.config_manager = SubOperationConfigManager()

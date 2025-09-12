@@ -22,7 +22,7 @@ from gemini_sre_agent.config.source_control_repositories import (
 class TestRepositoryConfig:
     """Test cases for base RepositoryConfig."""
 
-    def test_minimal_valid_config(self):
+    def test_minimal_valid_config(self) -> None:
         """Test minimal valid configuration."""
         config = RepositoryConfig(
             type="github", name="test-repo", branch="main", paths=["/src"]
@@ -35,7 +35,7 @@ class TestRepositoryConfig:
         assert config.credentials is None
         assert isinstance(config.remediation, RemediationStrategyConfig)
 
-    def test_default_values(self):
+    def test_default_values(self) -> None:
         """Test default values."""
         config = RepositoryConfig(type="github", name="test-repo")
 
@@ -43,7 +43,7 @@ class TestRepositoryConfig:
         assert config.paths == ["/"]
         assert config.credentials is None
 
-    def test_name_validation(self):
+    def test_name_validation(self) -> None:
         """Test repository name validation."""
         # Valid names
         valid_names = ["test-repo", "test_repo", "test.repo", "test123"]
@@ -70,7 +70,7 @@ class TestRepositoryConfig:
                 RepositoryConfig(type="github", name=invalid_name)
             assert expected_error in str(exc_info.value)
 
-    def test_branch_validation(self):
+    def test_branch_validation(self) -> None:
         """Test branch name validation."""
         # Valid branches
         valid_branches = ["main", "develop", "feature/branch", "hotfix-123"]
@@ -90,7 +90,7 @@ class TestRepositoryConfig:
                 RepositoryConfig(type="github", name="test", branch=invalid_branch)
             assert expected_error in str(exc_info.value)
 
-    def test_paths_validation(self):
+    def test_paths_validation(self) -> None:
         """Test paths validation."""
         # Valid paths
         valid_paths = ["/", "/src", "/src/api", "/docs"]
@@ -111,7 +111,7 @@ class TestRepositoryConfig:
                 RepositoryConfig(type="github", name="test", paths=invalid_paths)
             assert expected_error in str(exc_info.value)
 
-    def test_matches_path(self):
+    def test_matches_path(self) -> None:
         """Test path matching functionality."""
         config = RepositoryConfig(
             type="github", name="test", paths=["/src", "/docs", "/config"]
@@ -131,12 +131,12 @@ class TestRepositoryConfig:
 class TestGitHubRepositoryConfig:
     """Test cases for GitHubRepositoryConfig."""
 
-    def test_default_type(self):
+    def test_default_type(self) -> None:
         """Test that type is set to github by default."""
         config = GitHubRepositoryConfig(name="test", url="owner/repo")
         assert config.type == "github"
 
-    def test_url_validation(self):
+    def test_url_validation(self) -> None:
         """Test GitHub URL validation."""
         # Valid URLs
         valid_urls = [
@@ -175,7 +175,7 @@ class TestGitHubRepositoryConfig:
                 GitHubRepositoryConfig(name="test", url=invalid_url)
             assert expected_error in str(exc_info.value)
 
-    def test_api_base_url_validation(self):
+    def test_api_base_url_validation(self) -> None:
         """Test API base URL validation."""
         # Valid URLs
         valid_urls = [
@@ -203,7 +203,7 @@ class TestGitHubRepositoryConfig:
                 )
             assert expected_error in str(exc_info.value)
 
-    def test_get_full_url(self):
+    def test_get_full_url(self) -> None:
         """Test getting full GitHub URL."""
         config = GitHubRepositoryConfig(name="test", url="owner/repo")
         assert config.get_full_url() == "https://github.com/owner/repo"
@@ -213,7 +213,7 @@ class TestGitHubRepositoryConfig:
         )
         assert config.get_full_url() == "https://github.com/owner/repo"
 
-    def test_get_owner_and_repo_name(self):
+    def test_get_owner_and_repo_name(self) -> None:
         """Test getting owner and repository name."""
         config = GitHubRepositoryConfig(name="test", url="owner/repo")
         assert config.get_owner() == "owner"
@@ -223,14 +223,14 @@ class TestGitHubRepositoryConfig:
 class TestGitLabRepositoryConfig:
     """Test cases for GitLabRepositoryConfig."""
 
-    def test_default_type(self):
+    def test_default_type(self) -> None:
         """Test that type is set to gitlab by default."""
         config = GitLabRepositoryConfig(
             name="test", url="https://gitlab.com/owner/repo"
         )
         assert config.type == "gitlab"
 
-    def test_url_validation(self):
+    def test_url_validation(self) -> None:
         """Test GitLab URL validation."""
         # Valid URLs
         valid_urls = [
@@ -257,7 +257,7 @@ class TestGitLabRepositoryConfig:
                 GitLabRepositoryConfig(name="test", url=invalid_url)
             assert expected_error in str(exc_info.value)
 
-    def test_get_project_id(self):
+    def test_get_project_id(self) -> None:
         """Test getting project ID."""
         config = GitLabRepositoryConfig(
             name="test", url="https://gitlab.com/owner/repo"
@@ -273,13 +273,13 @@ class TestGitLabRepositoryConfig:
 class TestLocalRepositoryConfig:
     """Test cases for LocalRepositoryConfig."""
 
-    def test_default_type(self):
+    def test_default_type(self) -> None:
         """Test that type is set to local by default."""
         with tempfile.TemporaryDirectory() as temp_dir:
             config = LocalRepositoryConfig(name="test", path=temp_dir)
             assert config.type == "local"
 
-    def test_path_validation(self):
+    def test_path_validation(self) -> None:
         """Test local path validation."""
         # Valid path
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -304,7 +304,7 @@ class TestLocalRepositoryConfig:
                 LocalRepositoryConfig(name="test", path=temp_file.name)
             assert "Local repository path is not a directory" in str(exc_info.value)
 
-    def test_get_path(self):
+    def test_get_path(self) -> None:
         """Test getting path as Path object."""
         with tempfile.TemporaryDirectory() as temp_dir:
             config = LocalRepositoryConfig(name="test", path=temp_dir)
@@ -312,7 +312,7 @@ class TestLocalRepositoryConfig:
             assert isinstance(path_obj, Path)
             assert str(path_obj) == temp_dir
 
-    def test_is_git_repository(self):
+    def test_is_git_repository(self) -> None:
         """Test Git repository detection."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Not a Git repository

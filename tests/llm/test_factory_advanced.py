@@ -24,7 +24,7 @@ with patch.dict(
 class MockProvider(LLMProvider):
     """Mock provider for testing."""
 
-    def __init__(self, config):
+    def __init__(self, config: str) -> None:
         super().__init__(config)
         self._initialized = False
 
@@ -37,7 +37,7 @@ class MockProvider(LLMProvider):
     async def generate_structured(self, prompt, response_model, model=None, **kwargs):
         return response_model()
 
-    def generate_stream(self, prompt, model=None, **kwargs):
+    def generate_stream(self, prompt: str, model: Optional[str] = None, **kwargs: str) -> None:
         """
         Generate Stream.
 
@@ -54,14 +54,14 @@ class MockProvider(LLMProvider):
     async def health_check(self):
         return True
 
-    def get_available_models(self):
+    def get_available_models(self) -> None:
         """
         Get Available Models.
 
         """
         return ["mock-model"]
 
-    def estimate_cost(self, prompt, model=None):
+    def estimate_cost(self, prompt: str, model: Optional[str] = None) -> None:
         """
         Estimate Cost.
 
@@ -72,7 +72,7 @@ class MockProvider(LLMProvider):
         """
         return 0.01
 
-    def validate_config(self):
+    def validate_config(self) -> None:
         """
         Validate Config.
 
@@ -84,11 +84,11 @@ class TestFactoryAdvanced:
     """Test advanced factory functionality."""
 
     @pytest.fixture
-    def factory(self):
+    def factory(self) -> None:
         """Create a factory instance."""
         return LLMProviderFactory()
 
-    def test_create_providers_from_config(self, factory):
+    def test_create_providers_from_config(self, factory: str) -> None:
         """Test creating providers from complete configuration."""
         config = LLMConfig(
             default_provider="test1",
@@ -242,13 +242,13 @@ class TestFactoryAdvanced:
 class TestFactoryFunctions:
     """Test the factory utility functions."""
 
-    def test_get_provider_factory_singleton(self):
+    def test_get_provider_factory_singleton(self) -> None:
         """Test that get_provider_factory returns a singleton."""
         factory1 = get_provider_factory()
         factory2 = get_provider_factory()
         assert factory1 is factory2
 
-    def test_create_provider_factory_new_instance(self):
+    def test_create_provider_factory_new_instance(self) -> None:
         """Test that create_provider_factory returns a new instance."""
         factory1 = create_provider_factory()
         factory2 = create_provider_factory()

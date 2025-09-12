@@ -168,7 +168,7 @@ class MirascopeIntegrationConfig(BaseModel):
 class ConfigurationManager:
     """Manages Mirascope integration configuration."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """Initialize configuration manager."""
         self.config_path = (
             Path(config_path) if config_path else Path("./mirascope_config.json")

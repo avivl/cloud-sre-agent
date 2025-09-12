@@ -25,7 +25,7 @@ class WorkflowCodeGenerator:
     - Generator type determination and coordination
     """
 
-    def __init__(self, enhanced_agent: EnhancedAnalysisAgent):
+    def __init__(self, enhanced_agent: EnhancedAnalysisAgent) -> None:
         """
         Initialize the code generator.
 

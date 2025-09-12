@@ -29,7 +29,7 @@ class TestContextCache:
     """Test the context caching system."""
 
     @pytest.fixture
-    def cache(self):
+    def cache(self) -> None:
         """Create a test cache instance."""
         return ContextCache(max_size_mb=1, default_ttl_seconds=1)
 
@@ -92,12 +92,12 @@ class TestRepositoryContextCache:
     """Test the repository context cache."""
 
     @pytest.fixture
-    def base_cache(self):
+    def base_cache(self) -> None:
         """Create a base cache instance."""
         return ContextCache(max_size_mb=1, default_ttl_seconds=1)
 
     @pytest.fixture
-    def repo_cache(self, base_cache):
+    def repo_cache(self, base_cache: str) -> None:
         """Create a repository context cache instance."""
         return RepositoryContextCache(base_cache)
 
@@ -144,12 +144,12 @@ class TestIssuePatternCache:
     """Test the issue pattern cache."""
 
     @pytest.fixture
-    def base_cache(self):
+    def base_cache(self) -> None:
         """Create a base cache instance."""
         return ContextCache(max_size_mb=1, default_ttl_seconds=1)
 
     @pytest.fixture
-    def pattern_cache(self, base_cache):
+    def pattern_cache(self, base_cache: str) -> None:
         """Create an issue pattern cache instance."""
         return IssuePatternCache(base_cache)
 
@@ -176,7 +176,7 @@ class TestIssuePatternCache:
 class TestPerformanceConfig:
     """Test the performance configuration system."""
 
-    def test_default_config(self):
+    def test_default_config(self) -> None:
         """Test default configuration creation."""
         config = PerformanceConfig(
             cache=CacheConfig(),
@@ -210,7 +210,7 @@ class TestPerformanceConfig:
         assert config.performance_log_level == "INFO"
         assert config.max_memory_usage_mb == 512
 
-    def test_analysis_config_mapping(self):
+    def test_analysis_config_mapping(self) -> None:
         """Test analysis configuration depth mapping."""
         config = PerformanceConfig(
             cache=CacheConfig(),
@@ -248,7 +248,7 @@ class TestPerformanceConfig:
         assert standard_config["max_files"] == 500
         assert standard_config["max_depth"] == 3
 
-    def test_config_serialization(self):
+    def test_config_serialization(self) -> None:
         """Test configuration serialization to/from dictionary."""
         config = PerformanceConfig(
             cache=CacheConfig(),
@@ -297,7 +297,7 @@ class TestPerformanceRepositoryAnalyzer:
     """Test the performance repository analyzer."""
 
     @pytest.fixture
-    def mock_cache(self):
+    def mock_cache(self) -> None:
         """Create a mock cache instance."""
         cache = Mock(spec=RepositoryContextCache)
         cache.get_repository_context = AsyncMock(return_value=None)
@@ -305,7 +305,7 @@ class TestPerformanceRepositoryAnalyzer:
         return cache
 
     @pytest.fixture
-    def analyzer(self, mock_cache):
+    def analyzer(self, mock_cache: str) -> None:
         """Create a test analyzer instance."""
         return PerformanceRepositoryAnalyzer(mock_cache, repo_path=".")
 

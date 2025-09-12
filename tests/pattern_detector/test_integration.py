@@ -27,7 +27,7 @@ class TestPatternDetectorIntegration:
         """Test complete flow from log ingestion to pattern detection."""
         received_windows = []
 
-        def pattern_callback(window):
+        def pattern_callback(window: str) -> None:
             """
             Pattern Callback.
 
@@ -67,11 +67,11 @@ class TestPatternDetectorIntegration:
         finally:
             await manager.stop()
 
-    def test_realistic_log_data_processing(self):
+    def test_realistic_log_data_processing(self) -> None:
         """Test with realistic GCP log data structure."""
         received_windows = []
 
-        def pattern_callback(window):
+        def pattern_callback(window: str) -> None:
             """
             Pattern Callback.
 
@@ -119,7 +119,7 @@ class TestPatternDetectorIntegration:
 class TestSmartThresholdsIntegration:
     """Integration tests for smart thresholds with time windows."""
 
-    def test_threshold_evaluation_with_window_manager(self):
+    def test_threshold_evaluation_with_window_manager(self) -> None:
         """Test threshold evaluation integrated with window manager."""
         threshold_configs = [
             ThresholdConfig(
@@ -136,7 +136,7 @@ class TestSmartThresholdsIntegration:
         evaluator = ThresholdEvaluator(threshold_configs)
         triggered_results = []
 
-        def pattern_callback(window):
+        def pattern_callback(window: str) -> None:
             """
             Pattern Callback.
 
@@ -177,7 +177,7 @@ class TestSmartThresholdsIntegration:
         triggered = [r for r in results if r.triggered]
         assert len(triggered) >= 1
 
-    def test_baseline_tracking_over_time(self):
+    def test_baseline_tracking_over_time(self) -> None:
         """Test baseline tracking across multiple windows."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.ERROR_RATE,
@@ -219,7 +219,7 @@ class TestPatternClassificationIntegration:
         """Test complete pattern detection pipeline."""
         pattern_callback_results = []
 
-        def pattern_callback(window: TimeWindow):
+        def pattern_callback(window: TimeWindow) -> None:
             """
             Pattern Callback.
 

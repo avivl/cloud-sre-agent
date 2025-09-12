@@ -48,7 +48,7 @@ class SharedContext:
 class ContextManager:
     """Manages shared context between models in mixing operations."""
 
-    def __init__(self, max_context_age_hours: int = 24):
+    def __init__(self, max_context_age_hours: int = 24) -> None:
         """Initialize the context manager."""
         self.max_context_age = timedelta(hours=max_context_age_hours)
         self.active_contexts: Dict[str, SharedContext] = {}
@@ -232,7 +232,7 @@ class ContextManager:
 
         return base_prompt
 
-    def cleanup_expired_contexts(self):
+    def cleanup_expired_contexts(self) -> None:
         """Remove expired context sessions."""
         cutoff_time = datetime.now() - self.max_context_age
         expired_sessions = []
@@ -282,7 +282,7 @@ class ContextManager:
 class ContextPropagator:
     """Handles context propagation between models in mixing operations."""
 
-    def __init__(self, context_manager: ContextManager):
+    def __init__(self, context_manager: ContextManager) -> None:
         """Initialize the context propagator."""
         self.context_manager = context_manager
 
@@ -433,7 +433,7 @@ class ContextPropagator:
 class FeedbackLoop:
     """Implements feedback loops between models for iterative improvement."""
 
-    def __init__(self, context_manager: ContextManager):
+    def __init__(self, context_manager: ContextManager) -> None:
         """Initialize the feedback loop system."""
         self.context_manager = context_manager
         self.feedback_history: Dict[str, List[Dict[str, Any]]] = {}

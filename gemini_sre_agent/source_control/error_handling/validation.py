@@ -22,7 +22,7 @@ from .core import (
 class ErrorHandlingConfigValidator:
     """Validates error handling configuration options."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize the validator."""
         self.logger = logger or logging.getLogger(__name__)
 

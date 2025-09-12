@@ -56,7 +56,7 @@ def validate_config_file(config_path: Path) -> List[str]:
     return errors
 
 
-def main():
+def main() -> None:
     """Main validation function."""
     print("🔍 Log Ingestion Configuration Validator")
     print("=" * 50)

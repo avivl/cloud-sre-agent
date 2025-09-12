@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 class StrategyManager:
     """Manager for model selection strategies using the Strategy pattern."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None):
+    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
         """Initialize the strategy manager.
 
         Args:
@@ -123,7 +123,7 @@ class StrategyManager:
 
         return result
 
-    def add_strategy(self, goal: OptimizationGoal, strategy: ModelSelectionStrategy):
+    def add_strategy(self, goal: OptimizationGoal, strategy: ModelSelectionStrategy) -> None:
         """Add or replace a strategy.
 
         Args:
@@ -142,7 +142,7 @@ class StrategyManager:
 
         logger.info(f"Added strategy {strategy.name} for goal {goal.value}")
 
-    def remove_strategy(self, goal: OptimizationGoal):
+    def remove_strategy(self, goal: OptimizationGoal) -> None:
         """Remove a strategy.
 
         Args:
@@ -231,7 +231,7 @@ class StrategyManager:
             f"Updated performance for {goal.value} strategy: success={success}, latency={latency_ms}ms"
         )
 
-    def reset_statistics(self):
+    def reset_statistics(self) -> None:
         """Reset all statistics."""
         for goal in OptimizationGoal:
             self._strategy_usage_stats[goal.value] = 0

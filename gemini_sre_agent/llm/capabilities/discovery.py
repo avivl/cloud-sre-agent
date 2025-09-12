@@ -17,7 +17,7 @@ class CapabilityDiscovery:
     Discovers and catalogs capabilities of LLM models across various providers.
     """
 
-    def __init__(self, providers: Dict[str, LLMProvider], cache_ttl: int = 3600):
+    def __init__(self, providers: Dict[str, LLMProvider]: str, cache_ttl: int = 3600) -> None:
         """
         Initialize the CapabilityDiscovery.
 

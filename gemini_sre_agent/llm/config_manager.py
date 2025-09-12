@@ -44,7 +44,7 @@ class ConfigManager:
     from multiple sources with proper precedence rules.
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: Optional[Union[str, Path]]: Optional[str] = None) -> None:
         """
         Initialize the configuration manager.
 

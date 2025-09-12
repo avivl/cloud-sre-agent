@@ -12,7 +12,7 @@ class ProviderMetrics:
     A class to store and manage metrics for a single LLM provider.
     """
 
-    def __init__(self, provider_id: str):
+    def __init__(self, provider_id: str) -> None:
         """
         Initialize the ProviderMetrics.
 

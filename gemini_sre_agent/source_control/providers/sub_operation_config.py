@@ -151,7 +151,7 @@ class SubOperationConfig:
 class SubOperationConfigManager:
     """Manages configuration for sub-operation modules."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize configuration manager."""
         self.logger = logger or logging.getLogger("SubOperationConfigManager")
         self._configs: Dict[str, SubOperationConfig] = {}

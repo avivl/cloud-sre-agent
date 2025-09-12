@@ -18,14 +18,14 @@ from gemini_sre_agent.ml.code_generation_models import (
 class TestValidationSeverity:
     """Test ValidationSeverity enum"""
 
-    def test_severity_values(self):
+    def test_severity_values(self) -> None:
         """Test that severity values are properly ordered"""
         assert ValidationSeverity.LOW.value == 1
         assert ValidationSeverity.MEDIUM.value == 2
         assert ValidationSeverity.HIGH.value == 3
         assert ValidationSeverity.CRITICAL.value == 4
 
-    def test_severity_comparison(self):
+    def test_severity_comparison(self) -> None:
         """Test severity comparison operations"""
         assert ValidationSeverity.LOW.value < ValidationSeverity.MEDIUM.value
         assert ValidationSeverity.HIGH.value > ValidationSeverity.MEDIUM.value
@@ -35,7 +35,7 @@ class TestValidationSeverity:
 class TestCodeQualityLevel:
     """Test CodeQualityLevel enum"""
 
-    def test_quality_values(self):
+    def test_quality_values(self) -> None:
         """Test that quality values are properly ordered"""
         assert CodeQualityLevel.POOR.value == 1
         assert CodeQualityLevel.FAIR.value == 2
@@ -47,7 +47,7 @@ class TestCodeQualityLevel:
 class TestValidationIssue:
     """Test ValidationIssue dataclass"""
 
-    def test_validation_issue_creation(self):
+    def test_validation_issue_creation(self) -> None:
         """Test creating a validation issue"""
         issue = ValidationIssue(
             issue_id="test_issue",
@@ -66,7 +66,7 @@ class TestValidationIssue:
         assert issue.suggestion is None
         assert issue.code_snippet is None
 
-    def test_validation_issue_with_optional_fields(self):
+    def test_validation_issue_with_optional_fields(self) -> None:
         """Test creating a validation issue with optional fields"""
         issue = ValidationIssue(
             issue_id="test_issue_full",
@@ -90,7 +90,7 @@ class TestValidationIssue:
 class TestValidationResult:
     """Test ValidationResult dataclass"""
 
-    def test_validation_result_creation(self):
+    def test_validation_result_creation(self) -> None:
         """Test creating a validation result"""
         result = ValidationResult(
             is_valid=True, severity=ValidationSeverity.LOW, quality_score=8.5
@@ -103,7 +103,7 @@ class TestValidationResult:
         assert len(result.suggestions) == 0
         assert isinstance(result.validation_time, datetime)
 
-    def test_add_issue(self):
+    def test_add_issue(self) -> None:
         """Test adding issues to validation result"""
         result = ValidationResult(is_valid=True, severity=ValidationSeverity.LOW)
 
@@ -118,7 +118,7 @@ class TestValidationResult:
         assert len(result.issues) == 1
         assert result.issues[0] == issue
 
-    def test_add_suggestion(self):
+    def test_add_suggestion(self) -> None:
         """Test adding suggestions to validation result"""
         result = ValidationResult(is_valid=True, severity=ValidationSeverity.LOW)
 
@@ -126,7 +126,7 @@ class TestValidationResult:
         assert len(result.suggestions) == 1
         assert "Use better error handling" in result.suggestions
 
-    def test_critical_issue_affects_validity(self):
+    def test_critical_issue_affects_validity(self) -> None:
         """Test that critical issues make result invalid"""
         result = ValidationResult(is_valid=True, severity=ValidationSeverity.LOW)
 
@@ -140,7 +140,7 @@ class TestValidationResult:
         result.add_issue(critical_issue)
         assert result.is_valid is False
 
-    def test_get_critical_issues(self):
+    def test_get_critical_issues(self) -> None:
         """Test getting critical issues"""
         result = ValidationResult(is_valid=False, severity=ValidationSeverity.CRITICAL)
 
@@ -165,7 +165,7 @@ class TestValidationResult:
         assert len(critical_issues) == 1
         assert critical_issues[0] == critical_issue
 
-    def test_get_high_priority_issues(self):
+    def test_get_high_priority_issues(self) -> None:
         """Test getting high priority issues"""
         result = ValidationResult(is_valid=False, severity=ValidationSeverity.HIGH)
 
@@ -204,7 +204,7 @@ class TestValidationResult:
 class TestCodeFix:
     """Test CodeFix dataclass"""
 
-    def test_code_fix_creation(self):
+    def test_code_fix_creation(self) -> None:
         """Test creating a code fix"""
         fix = CodeFix(
             code="def fix_issue():\n    pass",
@@ -226,7 +226,7 @@ class TestCodeFix:
         assert fix.iteration_count == 0
         assert fix.quality_score == 0.0
 
-    def test_add_validation_result(self):
+    def test_add_validation_result(self) -> None:
         """Test adding validation results to code fix"""
         fix = CodeFix(
             code="def fix_issue():\n    pass",
@@ -244,7 +244,7 @@ class TestCodeFix:
         assert fix.validation_results == validation_result
         assert fix.quality_score == 9.0
 
-    def test_increment_iteration(self):
+    def test_increment_iteration(self) -> None:
         """Test incrementing iteration count"""
         fix = CodeFix(
             code="def fix_issue():\n    pass",
@@ -260,7 +260,7 @@ class TestCodeFix:
         fix.increment_iteration()
         assert fix.iteration_count == 2
 
-    def test_is_high_quality(self):
+    def test_is_high_quality(self) -> None:
         """Test high quality check"""
         fix = CodeFix(
             code="def fix_issue():\n    pass",
@@ -291,7 +291,7 @@ class TestCodeFix:
 class TestCodePattern:
     """Test CodePattern dataclass"""
 
-    def test_code_pattern_creation(self):
+    def test_code_pattern_creation(self) -> None:
         """Test creating a code pattern"""
         pattern = CodePattern(
             pattern_id="test_pattern",
@@ -315,7 +315,7 @@ class TestCodePattern:
         assert len(pattern.best_practices) == 2
         assert len(pattern.examples) == 2
 
-    def test_apply_pattern(self):
+    def test_apply_pattern(self) -> None:
         """Test applying a pattern to code"""
         pattern = CodePattern(
             pattern_id="test_pattern",
@@ -339,7 +339,7 @@ class TestCodePattern:
 class TestValidationRule:
     """Test ValidationRule dataclass"""
 
-    def test_validation_rule_creation(self):
+    def test_validation_rule_creation(self) -> None:
         """Test creating a validation rule"""
         rule = ValidationRule(
             rule_id="test_rule",
@@ -361,7 +361,7 @@ class TestValidationRule:
         assert rule.validation_function == "test_validation"
         assert rule.parameters["param1"] == "value1"
 
-    def test_get_severity_value(self):
+    def test_get_severity_value(self) -> None:
         """Test getting severity value"""
         rule = ValidationRule(
             rule_id="test_rule",
@@ -379,7 +379,7 @@ class TestValidationRule:
 class TestCodeGenerationContext:
     """Test CodeGenerationContext dataclass"""
 
-    def test_code_generation_context_creation(self):
+    def test_code_generation_context_creation(self) -> None:
         """Test creating a code generation context"""
         context = CodeGenerationContext(
             task_type="code_generation",
@@ -401,7 +401,7 @@ class TestCodeGenerationContext:
         assert context.human_review_required is True
         assert context.learning_enabled is False
 
-    def test_requires_strict_validation(self):
+    def test_requires_strict_validation(self) -> None:
         """Test strict validation requirement check"""
         strict_context = CodeGenerationContext(validation_level="strict")
         standard_context = CodeGenerationContext(validation_level="standard")
@@ -409,7 +409,7 @@ class TestCodeGenerationContext:
         assert strict_context.requires_strict_validation() is True
         assert standard_context.requires_strict_validation() is False
 
-    def test_should_escalate_to_human(self):
+    def test_should_escalate_to_human(self) -> None:
         """Test human escalation check"""
         # High complexity should escalate
         high_complexity = CodeGenerationContext(complexity_score=9)
@@ -433,7 +433,7 @@ class TestCodeGenerationContext:
 class TestCodeGenerationResult:
     """Test CodeGenerationResult dataclass"""
 
-    def test_code_generation_result_creation(self):
+    def test_code_generation_result_creation(self) -> None:
         """Test creating a code generation result"""
         result = CodeGenerationResult(
             success=True, generation_time_ms=1500, iteration_count=2, quality_score=8.5
@@ -448,7 +448,7 @@ class TestCodeGenerationResult:
         assert result.iteration_count == 2
         assert result.quality_score == 8.5
 
-    def test_add_warning(self):
+    def test_add_warning(self) -> None:
         """Test adding warnings"""
         result = CodeGenerationResult(success=True)
 
@@ -456,12 +456,12 @@ class TestCodeGenerationResult:
         assert len(result.warnings) == 1
         assert "Test warning" in result.warnings
 
-    def test_is_high_quality_without_code_fix(self):
+    def test_is_high_quality_without_code_fix(self) -> None:
         """Test high quality check without code fix"""
         result = CodeGenerationResult(success=True)
         assert result.is_high_quality() is False
 
-    def test_is_high_quality_with_code_fix(self):
+    def test_is_high_quality_with_code_fix(self) -> None:
         """Test high quality check with code fix"""
         from gemini_sre_agent.ml.code_generation_models import CodeFix, ValidationResult
 
@@ -485,7 +485,7 @@ class TestCodeGenerationResult:
 
         assert result.is_high_quality() is True
 
-    def test_get_summary(self):
+    def test_get_summary(self) -> None:
         """Test getting result summary"""
         result = CodeGenerationResult(
             success=True, generation_time_ms=2000, iteration_count=3, quality_score=8.0

@@ -31,7 +31,7 @@ class MockResponse(BaseModel):
 class MockLLMProvider(LLMProvider):
     """Test implementation of LLMProvider for testing the abstract interface."""
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self._initialized = False
 
@@ -44,7 +44,7 @@ class MockLLMProvider(LLMProvider):
     async def generate_structured(self, prompt, response_model, model=None, **kwargs):
         return response_model(message="Test", confidence=0.95)
 
-    def generate_stream(self, prompt, model=None, **kwargs):
+    def generate_stream(self, prompt: str, model: Optional[str] = None, **kwargs: str) -> None:
         """
         Generate Stream.
 
@@ -100,7 +100,7 @@ class MockLLMProvider(LLMProvider):
 class TestProviderInterface:
     """Test the LLMProvider abstract interface."""
 
-    def test_provider_initialization(self):
+    def test_provider_initialization(self) -> None:
         """Test provider initialization with configuration."""
         config = LLMProviderConfig(
             provider="openai",
@@ -114,7 +114,7 @@ class TestProviderInterface:
         assert not provider.is_initialized
         assert provider.provider_name == "openai"
 
-    def test_format_prompt_string(self):
+    def test_format_prompt_string(self) -> None:
         """Test formatting string prompts."""
         config = LLMProviderConfig(
             provider="openai",
@@ -127,7 +127,7 @@ class TestProviderInterface:
         result = provider._format_prompt("Hello {name}", name="World")
         assert result == "Hello World"
 
-    def test_format_prompt_mirascope(self):
+    def test_format_prompt_mirascope(self) -> None:
         """Test formatting Mirascope Prompt objects."""
         config = LLMProviderConfig(
             provider="openai",
@@ -145,7 +145,7 @@ class TestProviderInterface:
         assert result == "Formatted prompt"
         mock_prompt.format.assert_called_once_with(name="World")
 
-    def test_resolve_model(self):
+    def test_resolve_model(self) -> None:
         """Test model resolution logic."""
         config = LLMProviderConfig(
             provider="openai",

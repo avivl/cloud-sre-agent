@@ -16,7 +16,7 @@ class TestEnvironmentBackend:
     """Test the EnvironmentBackend class."""
 
     @pytest.fixture
-    def backend(self):
+    def backend(self) -> None:
         """
         Backend.
 
@@ -72,7 +72,7 @@ class TestFileBackend:
     """Test the FileBackend class."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """
         Temp Dir.
 
@@ -81,7 +81,7 @@ class TestFileBackend:
             yield temp_dir
 
     @pytest.fixture
-    def backend(self, temp_dir):
+    def backend(self, temp_dir: str) -> None:
         """
         Backend.
 
@@ -127,7 +127,7 @@ class TestCredentialManager:
     """Test the CredentialManager class."""
 
     @pytest.fixture
-    def manager(self):
+    def manager(self) -> None:
         """
         Manager.
 
@@ -135,7 +135,7 @@ class TestCredentialManager:
         return CredentialManager()
 
     @pytest.fixture
-    def manager_with_encryption(self):
+    def manager_with_encryption(self) -> None:
         """
         Manager With Encryption.
 
@@ -186,7 +186,7 @@ class TestCredentialManager:
             await manager.get_credentials("nonexistent", "github")
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """
         Temp Dir.
 

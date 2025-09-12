@@ -33,7 +33,7 @@ class FileQueueConfig(QueueConfig):
 class FileSystemQueue:
     """File-based persistent queue for log entries."""
 
-    def __init__(self, config: FileQueueConfig):
+    def __init__(self, config: FileQueueConfig) -> None:
         self.config = config
         self.queue_dir = Path(config.queue_dir)
         self.current_file: Optional[Path] = None

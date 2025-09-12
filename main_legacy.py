@@ -27,7 +27,7 @@ from gemini_sre_agent.logger import setup_logging
 from gemini_sre_agent.triage_agent import TriagePacket  # Used for mock TriagePacket
 
 
-def validate_environment():
+def validate_environment() -> None:
     """Validate required environment variables at startup"""
     logger = setup_logging()  # Get a basic logger for early validation
 

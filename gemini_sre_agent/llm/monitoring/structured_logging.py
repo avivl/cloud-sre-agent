@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class StructuredLogger:
     """Structured logger for LLM operations with context tracking."""
 
-    def __init__(self, name: str = __name__):
+    def __init__(self, name: str = __name__) -> None:
         """Initialize the structured logger."""
         self.name = name
         self._setup_structlog()
@@ -89,19 +89,19 @@ class StructuredLogger:
             log_message = f"{message} | Context: {context}"
             getattr(logger, level)(log_message)
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs: str) -> None:
         """Log info message with context."""
         self._log_with_context("info", message, **kwargs)
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs: str) -> None:
         """Log warning message with context."""
         self._log_with_context("warning", message, **kwargs)
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, **kwargs: str) -> None:
         """Log error message with context."""
         self._log_with_context("error", message, **kwargs)
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs: str) -> None:
         """Log debug message with context."""
         self._log_with_context("debug", message, **kwargs)
 
@@ -109,7 +109,7 @@ class StructuredLogger:
 class LLMRequestLogger:
     """Specialized logger for LLM request/response tracking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the LLM request logger."""
         self.structured_logger = StructuredLogger("llm_requests")
 
@@ -221,7 +221,7 @@ class LLMRequestLogger:
 class PerformanceLogger:
     """Specialized logger for performance metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance logger."""
         self.structured_logger = StructuredLogger("llm_performance")
 
@@ -265,7 +265,7 @@ class PerformanceLogger:
 class ErrorLogger:
     """Specialized logger for error tracking and context."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the error logger."""
         self.structured_logger = StructuredLogger("llm_errors")
 
@@ -333,7 +333,7 @@ def set_request_context(
         user_id_var.set(user_id)
 
 
-def clear_request_context():
+def clear_request_context() -> None:
     """Clear all context variables."""
     request_id_var.set(None)
     session_id_var.set(None)

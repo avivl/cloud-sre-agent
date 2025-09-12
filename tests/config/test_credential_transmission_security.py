@@ -18,7 +18,7 @@ from gemini_sre_agent.config.source_control_credentials import CredentialConfig
 class TestCredentialTransmissionSecurity:
     """Test credential transmission security mechanisms."""
 
-    def test_https_validation(self):
+    def test_https_validation(self) -> None:
         """Test that HTTPS is enforced for credential transmission."""
         # Test that HTTP URLs are rejected for sensitive operations
         insecure_urls = [
@@ -33,7 +33,7 @@ class TestCredentialTransmissionSecurity:
             # In a real implementation, this should raise a security error
             # For now, we'll just verify the URL structure
 
-    def test_credential_https_enforcement(self):
+    def test_credential_https_enforcement(self) -> None:
         """Test that credentials are only transmitted over HTTPS."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -45,7 +45,7 @@ class TestCredentialTransmissionSecurity:
             # In a real implementation, this would be used with HTTPS requests only
             assert token is not None
 
-    def test_api_key_transmission_security(self):
+    def test_api_key_transmission_security(self) -> None:
         """Test secure API key transmission."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "api_key_12345"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -58,7 +58,7 @@ class TestCredentialTransmissionSecurity:
             config_repr = repr(config)
             assert "api_key_12345" not in config_repr
 
-    def test_oauth_credential_transmission(self):
+    def test_oauth_credential_transmission(self) -> None:
         """Test secure OAuth credential transmission."""
         with patch.dict(
             os.environ,
@@ -77,7 +77,7 @@ class TestCredentialTransmissionSecurity:
             assert client_id == "oauth_client_id"
             assert client_secret == "oauth_client_secret"
 
-    def test_ssh_key_transmission_security(self):
+    def test_ssh_key_transmission_security(self) -> None:
         """Test secure SSH key transmission."""
         ssh_key_content = (
             "-----BEGIN PRIVATE KEY-----\nMOCK_SSH_KEY\n-----END PRIVATE KEY-----"
@@ -100,7 +100,7 @@ class TestCredentialTransmissionSecurity:
         finally:
             os.unlink(temp_file_path)
 
-    def test_credential_encryption_in_transit(self):
+    def test_credential_encryption_in_transit(self) -> None:
         """Test that credentials are encrypted in transit."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "sensitive_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -112,7 +112,7 @@ class TestCredentialTransmissionSecurity:
             # In a real implementation, this would be used with TLS/SSL
             assert token is not None
 
-    def test_credential_rotation_during_transmission(self):
+    def test_credential_rotation_during_transmission(self) -> None:
         """Test credential rotation during active transmission."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "old_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -122,7 +122,7 @@ class TestCredentialTransmissionSecurity:
             os.environ["GITHUB_TOKEN"] = "new_token"
             assert config.get_token() == "new_token"
 
-    def test_credential_transmission_audit(self):
+    def test_credential_transmission_audit(self) -> None:
         """Test that credential transmission can be audited."""
         config = CredentialConfig(token_env="GITHUB_TOKEN")
 
@@ -134,7 +134,7 @@ class TestCredentialTransmissionSecurity:
         assert hasattr(config, "get_client_credentials")
         assert hasattr(config, "get_service_account_key")
 
-    def test_credential_transmission_error_handling(self):
+    def test_credential_transmission_error_handling(self) -> None:
         """Test secure error handling during credential transmission."""
         # Test that transmission errors don't expose sensitive information
         with pytest.raises(ValidationError) as exc_info:
@@ -146,7 +146,7 @@ class TestCredentialTransmissionSecurity:
         assert "password" not in error_message.lower()
         assert "token" not in error_message.lower()
 
-    def test_credential_transmission_timeout(self):
+    def test_credential_transmission_timeout(self) -> None:
         """Test credential transmission timeout handling."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "timeout_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -161,7 +161,7 @@ class TestCredentialTransmissionSecurity:
             assert token == "timeout_test_token"
             assert end_time - start_time < 1.0  # Should be very fast
 
-    def test_credential_transmission_retry_security(self):
+    def test_credential_transmission_retry_security(self) -> None:
         """Test secure retry mechanisms for credential transmission."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "retry_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -171,7 +171,7 @@ class TestCredentialTransmissionSecurity:
                 token = config.get_token()
                 assert token == "retry_test_token"
 
-    def test_credential_transmission_compression(self):
+    def test_credential_transmission_compression(self) -> None:
         """Test that credentials are not compressed in a way that exposes them."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "compression_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -186,7 +186,7 @@ class TestCredentialTransmissionSecurity:
             compressed = zlib.compress(token.encode())
             assert b"compression_test_token" not in compressed
 
-    def test_credential_transmission_caching_security(self):
+    def test_credential_transmission_caching_security(self) -> None:
         """Test that credential caching doesn't expose sensitive data."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "cache_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -201,7 +201,7 @@ class TestCredentialTransmissionSecurity:
             config_repr = repr(config)
             assert "cache_test_token" not in config_repr
 
-    def test_credential_transmission_protocol_validation(self):
+    def test_credential_transmission_protocol_validation(self) -> None:
         """Test that only secure protocols are used for credential transmission."""
         # Test that only HTTPS URLs are accepted
         secure_urls = [
@@ -215,7 +215,7 @@ class TestCredentialTransmissionSecurity:
             assert parsed.scheme == "https"
             # In a real implementation, this would be validated
 
-    def test_credential_transmission_header_security(self):
+    def test_credential_transmission_header_security(self) -> None:
         """Test that credential headers are properly secured."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "header_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -229,7 +229,7 @@ class TestCredentialTransmissionSecurity:
             assert "header_test_token" in header_repr  # This is expected for actual use
             assert "Bearer" in header_repr
 
-    def test_credential_transmission_ssl_validation(self):
+    def test_credential_transmission_ssl_validation(self) -> None:
         """Test SSL certificate validation for credential transmission."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "ssl_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -240,7 +240,7 @@ class TestCredentialTransmissionSecurity:
 
             # In a real implementation, this would be used with SSL verification
 
-    def test_credential_transmission_rate_limiting(self):
+    def test_credential_transmission_rate_limiting(self) -> None:
         """Test rate limiting for credential transmission."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "rate_limit_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -250,7 +250,7 @@ class TestCredentialTransmissionSecurity:
                 token = config.get_token()
                 assert token == "rate_limit_test_token"
 
-    def test_credential_transmission_compression_security(self):
+    def test_credential_transmission_compression_security(self) -> None:
         """Test that credential compression doesn't expose sensitive data."""
         with patch.dict(
             os.environ, {"GITHUB_TOKEN": "compression_security_test_token"}
@@ -267,7 +267,7 @@ class TestCredentialTransmissionSecurity:
             compressed = gzip.compress(token.encode())
             assert b"compression_security_test_token" not in compressed
 
-    def test_credential_transmission_encryption_validation(self):
+    def test_credential_transmission_encryption_validation(self) -> None:
         """Test that credential transmission uses proper encryption."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "encryption_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -278,7 +278,7 @@ class TestCredentialTransmissionSecurity:
 
             # In a real implementation, this would be used with proper encryption
 
-    def test_credential_transmission_authentication_validation(self):
+    def test_credential_transmission_authentication_validation(self) -> None:
         """Test that credential transmission uses proper authentication."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "auth_test_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")

@@ -19,7 +19,7 @@ class TestAuditTrailSecurity:
     """Test audit trail and security monitoring mechanisms."""
 
     @pytest.fixture
-    def mock_github_provider(self):
+    def mock_github_provider(self) -> None:
         """Create a mock GitHub provider for testing."""
         credentials = CredentialConfig(token_env="GITHUB_TOKEN")
         repo_config = GitHubRepositoryConfig(
@@ -32,7 +32,7 @@ class TestAuditTrailSecurity:
         provider.repo = MagicMock()
         return provider
 
-    def test_audit_log_creation(self, mock_github_provider):
+    def test_audit_log_creation(self, mock_github_provider: str) -> None:
         """Test that audit logs are properly created."""
         # Test audit log structure
         audit_log = {
@@ -50,7 +50,7 @@ class TestAuditTrailSecurity:
         assert audit_log["success"] is True
         assert audit_log["ip_address"] == "192.168.1.100"
 
-    def test_audit_log_security_validation(self, mock_github_provider):
+    def test_audit_log_security_validation(self, mock_github_provider: str) -> None:
         """Test that audit logs are properly secured."""
         # Test that sensitive data is not logged
         audit_log = {
@@ -65,7 +65,7 @@ class TestAuditTrailSecurity:
         assert "password" not in str(audit_log).lower()
         assert "token" not in str(audit_log).lower()
 
-    def test_audit_log_encryption(self, mock_github_provider):
+    def test_audit_log_encryption(self, mock_github_provider: str) -> None:
         """Test that audit logs are properly encrypted."""
         # Test that audit logs can be encrypted
         audit_log = {
@@ -80,7 +80,7 @@ class TestAuditTrailSecurity:
         assert "testuser" in log_json
         assert "sensitive_operation" in log_json
 
-    def test_audit_log_compression_security(self, mock_github_provider):
+    def test_audit_log_compression_security(self, mock_github_provider: str) -> None:
         """Test that audit logs don't expose sensitive data through compression."""
         # Test that audit logs are not exposed in compressed form
         audit_log = "sensitive_audit_log_data"
@@ -90,7 +90,7 @@ class TestAuditTrailSecurity:
         compressed = zlib.compress(audit_log.encode())
         assert b"sensitive_audit_log_data" not in compressed
 
-    def test_audit_log_retention_policy(self, mock_github_provider):
+    def test_audit_log_retention_policy(self, mock_github_provider: str) -> None:
         """Test that audit logs follow proper retention policies."""
         # Test audit log retention policy
         retention_policy = {
@@ -103,7 +103,7 @@ class TestAuditTrailSecurity:
         assert retention_policy["archive_after_days"] == 30
         assert retention_policy["delete_after_days"] == 90
 
-    def test_audit_log_access_control(self, mock_github_provider):
+    def test_audit_log_access_control(self, mock_github_provider: str) -> None:
         """Test that audit logs have proper access controls."""
         # Test audit log access control
         access_control = {
@@ -118,7 +118,7 @@ class TestAuditTrailSecurity:
         assert access_control["user_access"] is False
         assert access_control["api_access"] is False
 
-    def test_audit_log_integrity_validation(self, mock_github_provider):
+    def test_audit_log_integrity_validation(self, mock_github_provider: str) -> None:
         """Test that audit logs maintain integrity."""
         # Test audit log integrity
         audit_log = {
@@ -136,7 +136,7 @@ class TestAuditTrailSecurity:
         expected_checksum = "abc123def456"
         assert audit_log["checksum"] == expected_checksum
 
-    def test_audit_log_tamper_detection(self, mock_github_provider):
+    def test_audit_log_tamper_detection(self, mock_github_provider: str) -> None:
         """Test that audit logs can detect tampering."""
         # Test audit log tamper detection
         original_log = {
@@ -155,7 +155,7 @@ class TestAuditTrailSecurity:
         assert tampered_log["checksum"] != original_log["checksum"]
         assert tampered_log["user"] != original_log["user"]
 
-    def test_audit_log_anonymization(self, mock_github_provider):
+    def test_audit_log_anonymization(self, mock_github_provider: str) -> None:
         """Test that audit logs properly anonymize sensitive data."""
         # Test audit log anonymization
         audit_log = {
@@ -175,7 +175,7 @@ class TestAuditTrailSecurity:
         anonymized_ua = "test-agent/xxx"
         assert anonymized_ua != audit_log["user_agent"]
 
-    def test_audit_log_rate_limiting(self, mock_github_provider):
+    def test_audit_log_rate_limiting(self, mock_github_provider: str) -> None:
         """Test that audit logs are properly rate limited."""
         # Test audit log rate limiting
         rate_limit = {
@@ -188,7 +188,7 @@ class TestAuditTrailSecurity:
         assert rate_limit["logs_per_hour"] == 10000
         assert rate_limit["current_usage"] == 0
 
-    def test_audit_log_security_headers(self, mock_github_provider):
+    def test_audit_log_security_headers(self, mock_github_provider: str) -> None:
         """Test that audit logs use proper security headers."""
         # Test that security headers are properly set
         security_headers = {
@@ -206,7 +206,7 @@ class TestAuditTrailSecurity:
             == "max-age=31536000; includeSubDomains"
         )
 
-    def test_audit_log_csrf_protection(self, mock_github_provider):
+    def test_audit_log_csrf_protection(self, mock_github_provider: str) -> None:
         """Test that audit logs are protected against CSRF attacks."""
         # Test that CSRF protection is in place
         csrf_token = "csrf_audit_protection_token_12345"
@@ -218,7 +218,7 @@ class TestAuditTrailSecurity:
         # Test that CSRF token is properly validated
         assert csrf_token == "csrf_audit_protection_token_12345"
 
-    def test_audit_log_security_monitoring(self, mock_github_provider):
+    def test_audit_log_security_monitoring(self, mock_github_provider: str) -> None:
         """Test that audit logs are properly monitored for security."""
         # Test security monitoring
         security_monitoring = {
@@ -233,7 +233,7 @@ class TestAuditTrailSecurity:
         assert security_monitoring["security_alerts"] == 0
         assert security_monitoring["monitoring_enabled"] is True
 
-    def test_audit_log_compliance_validation(self, mock_github_provider):
+    def test_audit_log_compliance_validation(self, mock_github_provider: str) -> None:
         """Test that audit logs meet compliance requirements."""
         # Test compliance validation
         compliance = {

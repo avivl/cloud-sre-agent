@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class GCPPubSubAdapter(LogIngestionInterface):
     """Adapter for Google Cloud Pub/Sub log consumption."""
 
-    def __init__(self, config: GCPPubSubConfig):
+    def __init__(self, config: GCPPubSubConfig) -> None:
         self.config = config
         self.project_id = config.project_id
         self.subscription_id = config.subscription_id

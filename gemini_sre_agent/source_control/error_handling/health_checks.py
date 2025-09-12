@@ -17,7 +17,7 @@ from .resilient_operations import ResilientOperationManager
 class HealthCheckManager:
     """Manages health checks for the error handling system."""
 
-    def __init__(self, resilient_manager: ResilientOperationManager):
+    def __init__(self, resilient_manager: ResilientOperationManager) -> None:
         self.resilient_manager = resilient_manager
         self.logger = logging.getLogger("HealthCheckManager")
 

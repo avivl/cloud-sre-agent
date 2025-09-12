@@ -29,7 +29,7 @@ class TestResponseModel(BaseModel):
 
 
 @pytest.fixture
-def mock_llm_config():
+def mock_llm_config() -> None:
     """Create a mock LLM configuration for testing."""
     provider_config = LLMProviderConfig(
         provider="openai",
@@ -52,7 +52,7 @@ def mock_llm_config():
 
 
 @pytest.fixture
-def mock_llm_service(mock_llm_config):
+def mock_llm_service(mock_llm_config: str) -> None:
     """Create a mock LLM service for testing."""
     with patch("gemini_sre_agent.llm.service.instructor") as mock_instructor, patch(
         "gemini_sre_agent.llm.service.litellm"
@@ -69,7 +69,7 @@ def mock_llm_service(mock_llm_config):
 class TestLLMService:
     """Test cases for the LLMService class."""
 
-    def test_initialization(self, mock_llm_config):
+    def test_initialization(self, mock_llm_config: str) -> None:
         """Test LLMService initialization."""
         with patch("gemini_sre_agent.llm.service.instructor") as mock_instructor, patch(
             "gemini_sre_agent.llm.service.litellm"
@@ -118,7 +118,7 @@ class TestLLMService:
             assert result == "test response"
             mock_completion.assert_called_once()
 
-    def test_resolve_model(self, mock_llm_service):
+    def test_resolve_model(self, mock_llm_service: str) -> None:
         """Test model resolution logic."""
         # Test with specific model
         model = mock_llm_service._resolve_model(model="gpt-4")
@@ -134,12 +134,12 @@ class TestLLMService:
         )
         assert model == "gpt-3.5-turbo"
 
-    def test_resolve_model_error(self, mock_llm_service):
+    def test_resolve_model_error(self, mock_llm_service: str) -> None:
         """Test model resolution with invalid parameters."""
         with pytest.raises(ValueError):
             mock_llm_service._resolve_model(provider="nonexistent")
 
-    def test_handle_error(self, mock_llm_service):
+    def test_handle_error(self, mock_llm_service: str) -> None:
         """Test error handling."""
         # Test rate limit error
         mock_llm_service._handle_error(Exception("Rate limit exceeded"))
@@ -176,7 +176,7 @@ class TestLLMService:
             # Assert
             assert result is False
 
-    def test_get_available_models(self, mock_llm_service):
+    def test_get_available_models(self, mock_llm_service: str) -> None:
         """Test getting available models."""
         # Test with specific provider
         models = mock_llm_service.get_available_models(provider="openai")
@@ -187,7 +187,7 @@ class TestLLMService:
         all_models = mock_llm_service.get_available_models()
         assert "openai" in all_models
 
-    def test_get_available_models_nonexistent_provider(self, mock_llm_service):
+    def test_get_available_models_nonexistent_provider(self, mock_llm_service: str) -> None:
         """Test getting models for nonexistent provider."""
         models = mock_llm_service.get_available_models(provider="nonexistent")
         assert models == {}
@@ -196,7 +196,7 @@ class TestLLMService:
 class TestFactoryFunction:
     """Test cases for the factory function."""
 
-    def test_create_llm_service(self, mock_llm_config):
+    def test_create_llm_service(self, mock_llm_config: str) -> None:
         """Test the create_llm_service factory function."""
         with patch("gemini_sre_agent.llm.service.instructor") as mock_instructor, patch(
             "gemini_sre_agent.llm.service.litellm"
@@ -214,7 +214,7 @@ class TestFactoryFunction:
 class TestImportErrors:
     """Test cases for import error handling."""
 
-    def test_missing_dependencies(self):
+    def test_missing_dependencies(self) -> None:
         """Test behavior when required dependencies are missing."""
         with patch.dict(
             "sys.modules", {"instructor": None, "litellm": None, "mirascope": None}

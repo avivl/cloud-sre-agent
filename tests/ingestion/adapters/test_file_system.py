@@ -22,13 +22,13 @@ class TestFileSystemAdapter:
     """Test cases for FileSystemAdapter."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def config(self, temp_dir):
+    def config(self, temp_dir: str) -> None:
         """Create a test configuration."""
         return FileSystemConfig(
             name="test_file_system",
@@ -42,11 +42,11 @@ class TestFileSystemAdapter:
         )
 
     @pytest.fixture
-    def adapter(self, config):
+    def adapter(self, config: str) -> None:
         """Create a test adapter instance."""
         return FileSystemAdapter(config)
 
-    def test_init(self, adapter, config):
+    def test_init(self, adapter: str, config: str) -> None:
         """Test adapter initialization."""
         assert adapter.config == config
         assert adapter.file_path == config.file_path
@@ -195,7 +195,7 @@ class TestFileSystemAdapter:
         assert "watched_files_count" in metrics
         assert "resilience_stats" in metrics
 
-    def test_get_config(self, adapter, config):
+    def test_get_config(self, adapter: str, config: str) -> None:
         """Test getting configuration."""
         returned_config = adapter.get_config()
         assert returned_config == config

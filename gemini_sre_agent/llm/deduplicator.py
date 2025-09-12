@@ -27,7 +27,7 @@ class CachedResponse:
 class RequestDeduplicator:
     """Prevent duplicate requests to reduce costs and improve performance."""
 
-    def __init__(self, config: DeduplicationConfig):
+    def __init__(self, config: DeduplicationConfig) -> None:
         self.config = config
         self.cache: Dict[str, CachedResponse] = {}
         self._lock = asyncio.Lock()

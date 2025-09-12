@@ -10,7 +10,7 @@ from gemini_sre_agent.resilience.resilience_manager import ResilienceManager
 
 
 @pytest.fixture
-def resilience_manager():
+def resilience_manager() -> None:
     """Create a ResilienceManager instance."""
     return ResilienceManager(
         providers=["gemini", "openai", "anthropic"],
@@ -26,7 +26,7 @@ def resilience_manager():
 
 
 @pytest.fixture
-def mock_provider_func():
+def mock_provider_func() -> None:
     """Create a mock provider function."""
     return AsyncMock()
 
@@ -34,7 +34,7 @@ def mock_provider_func():
 class TestResilienceManager:
     """Test cases for ResilienceManager."""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test ResilienceManager initialization."""
         manager = ResilienceManager()
         assert manager.providers == []
@@ -46,7 +46,7 @@ class TestResilienceManager:
         assert manager.circuit_breaker_timeout == 60.0
         assert manager.fallback_timeout == 30.0
 
-    def test_initialization_with_params(self, resilience_manager):
+    def test_initialization_with_params(self, resilience_manager: str) -> None:
         """Test ResilienceManager initialization with parameters."""
         assert resilience_manager.providers == ["gemini", "openai", "anthropic"]
         assert resilience_manager.max_retries == 3
@@ -131,7 +131,7 @@ class TestResilienceManager:
             return "fallback_success"
 
         # Mock the function to return different functions based on provider
-        def get_provider_func(provider):
+        def get_provider_func(provider: str) -> None:
             """
             Get Provider Func.
 
@@ -210,14 +210,14 @@ class TestResilienceManager:
         assert result == "success"
         assert provider == "gemini"
 
-    def test_get_circuit_breaker(self, resilience_manager):
+    def test_get_circuit_breaker(self, resilience_manager: str) -> None:
         """Test getting circuit breaker for a provider."""
         breaker = resilience_manager.get_circuit_breaker("gemini")
         assert breaker.name == "gemini"
         assert breaker.failure_threshold == 2
         assert breaker.recovery_timeout == 1.0
 
-    def test_reset_circuit_breaker(self, resilience_manager):
+    def test_reset_circuit_breaker(self, resilience_manager: str) -> None:
         """Test resetting circuit breaker."""
         breaker = resilience_manager.get_circuit_breaker("gemini")
 
@@ -229,27 +229,27 @@ class TestResilienceManager:
         assert result is True
         assert breaker._failure_count == 0
 
-    def test_reset_circuit_breaker_nonexistent(self, resilience_manager):
+    def test_reset_circuit_breaker_nonexistent(self, resilience_manager: str) -> None:
         """Test resetting non-existent circuit breaker."""
         result = resilience_manager.reset_circuit_breaker("nonexistent")
         assert result is False
 
-    def test_mark_provider_healthy(self, resilience_manager):
+    def test_mark_provider_healthy(self, resilience_manager: str) -> None:
         """Test marking provider as healthy."""
         resilience_manager.mark_provider_healthy("gemini")
         assert resilience_manager.get_provider_health("gemini") is True
 
-    def test_mark_provider_unhealthy(self, resilience_manager):
+    def test_mark_provider_unhealthy(self, resilience_manager: str) -> None:
         """Test marking provider as unhealthy."""
         resilience_manager.mark_provider_unhealthy("gemini")
         assert resilience_manager.get_provider_health("gemini") is False
 
-    def test_get_provider_health(self, resilience_manager):
+    def test_get_provider_health(self, resilience_manager: str) -> None:
         """Test getting provider health status."""
         health = resilience_manager.get_provider_health("gemini")
         assert isinstance(health, bool)
 
-    def test_get_comprehensive_stats(self, resilience_manager):
+    def test_get_comprehensive_stats(self, resilience_manager: str) -> None:
         """Test getting comprehensive statistics."""
         stats = resilience_manager.get_comprehensive_stats()
 
@@ -263,7 +263,7 @@ class TestResilienceManager:
         assert stats["resilience_manager"]["total_successes"] == 0
         assert stats["resilience_manager"]["total_failures"] == 0
 
-    def test_get_provider_stats(self, resilience_manager):
+    def test_get_provider_stats(self, resilience_manager: str) -> None:
         """Test getting provider-specific statistics."""
         stats = resilience_manager.get_provider_stats("gemini")
 
@@ -272,7 +272,7 @@ class TestResilienceManager:
         assert "circuit_breaker" in stats
         assert "fallback" in stats
 
-    def test_configure_provider(self, resilience_manager):
+    def test_configure_provider(self, resilience_manager: str) -> None:
         """Test configuring provider-specific settings."""
         resilience_manager.configure_provider(
             "gemini",
@@ -285,7 +285,7 @@ class TestResilienceManager:
         assert breaker.failure_threshold == 3
         assert breaker.recovery_timeout == 2.0
 
-    def test_add_provider(self, resilience_manager):
+    def test_add_provider(self, resilience_manager: str) -> None:
         """Test adding a provider."""
         initial_count = len(resilience_manager.providers)
 
@@ -294,7 +294,7 @@ class TestResilienceManager:
         assert len(resilience_manager.providers) == initial_count + 1
         assert "new_provider" in resilience_manager.providers
 
-    def test_remove_provider(self, resilience_manager):
+    def test_remove_provider(self, resilience_manager: str) -> None:
         """Test removing a provider."""
         initial_count = len(resilience_manager.providers)
 
@@ -304,12 +304,12 @@ class TestResilienceManager:
         assert len(resilience_manager.providers) == initial_count - 1
         assert "gemini" not in resilience_manager.providers
 
-    def test_remove_provider_nonexistent(self, resilience_manager):
+    def test_remove_provider_nonexistent(self, resilience_manager: str) -> None:
         """Test removing a non-existent provider."""
         result = resilience_manager.remove_provider("nonexistent")
         assert result is True  # Should return True even if not found
 
-    def test_health_check(self, resilience_manager):
+    def test_health_check(self, resilience_manager: str) -> None:
         """Test health check functionality."""
         health = resilience_manager.health_check()
 
@@ -361,7 +361,7 @@ class TestResilienceManager:
         # Should have attempted retries
         assert mock_provider_func.call_count > 1
 
-    def test_reset_all_circuit_breakers(self, resilience_manager):
+    def test_reset_all_circuit_breakers(self, resilience_manager: str) -> None:
         """Test resetting all circuit breakers."""
         # Create some circuit breakers with failures
         breaker1 = resilience_manager.get_circuit_breaker("gemini")
@@ -379,7 +379,7 @@ class TestResilienceManager:
     async def test_sync_function_execution(self, resilience_manager):
         """Test execution with synchronous functions."""
 
-        def sync_func():
+        def sync_func() -> None:
             """
             Sync Func.
 
@@ -399,7 +399,7 @@ class TestResilienceManager:
         # Clear circuit breaker state to ensure clean test
         resilience_manager.clear_all_circuit_breakers()
 
-        def sync_func():
+        def sync_func() -> None:
             """
             Sync Func.
 

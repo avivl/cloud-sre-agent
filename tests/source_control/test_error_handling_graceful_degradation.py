@@ -22,16 +22,16 @@ class TestGracefulDegradationManager:
     """Test cases for GracefulDegradationManager."""
 
     @pytest.fixture
-    def mock_resilient_manager(self):
+    def mock_resilient_manager(self) -> None:
         """Create a mock ResilientOperationManager."""
         return MagicMock(spec=ResilientOperationManager)
 
     @pytest.fixture
-    def graceful_degradation_manager(self, mock_resilient_manager):
+    def graceful_degradation_manager(self, mock_resilient_manager: str) -> None:
         """Create a GracefulDegradationManager instance for testing."""
         return GracefulDegradationManager(mock_resilient_manager)
 
-    def test_graceful_degradation_manager_initialization(self, mock_resilient_manager):
+    def test_graceful_degradation_manager_initialization(self, mock_resilient_manager: str) -> None:
         """Test GracefulDegradationManager initialization."""
         manager = GracefulDegradationManager(mock_resilient_manager)
 
@@ -100,7 +100,7 @@ class TestGracefulDegradationManager:
                 "test_operation", mock_func, "arg1", "arg2"
             )
 
-    def test_classify_error_type_network_error(self, graceful_degradation_manager):
+    def test_classify_error_type_network_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for network errors."""
         error = Exception("Network connection failed")
         error_type = graceful_degradation_manager._classify_error_type(error)
@@ -114,7 +114,7 @@ class TestGracefulDegradationManager:
         error_type = graceful_degradation_manager._classify_error_type(error)
         assert error_type == ErrorType.NETWORK_ERROR
 
-    def test_classify_error_type_timeout_error(self, graceful_degradation_manager):
+    def test_classify_error_type_timeout_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for timeout errors."""
         # Note: The current implementation classifies any error with "timeout" as NETWORK_ERROR
         # This test verifies that behavior. In a real implementation, this logic should be fixed.
@@ -124,7 +124,7 @@ class TestGracefulDegradationManager:
             error_type == ErrorType.NETWORK_ERROR
         )  # Current behavior due to logic bug
 
-    def test_classify_error_type_rate_limit_error(self, graceful_degradation_manager):
+    def test_classify_error_type_rate_limit_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for rate limit errors."""
         error = Exception("Rate limit exceeded")
         error_type = graceful_degradation_manager._classify_error_type(error)
@@ -134,7 +134,7 @@ class TestGracefulDegradationManager:
         error_type = graceful_degradation_manager._classify_error_type(error)
         assert error_type == ErrorType.RATE_LIMIT_ERROR
 
-    def test_classify_error_type_auth_error(self, graceful_degradation_manager):
+    def test_classify_error_type_auth_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for authentication errors."""
         error = Exception("Authentication failed")
         error_type = graceful_degradation_manager._classify_error_type(error)
@@ -148,7 +148,7 @@ class TestGracefulDegradationManager:
         error_type = graceful_degradation_manager._classify_error_type(error)
         assert error_type == ErrorType.AUTHENTICATION_ERROR
 
-    def test_classify_error_type_permission_error(self, graceful_degradation_manager):
+    def test_classify_error_type_permission_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for permission errors."""
         error = Exception("Permission denied")
         error_type = graceful_degradation_manager._classify_error_type(error)
@@ -170,7 +170,7 @@ class TestGracefulDegradationManager:
         error_type = graceful_degradation_manager._classify_error_type(error)
         assert error_type == ErrorType.FILE_NOT_FOUND_ERROR
 
-    def test_classify_error_type_disk_space_error(self, graceful_degradation_manager):
+    def test_classify_error_type_disk_space_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for disk space errors."""
         error = Exception("No space left on device")
         error_type = graceful_degradation_manager._classify_error_type(error)
@@ -204,7 +204,7 @@ class TestGracefulDegradationManager:
         error_type = graceful_degradation_manager._classify_error_type(error)
         assert error_type == ErrorType.API_SERVICE_UNAVAILABLE_ERROR
 
-    def test_classify_error_type_maintenance_error(self, graceful_degradation_manager):
+    def test_classify_error_type_maintenance_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for maintenance errors."""
         error = Exception("Service under maintenance")
         error_type = graceful_degradation_manager._classify_error_type(error)
@@ -214,7 +214,7 @@ class TestGracefulDegradationManager:
         error_type = graceful_degradation_manager._classify_error_type(error)
         assert error_type == ErrorType.API_MAINTENANCE_ERROR
 
-    def test_classify_error_type_unknown_error(self, graceful_degradation_manager):
+    def test_classify_error_type_unknown_error(self, graceful_degradation_manager: str) -> None:
         """Test error classification for unknown errors."""
         error = Exception("Some random error")
         error_type = graceful_degradation_manager._classify_error_type(error)
@@ -569,11 +569,11 @@ class TestCreateGracefulDegradationManager:
     """Test cases for create_graceful_degradation_manager function."""
 
     @pytest.fixture
-    def mock_resilient_manager(self):
+    def mock_resilient_manager(self) -> None:
         """Create a mock ResilientOperationManager."""
         return MagicMock(spec=ResilientOperationManager)
 
-    def test_create_graceful_degradation_manager(self, mock_resilient_manager):
+    def test_create_graceful_degradation_manager(self, mock_resilient_manager: str) -> None:
         """Test creating a graceful degradation manager."""
         manager = create_graceful_degradation_manager(mock_resilient_manager)
 

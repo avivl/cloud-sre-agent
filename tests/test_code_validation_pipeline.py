@@ -24,15 +24,15 @@ class TestCodeValidationPipeline:
     """Test cases for CodeValidationPipeline class."""
 
     @pytest.fixture
-    def validation_pipeline(self):
+    def validation_pipeline(self) -> None:
         """Create a CodeValidationPipeline instance."""
         return CodeValidationPipeline()
 
     @pytest.fixture
-    def valid_python_code(self):
+    def valid_python_code(self) -> None:
         """Valid Python code for testing."""
         return """
-def process_data(data):
+def process_data(data: str) -> None:
     try:
         result = []
         for item in data:
@@ -45,7 +45,7 @@ def process_data(data):
 """
 
     @pytest.fixture
-    def invalid_python_code(self):
+    def invalid_python_code(self) -> None:
         """Invalid Python code for testing."""
         return """
 def process_data(data:
@@ -56,40 +56,40 @@ def process_data(data:
 """
 
     @pytest.fixture
-    def code_with_security_issues(self):
+    def code_with_security_issues(self) -> None:
         """Code with security vulnerabilities."""
         return """
-def execute_query(user_input):
+def execute_query(user_input: str) -> None:
     query = "SELECT * FROM users WHERE name = '" + user_input + "'"
     cursor.execute(query)
     return cursor.fetchall()
 
-def save_file(filename):
+def save_file(filename: str) -> None:
     with open(filename, 'w') as f:
         f.write("data")
 """
 
     @pytest.fixture
-    def code_with_performance_issues(self):
+    def code_with_performance_issues(self) -> None:
         """Code with performance anti-patterns."""
         return """
-def process_large_dataset(data):
+def process_large_dataset(data: str) -> None:
     result = []
     for i in range(len(data)):
         for j in range(len(data)):
             result.append(data[i] + data[j])
     return result
 
-def infinite_loop():
+def infinite_loop() -> None:
     while True:
         process_data()
 """
 
     @pytest.fixture
-    def code_with_todo_comments(self):
+    def code_with_todo_comments(self) -> None:
         """Code with TODO/FIXME comments."""
         return """
-def incomplete_function():
+def incomplete_function() -> None:
     # TODO: Implement proper error handling
     result = process_data()
     # FIXME: Add validation
@@ -263,7 +263,7 @@ def incomplete_function():
     async def test_api_specific_validation(self, validation_pipeline):
         """Test API-specific validation patterns."""
         api_code = """
-def api_endpoint(request):
+def api_endpoint(request: str) -> None:
     data = request.json
     return process_data(data)
 """
@@ -286,7 +286,7 @@ def api_endpoint(request):
     async def test_database_specific_validation(self, validation_pipeline):
         """Test database-specific validation patterns."""
         db_code = """
-def get_user_data(user_id):
+def get_user_data(user_id: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
@@ -312,7 +312,7 @@ def get_user_data(user_id):
     async def test_security_specific_validation(self, validation_pipeline):
         """Test security-specific validation patterns."""
         security_code = """
-def process_user_input(user_input):
+def process_user_input(user_input: str) -> None:
     result = user_input
     return result
 """
@@ -342,7 +342,7 @@ def process_user_input(user_input):
         assert result.overall_score == 0.0
         assert len(result.issues) > 0
 
-    def test_get_line_number(self, validation_pipeline):
+    def test_get_line_number(self, validation_pipeline: str) -> None:
         """Test line number calculation."""
         code = "line1\nline2\nline3"
 
@@ -352,7 +352,7 @@ def process_user_input(user_input):
         assert validation_pipeline._get_line_number(code, 6) == 2
         assert validation_pipeline._get_line_number(code, 12) == 3
 
-    def test_create_empty_code_result(self, validation_pipeline):
+    def test_create_empty_code_result(self, validation_pipeline: str) -> None:
         """Test creation of empty code validation result."""
         result = validation_pipeline._create_empty_code_result()
 
@@ -361,7 +361,7 @@ def process_user_input(user_input):
         assert len(result.issues) == 1
         assert "empty" in result.issues[0].message.lower()
 
-    def test_create_error_result(self, validation_pipeline):
+    def test_create_error_result(self, validation_pipeline: str) -> None:
         """Test creation of error validation result."""
         error_msg = "Test error"
         result = validation_pipeline._create_error_result(error_msg)
@@ -375,7 +375,7 @@ def process_user_input(user_input):
 class TestValidationModels:
     """Test cases for validation models."""
 
-    def test_validation_result_get_issues_by_level(self):
+    def test_validation_result_get_issues_by_level(self) -> None:
         """Test filtering issues by level."""
         issues = [
             ValidationIssue(
@@ -417,7 +417,7 @@ class TestValidationModels:
         assert len(critical_issues) == 1
         assert critical_issues[0].issue_id == "2"
 
-    def test_validation_result_get_issues_by_type(self):
+    def test_validation_result_get_issues_by_type(self) -> None:
         """Test filtering issues by type."""
         issues = [
             ValidationIssue(
@@ -452,7 +452,7 @@ class TestValidationModels:
         assert len(security_issues) == 1
         assert security_issues[0].issue_id == "2"
 
-    def test_validation_result_has_critical_issues(self):
+    def test_validation_result_has_critical_issues(self) -> None:
         """Test critical issues detection."""
         issues = [
             ValidationIssue(
@@ -481,7 +481,7 @@ class TestValidationModels:
 
         assert result.has_critical_issues() is True
 
-    def test_validation_result_get_validation_summary(self):
+    def test_validation_result_get_validation_summary(self) -> None:
         """Test validation summary generation."""
         issues = [
             ValidationIssue(

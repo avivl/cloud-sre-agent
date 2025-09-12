@@ -124,7 +124,7 @@ class SecurityCodeGenerator(BaseCodeGenerator):
         'tag': base64.b64encode(tag).decode()
     }
 
-def decrypt_sensitive_data(encrypted_data, key):
+def decrypt_sensitive_data(encrypted_data: str, key: str) -> None:
     # Decode the encrypted components
     iv = base64.b64decode(encrypted_data['iv'])
     ciphertext = base64.b64decode(encrypted_data['ciphertext'])
@@ -247,54 +247,54 @@ from unittest.mock import Mock, patch
 from your_module import {code_fix.fix_description.split()[0]}
 
 class TestSecurityFunctionality:
-    def test_input_validation_success(self):
+    def test_input_validation_success(self) -> None:
         '''Test successful input validation'''
         # Test implementation here
         pass
     
-    def test_input_validation_malicious_input(self):
+    def test_input_validation_malicious_input(self) -> None:
         '''Test input validation with malicious input'''
         # Test implementation here
         pass
     
-    def test_authentication_success(self):
+    def test_authentication_success(self) -> None:
         '''Test successful authentication'''
         # Test implementation here
         pass
     
-    def test_authentication_failure(self):
+    def test_authentication_failure(self) -> None:
         '''Test authentication failure handling'''
         # Test implementation here
         pass
     
-    def test_authorization_check(self):
+    def test_authorization_check(self) -> None:
         '''Test authorization checks'''
         # Test implementation here
         pass
     
-    def test_encryption_decryption(self):
+    def test_encryption_decryption(self) -> None:
         '''Test encryption and decryption'''
         # Test implementation here
         pass
 
 # Security-specific tests
 class TestSecurityVulnerabilities:
-    def test_sql_injection_prevention(self):
+    def test_sql_injection_prevention(self) -> None:
         '''Test SQL injection prevention'''
         # Test implementation here
         pass
     
-    def test_xss_prevention(self):
+    def test_xss_prevention(self) -> None:
         '''Test XSS prevention'''
         # Test implementation here
         pass
     
-    def test_csrf_protection(self):
+    def test_csrf_protection(self) -> None:
         '''Test CSRF protection'''
         # Test implementation here
         pass
     
-    def test_timing_attack_prevention(self):
+    def test_timing_attack_prevention(self) -> None:
         '''Test timing attack prevention'''
         # Test implementation here
         pass"""

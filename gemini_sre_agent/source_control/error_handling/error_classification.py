@@ -53,7 +53,7 @@ class ErrorClassifierConfig:
 class ErrorClassifier:
     """Refactored error classifier using modular components."""
 
-    def __init__(self, config: Optional[ErrorClassifierConfig] = None):
+    def __init__(self, config: Optional[ErrorClassifierConfig] = None) -> None:
         """Initialize the error classifier with modular components."""
         self.config = config or ErrorClassifierConfig()
         self.logger = logging.getLogger("ErrorClassifier")

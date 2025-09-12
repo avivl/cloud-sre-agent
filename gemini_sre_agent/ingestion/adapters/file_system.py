@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class FileSystemAdapter(LogIngestionInterface):
     """Adapter for file system log consumption."""
 
-    def __init__(self, config: FileSystemConfig):
+    def __init__(self, config: FileSystemConfig) -> None:
         self.config = config
         self.file_path = config.file_path
         self.file_pattern = config.file_pattern

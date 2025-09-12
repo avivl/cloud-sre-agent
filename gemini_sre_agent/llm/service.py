@@ -35,7 +35,7 @@ class LLMService(Generic[T]):
     and advanced prompt management capabilities.
     """
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize the LLM service with configuration."""
         self.config = config
         self.logger = logging.getLogger(__name__)

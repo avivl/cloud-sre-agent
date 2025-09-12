@@ -21,14 +21,14 @@ from gemini_sre_agent.llm.model_registry import (
 class TestModelRegistry:
     """Test the ModelRegistry class."""
 
-    def test_model_registry_initialization(self):
+    def test_model_registry_initialization(self) -> None:
         """Test ModelRegistry initialization with default config."""
         registry = ModelRegistry()
         assert registry.config is not None
         assert len(registry._models) == 0
         assert len(registry._semantic_mappings) == 0
 
-    def test_model_registry_with_config(self):
+    def test_model_registry_with_config(self) -> None:
         """Test ModelRegistry initialization with custom config."""
         config = ModelRegistryConfig(
             config_file="test.yaml", auto_reload=True, cache_ttl=600
@@ -38,7 +38,7 @@ class TestModelRegistry:
         assert registry.config.auto_reload is True
         assert registry.config.cache_ttl == 600
 
-    def test_register_model(self):
+    def test_register_model(self) -> None:
         """Test registering a model."""
         registry = ModelRegistry()
         model_info = ModelInfo(
@@ -55,7 +55,7 @@ class TestModelRegistry:
         assert registry.is_model_registered("test-model")
         assert registry.get_model("test-model") == model_info
 
-    def test_unregister_model(self):
+    def test_unregister_model(self) -> None:
         """Test unregistering a model."""
         registry = ModelRegistry()
         model_info = ModelInfo(
@@ -75,7 +75,7 @@ class TestModelRegistry:
         result = registry.unregister_model("non-existent")
         assert result is False
 
-    def test_get_models_by_semantic_type(self):
+    def test_get_models_by_semantic_type(self) -> None:
         """Test getting models by semantic type."""
         registry = ModelRegistry()
 
@@ -102,7 +102,7 @@ class TestModelRegistry:
         assert len(smart_models) == 1
         assert smart_models[0].name == "smart-model"
 
-    def test_get_models_by_provider(self):
+    def test_get_models_by_provider(self) -> None:
         """Test getting models by provider."""
         registry = ModelRegistry()
 
@@ -128,7 +128,7 @@ class TestModelRegistry:
         assert len(claude_models) == 1
         assert claude_models[0].name == "claude-model"
 
-    def test_get_models_by_capability(self):
+    def test_get_models_by_capability(self) -> None:
         """Test getting models by capability."""
         registry = ModelRegistry()
 
@@ -165,7 +165,7 @@ class TestModelRegistry:
         model_names = {m.name for m in tools_models}
         assert model_names == {"tools-model", "both-model"}
 
-    def test_get_fallback_chain(self):
+    def test_get_fallback_chain(self) -> None:
         """Test getting fallback chain for a model."""
         registry = ModelRegistry()
 
@@ -192,7 +192,7 @@ class TestModelRegistry:
         assert chain[1].name == "fallback1"
         assert chain[2].name == "fallback2"
 
-    def test_query_models(self):
+    def test_query_models(self) -> None:
         """Test querying models with multiple criteria."""
         registry = ModelRegistry()
 
@@ -271,14 +271,14 @@ class TestModelRegistry:
         model_names = {m.name for m in combined}
         assert model_names == {"fast-openai", "fast-gemini"}
 
-    def test_load_from_config_file_not_found(self):
+    def test_load_from_config_file_not_found(self) -> None:
         """Test loading from non-existent config file."""
         registry = ModelRegistry()
         # Should not raise exception, just log warning
         registry.load_from_config("non-existent.yaml")
         assert len(registry._models) == 0
 
-    def test_load_from_config_yaml(self):
+    def test_load_from_config_yaml(self) -> None:
         """Test loading from YAML config file."""
         config_data = {
             "models": {
@@ -311,7 +311,7 @@ class TestModelRegistry:
         finally:
             Path(config_path).unlink()
 
-    def test_should_reload(self):
+    def test_should_reload(self) -> None:
         """Test cache reload logic."""
         config = ModelRegistryConfig(
             auto_reload=True, cache_ttl=1, config_file="test.yaml"
@@ -330,7 +330,7 @@ class TestModelRegistry:
         config.config_file = None
         assert registry.should_reload() is False
 
-    def test_get_model_count(self):
+    def test_get_model_count(self) -> None:
         """Test getting model count."""
         registry = ModelRegistry()
         assert registry.get_model_count() == 0
@@ -343,7 +343,7 @@ class TestModelRegistry:
         registry.register_model(model_info)
         assert registry.get_model_count() == 1
 
-    def test_get_all_models(self):
+    def test_get_all_models(self) -> None:
         """Test getting all models."""
         registry = ModelRegistry()
         assert len(registry.get_all_models()) == 0

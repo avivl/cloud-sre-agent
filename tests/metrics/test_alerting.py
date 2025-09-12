@@ -7,14 +7,14 @@ from gemini_sre_agent.metrics.metrics_manager import MetricsManager
 
 
 @pytest.fixture
-def mock_metrics_manager():
+def mock_metrics_manager() -> None:
     """Fixture for a mocked MetricsManager."""
     mock_manager = MagicMock(spec=MetricsManager)
     mock_manager.provider_metrics = {}
     return mock_manager
 
 
-def test_alert_manager_initialization():
+def test_alert_manager_initialization() -> None:
     """
     Test Alert Manager Initialization.
 
@@ -29,7 +29,7 @@ def test_alert_manager_initialization():
     assert manager.alert_history == []
 
 
-def test_check_metrics_with_alerts(mock_metrics_manager):
+def test_check_metrics_with_alerts(mock_metrics_manager: str) -> None:
     """
     Test Check Metrics With Alerts.
 
@@ -54,7 +54,7 @@ def test_check_metrics_with_alerts(mock_metrics_manager):
     assert alert.threshold == 0.8
 
 
-def test_check_metrics_no_alerts(mock_metrics_manager):
+def test_check_metrics_no_alerts(mock_metrics_manager: str) -> None:
     """
     Test Check Metrics No Alerts.
 

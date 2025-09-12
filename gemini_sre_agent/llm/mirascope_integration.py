@@ -66,7 +66,7 @@ class PromptData(BaseModel):
 class PromptManager:
     """Advanced prompt manager with Mirascope integration."""
 
-    def __init__(self, storage_path: str = "./prompts"):
+    def __init__(self, storage_path: str = "./prompts") -> None:
         """Initialize the prompt manager."""
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
@@ -304,7 +304,7 @@ class PromptManager:
 class PromptEnvironment:
     """Environment-specific prompt deployment."""
 
-    def __init__(self, name: str, prompt_manager: PromptManager):
+    def __init__(self, name: str, prompt_manager: PromptManager) -> None:
         self.name = name
         self.prompt_manager = prompt_manager
         self.environment_versions: Dict[str, str] = {}
@@ -334,7 +334,7 @@ class PromptEnvironment:
 class PromptCollaborationManager:
     """Team collaboration features for prompt management."""
 
-    def __init__(self, prompt_manager: PromptManager):
+    def __init__(self, prompt_manager: PromptManager) -> None:
         self.prompt_manager = prompt_manager
         self.reviews: Dict[str, List[Dict[str, Any]]] = {}
 
@@ -389,7 +389,7 @@ class PromptCollaborationManager:
 class PromptOptimizer:
     """Prompt optimization capabilities."""
 
-    def __init__(self, prompt_manager: PromptManager, llm_service=None):
+    def __init__(self, prompt_manager: PromptManager, llm_service: Optional[str] = None) -> None:
         self.prompt_manager = prompt_manager
         self.llm_service = llm_service
 

@@ -468,7 +468,7 @@ class CostTracker:
     class _StatsManager:
         """Simplified stats manager for cost tracking."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.budget_violations = 0
             self.total_requests = 0
             self.successful_requests = 0

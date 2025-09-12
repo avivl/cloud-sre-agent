@@ -10,7 +10,7 @@ class PerformanceAnalytics:
     Provides performance analytics and optimization recommendations.
     """
 
-    def __init__(self, metrics_manager: MetricsManager):
+    def __init__(self, metrics_manager: MetricsManager) -> None:
         """
         Initialize the PerformanceAnalytics.
 

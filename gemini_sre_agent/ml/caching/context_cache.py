@@ -286,7 +286,7 @@ class RepositoryContextCache:
     infrequently and can be shared across multiple requests.
     """
 
-    def __init__(self, base_cache: ContextCache):
+    def __init__(self, base_cache: ContextCache) -> None:
         """
         Initialize repository context cache.
 
@@ -363,7 +363,7 @@ class IssuePatternCache:
     to speed up issue analysis.
     """
 
-    def __init__(self, base_cache: ContextCache):
+    def __init__(self, base_cache: ContextCache) -> None:
         """
         Initialize issue pattern cache.
 

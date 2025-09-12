@@ -6,7 +6,7 @@ from gemini_sre_agent.llm.capabilities.models import ModelCapabilities, ModelCap
 
 
 @pytest.fixture
-def populated_capability_database():
+def populated_capability_database() -> None:
     """Fixture for a populated CapabilityDatabase."""
     db = CapabilityDatabase()
 
@@ -49,7 +49,7 @@ def populated_capability_database():
     return db
 
 
-def test_compare_models(populated_capability_database):
+def test_compare_models(populated_capability_database: str) -> None:
     """
     Test Compare Models.
 
@@ -92,7 +92,7 @@ def test_compare_models(populated_capability_database):
     assert not model_C_results["summary"]["unique_capabilities"]
 
 
-def test_find_best_model_for_capabilities(populated_capability_database):
+def test_find_best_model_for_capabilities(populated_capability_database: str) -> None:
     """
     Test Find Best Model For Capabilities.
 

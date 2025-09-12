@@ -40,7 +40,7 @@ class RepositoryConfig(BaseConfig):
 
     @field_validator("name")
     @classmethod
-    def validate_name(cls, v):
+    def validate_name(cls: str, v: str) -> None:
         """Validate repository name format."""
         if not v or not v.strip():
             raise ValueError("Repository name cannot be empty")
@@ -55,7 +55,7 @@ class RepositoryConfig(BaseConfig):
 
     @field_validator("branch")
     @classmethod
-    def validate_branch(cls, v):
+    def validate_branch(cls: str, v: str) -> None:
         """Validate branch name format."""
         if not v or not v.strip():
             raise ValueError("Branch name cannot be empty")
@@ -70,7 +70,7 @@ class RepositoryConfig(BaseConfig):
 
     @field_validator("paths")
     @classmethod
-    def validate_paths(cls, v):
+    def validate_paths(cls: str, v: str) -> None:
         """Validate that paths are properly formatted."""
         if not v:
             raise ValueError("At least one path must be specified")
@@ -96,7 +96,7 @@ class RepositoryConfig(BaseConfig):
 class GitHubRepositoryConfig(RepositoryConfig):
     """GitHub-specific repository configuration."""
 
-    def __init__(self, **data):
+    def __init__(self, **data: str) -> None:
         if "type" not in data:
             data["type"] = "github"
         super().__init__(**data)
@@ -108,7 +108,7 @@ class GitHubRepositoryConfig(RepositoryConfig):
 
     @field_validator("url")
     @classmethod
-    def validate_github_url(cls, v):
+    def validate_github_url(cls: str, v: str) -> None:
         """Validate GitHub repository URL format."""
         if not v or not v.strip():
             raise ValueError("GitHub URL cannot be empty")
@@ -139,7 +139,7 @@ class GitHubRepositoryConfig(RepositoryConfig):
 
     @field_validator("api_base_url")
     @classmethod
-    def validate_api_base_url(cls, v):
+    def validate_api_base_url(cls: str, v: str) -> None:
         """Validate GitHub API base URL."""
         if not v or not v.strip():
             raise ValueError("API base URL cannot be empty")
@@ -217,7 +217,7 @@ class GitHubRepositoryConfig(RepositoryConfig):
 class GitLabRepositoryConfig(RepositoryConfig):
     """GitLab-specific repository configuration."""
 
-    def __init__(self, **data):
+    def __init__(self, **data: str) -> None:
         if "type" not in data:
             data["type"] = "gitlab"
         super().__init__(**data)
@@ -232,7 +232,7 @@ class GitLabRepositoryConfig(RepositoryConfig):
 
     @field_validator("url")
     @classmethod
-    def validate_gitlab_url(cls, v):
+    def validate_gitlab_url(cls: str, v: str) -> None:
         """Validate GitLab repository URL format."""
         if not v or not v.strip():
             raise ValueError("GitLab URL cannot be empty")
@@ -257,7 +257,7 @@ class GitLabRepositoryConfig(RepositoryConfig):
 
     @field_validator("api_base_url")
     @classmethod
-    def validate_api_base_url(cls, v):
+    def validate_api_base_url(cls: str, v: str) -> None:
         """Validate GitLab API base URL."""
         if not v or not v.strip():
             raise ValueError("API base URL cannot be empty")
@@ -322,7 +322,7 @@ class GitLabRepositoryConfig(RepositoryConfig):
 class LocalRepositoryConfig(RepositoryConfig):
     """Local filesystem repository configuration."""
 
-    def __init__(self, **data):
+    def __init__(self, **data: str) -> None:
         if "type" not in data:
             data["type"] = "local"
         super().__init__(**data)
@@ -344,7 +344,7 @@ class LocalRepositoryConfig(RepositoryConfig):
 
     @field_validator("path")
     @classmethod
-    def validate_local_path(cls, v):
+    def validate_local_path(cls: str, v: str) -> None:
         """Validate that local path is absolute and exists."""
         if not v or not v.strip():
             raise ValueError("Local repository path cannot be empty")

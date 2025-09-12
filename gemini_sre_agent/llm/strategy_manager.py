@@ -112,7 +112,7 @@ def get_default_strategy_manager() -> StrategyManager:
     return _default_manager
 
 
-def reset_default_strategy_manager():
+def reset_default_strategy_manager() -> None:
     """Reset the default strategy manager instance."""
     global _default_manager
     _default_manager = None

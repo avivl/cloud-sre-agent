@@ -28,7 +28,7 @@ class TestCostTracker:
         """Create a CostTracker instance with test configuration."""
         return CostTracker(budget_config)
 
-    def test_initialization(self, cost_tracker: CostTracker):
+    def test_initialization(self, cost_tracker: CostTracker) -> None:
         """Test CostTracker initialization."""
         assert cost_tracker.daily_usage == 0.0
         assert cost_tracker.monthly_usage == 0.0
@@ -37,7 +37,7 @@ class TestCostTracker:
         assert cost_tracker.max_records == 10000
         assert len(cost_tracker.usage_records) == 0
 
-    def test_cost_estimation(self, cost_tracker: CostTracker):
+    def test_cost_estimation(self, cost_tracker: CostTracker) -> None:
         """Test cost estimation for different models."""
         # Test with known model
         cost = cost_tracker.estimate_cost("gemini-1.5-flash", 1000, 500)
@@ -150,7 +150,7 @@ class TestCostTracker:
         assert stats["total_tokens_input"] == 1000
         assert stats["total_tokens_output"] == 500
 
-    def test_usage_records_size_limit(self, cost_tracker: CostTracker):
+    def test_usage_records_size_limit(self, cost_tracker: CostTracker) -> None:
         """Test that usage records are limited to max_records."""
         cost_tracker.max_records = 3
 
@@ -248,7 +248,7 @@ class TestCostTracker:
         assert cost_tracker.current_date == new_date
         assert cost_tracker.current_month == (2024, 2)
 
-    def test_get_usage_stats(self, cost_tracker: CostTracker):
+    def test_get_usage_stats(self, cost_tracker: CostTracker) -> None:
         """Test comprehensive usage statistics."""
         # Add some usage
         cost_tracker.daily_usage = 2.0
@@ -289,7 +289,7 @@ class TestCostTracker:
         assert stats["recent_24h_cost_usd"] == 1.5
         assert stats["most_used_model"] == "gemini-1.5-flash"
 
-    def test_get_cost_breakdown(self, cost_tracker: CostTracker):
+    def test_get_cost_breakdown(self, cost_tracker: CostTracker) -> None:
         """Test detailed cost breakdown analysis."""
         # Add some usage records with different models and operations
         now = datetime.now()
@@ -331,7 +331,7 @@ class TestCostTracker:
         assert operation_breakdown["pattern_classification"]["requests"] == 2
         assert operation_breakdown["analysis"]["total_cost"] == 1.0
 
-    def test_default_budget_config(self):
+    def test_default_budget_config(self) -> None:
         """Test CostTracker with default configuration."""
         tracker = CostTracker()
 
@@ -339,7 +339,7 @@ class TestCostTracker:
         assert tracker.config.monthly_budget_usd == 2000.0
         assert tracker.config.warn_threshold_percent == 80.0
 
-    def test_custom_model_costs(self):
+    def test_custom_model_costs(self) -> None:
         """Test custom model costs in configuration."""
         config = BudgetConfig()
         config.model_costs["custom-model"] = {"input": 0.001, "output": 0.002}

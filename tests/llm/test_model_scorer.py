@@ -37,20 +37,20 @@ class TestModelScorer:
         defaults.update(kwargs)
         return ModelInfo(name=name, **defaults)
 
-    def test_scorer_initialization(self):
+    def test_scorer_initialization(self) -> None:
         """Test ModelScorer initialization."""
         scorer = ModelScorer()
         assert scorer.default_weights is not None
         assert len(scorer._custom_scorers) > 0
         assert len(scorer._score_cache) == 0
 
-    def test_scorer_with_custom_weights(self):
+    def test_scorer_with_custom_weights(self) -> None:
         """Test ModelScorer with custom default weights."""
         weights = ScoringWeights(cost=0.5, performance=0.3, reliability=0.2)
         scorer = ModelScorer(default_weights=weights)
         assert scorer.default_weights == weights
 
-    def test_weights_normalization(self):
+    def test_weights_normalization(self) -> None:
         """Test weight normalization."""
         weights = ScoringWeights(cost=0.3, performance=0.6, reliability=0.1)
         normalized = weights.normalize()
@@ -61,7 +61,7 @@ class TestModelScorer:
         assert normalized.performance == 0.6
         assert normalized.reliability == 0.1
 
-    def test_weights_normalization_zero_weights(self):
+    def test_weights_normalization_zero_weights(self) -> None:
         """Test weight normalization with all zero weights."""
         weights = ScoringWeights(cost=0.0, performance=0.0, reliability=0.0)
         normalized = weights.normalize()
@@ -78,7 +78,7 @@ class TestModelScorer:
         )
         assert abs(total - 1.0) < 0.001
 
-    def test_score_model_basic(self):
+    def test_score_model_basic(self) -> None:
         """Test basic model scoring."""
         scorer = ModelScorer()
         model = self.create_test_model("test-model")
@@ -92,7 +92,7 @@ class TestModelScorer:
         assert len(score.dimension_scores) > 0
         assert score.context == context
 
-    def test_score_model_with_weights(self):
+    def test_score_model_with_weights(self) -> None:
         """Test model scoring with custom weights."""
         scorer = ModelScorer()
         model = self.create_test_model("test-model")
@@ -105,7 +105,7 @@ class TestModelScorer:
         # Cost should have high influence due to weight
         assert ScoringDimension.COST in score.dimension_scores
 
-    def test_score_model_with_context(self):
+    def test_score_model_with_context(self) -> None:
         """Test model scoring with context requirements."""
         scorer = ModelScorer()
         model = self.create_test_model(
@@ -125,7 +125,7 @@ class TestModelScorer:
         # Model should score well since it meets requirements
         assert score.overall_score > 0.0
 
-    def test_score_models_multiple(self):
+    def test_score_models_multiple(self) -> None:
         """Test scoring multiple models."""
         scorer = ModelScorer()
         models = [
@@ -142,7 +142,7 @@ class TestModelScorer:
         for i in range(len(scores) - 1):
             assert scores[i].overall_score >= scores[i + 1].overall_score
 
-    def test_rank_models(self):
+    def test_rank_models(self) -> None:
         """Test model ranking functionality."""
         scorer = ModelScorer()
         models = [
@@ -161,7 +161,7 @@ class TestModelScorer:
             for pair in ranked
         )
 
-    def test_compare_models(self):
+    def test_compare_models(self) -> None:
         """Test model comparison functionality."""
         scorer = ModelScorer()
         model1 = self.create_test_model(
@@ -184,7 +184,7 @@ class TestModelScorer:
         assert comparison["model2"]["name"] == "model2"
         assert comparison["winner"] in ["model1", "model2"]
 
-    def test_custom_scorer_registration(self):
+    def test_custom_scorer_registration(self) -> None:
         """Test custom scorer registration."""
         scorer = ModelScorer()
 
@@ -213,7 +213,7 @@ class TestModelScorer:
         # Should use custom scorer
         assert score.dimension_scores[ScoringDimension.COST] == 0.5
 
-    def test_score_cost_dimension(self):
+    def test_score_cost_dimension(self) -> None:
         """Test cost scoring dimension."""
         scorer = ModelScorer()
         context = ScoringContext()
@@ -230,7 +230,7 @@ class TestModelScorer:
         expensive_score = scorer._score_cost(expensive_model, context)
         assert expensive_score < free_score
 
-    def test_score_performance_dimension(self):
+    def test_score_performance_dimension(self) -> None:
         """Test performance scoring dimension."""
         scorer = ModelScorer()
         context = ScoringContext()
@@ -239,7 +239,7 @@ class TestModelScorer:
         score = scorer._score_performance(model, context)
         assert score == 0.8
 
-    def test_score_reliability_dimension(self):
+    def test_score_reliability_dimension(self) -> None:
         """Test reliability scoring dimension."""
         scorer = ModelScorer()
         context = ScoringContext()
@@ -248,7 +248,7 @@ class TestModelScorer:
         score = scorer._score_reliability(model, context)
         assert score == 0.9
 
-    def test_score_speed_dimension(self):
+    def test_score_speed_dimension(self) -> None:
         """Test speed scoring dimension."""
         scorer = ModelScorer()
         context = ScoringContext()
@@ -262,7 +262,7 @@ class TestModelScorer:
 
         assert fast_score > slow_score
 
-    def test_score_quality_dimension(self):
+    def test_score_quality_dimension(self) -> None:
         """Test quality scoring dimension."""
         scorer = ModelScorer()
         context = ScoringContext()
@@ -274,7 +274,7 @@ class TestModelScorer:
         expected = (0.8 + 0.9) / 2
         assert abs(score - expected) < 0.001
 
-    def test_score_availability_dimension(self):
+    def test_score_availability_dimension(self) -> None:
         """Test availability scoring dimension."""
         scorer = ModelScorer()
 
@@ -295,7 +295,7 @@ class TestModelScorer:
         assert preferred_score == 1.0
         assert non_preferred_score == 0.5
 
-    def test_score_caching(self):
+    def test_score_caching(self) -> None:
         """Test score caching functionality."""
         scorer = ModelScorer()
         model = self.create_test_model("test-model")
@@ -311,7 +311,7 @@ class TestModelScorer:
             score1.timestamp == score2.timestamp
         )  # Same timestamp indicates cache hit
 
-    def test_cache_management(self):
+    def test_cache_management(self) -> None:
         """Test cache management and cleanup."""
         scorer = ModelScorer()
         scorer._cache_ttl = 1  # Very short TTL for testing (1 second)
@@ -330,7 +330,7 @@ class TestModelScorer:
         scorer.score_model(model, context)
         assert len(scorer._score_cache) == 1  # Should have cleared old and added new
 
-    def test_clear_cache(self):
+    def test_clear_cache(self) -> None:
         """Test cache clearing."""
         scorer = ModelScorer()
         model = self.create_test_model("test-model")
@@ -344,7 +344,7 @@ class TestModelScorer:
         scorer.clear_cache()
         assert len(scorer._score_cache) == 0
 
-    def test_get_cache_stats(self):
+    def test_get_cache_stats(self) -> None:
         """Test cache statistics."""
         scorer = ModelScorer()
         model = self.create_test_model("test-model")
@@ -362,7 +362,7 @@ class TestModelScorer:
         assert stats["valid_entries"] == 1
         assert stats["expired_entries"] == 0
 
-    def test_error_handling_in_scoring(self):
+    def test_error_handling_in_scoring(self) -> None:
         """Test error handling during scoring."""
         scorer = ModelScorer()
 
@@ -393,7 +393,7 @@ class TestModelScorer:
             score.dimension_scores[ScoringDimension.COST] == 0.0
         )  # Default to 0 on error
 
-    def test_score_clamping(self):
+    def test_score_clamping(self) -> None:
         """Test that scores are clamped to [0, 1] range."""
         scorer = ModelScorer()
 

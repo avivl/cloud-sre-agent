@@ -16,7 +16,7 @@ from .loader import ConfigLoader
 class ConfigManager:
     """Central configuration manager with hot reloading."""
 
-    def __init__(self, config_dir: str = "config"):
+    def __init__(self, config_dir: str = "config") -> None:
         self.loader = ConfigLoader(config_dir)
         self._config: Optional[AppConfig] = None
         self._lock = threading.RLock()
@@ -69,7 +69,7 @@ class ConfigManager:
             # Log error but don't crash
             print(f"Failed to reload config: {e}")
 
-    def set_auto_reload(self, enabled: bool):
+    def set_auto_reload(self, enabled: bool) -> None:
         """Enable or disable automatic configuration reloading."""
         self._auto_reload = enabled
 

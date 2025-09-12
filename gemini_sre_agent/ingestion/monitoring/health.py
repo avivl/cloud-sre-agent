@@ -69,7 +69,7 @@ class HealthChecker:
     - System resources (memory, disk, network)
     """
 
-    def __init__(self, check_interval: timedelta = timedelta(seconds=30)):
+    def __init__(self, check_interval: timedelta = timedelta(seconds=30)) -> None:
         """
         Initialize the health checker.
 

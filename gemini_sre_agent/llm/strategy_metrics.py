@@ -61,7 +61,7 @@ class PerformanceSnapshot:
 class StrategyMetricsCollector:
     """Collects and analyzes strategy performance metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the metrics collector."""
         self._metrics: Dict[str, StrategyMetrics] = {}
         self._performance_history: List[PerformanceSnapshot] = []
@@ -332,7 +332,7 @@ class StrategyMetricsCollector:
             ),
         }
 
-    def reset_metrics(self, strategy_name: Optional[str] = None):
+    def reset_metrics(self, strategy_name: Optional[str] = None) -> None:
         """Reset metrics for a strategy or all strategies.
 
         Args:
@@ -385,7 +385,7 @@ class StrategyMetricsCollector:
 class StrategyPerformanceAnalyzer:
     """Analyzes strategy performance patterns and provides insights."""
 
-    def __init__(self, metrics_collector: StrategyMetricsCollector):
+    def __init__(self, metrics_collector: StrategyMetricsCollector) -> None:
         """Initialize the performance analyzer.
 
         Args:
@@ -476,7 +476,7 @@ class StrategyPerformanceAnalyzer:
 class StrategyRecommendationEngine:
     """Provides strategy recommendations based on performance metrics."""
 
-    def __init__(self, metrics_collector: StrategyMetricsCollector):
+    def __init__(self, metrics_collector: StrategyMetricsCollector) -> None:
         """Initialize the recommendation engine.
 
         Args:

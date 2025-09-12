@@ -25,7 +25,7 @@ class WorkflowValidationEngine:
     - Legacy format compatibility
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the validation engine."""
         self.validation_pipeline = CodeValidationPipeline()
         self.logger = logging.getLogger(__name__)

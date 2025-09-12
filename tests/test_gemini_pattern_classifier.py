@@ -20,7 +20,7 @@ class TestGeminiPatternClassifierInit:
     """Test GeminiPatternClassifier initialization."""
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_successful_init(self, mock_gemini_client_class):
+    def test_successful_init(self, mock_gemini_client_class: str) -> None:
         """Test successful classifier initialization."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -30,7 +30,7 @@ class TestGeminiPatternClassifierInit:
         mock_gemini_client_class.assert_called_once()
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_init_with_custom_config(self, mock_gemini_client_class):
+    def test_init_with_custom_config(self, mock_gemini_client_class: str) -> None:
         """Test initialization with custom configuration."""
         config = {"confidence_threshold": 0.8}
         classifier = GeminiPatternClassifier(api_key="test_key", config=config)
@@ -38,7 +38,7 @@ class TestGeminiPatternClassifierInit:
         assert classifier.confidence_assessment_threshold == 0.8
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_init_with_monitoring_components(self, mock_gemini_client_class):
+    def test_init_with_monitoring_components(self, mock_gemini_client_class: str) -> None:
         """Test initialization with cost tracker and rate limiter."""
         cost_tracker = Mock()
         rate_limiter = Mock()
@@ -57,7 +57,7 @@ class TestGeminiPatternClassifierClassification:
     """Test pattern classification functionality."""
 
     @pytest.fixture
-    def sample_window(self):
+    def sample_window(self) -> None:
         """Create sample time window with logs."""
         start_time = datetime.now(timezone.utc)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -85,7 +85,7 @@ class TestGeminiPatternClassifierClassification:
         return window
 
     @pytest.fixture
-    def sample_threshold_results(self):
+    def sample_threshold_results(self) -> None:
         """Create sample threshold results."""
         return [
             {
@@ -98,7 +98,7 @@ class TestGeminiPatternClassifierClassification:
         ]
 
     @pytest.fixture
-    def mock_gemini_response(self):
+    def mock_gemini_response(self) -> None:
         """Create mock successful Gemini response."""
         classification_result = {
             "pattern_type": "cascade_failure",
@@ -315,7 +315,7 @@ class TestGeminiPatternClassifierHelpers:
     """Test helper methods."""
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_model_selection_simple_case(self, mock_gemini_client_class):
+    def test_model_selection_simple_case(self, mock_gemini_client_class: str) -> None:
         """Test model selection for simple incidents."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -335,7 +335,7 @@ class TestGeminiPatternClassifierHelpers:
         assert model == "gemini-1.5-flash"
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_model_selection_complex_case(self, mock_gemini_client_class):
+    def test_model_selection_complex_case(self, mock_gemini_client_class: str) -> None:
         """Test model selection for complex incidents."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -363,7 +363,7 @@ class TestGeminiPatternClassifierHelpers:
         assert model == "gemini-1.5-pro"
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_pattern_type_mapping(self, mock_gemini_client_class):
+    def test_pattern_type_mapping(self, mock_gemini_client_class: str) -> None:
         """Test pattern type string to enum mapping."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -378,7 +378,7 @@ class TestGeminiPatternClassifierHelpers:
         assert classifier._map_pattern_type("unknown_pattern") is None
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_affected_services_extraction(self, mock_gemini_client_class):
+    def test_affected_services_extraction(self, mock_gemini_client_class: str) -> None:
         """Test extraction of affected services from pattern data."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -396,7 +396,7 @@ class TestGeminiPatternClassifierHelpers:
         assert len(services) == 3
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_performance_stats(self, mock_gemini_client_class):
+    def test_performance_stats(self, mock_gemini_client_class: str) -> None:
         """Test performance statistics calculation."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -416,7 +416,7 @@ class TestGeminiPatternClassifierPrompts:
     """Test prompt building functionality."""
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_classification_prompt_building(self, mock_gemini_client_class):
+    def test_classification_prompt_building(self, mock_gemini_client_class: str) -> None:
         """Test classification prompt construction."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -455,7 +455,7 @@ class TestGeminiPatternClassifierPrompts:
         assert "SOURCE CODE CONTEXT:" in prompt
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_confidence_prompt_building(self, mock_gemini_client_class):
+    def test_confidence_prompt_building(self, mock_gemini_client_class: str) -> None:
         """Test confidence assessment prompt construction."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
@@ -476,7 +476,7 @@ class TestGeminiPatternClassifierPrompts:
         assert "TIME WINDOW CHARACTERISTICS:" in prompt
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_schema_building(self, mock_gemini_client_class):
+    def test_schema_building(self, mock_gemini_client_class: str) -> None:
         """Test JSON schema construction for structured output."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 

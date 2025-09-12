@@ -36,7 +36,7 @@ from gemini_sre_agent.config.source_control_repositories import (
 class TestErrorHandlingConfig:
     """Test error handling configuration classes."""
 
-    def test_circuit_breaker_config_defaults(self):
+    def test_circuit_breaker_config_defaults(self) -> None:
         """Test circuit breaker configuration defaults."""
         config = CircuitBreakerConfig()
 
@@ -45,7 +45,7 @@ class TestErrorHandlingConfig:
         assert config.success_threshold == 3
         assert config.timeout == 30.0
 
-    def test_operation_circuit_breaker_config_defaults(self):
+    def test_operation_circuit_breaker_config_defaults(self) -> None:
         """Test operation-specific circuit breaker configuration defaults."""
         config = OperationCircuitBreakerConfig()
 
@@ -61,7 +61,7 @@ class TestErrorHandlingConfig:
         assert config.auth_operations.success_threshold == 5
         assert config.auth_operations.timeout == 15.0
 
-    def test_retry_config_defaults(self):
+    def test_retry_config_defaults(self) -> None:
         """Test retry configuration defaults."""
         config = RetryConfig()
 
@@ -71,7 +71,7 @@ class TestErrorHandlingConfig:
         assert config.backoff_factor == 2.0
         assert config.jitter is True
 
-    def test_graceful_degradation_config_defaults(self):
+    def test_graceful_degradation_config_defaults(self) -> None:
         """Test graceful degradation configuration defaults."""
         config = GracefulDegradationConfig()
 
@@ -83,7 +83,7 @@ class TestErrorHandlingConfig:
         assert config.simplified_operation_timeout == 10.0
         assert config.offline_mode_enabled is True
 
-    def test_health_check_config_defaults(self):
+    def test_health_check_config_defaults(self) -> None:
         """Test health check configuration defaults."""
         config = HealthCheckConfig()
 
@@ -94,7 +94,7 @@ class TestErrorHandlingConfig:
         assert config.success_threshold == 2
         assert config.metrics_retention_hours == 24
 
-    def test_metrics_config_defaults(self):
+    def test_metrics_config_defaults(self) -> None:
         """Test metrics configuration defaults."""
         config = MetricsConfig()
 
@@ -105,7 +105,7 @@ class TestErrorHandlingConfig:
         assert config.max_points_per_series == 10000
         assert config.background_processing is True
 
-    def test_error_handling_config_defaults(self):
+    def test_error_handling_config_defaults(self) -> None:
         """Test error handling configuration defaults."""
         config = ErrorHandlingConfig()
 
@@ -117,7 +117,7 @@ class TestErrorHandlingConfig:
         assert isinstance(config.metrics, MetricsConfig)
         assert config.provider_overrides == {}
 
-    def test_get_provider_config(self):
+    def test_get_provider_config(self) -> None:
         """Test getting provider-specific configuration."""
         config = ErrorHandlingConfig()
 
@@ -130,7 +130,7 @@ class TestErrorHandlingConfig:
         assert "health_checks" in provider_config
         assert "metrics" in provider_config
 
-    def test_get_operation_circuit_breaker_config(self):
+    def test_get_operation_circuit_breaker_config(self) -> None:
         """Test getting operation-specific circuit breaker configuration."""
         config = ErrorHandlingConfig()
 
@@ -144,7 +144,7 @@ class TestErrorHandlingConfig:
         )
         assert default_cb_config.failure_threshold == 5
 
-    def test_is_operation_enabled(self):
+    def test_is_operation_enabled(self) -> None:
         """Test checking if operation is enabled."""
         config = ErrorHandlingConfig()
 
@@ -164,7 +164,7 @@ class TestErrorHandlingConfig:
 class TestErrorHandlingConfigValidator:
     """Test error handling configuration validation."""
 
-    def test_validate_config_valid(self):
+    def test_validate_config_valid(self) -> None:
         """Test validation of valid configuration."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -172,7 +172,7 @@ class TestErrorHandlingConfigValidator:
         issues = validator.validate_config(config)
         assert len(issues) == 0
 
-    def test_validate_circuit_breaker_config_invalid(self):
+    def test_validate_circuit_breaker_config_invalid(self) -> None:
         """Test validation of invalid circuit breaker configuration."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -188,7 +188,7 @@ class TestErrorHandlingConfigValidator:
         assert any("failure_threshold" in issue for issue in issues)
         assert any("success_threshold" in issue for issue in issues)
 
-    def test_validate_retry_config_invalid(self):
+    def test_validate_retry_config_invalid(self) -> None:
         """Test validation of invalid retry configuration."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -210,7 +210,7 @@ class TestErrorHandlingConfigValidator:
         issues = validator.validate_config(config)
         assert any("max_delay" in issue for issue in issues)
 
-    def test_validate_graceful_degradation_config_invalid(self):
+    def test_validate_graceful_degradation_config_invalid(self) -> None:
         """Test validation of invalid graceful degradation configuration."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -224,7 +224,7 @@ class TestErrorHandlingConfigValidator:
         assert any("Invalid graceful degradation strategy" in issue for issue in issues)
         assert any("cache_ttl" in issue for issue in issues)
 
-    def test_validate_health_check_config_invalid(self):
+    def test_validate_health_check_config_invalid(self) -> None:
         """Test validation of invalid health check configuration."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -238,7 +238,7 @@ class TestErrorHandlingConfigValidator:
         assert any("check_interval" in issue for issue in issues)
         assert any("success_threshold" in issue for issue in issues)
 
-    def test_validate_metrics_config_invalid(self):
+    def test_validate_metrics_config_invalid(self) -> None:
         """Test validation of invalid metrics configuration."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -252,7 +252,7 @@ class TestErrorHandlingConfigValidator:
         assert any("collection_interval" in issue for issue in issues)
         assert any("max_series" in issue for issue in issues)
 
-    def test_validate_provider_overrides_invalid(self):
+    def test_validate_provider_overrides_invalid(self) -> None:
         """Test validation of invalid provider overrides."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -268,7 +268,7 @@ class TestErrorHandlingConfigValidator:
         assert any("Invalid provider" in issue for issue in issues)
         assert any("Invalid override key" in issue for issue in issues)
 
-    def test_get_configuration_recommendations(self):
+    def test_get_configuration_recommendations(self) -> None:
         """Test getting configuration recommendations."""
         validator = ErrorHandlingConfigValidator()
         config = ErrorHandlingConfig()
@@ -280,7 +280,7 @@ class TestErrorHandlingConfigValidator:
 class TestErrorHandlingConfigLoader:
     """Test error handling configuration loader."""
 
-    def test_load_default(self):
+    def test_load_default(self) -> None:
         """Test loading default configuration."""
         loader = ErrorHandlingConfigLoader()
         config = loader.load_default()
@@ -288,7 +288,7 @@ class TestErrorHandlingConfigLoader:
         assert isinstance(config, ErrorHandlingConfig)
         assert config.enabled is True
 
-    def test_load_from_dict(self):
+    def test_load_from_dict(self) -> None:
         """Test loading configuration from dictionary."""
         loader = ErrorHandlingConfigLoader()
         config_data = {
@@ -304,7 +304,7 @@ class TestErrorHandlingConfigLoader:
         assert config.retry.max_retries == 5
         assert config.retry.base_delay == 2.0
 
-    def test_load_from_env(self):
+    def test_load_from_env(self) -> None:
         """Test loading configuration from environment variables."""
         loader = ErrorHandlingConfigLoader()
 
@@ -322,7 +322,7 @@ class TestErrorHandlingConfigLoader:
             assert config.retry.max_retries == 10
             assert config.retry.base_delay == 5.0
 
-    def test_load_from_file_yaml(self):
+    def test_load_from_file_yaml(self) -> None:
         """Test loading configuration from YAML file."""
         loader = ErrorHandlingConfigLoader()
 
@@ -347,7 +347,7 @@ class TestErrorHandlingConfigLoader:
         finally:
             Path(temp_file).unlink()
 
-    def test_load_with_validation(self):
+    def test_load_with_validation(self) -> None:
         """Test loading configuration with validation."""
         loader = ErrorHandlingConfigLoader()
 
@@ -364,7 +364,7 @@ class TestErrorHandlingConfigLoader:
         config = loader.load_with_validation(config_data)
         assert config.enabled is True  # Should still load but log warnings
 
-    def test_save_to_file_yaml(self):
+    def test_save_to_file_yaml(self) -> None:
         """Test saving configuration to YAML file."""
         loader = ErrorHandlingConfigLoader()
         config = ErrorHandlingConfig()
@@ -379,7 +379,7 @@ class TestErrorHandlingConfigLoader:
             loaded_config = loader.load_from_file(file_path)
             assert loaded_config.enabled == config.enabled
 
-    def test_get_configuration_summary(self):
+    def test_get_configuration_summary(self) -> None:
         """Test getting configuration summary."""
         loader = ErrorHandlingConfigLoader()
         config = ErrorHandlingConfig()
@@ -398,7 +398,7 @@ class TestErrorHandlingConfigLoader:
 class TestRepositoryConfigErrorHandling:
     """Test repository configuration with error handling."""
 
-    def test_github_repository_error_handling_config(self):
+    def test_github_repository_error_handling_config(self) -> None:
         """Test GitHub repository error handling configuration."""
         repo_config = GitHubRepositoryConfig(
             name="test-repo",
@@ -420,7 +420,7 @@ class TestRepositoryConfigErrorHandling:
         assert error_config["retry"]["max_retries"] == 5
         assert error_config["graceful_degradation"]["cache_ttl"] == 600.0
 
-    def test_gitlab_repository_error_handling_config(self):
+    def test_gitlab_repository_error_handling_config(self) -> None:
         """Test GitLab repository error handling configuration."""
         repo_config = GitLabRepositoryConfig(
             name="test-repo",
@@ -442,7 +442,7 @@ class TestRepositoryConfigErrorHandling:
         assert error_config["retry"]["max_retries"] == 4
         assert error_config["graceful_degradation"]["cache_ttl"] == 480.0
 
-    def test_local_repository_error_handling_config(self):
+    def test_local_repository_error_handling_config(self) -> None:
         """Test Local repository error handling configuration."""
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_config = LocalRepositoryConfig(

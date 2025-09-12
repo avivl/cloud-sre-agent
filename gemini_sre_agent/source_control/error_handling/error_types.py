@@ -187,7 +187,7 @@ class UnknownErrors(Enum):
 class ErrorTypeRegistry:
     """Registry for managing error type metadata and classification."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._metadata: Dict[str, ErrorTypeMetadata] = {}
         self._category_mappings: Dict[ErrorCategory, Set[str]] = {
             category: set() for category in ErrorCategory

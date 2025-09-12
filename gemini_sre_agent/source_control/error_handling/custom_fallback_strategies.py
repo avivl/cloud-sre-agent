@@ -19,7 +19,7 @@ from .core import ErrorType
 class FallbackStrategyBase(ABC):
     """Base class for custom fallback strategies."""
 
-    def __init__(self, name: str, priority: int = 1):
+    def __init__(self, name: str, priority: int = 1) -> None:
         self.name = name
         self.priority = priority
         self.logger = logging.getLogger(f"FallbackStrategy.{name}")
@@ -44,7 +44,7 @@ class FallbackStrategyBase(ABC):
 class CachedResponseStrategy(FallbackStrategyBase):
     """Fallback to cached responses when operations fail."""
 
-    def __init__(self, cache_ttl_seconds: int = 300):
+    def __init__(self, cache_ttl_seconds: int = 300) -> None:
         super().__init__("cached_response", priority=1)
         self.cache_ttl = cache_ttl_seconds
         self.cache: Dict[str, Dict[str, Any]] = {}
@@ -104,7 +104,7 @@ class CachedResponseStrategy(FallbackStrategyBase):
 class SimplifiedOperationStrategy(FallbackStrategyBase):
     """Fallback to simplified versions of operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("simplified_operation", priority=2)
 
     async def can_handle(
@@ -174,7 +174,7 @@ class SimplifiedOperationStrategy(FallbackStrategyBase):
 class OfflineModeStrategy(FallbackStrategyBase):
     """Fallback to offline mode when network operations fail."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("offline_mode", priority=3)
         self.offline_data: Dict[str, Any] = {}
 
@@ -237,7 +237,7 @@ class OfflineModeStrategy(FallbackStrategyBase):
 class ProviderSpecificStrategy(FallbackStrategyBase):
     """Provider-specific fallback strategies."""
 
-    def __init__(self, provider_name: str):
+    def __init__(self, provider_name: str) -> None:
         super().__init__(f"provider_specific_{provider_name}", priority=4)
         self.provider_name = provider_name
 
@@ -326,7 +326,7 @@ class ProviderSpecificStrategy(FallbackStrategyBase):
 class CustomFallbackManager:
     """Manages custom fallback strategies for different operations and providers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.strategies: List[FallbackStrategyBase] = []
         self.logger = logging.getLogger("CustomFallbackManager")
         self._initialize_default_strategies()

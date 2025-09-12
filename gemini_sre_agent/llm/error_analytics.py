@@ -18,7 +18,7 @@ from .error_config import ErrorCategory, RequestContext
 class ErrorAnalytics:
     """Analytics for error tracking and monitoring."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.error_counts = Counter()
         self.provider_error_counts = defaultdict(Counter)
         self.category_counts = Counter()

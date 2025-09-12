@@ -8,7 +8,7 @@ from gemini_sre_agent.resilience.retry_handler import RetryHandler
 
 
 @pytest.fixture
-def retry_handler():
+def retry_handler() -> None:
     """Create a RetryHandler instance."""
     return RetryHandler(
         max_attempts=3,
@@ -21,7 +21,7 @@ def retry_handler():
 class TestRetryHandlerInitialization:
     """Test cases for RetryHandler initialization."""
 
-    def test_default_config(self):
+    def test_default_config(self) -> None:
         """Test default RetryHandler values."""
         handler = RetryHandler()
 
@@ -32,7 +32,7 @@ class TestRetryHandlerInitialization:
         # The retry handler uses an error classifier internally
         assert hasattr(handler, "error_classifier")
 
-    def test_custom_config(self, retry_handler):
+    def test_custom_config(self, retry_handler: str) -> None:
         """Test custom RetryHandler values."""
         assert retry_handler.max_attempts == 3
         assert retry_handler.base_delay == 0.1
@@ -45,7 +45,7 @@ class TestRetryHandlerInitialization:
 class TestRetryHandler:
     """Test cases for RetryHandler."""
 
-    def test_initialization_default(self):
+    def test_initialization_default(self) -> None:
         """Test RetryHandler initialization with default config."""
         handler = RetryHandler()
 
@@ -57,7 +57,7 @@ class TestRetryHandler:
         assert hasattr(handler, "error_classifier")
         assert ConnectionError in handler.error_classifier._exception_mappings
 
-    def test_initialization_custom(self, retry_handler):
+    def test_initialization_custom(self, retry_handler: str) -> None:
         """Test RetryHandler initialization with custom config."""
         assert retry_handler.max_attempts == 3
         assert retry_handler.base_delay == 0.1
@@ -129,7 +129,7 @@ class TestRetryHandler:
         """Test retry with synchronous function."""
         call_count = 0
 
-        def sync_retry_func():
+        def sync_retry_func() -> None:
             """
             Sync Retry Func.
 
@@ -149,7 +149,7 @@ class TestRetryHandler:
         """Test retry with synchronous function that always fails."""
         call_count = 0
 
-        def sync_fail_func():
+        def sync_fail_func() -> None:
             """
             Sync Fail Func.
 
@@ -344,7 +344,7 @@ class TestRetryHandler:
         """Test tenacity integration with synchronous functions."""
         call_count = 0
 
-        def tenacity_sync_func():
+        def tenacity_sync_func() -> None:
             """
             Tenacity Sync Func.
 
@@ -364,7 +364,7 @@ class TestRetryHandler:
         """Test tenacity integration with synchronous function failure."""
         call_count = 0
 
-        def tenacity_sync_fail_func():
+        def tenacity_sync_fail_func() -> None:
             """
             Tenacity Sync Fail Func.
 
@@ -387,7 +387,7 @@ class TestRetryHandler:
         """Test tenacity integration with non-retryable exception."""
         call_count = 0
 
-        def tenacity_non_retryable_func():
+        def tenacity_non_retryable_func() -> None:
             """
             Tenacity Non Retryable Func.
 
@@ -428,7 +428,7 @@ class TestRetryHandler:
     async def test_sync_function_with_arguments(self, retry_handler):
         """Test retry with synchronous function that takes arguments."""
 
-        def sync_func_with_args(arg1, arg2, kwarg1=None):
+        def sync_func_with_args(arg1: str, arg2: str, kwarg1: Optional[str] = None) -> None:
             """
             Sync Func With Args.
 

@@ -177,23 +177,23 @@ class DatabaseCodeGenerator(BaseCodeGenerator):
 import pytest
 from unittest.mock import Mock, patch
 
-def test_database_connection():
+def test_database_connection() -> None:
     # Test database connection establishment
     pass
 
-def test_transaction_rollback():
+def test_transaction_rollback() -> None:
     # Test transaction rollback on error
     pass
 
-def test_connection_pool():
+def test_connection_pool() -> None:
     # Test connection pool functionality
     pass
 
-def test_error_handling():
+def test_error_handling() -> None:
     # Test database error handling
     pass
 
-def test_query_optimization():
+def test_query_optimization() -> None:
     # Test query performance
     pass"""
 

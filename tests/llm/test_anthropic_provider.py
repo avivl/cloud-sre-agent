@@ -15,7 +15,7 @@ from gemini_sre_agent.llm.providers.anthropic_provider import AnthropicProvider
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> None:
     """Create a mock configuration for Anthropic provider."""
     return LLMProviderConfig(
         provider="anthropic",
@@ -35,7 +35,7 @@ def mock_config():
 
 
 @pytest.fixture
-def provider(mock_config):
+def provider(mock_config: str) -> None:
     """Create an AnthropicProvider instance with mocked dependencies."""
     with patch(
         "gemini_sre_agent.llm.providers.anthropic_provider.anthropic.AsyncAnthropic"
@@ -50,7 +50,7 @@ def provider(mock_config):
 class TestAnthropicProvider:
     """Test cases for AnthropicProvider."""
 
-    def test_provider_initialization(self, mock_config):
+    def test_provider_initialization(self, mock_config: str) -> None:
         """Test provider initialization."""
         with patch(
             "gemini_sre_agent.llm.providers.anthropic_provider.anthropic.AsyncAnthropic"
@@ -60,7 +60,7 @@ class TestAnthropicProvider:
             assert provider.model == "claude-3-5-sonnet-20241022"
             assert provider.base_url == "https://api.anthropic.com/"
 
-    def test_get_available_models(self, provider):
+    def test_get_available_models(self, provider: str) -> None:
         """Test getting available models."""
         models = provider.get_available_models()
 
@@ -130,19 +130,19 @@ class TestAnthropicProvider:
         assert len(embeddings) == 1024
         assert all(x == 0.0 for x in embeddings)
 
-    def test_token_count(self, provider):
+    def test_token_count(self, provider: str) -> None:
         """Test token counting."""
         count = provider.token_count("Test text with multiple words")
         # Should use approximation
         assert count > 0
 
-    def test_cost_estimate(self, provider):
+    def test_cost_estimate(self, provider: str) -> None:
         """Test cost estimation."""
         cost = provider.cost_estimate(100, 50)
         # Should calculate based on Anthropic pricing
         assert cost > 0
 
-    def test_validate_config(self, provider):
+    def test_validate_config(self, provider: str) -> None:
         """Test configuration validation."""
         # Create a config with valid API key
         config_with_key = LLMProviderConfig(
@@ -158,7 +158,7 @@ class TestAnthropicProvider:
         result = AnthropicProvider.validate_config(config_with_key)
         assert result is None  # validate_config doesn't return anything on success
 
-    def test_validate_config_invalid_key(self, provider):
+    def test_validate_config_invalid_key(self, provider: str) -> None:
         """Test configuration validation with invalid API key."""
         config_with_invalid_key = LLMProviderConfig(
             provider="anthropic",
@@ -176,7 +176,7 @@ class TestAnthropicProvider:
         ):
             AnthropicProvider.validate_config(config_with_invalid_key)
 
-    def test_convert_messages_to_anthropic_format(self, provider):
+    def test_convert_messages_to_anthropic_format(self, provider: str) -> None:
         """Test message format conversion."""
         messages = [
             {"role": "user", "content": "Hello"},
@@ -192,7 +192,7 @@ class TestAnthropicProvider:
         assert anthropic_messages[1]["role"] == "assistant"
         assert anthropic_messages[1]["content"] == "Hi there"
 
-    def test_extract_usage(self, provider):
+    def test_extract_usage(self, provider: str) -> None:
         """Test usage extraction from response."""
         mock_usage = MagicMock()
         mock_usage.input_tokens = 20

@@ -74,7 +74,7 @@ class CredentialConfig(BaseConfig):
 
     @field_validator("ssh_key_path")
     @classmethod
-    def validate_ssh_key_path(cls, v):
+    def validate_ssh_key_path(cls: str, v: str) -> None:
         """Validate SSH key path exists if provided."""
         if v is not None:
             key_path = Path(v)
@@ -86,7 +86,7 @@ class CredentialConfig(BaseConfig):
 
     @field_validator("service_account_key_file")
     @classmethod
-    def validate_service_account_key_file(cls, v):
+    def validate_service_account_key_file(cls: str, v: str) -> None:
         """Validate service account key file exists if provided."""
         if v is not None:
             key_path = Path(v)
@@ -97,7 +97,7 @@ class CredentialConfig(BaseConfig):
         return v
 
     @model_validator(mode="after")
-    def check_auth_method(self):
+    def check_auth_method(self) -> None:
         """Ensure at least one authentication method is provided."""
         auth_methods = [
             self.token_env,

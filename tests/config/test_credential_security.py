@@ -18,7 +18,7 @@ from gemini_sre_agent.config.source_control_credentials import CredentialConfig
 class TestCredentialStorageSecurity:
     """Test credential storage security mechanisms."""
 
-    def test_environment_variable_security(self):
+    def test_environment_variable_security(self) -> None:
         """Test that environment variables are properly handled for credentials."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "test_token_123"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -30,7 +30,7 @@ class TestCredentialStorageSecurity:
             # Test that direct token access is not available
             assert config.token is None
 
-    def test_file_based_credential_security(self):
+    def test_file_based_credential_security(self) -> None:
         """Test secure handling of file-based credentials."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
             temp_file.write("secure_token_from_file")
@@ -50,7 +50,7 @@ class TestCredentialStorageSecurity:
         finally:
             os.unlink(temp_file_path)
 
-    def test_ssh_key_file_security(self):
+    def test_ssh_key_file_security(self) -> None:
         """Test SSH key file security validation."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
             temp_file.write(
@@ -71,7 +71,7 @@ class TestCredentialStorageSecurity:
         finally:
             os.unlink(temp_file_path)
 
-    def test_service_account_key_file_security(self):
+    def test_service_account_key_file_security(self) -> None:
         """Test service account key file security validation."""
         service_account_data = {
             "type": "service_account",
@@ -118,7 +118,7 @@ class TestCredentialStorageSecurity:
         finally:
             os.unlink(temp_file_path)
 
-    def test_credential_validation_security(self):
+    def test_credential_validation_security(self) -> None:
         """Test that credential validation enforces security requirements."""
         # Test that at least one auth method is required
         with pytest.raises(
@@ -146,7 +146,7 @@ class TestCredentialStorageSecurity:
         finally:
             os.unlink(temp_file_path)
 
-    def test_secret_string_handling(self):
+    def test_secret_string_handling(self) -> None:
         """Test that SecretStr values are handled securely."""
         config = CredentialConfig(
             token="secret_token_value",
@@ -163,7 +163,7 @@ class TestCredentialStorageSecurity:
         client_id, client_secret = config.get_client_credentials()
         assert client_secret == "secret_client_secret_value"
 
-    def test_environment_variable_fallback_security(self):
+    def test_environment_variable_fallback_security(self) -> None:
         """Test secure fallback between different credential sources."""
         with patch.dict(
             os.environ,
@@ -184,7 +184,7 @@ class TestCredentialStorageSecurity:
             assert config.get_username() == "env_username"
             assert config.get_password() == "env_password"
 
-    def test_credential_file_permissions(self):
+    def test_credential_file_permissions(self) -> None:
         """Test that credential files have appropriate permissions."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
             temp_file.write("sensitive_credential_data")
@@ -205,7 +205,7 @@ class TestCredentialStorageSecurity:
         finally:
             os.unlink(temp_file_path)
 
-    def test_credential_cleanup_security(self):
+    def test_credential_cleanup_security(self) -> None:
         """Test that credentials are properly cleaned up from memory."""
         config = CredentialConfig(token="temporary_token")
 
@@ -218,7 +218,7 @@ class TestCredentialStorageSecurity:
         assert "temporary_token" not in token_repr
         assert "SecretStr" in token_repr
 
-    def test_malicious_file_path_security(self):
+    def test_malicious_file_path_security(self) -> None:
         """Test security against malicious file paths."""
         # Test path traversal attempts - these should fail validation because files don't exist
         malicious_paths = [
@@ -236,7 +236,7 @@ class TestCredentialStorageSecurity:
             with pytest.raises(ValidationError, match="does not exist"):
                 CredentialConfig(service_account_key_file=malicious_path)
 
-    def test_credential_rotation_security(self):
+    def test_credential_rotation_security(self) -> None:
         """Test credential rotation security mechanisms."""
         with patch.dict(os.environ, {"GITHUB_TOKEN": "old_token"}):
             config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -246,7 +246,7 @@ class TestCredentialStorageSecurity:
             os.environ["GITHUB_TOKEN"] = "new_token"
             assert config.get_token() == "new_token"
 
-    def test_credential_encryption_validation(self):
+    def test_credential_encryption_validation(self) -> None:
         """Test validation of encrypted credential storage."""
         # Test that encrypted credentials are properly handled
         encrypted_token = "encrypted_token_data"
@@ -263,7 +263,7 @@ class TestCredentialStorageSecurity:
         finally:
             os.unlink(temp_file_path)
 
-    def test_credential_audit_trail(self):
+    def test_credential_audit_trail(self) -> None:
         """Test that credential access can be audited."""
         config = CredentialConfig(token_env="GITHUB_TOKEN")
 
@@ -275,7 +275,7 @@ class TestCredentialStorageSecurity:
         assert hasattr(config, "get_client_credentials")
         assert hasattr(config, "get_service_account_key")
 
-    def test_credential_validation_error_handling(self):
+    def test_credential_validation_error_handling(self) -> None:
         """Test secure error handling for credential validation."""
         # Test that validation errors don't expose sensitive information
         with pytest.raises(ValidationError, match="does not exist") as exc_info:
@@ -288,7 +288,7 @@ class TestCredentialStorageSecurity:
         assert "password" not in error_message.lower()
         assert "token" not in error_message.lower()
 
-    def test_credential_configuration_security(self):
+    def test_credential_configuration_security(self) -> None:
         """Test overall credential configuration security."""
         # Test that configuration is immutable after creation
         config = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -299,7 +299,7 @@ class TestCredentialStorageSecurity:
         assert config.username is None
         assert config.password is None
 
-    def test_credential_environment_isolation(self):
+    def test_credential_environment_isolation(self) -> None:
         """Test that credentials are properly isolated between environments."""
         # Test that environment variables don't leak between configurations
         with patch.dict(os.environ, {"GITHUB_TOKEN": "env_token"}):

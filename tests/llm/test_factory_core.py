@@ -20,7 +20,7 @@ with patch.dict(
 class MockProvider(LLMProvider):
     """Mock provider for testing."""
 
-    def __init__(self, config):
+    def __init__(self, config: str) -> None:
         super().__init__(config)
         self._initialized = False
 
@@ -33,7 +33,7 @@ class MockProvider(LLMProvider):
     async def generate_structured(self, prompt, response_model, model=None, **kwargs):
         return response_model()
 
-    def generate_stream(self, prompt, model=None, **kwargs):
+    def generate_stream(self, prompt: str, model: Optional[str] = None, **kwargs: str) -> None:
         """
         Generate Stream.
 
@@ -50,14 +50,14 @@ class MockProvider(LLMProvider):
     async def health_check(self):
         return True
 
-    def get_available_models(self):
+    def get_available_models(self) -> None:
         """
         Get Available Models.
 
         """
         return ["mock-model"]
 
-    def estimate_cost(self, prompt, model=None):
+    def estimate_cost(self, prompt: str, model: Optional[str] = None) -> None:
         """
         Estimate Cost.
 
@@ -68,7 +68,7 @@ class MockProvider(LLMProvider):
         """
         return 0.01
 
-    def validate_config(self):
+    def validate_config(self) -> None:
         """
         Validate Config.
 
@@ -80,12 +80,12 @@ class TestLLMProviderFactory:
     """Test the LLMProviderFactory class."""
 
     @pytest.fixture
-    def factory(self):
+    def factory(self) -> None:
         """Create a factory instance."""
         return LLMProviderFactory()
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Create a mock provider configuration."""
         return LLMProviderConfig(
             provider="test",
@@ -99,20 +99,20 @@ class TestLLMProviderFactory:
             },
         )
 
-    def test_factory_initialization(self, factory):
+    def test_factory_initialization(self, factory: str) -> None:
         """Test factory initialization."""
         assert factory._providers == {}
         assert "openai" in factory._provider_types
         assert "anthropic" in factory._provider_types
         assert "gemini" in factory._provider_types
 
-    def test_register_provider_type(self, factory):
+    def test_register_provider_type(self, factory: str) -> None:
         """Test registering a new provider type."""
         factory.register_provider_type("custom", MockProvider)
         assert "custom" in factory._provider_types
         assert factory._provider_types["custom"] == MockProvider
 
-    def test_create_provider_success(self, factory, mock_config):
+    def test_create_provider_success(self, factory: str, mock_config: str) -> None:
         """Test successful provider creation."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -128,7 +128,7 @@ class TestLLMProviderFactory:
             mock_provider_class.assert_called_once_with(mock_config)
             mock_provider.validate_config.assert_called_once()
 
-    def test_create_provider_force_recreate(self, factory, mock_config):
+    def test_create_provider_force_recreate(self, factory: str, mock_config: str) -> None:
         """Test provider creation with force_recreate=True."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -148,7 +148,7 @@ class TestLLMProviderFactory:
             assert provider2 == mock_provider2
             assert mock_provider_class.call_count == 2
 
-    def test_create_provider_unsupported_type(self, factory):
+    def test_create_provider_unsupported_type(self, factory: str) -> None:
         """Test creating provider with unsupported type."""
         config = LLMProviderConfig(
             provider="unsupported",
@@ -158,7 +158,7 @@ class TestLLMProviderFactory:
         with pytest.raises(ValueError, match="Unsupported provider type: unsupported"):
             factory.create_provider(config)
 
-    def test_create_provider_invalid_config(self, factory, mock_config):
+    def test_create_provider_invalid_config(self, factory: str, mock_config: str) -> None:
         """Test creating provider with invalid configuration."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -172,7 +172,7 @@ class TestLLMProviderFactory:
             ):
                 factory.create_provider(mock_config)
 
-    def test_create_provider_creation_failure(self, factory, mock_config):
+    def test_create_provider_creation_failure(self, factory: str, mock_config: str) -> None:
         """Test provider creation failure."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -182,7 +182,7 @@ class TestLLMProviderFactory:
             with pytest.raises(RuntimeError, match="Provider creation failed"):
                 factory.create_provider(mock_config)
 
-    def test_get_provider_existing(self, factory, mock_config):
+    def test_get_provider_existing(self, factory: str, mock_config: str) -> None:
         """Test getting an existing provider."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -196,12 +196,12 @@ class TestLLMProviderFactory:
 
             assert provider == mock_provider
 
-    def test_get_provider_nonexistent(self, factory):
+    def test_get_provider_nonexistent(self, factory: str) -> None:
         """Test getting a non-existent provider."""
         provider = factory.get_provider("nonexistent")
         assert provider is None
 
-    def test_get_all_providers(self, factory, mock_config):
+    def test_get_all_providers(self, factory: str, mock_config: str) -> None:
         """Test getting all providers."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -218,7 +218,7 @@ class TestLLMProviderFactory:
             # Should return a copy, not the original
             assert providers is not factory._providers
 
-    def test_remove_provider_existing(self, factory, mock_config):
+    def test_remove_provider_existing(self, factory: str, mock_config: str) -> None:
         """Test removing an existing provider."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -233,12 +233,12 @@ class TestLLMProviderFactory:
             assert result is True
             assert "test" not in factory._providers
 
-    def test_remove_provider_nonexistent(self, factory):
+    def test_remove_provider_nonexistent(self, factory: str) -> None:
         """Test removing a non-existent provider."""
         result = factory.remove_provider("nonexistent")
         assert result is False
 
-    def test_clear_providers(self, factory, mock_config):
+    def test_clear_providers(self, factory: str, mock_config: str) -> None:
         """Test clearing all providers."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -252,7 +252,7 @@ class TestLLMProviderFactory:
 
             assert factory._providers == {}
 
-    def test_get_supported_providers(self, factory):
+    def test_get_supported_providers(self, factory: str) -> None:
         """Test getting supported provider types."""
         providers = factory.get_supported_providers()
         assert "openai" in providers

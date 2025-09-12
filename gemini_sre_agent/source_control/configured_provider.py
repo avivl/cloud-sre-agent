@@ -47,15 +47,15 @@ class ConfiguredSourceControlProvider(BaseSourceControlProvider):
         """Get the configured paths from config."""
         return self.repository_config.paths
 
-    def get_credentials(self):
+    def get_credentials(self) -> None:
         """Get the credentials from config."""
         return self.repository_config.credentials
 
-    def get_remediation_strategy(self):
+    def get_remediation_strategy(self) -> None:
         """Get the remediation strategy from config."""
         return self.repository_config.remediation
 
-    def get_global_config_value(self, key: str, default: Any = None) -> Any:
+    def get_global_config_value(self, key: str, default: Any : Optional[str] = None) -> Any:
         """Get a value from the global configuration."""
         if self.global_config is None:
             return default
@@ -151,7 +151,7 @@ class ConfiguredSourceControlProvider(BaseSourceControlProvider):
         """Check if a file path matches the configured paths."""
         return self.repository_config.matches_path(file_path)
 
-    def get_effective_credentials(self):
+    def get_effective_credentials(self) -> None:
         """Get effective credentials (repository-specific or global default)."""
         if self.global_config is None:
             return self.repository_config.credentials
@@ -160,7 +160,7 @@ class ConfiguredSourceControlProvider(BaseSourceControlProvider):
             self.repository_config.credentials
         )
 
-    def get_effective_remediation_strategy(self):
+    def get_effective_remediation_strategy(self) -> None:
         """Get effective remediation strategy (repository-specific or global default)."""
         if self.global_config is None:
             return self.repository_config.remediation

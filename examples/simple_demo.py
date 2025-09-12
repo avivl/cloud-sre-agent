@@ -52,7 +52,7 @@ async def demo_resilience_config():
         logger.error(f"❌ Resilience demo failed: {e}")
 
 
-def demo_log_entry():
+def demo_log_entry() -> None:
     """Demonstrate the LogEntry dataclass."""
     logger.info("=== Log Entry Demo ===")
 
@@ -88,7 +88,7 @@ def demo_log_entry():
         logger.error(f"❌ Log entry demo failed: {e}")
 
 
-def demo_file_system_config():
+def demo_file_system_config() -> None:
     """Demonstrate the file system configuration."""
     logger.info("=== File System Configuration Demo ===")
 

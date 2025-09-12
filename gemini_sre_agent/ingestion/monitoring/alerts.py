@@ -86,7 +86,7 @@ class AlertManager:
     - Component failures
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the alert manager."""
         self._alerts: Dict[str, Alert] = {}
         self._alert_rules: Dict[str, AlertRule] = {}

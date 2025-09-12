@@ -14,7 +14,7 @@ from gemini_sre_agent.triage_agent import TriageAgent, TriagePacket
 
 
 @pytest.fixture(scope="session")
-def integration_config():
+def integration_config() -> None:
     """Load config or use mock config if real config is unavailable"""
     try:
         config = load_config()
@@ -40,7 +40,7 @@ def integration_config():
 
 
 @pytest.fixture(scope="session")
-def gcp_project_id(integration_config):
+def gcp_project_id(integration_config: str) -> None:
     """
     Gcp Project Id.
 
@@ -52,7 +52,7 @@ def gcp_project_id(integration_config):
 
 
 @pytest.fixture(scope="session")
-def gcp_location(integration_config):
+def gcp_location(integration_config: str) -> None:
     """
     Gcp Location.
 
@@ -64,7 +64,7 @@ def gcp_location(integration_config):
 
 
 @pytest.fixture(scope="session")
-def github_token():
+def github_token() -> None:
     """
     Github Token.
 
@@ -76,7 +76,7 @@ def github_token():
 
 
 @pytest.fixture(scope="session")
-def github_repo_name(integration_config):
+def github_repo_name(integration_config: str) -> None:
     """
     Github Repo Name.
 
@@ -88,7 +88,7 @@ def github_repo_name(integration_config):
 
 
 @pytest.fixture(scope="session")
-def github_base_branch(integration_config):
+def github_base_branch(integration_config: str) -> None:
     """
     Github Base Branch.
 

@@ -131,7 +131,7 @@ async def test_resilient_client_timeout():  # New test case
     assert stats["statistics"]["timeouts"] == 1  # Ensure timeout stat is incremented
 
 
-def test_create_resilience_config():
+def test_create_resilience_config() -> None:
     """
     Test Create Resilience Config.
 

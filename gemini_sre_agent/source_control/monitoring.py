@@ -76,7 +76,7 @@ class Alert:
 class MetricsCollector:
     """Collects and stores metrics from source control operations."""
 
-    def __init__(self, max_metrics: int = 10000):
+    def __init__(self, max_metrics: int = 10000) -> None:
         self.metrics: deque = deque(maxlen=max_metrics)
         self.counters: Dict[str, float] = defaultdict(float)
         self.gauges: Dict[str, float] = defaultdict(float)
@@ -142,7 +142,7 @@ class MetricsCollector:
 class HealthChecker:
     """Performs comprehensive health checks on source control providers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.health_checks: Dict[
             str, Callable[[SourceControlProvider], Awaitable[HealthCheck]]
         ] = {}
@@ -289,17 +289,17 @@ class HealthChecker:
 class AlertManager:
     """Manages alerts and notifications."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.alerts: List[Alert] = []
         self.alert_rules: Dict[str, Callable[[Dict[str, Any]], bool]] = {}
         self.notification_handlers: List[Callable[[Alert], None]] = []
         self.logger = logging.getLogger("AlertManager")
 
-    def add_alert_rule(self, name: str, rule_func: Callable[[Dict[str, Any]], bool]):
+    def add_alert_rule(self, name: str, rule_func: Callable[[Dict[str, Any]]: str, bool]: str) -> None:
         """Add an alert rule."""
         self.alert_rules[name] = rule_func
 
-    def add_notification_handler(self, handler: Callable[[Alert], None]):
+    def add_notification_handler(self, handler: Callable[[Alert], None]: str) -> None:
         """Add a notification handler."""
         self.notification_handlers.append(handler)
 
@@ -332,7 +332,7 @@ class AlertManager:
 
         return new_alerts
 
-    def resolve_alert(self, alert_name: str, resolved_at: Optional[datetime] = None):
+    def resolve_alert(self, alert_name: str, resolved_at: Optional[datetime] = None) -> None:
         """Mark an alert as resolved."""
         for alert in self.alerts:
             if alert.name == alert_name and not alert.resolved:
@@ -539,7 +539,7 @@ class MonitoringManager:
 
         return summary
 
-    def add_notification_handler(self, handler: Callable[[Alert], None]):
+    def add_notification_handler(self, handler: Callable[[Alert], None]: str) -> None:
         """Add a notification handler for alerts."""
         if self.alert_manager:
             self.alert_manager.add_notification_handler(handler)

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class EnhancedErrorHandler:
     """Enhanced error handling with categorization and recovery strategies."""
 
-    def __init__(self, config: ErrorHandlerConfig):
+    def __init__(self, config: ErrorHandlerConfig) -> None:
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.error_patterns = self._load_error_patterns()

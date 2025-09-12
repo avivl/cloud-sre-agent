@@ -9,7 +9,7 @@ from gemini_sre_agent.llm.config import LLMProviderConfig, ModelConfig
 
 
 @pytest.fixture
-def mock_llm_provider():
+def mock_llm_provider() -> None:
     """Fixture for a mocked LLMProvider."""
     mock_provider = MagicMock()
     mock_provider.provider_name = "gemini"
@@ -44,7 +44,7 @@ def mock_llm_provider():
 
 
 @pytest.fixture
-def mock_llm_providers(mock_llm_provider):
+def mock_llm_providers(mock_llm_provider: str) -> None:
     """Fixture for a dictionary of mocked LLMProviders."""
     return {"test_provider": mock_llm_provider}
 
@@ -67,7 +67,7 @@ async def test_discover_capabilities(mock_llm_providers):
     assert any(c.name == "code_generation" for c in code_model_caps.capabilities)
 
 
-def test_get_model_capabilities(mock_llm_providers):
+def test_get_model_capabilities(mock_llm_providers: str) -> None:
     """
     Test Get Model Capabilities.
 
@@ -92,7 +92,7 @@ def test_get_model_capabilities(mock_llm_providers):
     assert discovery.get_model_capabilities("non_existent_model") is None
 
 
-def test_find_models_by_capability(mock_llm_providers):
+def test_find_models_by_capability(mock_llm_providers: str) -> None:
     """
     Test Find Models By Capability.
 

@@ -18,7 +18,7 @@ class TestFileSystemIntegration:
     """Test file system log ingestion integration."""
 
     @pytest.fixture
-    def temp_log_file(self):
+    def temp_log_file(self) -> None:
         """Create a temporary log file for testing."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
             f.write("2024-01-01 10:00:00 INFO Test log message 1\n")
@@ -34,7 +34,7 @@ class TestFileSystemIntegration:
         except OSError:
             pass
 
-    def test_file_system_adapter_creation(self):
+    def test_file_system_adapter_creation(self) -> None:
         """Test creating a file system adapter."""
         config = FileSystemConfig(
             name="test-file-source",
@@ -93,7 +93,7 @@ class TestFileSystemIntegration:
 class TestLogEntryIntegration:
     """Test LogEntry dataclass integration."""
 
-    def test_log_entry_creation(self):
+    def test_log_entry_creation(self) -> None:
         """Test creating a LogEntry instance."""
         from datetime import datetime
 
@@ -113,7 +113,7 @@ class TestLogEntryIntegration:
         assert entry.message == "Test log message"
         assert entry.metadata["key"] == "value"
 
-    def test_log_severity_enum(self):
+    def test_log_severity_enum(self) -> None:
         """Test LogSeverity enum values."""
         assert LogSeverity.DEBUG == "DEBUG"
         assert LogSeverity.INFO == "INFO"
@@ -125,7 +125,7 @@ class TestLogEntryIntegration:
 class TestConfigurationIntegration:
     """Test configuration system integration."""
 
-    def test_source_type_enum(self):
+    def test_source_type_enum(self) -> None:
         """Test SourceType enum values."""
         assert SourceType.FILE_SYSTEM == "file_system"
         assert SourceType.GCP_PUBSUB == "gcp_pubsub"

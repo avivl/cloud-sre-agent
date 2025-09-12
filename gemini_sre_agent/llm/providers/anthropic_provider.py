@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class AnthropicProvider(LLMProvider):
     """Anthropic Claude provider implementation."""
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.api_key = config.api_key
         self.base_url = (

@@ -26,7 +26,7 @@ from gemini_sre_agent.ingestion.manager.log_manager import LogManager
 class MockAdapter:
     """Mock adapter for testing."""
 
-    def __init__(self, name: str, running: bool = False):
+    def __init__(self, name: str, running: bool = False) -> None:
         self.name = name
         self.running = running
         self.logs = []
@@ -60,7 +60,7 @@ class MockAdapter:
     async def get_health_metrics(self):
         return {"status": "healthy"}
 
-    def get_config(self):
+    def get_config(self) -> None:
         """
         Get Config.
 
@@ -78,16 +78,16 @@ class TestLogManager:
     """Test cases for LogManager."""
 
     @pytest.fixture
-    def log_manager(self):
+    def log_manager(self) -> None:
         """Create a test LogManager instance."""
         return LogManager()
 
     @pytest.fixture
-    def mock_adapter(self):
+    def mock_adapter(self) -> None:
         """Create a mock adapter."""
         return MockAdapter("test_adapter")
 
-    def test_init(self, log_manager):
+    def test_init(self, log_manager: str) -> None:
         """Test LogManager initialization."""
         assert log_manager.sources == {}
         assert log_manager.running is False

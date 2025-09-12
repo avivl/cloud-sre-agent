@@ -8,7 +8,7 @@ from gemini_sre_agent.metrics.metrics_manager import MetricsManager
 
 
 @pytest.fixture
-def mock_config_manager():
+def mock_config_manager() -> None:
     """Fixture for a mocked ConfigManager."""
     mock_config = LLMConfig(
         providers={},
@@ -19,7 +19,7 @@ def mock_config_manager():
     return mock_manager
 
 
-def test_metrics_manager_initialization(mock_config_manager):
+def test_metrics_manager_initialization(mock_config_manager: str) -> None:
     """
     Test Metrics Manager Initialization.
 
@@ -50,7 +50,7 @@ async def test_record_provider_request(mock_config_manager):
     assert provider_metrics.success_count == 1
 
 
-def test_get_provider_health(mock_config_manager):
+def test_get_provider_health(mock_config_manager: str) -> None:
     """
     Test Get Provider Health.
 

@@ -20,7 +20,7 @@ class TestRepositoryPermissionTests:
     """Test repository access permissions and security controls."""
 
     @pytest.fixture
-    def mock_github_provider(self):
+    def mock_github_provider(self) -> None:
         """Create a mock GitHub provider for testing."""
         credentials = CredentialConfig(token_env="GITHUB_TOKEN")
         repo_config = GitHubRepositoryConfig(
@@ -33,7 +33,7 @@ class TestRepositoryPermissionTests:
         provider.repo = MagicMock()
         return provider
 
-    def test_branch_protection_rules_validation(self, mock_github_provider):
+    def test_branch_protection_rules_validation(self, mock_github_provider: str) -> None:
         """Test comprehensive branch protection rules validation."""
         # Test main branch protection
         main_branch = BranchInfo(
@@ -122,7 +122,7 @@ class TestRepositoryPermissionTests:
             == 1
         )
 
-    def test_code_review_requirements_validation(self, mock_github_provider):
+    def test_code_review_requirements_validation(self, mock_github_provider: str) -> None:
         """Test comprehensive code review requirements validation."""
         # Test different review requirement configurations
         review_configs = {
@@ -184,7 +184,7 @@ class TestRepositoryPermissionTests:
         assert relaxed_config["require_code_owner_reviews"] is False
         assert relaxed_config["require_last_push_approval"] is False
 
-    def test_access_control_validation(self, mock_github_provider):
+    def test_access_control_validation(self, mock_github_provider: str) -> None:
         """Test comprehensive access control validation."""
         # Test different access levels
         access_levels = {
@@ -285,7 +285,7 @@ class TestRepositoryPermissionTests:
         assert pull_access["permissions"]["triage"] is False
         assert pull_access["permissions"]["maintain"] is False
 
-    def test_repository_permission_escalation_prevention(self, mock_github_provider):
+    def test_repository_permission_escalation_prevention(self, mock_github_provider: str) -> None:
         """Test that permission escalation is prevented."""
         # Test that users cannot escalate their own permissions
         user_permissions = {
@@ -297,7 +297,7 @@ class TestRepositoryPermissionTests:
         }
 
         # Test that user cannot grant themselves admin access
-        def attempt_permission_escalation():
+        def attempt_permission_escalation() -> None:
             """
             Attempt Permission Escalation.
 
@@ -310,7 +310,7 @@ class TestRepositoryPermissionTests:
             attempt_permission_escalation()
 
         # Test that user cannot grant themselves maintain access
-        def attempt_maintain_escalation():
+        def attempt_maintain_escalation() -> None:
             """
             Attempt Maintain Escalation.
 
@@ -322,7 +322,7 @@ class TestRepositoryPermissionTests:
         with pytest.raises(PermissionError, match="Permission escalation not allowed"):
             attempt_maintain_escalation()
 
-    def test_branch_protection_bypass_prevention(self, mock_github_provider):
+    def test_branch_protection_bypass_prevention(self, mock_github_provider: str) -> None:
         """Test that branch protection bypass is prevented."""
         # Test that protected branches cannot be force-pushed
         protected_branch = BranchInfo(
@@ -332,7 +332,7 @@ class TestRepositoryPermissionTests:
             last_commit=datetime.now(),
         )
 
-        def attempt_force_push(branch_name, is_protected):
+        def attempt_force_push(branch_name: str, is_protected: str) -> None:
             """
             Attempt Force Push.
 
@@ -353,7 +353,7 @@ class TestRepositoryPermissionTests:
             attempt_force_push(protected_branch.name, protected_branch.is_protected)
 
         # Test that protected branches cannot be deleted
-        def attempt_branch_deletion(branch_name, is_protected):
+        def attempt_branch_deletion(branch_name: str, is_protected: str) -> None:
             """
             Attempt Branch Deletion.
 
@@ -375,7 +375,7 @@ class TestRepositoryPermissionTests:
                 protected_branch.name, protected_branch.is_protected
             )
 
-    def test_code_review_bypass_prevention(self, mock_github_provider):
+    def test_code_review_bypass_prevention(self, mock_github_provider: str) -> None:
         """Test that code review bypass is prevented."""
         # Test that PRs cannot be merged without required reviews
         pr_review_status = {
@@ -385,7 +385,7 @@ class TestRepositoryPermissionTests:
             "dismissed_reviews": 0,
         }
 
-        def attempt_pr_merge(review_status):
+        def attempt_pr_merge(review_status: str) -> None:
             """
             Attempt Pr Merge.
 
@@ -413,7 +413,7 @@ class TestRepositoryPermissionTests:
             "dismissed_reviews": 1,
         }
 
-        def attempt_pr_merge_with_dismissed(review_status):
+        def attempt_pr_merge_with_dismissed(review_status: str) -> None:
             """
             Attempt Pr Merge With Dismissed.
 
@@ -433,7 +433,7 @@ class TestRepositoryPermissionTests:
         ):
             attempt_pr_merge_with_dismissed(pr_with_dismissed_reviews)
 
-    def test_repository_visibility_access_control(self, mock_github_provider):
+    def test_repository_visibility_access_control(self, mock_github_provider: str) -> None:
         """Test repository visibility access control."""
         # Test private repository access
         private_repo = RepositoryInfo(
@@ -451,7 +451,7 @@ class TestRepositoryPermissionTests:
         )
 
         # Test that only collaborators can access private repos
-        def check_private_repo_access(user, repo):
+        def check_private_repo_access(user: str, repo: str) -> None:
             """
             Check Private Repo Access.
 
@@ -491,7 +491,7 @@ class TestRepositoryPermissionTests:
         )
 
         # Test that anyone can access public repos
-        def check_public_repo_access(user, repo):
+        def check_public_repo_access(user: str, repo: str) -> None:
             """
             Check Public Repo Access.
 
@@ -508,7 +508,7 @@ class TestRepositoryPermissionTests:
 
         assert check_public_repo_access("any_user", public_repo) is True
 
-    def test_credential_validation_for_permissions(self, mock_github_provider):
+    def test_credential_validation_for_permissions(self, mock_github_provider: str) -> None:
         """Test that credentials are properly validated for permission checks."""
         # Test valid credentials
         with patch.dict("os.environ", {"GITHUB_TOKEN": "valid_token_123"}):
@@ -534,7 +534,7 @@ class TestRepositoryPermissionTests:
             # In a real implementation, this would check token expiration
             assert token == "expired_token"
 
-    def test_permission_audit_logging(self, mock_github_provider):
+    def test_permission_audit_logging(self, mock_github_provider: str) -> None:
         """Test that permission changes are properly logged for audit."""
         # Test permission change logging
         permission_log = {
@@ -582,11 +582,11 @@ class TestRepositoryPermissionTests:
         assert protection_log["old_protection"]["required_reviews"] == 1
         assert protection_log["new_protection"]["required_reviews"] == 2
 
-    def test_permission_validation_error_handling(self, mock_github_provider):
+    def test_permission_validation_error_handling(self, mock_github_provider: str) -> None:
         """Test error handling for permission validation."""
 
         # Test invalid permission configuration
-        def validate_permissions(permissions):
+        def validate_permissions(permissions: str) -> None:
             """
             Validate Permissions.
 
@@ -608,7 +608,7 @@ class TestRepositoryPermissionTests:
             validate_permissions(invalid_permissions)
 
         # Test missing required permissions
-        def validate_required_permissions(permissions):
+        def validate_required_permissions(permissions: str) -> None:
             """
             Validate Required Permissions.
 
@@ -631,7 +631,7 @@ class TestRepositoryPermissionTests:
             validate_required_permissions(empty_permissions)
 
         # Test invalid review configuration
-        def validate_review_config(config):
+        def validate_review_config(config: str) -> None:
             """
             Validate Review Config.
 
@@ -652,7 +652,7 @@ class TestRepositoryPermissionTests:
             }
             validate_review_config(invalid_review_config)
 
-    def test_permission_security_headers(self, mock_github_provider):
+    def test_permission_security_headers(self, mock_github_provider: str) -> None:
         """Test that permission operations use proper security headers."""
         # Test security headers for permission operations
         security_headers = {
@@ -670,7 +670,7 @@ class TestRepositoryPermissionTests:
         assert security_headers["X-Permission-Validation"] == "enabled"
         assert security_headers["X-Audit-Logging"] == "enabled"
 
-    def test_permission_rate_limiting(self, mock_github_provider):
+    def test_permission_rate_limiting(self, mock_github_provider: str) -> None:
         """Test that permission operations are properly rate limited."""
         # Test rate limiting for permission operations
         permission_rate_limits = {
@@ -692,7 +692,7 @@ class TestRepositoryPermissionTests:
         assert permission_rate_limits["review_requirement_changes_per_hour"] == 25
 
         # Test rate limit enforcement
-        def check_rate_limit(operation_type, current_usage, limit):
+        def check_rate_limit(operation_type: str, current_usage: str, limit: str) -> None:
             """
             Check Rate Limit.
 

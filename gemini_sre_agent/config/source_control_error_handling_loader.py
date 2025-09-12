@@ -21,7 +21,7 @@ from .source_control_error_handling_validation import ErrorHandlingConfigValidat
 class ErrorHandlingConfigLoader:
     """Loader for error handling configuration."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize the configuration loader."""
         self.logger = logger or logging.getLogger(__name__)
         self.validator = ErrorHandlingConfigValidator(logger)

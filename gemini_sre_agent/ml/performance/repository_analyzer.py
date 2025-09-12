@@ -30,7 +30,7 @@ class PerformanceRepositoryAnalyzer:
     - Configurable analysis depth
     """
 
-    def __init__(self, cache: RepositoryContextCache, repo_path: str = "."):
+    def __init__(self, cache: RepositoryContextCache, repo_path: str = ".") -> None:
         """
         Initialize the performance repository analyzer.
 
@@ -113,7 +113,7 @@ class PerformanceRepositoryAnalyzer:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # Process results and handle exceptions
-            def safe_result(result, default):
+            def safe_result(result: str, default: str) -> None:
                 """
                 Safe Result.
 

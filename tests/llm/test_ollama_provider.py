@@ -15,7 +15,7 @@ from gemini_sre_agent.llm.providers.ollama_provider import OllamaProvider
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> None:
     """Create a mock configuration for Ollama provider."""
     return LLMProviderConfig(
         provider="ollama",
@@ -36,7 +36,7 @@ def mock_config():
 
 
 @pytest.fixture
-def provider(mock_config):
+def provider(mock_config: str) -> None:
     """Create an OllamaProvider instance with mocked dependencies."""
     with patch(
         "gemini_sre_agent.llm.providers.ollama_provider.ollama.Client"
@@ -51,7 +51,7 @@ def provider(mock_config):
 class TestOllamaProvider:
     """Test cases for OllamaProvider."""
 
-    def test_provider_initialization(self, mock_config):
+    def test_provider_initialization(self, mock_config: str) -> None:
         """Test provider initialization."""
         with patch("gemini_sre_agent.llm.providers.ollama_provider.ollama.Client"):
             provider = OllamaProvider(mock_config)
@@ -59,7 +59,7 @@ class TestOllamaProvider:
             assert provider.model == "llama3.1:8b"
             assert provider.base_url == "http://localhost:11434/"
 
-    def test_get_available_models(self, provider):
+    def test_get_available_models(self, provider: str) -> None:
         """Test getting available models."""
         models = provider.get_available_models()
 
@@ -112,7 +112,7 @@ class TestOllamaProvider:
             },
         ]
 
-        def mock_chat(*args, **kwargs):
+        def mock_chat(*args: str, **kwargs: str) -> None:
             """
             Mock Chat.
 
@@ -161,7 +161,7 @@ class TestOllamaProvider:
         embeddings = await provider.embeddings("Test text")
         assert embeddings == [0.1, 0.2, 0.3]
 
-    def test_token_count(self, provider):
+    def test_token_count(self, provider: str) -> None:
         """Test token counting."""
         mock_response = {
             "message": {"content": ""},
@@ -173,7 +173,7 @@ class TestOllamaProvider:
         count = provider.token_count("Test text")
         assert count == 8
 
-    def test_token_count_fallback(self, provider):
+    def test_token_count_fallback(self, provider: str) -> None:
         """Test token count fallback when eval_count is not available."""
         mock_response = {"message": {"content": ""}}
         provider.client.chat = MagicMock(return_value=mock_response)
@@ -182,13 +182,13 @@ class TestOllamaProvider:
         # Should fall back to approximation
         assert count > 0
 
-    def test_cost_estimate(self, provider):
+    def test_cost_estimate(self, provider: str) -> None:
         """Test cost estimation."""
         cost = provider.cost_estimate(100, 50)
         # Ollama is free, so cost should be 0
         assert cost == 0.0
 
-    def test_validate_config(self, provider):
+    def test_validate_config(self, provider: str) -> None:
         """Test configuration validation."""
         # Create a config without API key for Ollama
         config_without_key = LLMProviderConfig(
@@ -204,7 +204,7 @@ class TestOllamaProvider:
         result = OllamaProvider.validate_config(config_without_key)
         assert result is None  # validate_config doesn't return anything on success
 
-    def test_convert_messages_to_ollama_format(self, provider):
+    def test_convert_messages_to_ollama_format(self, provider: str) -> None:
         """Test message format conversion."""
         messages = [
             {"role": "user", "content": "Hello"},
@@ -220,7 +220,7 @@ class TestOllamaProvider:
         assert ollama_messages[1]["role"] == "assistant"
         assert ollama_messages[1]["content"] == "Hi there"
 
-    def test_extract_usage_from_dict(self, provider):
+    def test_extract_usage_from_dict(self, provider: str) -> None:
         """Test usage extraction from dict response."""
         response = {"eval_count": 20, "prompt_eval_count": 10}
 
@@ -228,11 +228,11 @@ class TestOllamaProvider:
         assert usage["input_tokens"] == 10
         assert usage["output_tokens"] == 20
 
-    def test_extract_usage_from_object(self, provider):
+    def test_extract_usage_from_object(self, provider: str) -> None:
         """Test usage extraction from object response."""
 
         class MockResponse:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.eval_count = 15
                 self.prompt_eval_count = 8
 
@@ -241,7 +241,7 @@ class TestOllamaProvider:
         assert usage["input_tokens"] == 8
         assert usage["output_tokens"] == 15
 
-    def test_extract_usage_no_data(self, provider):
+    def test_extract_usage_no_data(self, provider: str) -> None:
         """Test usage extraction when no usage data is available."""
         response = {}
         usage = provider._extract_usage(response)

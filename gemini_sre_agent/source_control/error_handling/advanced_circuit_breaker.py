@@ -31,7 +31,7 @@ from .metrics_integration import ErrorHandlingMetrics
 class AdaptiveThresholds:
     """Manages adaptive thresholds based on historical performance data."""
 
-    def __init__(self, base_threshold: int = 5, learning_window: int = 100):
+    def __init__(self, base_threshold: int = 5, learning_window: int = 100) -> None:
         self.base_threshold = base_threshold
         self.learning_window = learning_window
         self.recent_failures = deque(maxlen=learning_window)
@@ -100,7 +100,7 @@ class AdaptiveThresholds:
 class StateTransitionCallback:
     """Handles custom state transition callbacks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.callbacks: Dict[Tuple[CircuitState, CircuitState], List[Callable]] = {}
 
     def register_callback(
@@ -136,7 +136,7 @@ class StateTransitionCallback:
 class MultiDimensionalFailureAnalyzer:
     """Analyzes failures across multiple dimensions for intelligent circuit management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.failure_patterns = {
             "timeout_errors": deque(maxlen=50),
             "network_errors": deque(maxlen=50),

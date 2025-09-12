@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class MonitoringDashboard:
     """Comprehensive monitoring dashboard for the enhanced LLM system."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics_collector = get_llm_metrics_collector()
         self.start_time = datetime.now()
         
@@ -163,7 +163,7 @@ class MonitoringDashboard:
         
         return recommendations
     
-    def export_dashboard_json(self, filename: str = None) -> str:
+    def export_dashboard_json(self, filename: str : Optional[str] = None) -> str:
         """Export dashboard data to JSON file."""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -176,7 +176,7 @@ class MonitoringDashboard:
         
         return filename
     
-    def print_dashboard(self):
+    def print_dashboard(self) -> None:
         """Print a formatted dashboard to console."""
         dashboard_data = self.generate_dashboard_data()
         

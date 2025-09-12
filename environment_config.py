@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 class EnvironmentConfigManager:
     """Manages environment-specific configurations for the enhanced LLM system."""
     
-    def __init__(self, config_dir: str = "config"):
+    def __init__(self, config_dir: str = "config") -> None:
         self.config_dir = Path(config_dir)
         self.config_dir.mkdir(exist_ok=True)
         self.current_env = os.getenv('ENVIRONMENT', 'development')
         
-    def get_environment_config(self, environment: str = None) -> Dict[str, Any]:
+    def get_environment_config(self, environment: str : Optional[str] = None) -> Dict[str, Any]:
         """Get configuration for a specific environment."""
         if environment is None:
             environment = self.current_env
@@ -254,7 +254,7 @@ class EnvironmentConfigManager:
         
         return config
     
-    def create_environment_configs(self):
+    def create_environment_configs(self) -> None:
         """Create configuration files for all environments."""
         environments = ['development', 'staging', 'production']
         
@@ -278,7 +278,7 @@ class EnvironmentConfigManager:
             logger.error(f"Configuration validation failed: {e}")
             return False
     
-    def get_llm_config(self, environment: str = None) -> LLMConfig:
+    def get_llm_config(self, environment: str : Optional[str] = None) -> LLMConfig:
         """Get LLM configuration for a specific environment."""
         env_config = self.get_environment_config(environment)
         
@@ -287,7 +287,7 @@ class EnvironmentConfigManager:
         
         return LLMConfig(**env_config['llm'])
     
-    def print_environment_summary(self, environment: str = None):
+    def print_environment_summary(self, environment: str : Optional[str] = None) -> None:
         """Print a summary of environment configuration."""
         if environment is None:
             environment = self.current_env
@@ -332,7 +332,7 @@ class EnvironmentConfigManager:
         
         print("=" * 60)
 
-def main():
+def main() -> None:
     """Main function to demonstrate environment configuration management."""
     print("🚀 Environment Configuration Management Demo")
     print("=" * 60)

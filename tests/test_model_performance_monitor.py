@@ -40,7 +40,7 @@ class TestModelPerformanceMonitor:
         """Create a ModelPerformanceMonitor instance with test configuration."""
         return ModelPerformanceMonitor(config)
 
-    def test_initialization(self, monitor: ModelPerformanceMonitor):
+    def test_initialization(self, monitor: ModelPerformanceMonitor) -> None:
         """Test ModelPerformanceMonitor initialization."""
         assert len(monitor.accuracy_history) == 0
         assert len(monitor.confidence_history) == 0
@@ -52,7 +52,7 @@ class TestModelPerformanceMonitor:
         assert len(monitor.drift_alerts) == 0
         assert isinstance(monitor.drift_detector, DriftDetector)
 
-    def test_initialization_with_default_config(self):
+    def test_initialization_with_default_config(self) -> None:
         """Test initialization with default configuration."""
         monitor = ModelPerformanceMonitor()
         assert monitor.config.window_size == 100
@@ -117,7 +117,7 @@ class TestModelPerformanceMonitor:
         )  # Mean of 0.8, 0.82, 0.84, 0.86, 0.88
         assert monitor.baseline_latency == 120.0  # Mean of 100, 110, 120, 130, 140
 
-    def test_get_performance_metrics_empty(self, monitor: ModelPerformanceMonitor):
+    def test_get_performance_metrics_empty(self, monitor: ModelPerformanceMonitor) -> None:
         """Test getting metrics when no data is available."""
         metrics = monitor.get_performance_metrics()
         expected = PerformanceMetrics.empty_metrics()
@@ -146,7 +146,7 @@ class TestModelPerformanceMonitor:
         assert "pattern_accuracy" in metrics
         assert "memory_leak" in metrics["pattern_accuracy"]
 
-    def test_get_drift_summary_no_alerts(self, monitor: ModelPerformanceMonitor):
+    def test_get_drift_summary_no_alerts(self, monitor: ModelPerformanceMonitor) -> None:
         """Test drift summary with no alerts."""
         summary = monitor.get_drift_summary()
         assert summary["has_drift"] is False
@@ -154,7 +154,7 @@ class TestModelPerformanceMonitor:
         assert summary["recent_alerts"] == []
         assert summary["severity_counts"] == {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
 
-    def test_get_drift_summary_with_alerts(self, monitor: ModelPerformanceMonitor):
+    def test_get_drift_summary_with_alerts(self, monitor: ModelPerformanceMonitor) -> None:
         """Test drift summary with alerts."""
         # Add test alerts
         alert1 = DriftAlert(
@@ -183,7 +183,7 @@ class TestModelPerformanceMonitor:
         assert summary["severity_counts"]["MEDIUM"] == 1
         assert summary["high_severity_recent"] == 2
 
-    def test_reset_drift_alerts(self, monitor: ModelPerformanceMonitor):
+    def test_reset_drift_alerts(self, monitor: ModelPerformanceMonitor) -> None:
         """Test resetting drift alerts."""
         # Add test alerts
         monitor.drift_alerts = [
@@ -220,7 +220,7 @@ class TestModelPerformanceMonitor:
         monitor.last_drift_check = datetime.now() - timedelta(seconds=70)
         assert monitor._should_check_drift() is True
 
-    def test_can_check_drift(self, monitor: ModelPerformanceMonitor):
+    def test_can_check_drift(self, monitor: ModelPerformanceMonitor) -> None:
         """Test drift check capability conditions."""
         # Initially cannot check drift
         assert monitor._can_check_drift() is False
@@ -264,7 +264,7 @@ class TestModelPerformanceMonitor:
         drift_types = {alert.drift_type for alert in monitor.drift_alerts}
         assert "accuracy_drift" in drift_types
 
-    def test_pattern_accuracy_tracking(self, monitor: ModelPerformanceMonitor):
+    def test_pattern_accuracy_tracking(self, monitor: ModelPerformanceMonitor) -> None:
         """Test pattern-specific accuracy tracking."""
         # Add mixed pattern predictions
         patterns_data = [
@@ -292,7 +292,7 @@ class TestModelPerformanceMonitor:
         assert pattern_accuracy["cpu_spike"]["accuracy"] == 1.0  # 1/1 correct
         assert pattern_accuracy["network_issue"]["accuracy"] == 0.5  # 1/2 correct
 
-    def test_pattern_history_trimming(self, monitor: ModelPerformanceMonitor):
+    def test_pattern_history_trimming(self, monitor: ModelPerformanceMonitor) -> None:
         """Test pattern history trimming."""
         pattern = "memory_leak"
 
@@ -312,32 +312,32 @@ class TestModelPerformanceMonitor:
 class TestMetricsCalculator:
     """Test cases for MetricsCalculator helper class."""
 
-    def test_calculate_recent_metrics_empty(self):
+    def test_calculate_recent_metrics_empty(self) -> None:
         """Test calculating recent metrics with empty history."""
         result = MetricsCalculator.calculate_recent_metrics([], 5)
         assert result == 0.0
 
-    def test_calculate_recent_metrics_partial(self):
+    def test_calculate_recent_metrics_partial(self) -> None:
         """Test calculating recent metrics with partial data."""
         history = [1.0, 0.8, 0.6, 0.9, 0.7, 0.5]
         result = MetricsCalculator.calculate_recent_metrics(history, 3)
         # Should use last 3: 0.9, 0.7, 0.5 -> mean = 0.7
         assert result == 0.7
 
-    def test_calculate_recent_metrics_full_window(self):
+    def test_calculate_recent_metrics_full_window(self) -> None:
         """Test calculating recent metrics with full window."""
         history = [1.0, 0.8]
         result = MetricsCalculator.calculate_recent_metrics(history, 5)
         # Should use all available: 1.0, 0.8 -> mean = 0.9
         assert result == 0.9
 
-    def test_calculate_pattern_accuracy_empty(self):
+    def test_calculate_pattern_accuracy_empty(self) -> None:
         """Test calculating pattern accuracy with empty data."""
         result = MetricsCalculator.calculate_pattern_accuracy([], 5)
         expected = {"accuracy": 0.0, "sample_count": 0, "recent_samples": 0}
         assert result == expected
 
-    def test_calculate_pattern_accuracy_with_data(self):
+    def test_calculate_pattern_accuracy_with_data(self) -> None:
         """Test calculating pattern accuracy with data."""
         accuracies = [1.0, 1.0, 0.0, 1.0, 0.0, 1.0]
         result = MetricsCalculator.calculate_pattern_accuracy(accuracies, 4)
@@ -347,19 +347,19 @@ class TestMetricsCalculator:
         # Recent 4: 0.0, 1.0, 0.0, 1.0 -> mean = 0.5
         assert result["accuracy"] == 0.5
 
-    def test_trim_history_no_trimming(self):
+    def test_trim_history_no_trimming(self) -> None:
         """Test trimming history when no trimming needed."""
         history = [1.0, 2.0, 3.0]
         result = MetricsCalculator.trim_history(history, 5)
         assert result == history
 
-    def test_trim_history_with_trimming(self):
+    def test_trim_history_with_trimming(self) -> None:
         """Test trimming history when trimming needed."""
         history = [1.0, 2.0, 3.0, 4.0, 5.0]
         result = MetricsCalculator.trim_history(history, 3)
         assert result == [3.0, 4.0, 5.0]
 
-    def test_analyze_drift_alerts_empty(self):
+    def test_analyze_drift_alerts_empty(self) -> None:
         """Test analyzing drift alerts with no alerts."""
         result = MetricsCalculator.analyze_drift_alerts([])
         expected = {
@@ -370,7 +370,7 @@ class TestMetricsCalculator:
         }
         assert result == expected
 
-    def test_analyze_drift_alerts_with_data(self):
+    def test_analyze_drift_alerts_with_data(self) -> None:
         """Test analyzing drift alerts with data."""
         alerts = [
             DriftAlert(
@@ -491,7 +491,7 @@ class TestDriftDetector:
         assert alert.severity == "MEDIUM"
         assert alert.drift_amount == 100.0  # (2.0 - 1.0) * 100
 
-    def test_determine_drift_severity(self, detector: DriftDetector):
+    def test_determine_drift_severity(self, detector: DriftDetector) -> None:
         """Test drift severity determination."""
         assert detector._determine_drift_severity(0.30, 0.25) == "HIGH"
         assert detector._determine_drift_severity(0.20, 0.25) == "MEDIUM"  # > 0.125
@@ -501,7 +501,7 @@ class TestDriftDetector:
 class TestPerformanceConfig:
     """Test cases for PerformanceConfig dataclass."""
 
-    def test_default_configuration(self):
+    def test_default_configuration(self) -> None:
         """Test default configuration values."""
         config = PerformanceConfig()
         assert config.window_size == 100
@@ -511,7 +511,7 @@ class TestPerformanceConfig:
         assert config.confidence_drift_threshold == 0.20
         assert config.latency_drift_multiplier == 2.0
 
-    def test_custom_configuration(self):
+    def test_custom_configuration(self) -> None:
         """Test custom configuration values."""
         config = PerformanceConfig(
             window_size=50,
@@ -526,7 +526,7 @@ class TestPerformanceConfig:
 class TestDriftAlert:
     """Test cases for DriftAlert dataclass."""
 
-    def test_drift_alert_creation(self):
+    def test_drift_alert_creation(self) -> None:
         """Test creating drift alert."""
         timestamp = datetime.now()
         alert = DriftAlert(
@@ -545,7 +545,7 @@ class TestDriftAlert:
         assert alert.drift_amount == 0.4
         assert alert.timestamp == timestamp
 
-    def test_drift_alert_string_representation(self):
+    def test_drift_alert_string_representation(self) -> None:
         """Test drift alert string representation."""
         alert = DriftAlert(
             drift_type="accuracy_drift",
@@ -563,7 +563,7 @@ class TestDriftAlert:
 class TestPerformanceMetrics:
     """Test cases for PerformanceMetrics helper class."""
 
-    def test_empty_metrics(self):
+    def test_empty_metrics(self) -> None:
         """Test empty metrics structure."""
         metrics = PerformanceMetrics.empty_metrics()
         assert metrics["overall_accuracy"] == 0.0
@@ -571,7 +571,7 @@ class TestPerformanceMetrics:
         assert metrics["total_predictions"] == 0
         assert metrics["baseline_established"] is False
 
-    def test_calculate_drift_percentage(self):
+    def test_calculate_drift_percentage(self) -> None:
         """Test drift percentage calculation."""
         assert (
             abs(PerformanceMetrics.calculate_drift_percentage(0.8, 0.9) - 12.5) < 1e-10
@@ -582,13 +582,13 @@ class TestPerformanceMetrics:
         )
         assert PerformanceMetrics.calculate_drift_percentage(0.0, 0.5) == 0.0
 
-    def test_is_significant_drift(self):
+    def test_is_significant_drift(self) -> None:
         """Test significant drift detection."""
         assert PerformanceMetrics.is_significant_drift(0.8, 0.6, 0.15) is True
         assert PerformanceMetrics.is_significant_drift(0.8, 0.75, 0.15) is False
         assert PerformanceMetrics.is_significant_drift(0.8, 0.95, 0.10) is True
 
-    def test_categorize_drift_severity(self):
+    def test_categorize_drift_severity(self) -> None:
         """Test drift severity categorization."""
         assert PerformanceMetrics.categorize_drift_severity(0.30, 0.25) == "HIGH"
         assert PerformanceMetrics.categorize_drift_severity(0.20, 0.25) == "MEDIUM"

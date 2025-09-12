@@ -114,7 +114,7 @@ class ModelMetrics:
 class LLMMetricsCollector:
     """Comprehensive metrics collector for LLM operations."""
 
-    def __init__(self, retention_hours: int = 24):
+    def __init__(self, retention_hours: int = 24) -> None:
         """Initialize the LLM metrics collector."""
         self.retention_hours = retention_hours
         self.retention_duration = timedelta(hours=retention_hours)
@@ -306,13 +306,13 @@ class LLMMetricsCollector:
         index = int((percentile / 100) * len(data))
         return data[min(index, len(data) - 1)]
 
-    def record_circuit_breaker_trip(self, provider: str):
+    def record_circuit_breaker_trip(self, provider: str) -> None:
         """Record a circuit breaker trip."""
         if provider in self._provider_metrics:
             self._provider_metrics[provider].circuit_breaker_trips += 1
             self._provider_metrics[provider].last_updated = datetime.now()
 
-    def record_rate_limit_hit(self, provider: str):
+    def record_rate_limit_hit(self, provider: str) -> None:
         """Record a rate limit hit."""
         if provider in self._provider_metrics:
             self._provider_metrics[provider].rate_limit_hits += 1

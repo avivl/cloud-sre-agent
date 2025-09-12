@@ -55,7 +55,7 @@ class RolloutMetrics:
 class RolloutManager:
     """Manages gradual rollout of the enhanced LLM system."""
     
-    def __init__(self, config: RolloutConfig):
+    def __init__(self, config: RolloutConfig) -> None:
         self.config = config
         self.metrics_collector = get_llm_metrics_collector()
         self.start_time = time.time()
@@ -231,7 +231,7 @@ class RolloutManager:
 class CanaryRollout(RolloutManager):
     """Canary rollout strategy - gradual traffic increase."""
     
-    def __init__(self, config: RolloutConfig):
+    def __init__(self, config: RolloutConfig) -> None:
         super().__init__(config)
         self.traffic_percentages = [0.1, 0.25, 0.5, 0.75, 1.0]  # Gradual increase
         self.current_stage = 0
@@ -284,7 +284,7 @@ class CanaryRollout(RolloutManager):
 class BlueGreenRollout(RolloutManager):
     """Blue-Green deployment strategy."""
     
-    def __init__(self, config: RolloutConfig):
+    def __init__(self, config: RolloutConfig) -> None:
         super().__init__(config)
         self.blue_active = True  # Start with blue (old system)
         self.green_active = False  # Green is new system
@@ -339,7 +339,7 @@ class BlueGreenRollout(RolloutManager):
 class FeatureFlagRollout(RolloutManager):
     """Feature flag-based rollout strategy."""
     
-    def __init__(self, config: RolloutConfig):
+    def __init__(self, config: RolloutConfig) -> None:
         super().__init__(config)
         self.feature_flags = {
             'enhanced_triage': False,

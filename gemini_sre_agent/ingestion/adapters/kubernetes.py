@@ -35,7 +35,7 @@ except ImportError:
 class KubernetesAdapter(LogIngestionInterface):
     """Adapter for Kubernetes pod logs."""
 
-    def __init__(self, config: KubernetesConfig):
+    def __init__(self, config: KubernetesConfig) -> None:
         if not KUBERNETES_AVAILABLE:
             raise ImportError("kubernetes client is required for Kubernetes adapter")
 

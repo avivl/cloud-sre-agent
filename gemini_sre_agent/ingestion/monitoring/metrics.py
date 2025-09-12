@@ -62,7 +62,7 @@ class MetricsCollector:
     - Component-specific metrics (adapter health, resilience stats)
     """
 
-    def __init__(self, retention_period: timedelta = timedelta(hours=24)):
+    def __init__(self, retention_period: timedelta = timedelta(hours=24)) -> None:
         """
         Initialize the metrics collector.
 

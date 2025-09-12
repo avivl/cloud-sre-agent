@@ -543,7 +543,7 @@ class PatternMatcherFactory:
 class PatternRegistry:
     """Registry for managing error patterns and matchers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the pattern registry."""
         self.matchers: Dict[str, PatternMatcher] = {}
         self.pattern_cache: Dict[str, List[PatternMatch]] = {}

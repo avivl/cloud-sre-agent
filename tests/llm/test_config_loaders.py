@@ -21,18 +21,18 @@ from gemini_sre_agent.llm.config_loaders import (
 class TestBaseConfigLoader:
     """Test the BaseConfigLoader class."""
 
-    def test_base_loader_initialization(self):
+    def test_base_loader_initialization(self) -> None:
         """Test BaseConfigLoader initialization."""
         loader = BaseConfigLoader("test_source", priority=1)
         assert loader.source == "test_source"
         assert loader.priority == 1
         assert loader._validators == []
 
-    def test_add_validator(self):
+    def test_add_validator(self) -> None:
         """Test adding validators."""
         loader = BaseConfigLoader("test_source")
 
-        def test_validator(data):
+        def test_validator(data: str) -> None:
             """
             Test Validator.
 
@@ -52,7 +52,7 @@ class TestBaseConfigLoader:
         errors = loader.validate({"valid": True})
         assert errors == []
 
-    def test_load_not_implemented(self):
+    def test_load_not_implemented(self) -> None:
         """Test that load method raises NotImplementedError."""
         loader = BaseConfigLoader("test_source")
         with pytest.raises(NotImplementedError):
@@ -62,14 +62,14 @@ class TestBaseConfigLoader:
 class TestEnvironmentConfigLoader:
     """Test the EnvironmentConfigLoader class."""
 
-    def test_environment_loader_initialization(self):
+    def test_environment_loader_initialization(self) -> None:
         """Test EnvironmentConfigLoader initialization."""
         loader = EnvironmentConfigLoader(prefix="TEST_", priority=2)
         assert loader.source == "environment"
         assert loader.priority == 2
         assert loader.prefix == "TEST_"
 
-    def test_load_basic_environment_vars(self):
+    def test_load_basic_environment_vars(self) -> None:
         """Test loading basic environment variables."""
         with patch.dict(
             os.environ,
@@ -90,7 +90,7 @@ class TestEnvironmentConfigLoader:
             assert result.data["enable_monitoring"] is False
             assert result.errors == []
 
-    def test_load_provider_environment_vars(self):
+    def test_load_provider_environment_vars(self) -> None:
         """Test loading provider-specific environment variables."""
         with patch.dict(
             os.environ,
@@ -116,7 +116,7 @@ class TestEnvironmentConfigLoader:
             assert openai_config["timeout"] == 60
             assert openai_config["max_retries"] == 5
 
-    def test_load_agent_environment_vars(self):
+    def test_load_agent_environment_vars(self) -> None:
         """Test loading agent-specific environment variables."""
         with patch.dict(
             os.environ,
@@ -139,7 +139,7 @@ class TestEnvironmentConfigLoader:
             assert triage_config["primary_model_type"] == "fast"
             assert triage_config["fallback_provider"] == "anthropic"
 
-    def test_set_nested_value(self):
+    def test_set_nested_value(self) -> None:
         """Test setting nested values."""
         loader = EnvironmentConfigLoader()
         data = {}
@@ -162,14 +162,14 @@ class TestEnvironmentConfigLoader:
 class TestFileConfigLoader:
     """Test the FileConfigLoader class."""
 
-    def test_file_loader_initialization(self):
+    def test_file_loader_initialization(self) -> None:
         """Test FileConfigLoader initialization."""
         loader = FileConfigLoader("/path/to/config.yaml", priority=1)
         assert loader.source == "file:/path/to/config.yaml"
         assert loader.priority == 1
         assert loader.file_path == Path("/path/to/config.yaml")
 
-    def test_load_yaml_file(self):
+    def test_load_yaml_file(self) -> None:
         """Test loading YAML configuration file."""
         config_content = """
 default_provider: "openai"
@@ -204,7 +204,7 @@ agents: {}
         finally:
             os.unlink(temp_path)
 
-    def test_load_json_file(self):
+    def test_load_json_file(self) -> None:
         """Test loading JSON configuration file."""
         config_content = """
 {
@@ -239,7 +239,7 @@ agents: {}
         finally:
             os.unlink(temp_path)
 
-    def test_load_nonexistent_file(self):
+    def test_load_nonexistent_file(self) -> None:
         """Test loading non-existent file."""
         loader = FileConfigLoader("/nonexistent/path.yaml")
         result = loader.load()
@@ -248,7 +248,7 @@ agents: {}
         assert len(result.errors) == 1
         assert "Configuration file not found" in result.errors[0]
 
-    def test_load_invalid_yaml(self):
+    def test_load_invalid_yaml(self) -> None:
         """Test loading invalid YAML file."""
         config_content = """
 invalid: yaml: content: [unclosed
@@ -269,7 +269,7 @@ invalid: yaml: content: [unclosed
         finally:
             os.unlink(temp_path)
 
-    def test_load_unsupported_format(self):
+    def test_load_unsupported_format(self) -> None:
         """Test loading unsupported file format."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("some text content")
@@ -290,7 +290,7 @@ invalid: yaml: content: [unclosed
 class TestProgrammaticConfigLoader:
     """Test the ProgrammaticConfigLoader class."""
 
-    def test_programmatic_loader_initialization(self):
+    def test_programmatic_loader_initialization(self) -> None:
         """Test ProgrammaticConfigLoader initialization."""
         config_data = {"default_provider": "openai"}
         loader = ProgrammaticConfigLoader(config_data, priority=3)
@@ -299,7 +299,7 @@ class TestProgrammaticConfigLoader:
         assert loader.priority == 3
         assert loader.config_data == config_data
 
-    def test_load_programmatic_config(self):
+    def test_load_programmatic_config(self) -> None:
         """Test loading programmatic configuration."""
         config_data = {
             "default_provider": "openai",
@@ -317,11 +317,11 @@ class TestProgrammaticConfigLoader:
         assert result.data == config_data
         assert result.errors == []
 
-    def test_load_with_validation_errors(self):
+    def test_load_with_validation_errors(self) -> None:
         """Test loading with validation errors."""
         config_data = {"invalid": "data"}
 
-        def validator(data):
+        def validator(data: str) -> None:
             """
             Validator.
 
@@ -342,13 +342,13 @@ class TestProgrammaticConfigLoader:
 class TestConfigLoaderManager:
     """Test the ConfigLoaderManager class."""
 
-    def test_manager_initialization(self):
+    def test_manager_initialization(self) -> None:
         """Test ConfigLoaderManager initialization."""
         manager = ConfigLoaderManager()
         assert manager.loaders == []
         assert manager._results == []
 
-    def test_add_loader(self):
+    def test_add_loader(self) -> None:
         """Test adding loaders."""
         manager = ConfigLoaderManager()
         loader1 = EnvironmentConfigLoader()
@@ -361,7 +361,7 @@ class TestConfigLoaderManager:
         assert loader1 in manager.loaders
         assert loader2 in manager.loaders
 
-    def test_load_all_with_priority(self):
+    def test_load_all_with_priority(self) -> None:
         """Test loading from multiple loaders with priority."""
         manager = ConfigLoaderManager()
 
@@ -389,7 +389,7 @@ class TestConfigLoaderManager:
             # This is the correct behavior - later loaders can override earlier ones
             assert result["default_provider"] == "environment"
 
-    def test_merge_config_data(self):
+    def test_merge_config_data(self) -> None:
         """Test merging configuration data."""
         manager = ConfigLoaderManager()
 
@@ -413,7 +413,7 @@ class TestConfigLoaderManager:
         assert result["providers"]["openai"]["timeout"] == 30  # Preserved from base
         assert result["providers"]["anthropic"]["api_key"] == "new-key"
 
-    def test_get_loader_results(self):
+    def test_get_loader_results(self) -> None:
         """Test getting loader results."""
         manager = ConfigLoaderManager()
         loader = ProgrammaticConfigLoader({"test": "data"})
@@ -426,7 +426,7 @@ class TestConfigLoaderManager:
         assert results[0].source == "programmatic"
         assert results[0].data == {"test": "data"}
 
-    def test_get_all_errors(self):
+    def test_get_all_errors(self) -> None:
         """Test getting all errors from loaders."""
         manager = ConfigLoaderManager()
 
@@ -440,7 +440,7 @@ class TestConfigLoaderManager:
         assert len(errors) > 0
         assert any("Configuration file not found" in error for error in errors)
 
-    def test_get_loader_summary(self):
+    def test_get_loader_summary(self) -> None:
         """Test getting loader summary."""
         manager = ConfigLoaderManager()
 

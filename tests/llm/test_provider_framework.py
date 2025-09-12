@@ -32,7 +32,7 @@ class TestBaseProviderTemplate:
     """Test the BaseProviderTemplate class."""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Create a mock LLMProviderConfig."""
         return LLMProviderConfig(
             provider=ProviderType.GEMINI,
@@ -44,7 +44,7 @@ class TestBaseProviderTemplate:
         )
 
     @pytest.fixture
-    def concrete_provider(self, mock_config):
+    def concrete_provider(self, mock_config: str) -> None:
         """Create a concrete provider for testing."""
 
         class TestProvider(BaseProviderTemplate):
@@ -68,7 +68,7 @@ class TestBaseProviderTemplate:
 
         return TestProvider(mock_config)
 
-    def test_initialization(self, concrete_provider, mock_config):
+    def test_initialization(self, concrete_provider: str, mock_config: str) -> None:
         """Test provider initialization."""
         assert concrete_provider.api_key == "test_key"
         assert concrete_provider.base_url == "https://api.test.com"
@@ -100,7 +100,7 @@ class TestBaseProviderTemplate:
             health = await concrete_provider.health_check()
             assert isinstance(health, bool)
 
-    def test_get_available_models(self, concrete_provider):
+    def test_get_available_models(self, concrete_provider: str) -> None:
         """Test getting available models."""
         models = concrete_provider.get_available_models()
         assert ModelType.FAST in models
@@ -108,27 +108,27 @@ class TestBaseProviderTemplate:
         assert models[ModelType.FAST] == "test-fast"
         assert models[ModelType.SMART] == "test-smart"
 
-    def test_supports_streaming(self, concrete_provider):
+    def test_supports_streaming(self, concrete_provider: str) -> None:
         """Test streaming support check."""
         assert isinstance(concrete_provider.supports_streaming(), bool)
 
-    def test_supports_tools(self, concrete_provider):
+    def test_supports_tools(self, concrete_provider: str) -> None:
         """Test tools support check."""
         assert isinstance(concrete_provider.supports_tools(), bool)
 
-    def test_token_count(self, concrete_provider):
+    def test_token_count(self, concrete_provider: str) -> None:
         """Test token counting."""
         count = concrete_provider.token_count("Hello world")
         assert isinstance(count, int)
         assert count > 0
 
-    def test_cost_estimate(self, concrete_provider):
+    def test_cost_estimate(self, concrete_provider: str) -> None:
         """Test cost estimation."""
         cost = concrete_provider.cost_estimate(100, 50)
         assert isinstance(cost, float)
         assert cost >= 0
 
-    def test_validate_config(self, mock_config):
+    def test_validate_config(self, mock_config: str) -> None:
         """Test configuration validation."""
 
         class TestProvider(BaseProviderTemplate):
@@ -144,7 +144,7 @@ class TestBaseProviderTemplate:
         # Should not raise an exception
         TestProvider.validate_config(mock_config)
 
-    def test_validate_config_invalid(self):
+    def test_validate_config_invalid(self) -> None:
         """Test configuration validation with invalid config."""
 
         class TestProvider(BaseProviderTemplate):
@@ -174,7 +174,7 @@ class TestProviderTemplates:
     """Test the pre-built provider templates."""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Create a mock LLMProviderConfig."""
         return LLMProviderConfig(
             provider=ProviderType.GEMINI,
@@ -279,11 +279,11 @@ class TestProviderAutoRegistry:
     """Test the ProviderAutoRegistry class."""
 
     @pytest.fixture
-    def auto_registry(self):
+    def auto_registry(self) -> None:
         """Create a ProviderAutoRegistry instance."""
         return ProviderAutoRegistry()
 
-    def test_discover_builtin_providers(self, auto_registry):
+    def test_discover_builtin_providers(self, auto_registry: str) -> None:
         """Test discovering built-in providers."""
         with patch("importlib.import_module") as mock_import:
             mock_module = MagicMock()
@@ -307,14 +307,14 @@ class TestProviderAutoRegistry:
                     # Should have discovered the provider
                     assert len(auto_registry.discovered_providers) > 0
 
-    def test_extract_provider_name(self, auto_registry):
+    def test_extract_provider_name(self, auto_registry: str) -> None:
         """Test provider name extraction."""
         assert auto_registry._extract_provider_name("OpenAIProvider") == "openai"
         assert auto_registry._extract_provider_name("AnthropicProvider") == "anthropic"
         assert auto_registry._extract_provider_name("CustomProvider") == "custom"
         assert auto_registry._extract_provider_name("NotAProvider") is None
 
-    def test_register_discovered_providers(self, auto_registry):
+    def test_register_discovered_providers(self, auto_registry: str) -> None:
         """Test registering discovered providers."""
 
         # Mock a provider class
@@ -329,7 +329,7 @@ class TestProviderAutoRegistry:
             auto_registry.register_discovered_providers()
             mock_register.assert_called_once_with("test", MockProvider)
 
-    def test_get_provider_info(self, auto_registry):
+    def test_get_provider_info(self, auto_registry: str) -> None:
         """Test getting provider information."""
 
         class MockProvider:
@@ -344,7 +344,7 @@ class TestProviderAutoRegistry:
         assert info["name"] == "test"
         assert info["class"] == "MockProvider"
 
-    def test_validate_discovered_providers(self, auto_registry):
+    def test_validate_discovered_providers(self, auto_registry: str) -> None:
         """Test validating discovered providers."""
 
         class MockProvider:
@@ -369,11 +369,11 @@ class TestProviderValidator:
     """Test the ProviderValidator class."""
 
     @pytest.fixture
-    def validator(self):
+    def validator(self) -> None:
         """Create a ProviderValidator instance."""
         return ProviderValidator()
 
-    def test_validate_inheritance(self, validator):
+    def test_validate_inheritance(self, validator: str) -> None:
         """Test inheritance validation."""
 
         class ValidProvider(BaseProviderTemplate):
@@ -396,7 +396,7 @@ class TestProviderValidator:
         assert len(errors) > 0
         assert "must inherit from LLMProvider" in errors[0]
 
-    def test_validate_abstract_methods(self, validator):
+    def test_validate_abstract_methods(self, validator: str) -> None:
         """Test abstract method validation."""
 
         class ValidProvider(BaseProviderTemplate):
@@ -419,11 +419,11 @@ class TestProviderValidator:
         errors = validator._validate_abstract_methods(InvalidProvider)
         assert len(errors) > 0
 
-    def test_validate_constructor(self, validator):
+    def test_validate_constructor(self, validator: str) -> None:
         """Test constructor validation."""
 
         class ValidProvider(BaseProviderTemplate):
-            def __init__(self, config):
+            def __init__(self, config: str) -> None:
                 super().__init__(config)
 
             async def _make_api_request(self, request: LLMRequest) -> dict:
@@ -438,12 +438,12 @@ class TestProviderValidator:
         errors = validator._validate_constructor(ValidProvider)
         assert len(errors) == 0
 
-    def test_validate_config_validation(self, validator):
+    def test_validate_config_validation(self, validator: str) -> None:
         """Test config validation method validation."""
 
         class ValidProvider(BaseProviderTemplate):
             @classmethod
-            def validate_config(cls, config):
+            def validate_config(cls: str, config: str) -> None:
                 """
                 Validate Config.
 
@@ -466,7 +466,7 @@ class TestProviderValidator:
         errors = validator._validate_config_validation(ValidProvider)
         assert len(errors) == 0
 
-    def test_generate_validation_report(self, validator):
+    def test_generate_validation_report(self, validator: str) -> None:
         """Test validation report generation."""
 
         class ValidProvider(BaseProviderTemplate):
@@ -495,32 +495,32 @@ class TestProviderPluginLoader:
     """Test the ProviderPluginLoader class."""
 
     @pytest.fixture
-    def plugin_loader(self):
+    def plugin_loader(self) -> None:
         """Create a ProviderPluginLoader instance."""
         return ProviderPluginLoader()
 
-    def test_add_plugin_path(self, plugin_loader):
+    def test_add_plugin_path(self, plugin_loader: str) -> None:
         """Test adding plugin paths."""
         plugin_loader.add_plugin_path("/test/path")
         assert "/test/path" in plugin_loader.plugin_paths
 
-    def test_extract_provider_name(self, plugin_loader):
+    def test_extract_provider_name(self, plugin_loader: str) -> None:
         """Test provider name extraction."""
         assert plugin_loader._extract_provider_name("TestProvider") == "test"
         assert plugin_loader._extract_provider_name("CustomProvider") == "custom"
         assert plugin_loader._extract_provider_name("NotAProvider") is None
 
-    def test_list_loaded_plugins(self, plugin_loader):
+    def test_list_loaded_plugins(self, plugin_loader: str) -> None:
         """Test listing loaded plugins."""
         plugins = plugin_loader.list_loaded_plugins()
         assert isinstance(plugins, list)
 
-    def test_get_plugin_info(self, plugin_loader):
+    def test_get_plugin_info(self, plugin_loader: str) -> None:
         """Test getting plugin information."""
         info = plugin_loader.get_plugin_info("nonexistent")
         assert info is None
 
-    def test_discover_plugins(self, plugin_loader):
+    def test_discover_plugins(self, plugin_loader: str) -> None:
         """Test plugin discovery."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a test plugin file
@@ -541,12 +541,12 @@ class TestProviderCapabilityDiscovery:
     """Test the ProviderCapabilityDiscovery class."""
 
     @pytest.fixture
-    def capability_discovery(self):
+    def capability_discovery(self) -> None:
         """Create a ProviderCapabilityDiscovery instance."""
         return ProviderCapabilityDiscovery()
 
     @pytest.fixture
-    def mock_provider(self):
+    def mock_provider(self) -> None:
         """Create a mock provider for testing."""
         provider = MagicMock()
         provider.provider_name = "test_provider"
@@ -593,7 +593,7 @@ class TestProviderCapabilityDiscovery:
         result = await capability_discovery._test_embeddings_capability(mock_provider)
         assert result is False
 
-    def test_get_capability_description(self, capability_discovery):
+    def test_get_capability_description(self, capability_discovery: str) -> None:
         """Test getting capability descriptions."""
         desc = capability_discovery._get_capability_description("streaming")
         assert "streaming" in desc.lower()
@@ -601,7 +601,7 @@ class TestProviderCapabilityDiscovery:
         desc = capability_discovery._get_capability_description("unknown")
         assert "unknown" in desc
 
-    def test_find_providers_with_capability(self, capability_discovery):
+    def test_find_providers_with_capability(self, capability_discovery: str) -> None:
         """Test finding providers with specific capabilities."""
         # Mock capability registry
         capability_discovery.capability_registry = {
@@ -625,7 +625,7 @@ class TestProviderCapabilityDiscovery:
         assert "provider1" not in tools_providers
         assert "provider2" in tools_providers
 
-    def test_find_providers_matching_requirements(self, capability_discovery):
+    def test_find_providers_matching_requirements(self, capability_discovery: str) -> None:
         """Test finding providers matching requirements."""
         # Mock capability registry
         capability_discovery.capability_registry = {
@@ -645,7 +645,7 @@ class TestProviderCapabilityDiscovery:
         assert "provider1" in matching
         assert "provider2" not in matching
 
-    def test_get_capability_compatibility_matrix(self, capability_discovery):
+    def test_get_capability_compatibility_matrix(self, capability_discovery: str) -> None:
         """Test getting compatibility matrix."""
         # Mock capability registry
         capability_discovery.capability_registry = {
@@ -660,7 +660,7 @@ class TestProviderCapabilityDiscovery:
         assert matrix["provider1"]["streaming"] is True
         assert matrix["provider1"]["tools"] is False
 
-    def test_validate_provider_for_use_case(self, capability_discovery):
+    def test_validate_provider_for_use_case(self, capability_discovery: str) -> None:
         """Test validating provider for use case."""
         # Mock capability registry
         capability_discovery.capability_registry = {
@@ -682,7 +682,7 @@ class TestProviderCapabilityDiscovery:
         assert validation["valid"] is False
         assert validation["score"] == 0.0
 
-    def test_export_capability_report(self, capability_discovery):
+    def test_export_capability_report(self, capability_discovery: str) -> None:
         """Test exporting capability report."""
         # Mock capability registry
         capability_discovery.capability_registry = {
@@ -746,7 +746,7 @@ class TestProviderFrameworkIntegration:
         errors = validator.validate_provider_class(TestProvider)
         assert len(errors) == 0  # Should be valid
 
-    def test_provider_line_count_requirement(self):
+    def test_provider_line_count_requirement(self) -> None:
         """Test that providers can be implemented in < 50 lines."""
         # Count lines in the simple provider example
         simple_provider_path = (

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class OllamaProvider(LLMProvider):
     """Ollama local provider implementation."""
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.base_url = str(config.base_url or "http://localhost:11434")
         self.timeout = config.timeout or 30

@@ -19,16 +19,16 @@ class TestErrorClassifier:
     """Test cases for ErrorClassifier."""
 
     @pytest.fixture
-    def error_classifier(self):
+    def error_classifier(self) -> None:
         """Create an ErrorClassifier instance for testing."""
         return ErrorClassifier()
 
-    def test_error_classifier_initialization(self, error_classifier):
+    def test_error_classifier_initialization(self, error_classifier: str) -> None:
         """Test ErrorClassifier initialization."""
         assert error_classifier.logger.name == "ErrorClassifier"
         assert len(error_classifier.classification_rules) == 10
 
-    def test_classify_network_errors(self, error_classifier):
+    def test_classify_network_errors(self, error_classifier: str) -> None:
         """Test classification of network errors."""
         error = ConnectionError("Connection failed")
         classification = error_classifier._classify_network_errors(error)
@@ -40,7 +40,7 @@ class TestErrorClassifier:
         assert classification.max_retries == 5
         assert classification.should_open_circuit is True
 
-    def test_classify_timeout_errors(self, error_classifier):
+    def test_classify_timeout_errors(self, error_classifier: str) -> None:
         """Test classification of timeout errors."""
         error = asyncio.TimeoutError("Operation timed out")
         classification = error_classifier._classify_timeout_errors(error)
@@ -51,7 +51,7 @@ class TestErrorClassifier:
         assert classification.retry_delay == 2.0
         assert classification.max_retries == 3
 
-    def test_classify_rate_limit_errors(self, error_classifier):
+    def test_classify_rate_limit_errors(self, error_classifier: str) -> None:
         """Test classification of rate limit errors."""
         error = Exception("Rate limit exceeded")
         classification = error_classifier._classify_rate_limit_errors(error)
@@ -63,7 +63,7 @@ class TestErrorClassifier:
         assert classification.max_retries == 3
         assert classification.should_open_circuit is False
 
-    def test_classify_http_errors(self, error_classifier):
+    def test_classify_http_errors(self, error_classifier: str) -> None:
         """Test classification of HTTP errors."""
         error = MagicMock()
         error.status = 500
@@ -75,7 +75,7 @@ class TestErrorClassifier:
         assert classification.retry_delay == 2.0
         assert classification.max_retries == 3
 
-    def test_classify_authentication_errors(self, error_classifier):
+    def test_classify_authentication_errors(self, error_classifier: str) -> None:
         """Test classification of authentication errors."""
         error = Exception("Unauthorized access")
         classification = error_classifier._classify_authentication_errors(error)
@@ -86,7 +86,7 @@ class TestErrorClassifier:
         assert classification.retry_delay == 0.0
         assert classification.max_retries == 0
 
-    def test_classify_validation_errors(self, error_classifier):
+    def test_classify_validation_errors(self, error_classifier: str) -> None:
         """Test classification of validation errors."""
         error = ValueError("Invalid value")
         classification = error_classifier._classify_validation_errors(error)
@@ -97,7 +97,7 @@ class TestErrorClassifier:
         assert classification.retry_delay == 0.0
         assert classification.max_retries == 0
 
-    def test_classify_error_unknown_error(self, error_classifier):
+    def test_classify_error_unknown_error(self, error_classifier: str) -> None:
         """Test classification of unknown errors."""
         error = Exception("Unknown error")
         classification = error_classifier.classify_error(error)

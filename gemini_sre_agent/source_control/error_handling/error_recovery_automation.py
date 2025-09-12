@@ -38,7 +38,7 @@ class ErrorPattern:
 class RecoveryAction:
     """Base class for recovery actions."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.logger = logging.getLogger(f"RecoveryAction.{name}")
 
@@ -58,7 +58,7 @@ class RecoveryAction:
 class RetryWithBackoffAction(RecoveryAction):
     """Recovery action that retries with exponential backoff."""
 
-    def __init__(self, max_retries: int = 3, base_delay: float = 1.0):
+    def __init__(self, max_retries: int = 3, base_delay: float = 1.0) -> None:
         super().__init__("retry_with_backoff")
         self.max_retries = max_retries
         self.base_delay = base_delay
@@ -91,7 +91,7 @@ class RetryWithBackoffAction(RecoveryAction):
 class CredentialRefreshAction(RecoveryAction):
     """Recovery action that refreshes authentication credentials."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("credential_refresh")
 
     async def can_execute(self, context: Dict[str, Any]) -> bool:
@@ -121,7 +121,7 @@ class CredentialRefreshAction(RecoveryAction):
 class ConnectionResetAction(RecoveryAction):
     """Recovery action that resets network connections."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("connection_reset")
 
     async def execute(self, context: Dict[str, Any]) -> bool:
@@ -148,7 +148,7 @@ class ConnectionResetAction(RecoveryAction):
 class CircuitBreakerResetAction(RecoveryAction):
     """Recovery action that resets circuit breakers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("circuit_breaker_reset")
 
     async def execute(self, context: Dict[str, Any]) -> bool:
@@ -174,7 +174,7 @@ class CircuitBreakerResetAction(RecoveryAction):
 class ConfigurationUpdateAction(RecoveryAction):
     """Recovery action that updates configuration based on error patterns."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("configuration_update")
 
     async def execute(self, context: Dict[str, Any]) -> bool:
@@ -213,7 +213,7 @@ class ConfigurationUpdateAction(RecoveryAction):
 class SelfHealingManager:
     """Manages automated error recovery and self-healing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("SelfHealingManager")
         self.error_patterns: List[ErrorPattern] = []
         self.recovery_actions: List[RecoveryAction] = []

@@ -10,7 +10,7 @@ class DashboardDataGenerator:
     Generates data for monitoring dashboards.
     """
 
-    def __init__(self, metrics_manager: MetricsManager):
+    def __init__(self, metrics_manager: MetricsManager) -> None:
         """
         Initialize the DashboardDataGenerator.
 

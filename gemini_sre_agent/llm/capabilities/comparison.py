@@ -15,7 +15,7 @@ class CapabilityComparer:
     Compares capabilities of different LLM models.
     """
 
-    def __init__(self, capability_database: CapabilityDatabase):
+    def __init__(self, capability_database: CapabilityDatabase) -> None:
         """
         Initialize the CapabilityComparer.
 

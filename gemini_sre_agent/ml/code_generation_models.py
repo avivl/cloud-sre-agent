@@ -51,13 +51,13 @@ class ValidationResult:
     quality_score: float = 0.0
     validation_time: datetime = field(default_factory=datetime.now)
 
-    def add_issue(self, issue: ValidationIssue):
+    def add_issue(self, issue: ValidationIssue) -> None:
         """Add a validation issue"""
         self.issues.append(issue)
         if issue.severity == ValidationSeverity.CRITICAL:
             self.is_valid = False
 
-    def add_suggestion(self, suggestion: str):
+    def add_suggestion(self, suggestion: str) -> None:
         """Add a suggestion for improvement"""
         self.suggestions.append(suggestion)
 
@@ -94,17 +94,17 @@ class CodeFix:
     iteration_count: int = 0
     quality_score: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post-initialization hook to set quality score if validation results are provided"""
         if self.validation_results:
             self.quality_score = self.validation_results.quality_score
 
-    def add_validation_result(self, result: ValidationResult):
+    def add_validation_result(self, result: ValidationResult) -> None:
         """Add validation results to the code fix"""
         self.validation_results = result
         self.quality_score = result.quality_score
 
-    def increment_iteration(self):
+    def increment_iteration(self) -> None:
         """Increment the iteration count"""
         self.iteration_count += 1
 
@@ -203,7 +203,7 @@ class CodeGenerationResult:
             return False
         return self.code_fix.is_high_quality()
 
-    def add_warning(self, warning: str):
+    def add_warning(self, warning: str) -> None:
         """Add a warning message"""
         self.warnings.append(warning)
 

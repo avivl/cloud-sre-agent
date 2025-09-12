@@ -27,7 +27,7 @@ class HTTPAPITemplate(BaseProviderTemplate):
     Perfect for REST APIs that follow standard patterns.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
@@ -73,7 +73,7 @@ class OpenAICompatibleTemplate(BaseProviderTemplate):
     Perfect for providers that follow OpenAI's API format exactly.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
@@ -119,7 +119,7 @@ class RESTAPITemplate(BaseProviderTemplate):
     Provides flexibility for non-standard API formats.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
@@ -178,7 +178,7 @@ class StreamingTemplate(BaseProviderTemplate):
     Extends base template with streaming capabilities.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
@@ -253,7 +253,7 @@ class AnthropicCompatibleTemplate(BaseProviderTemplate):
     Follows Anthropic's API format and patterns.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.client = httpx.AsyncClient(
             base_url=self.base_url,

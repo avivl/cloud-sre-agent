@@ -38,7 +38,7 @@ class CircuitState:
 class CircuitBreaker:
     """Circuit breaker pattern for provider resilience."""
 
-    def __init__(self, config: CircuitBreakerConfig):
+    def __init__(self, config: CircuitBreakerConfig) -> None:
         self.config = config
         self._states: Dict[str, CircuitState] = {}
         self._lock = asyncio.Lock()

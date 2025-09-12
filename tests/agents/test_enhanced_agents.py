@@ -28,7 +28,7 @@ from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
 
 
 @pytest.fixture
-def mock_llm_config():
+def mock_llm_config() -> None:
     """Create mock LLM configuration."""
     from pydantic import HttpUrl
 
@@ -52,7 +52,7 @@ def mock_llm_config():
 
 
 @pytest.fixture
-def mock_enhanced_llm_service():
+def mock_enhanced_llm_service() -> None:
     """Create mock enhanced LLM service."""
     service = MagicMock()
     service.model_registry = MagicMock()
@@ -69,7 +69,7 @@ def mock_enhanced_llm_service():
 
 
 @pytest.fixture
-def mock_strategy_manager():
+def mock_strategy_manager() -> None:
     """Create mock strategy manager."""
     manager = MagicMock()
     manager.select_model.return_value = MagicMock(
@@ -215,7 +215,7 @@ class TestEnhancedBaseAgent:
         assert selected_model == "gpt-4o"
         mock_strategy_manager.select_model.assert_called_once()
 
-    def test_conversation_context_management(self, mock_llm_config):
+    def test_conversation_context_management(self, mock_llm_config: str) -> None:
         """Test conversation context management."""
         with patch("gemini_sre_agent.agents.enhanced_base.EnhancedLLMService"), patch(
             "gemini_sre_agent.agents.enhanced_base.StrategyManager"
@@ -246,7 +246,7 @@ class TestEnhancedBaseAgent:
             agent.clear_conversation_context()
             assert len(agent.get_conversation_context()) == 0
 
-    def test_configuration_updates(self, mock_llm_config):
+    def test_configuration_updates(self, mock_llm_config: str) -> None:
         """Test configuration update methods."""
         with patch("gemini_sre_agent.agents.enhanced_base.EnhancedLLMService"), patch(
             "gemini_sre_agent.agents.enhanced_base.StrategyManager"
@@ -273,7 +273,7 @@ class TestEnhancedBaseAgent:
             assert agent.max_cost == 0.01
             assert agent.min_performance == 0.8
 
-    def test_stats_summary(self, mock_llm_config):
+    def test_stats_summary(self, mock_llm_config: str) -> None:
         """Test comprehensive stats summary."""
         with patch("gemini_sre_agent.agents.enhanced_base.EnhancedLLMService"), patch(
             "gemini_sre_agent.agents.enhanced_base.StrategyManager"
@@ -305,7 +305,7 @@ class TestEnhancedSpecializedAgents:
     """Test enhanced specialized agent classes."""
 
     @patch("gemini_sre_agent.agents.enhanced_specialized.EnhancedBaseAgent.__init__")
-    def test_enhanced_text_agent(self, mock_init, mock_llm_config):
+    def test_enhanced_text_agent(self, mock_init: str, mock_llm_config: str) -> None:
         """Test EnhancedTextAgent initialization."""
         mock_init.return_value = None
 
@@ -320,7 +320,7 @@ class TestEnhancedSpecializedAgents:
         assert call_args[1]["optimization_goal"] == OptimizationGoal.QUALITY
 
     @patch("gemini_sre_agent.agents.enhanced_specialized.EnhancedBaseAgent.__init__")
-    def test_enhanced_analysis_agent(self, mock_init, mock_llm_config):
+    def test_enhanced_analysis_agent(self, mock_init: str, mock_llm_config: str) -> None:
         """Test EnhancedAnalysisAgent initialization."""
         mock_init.return_value = None
 
@@ -335,7 +335,7 @@ class TestEnhancedSpecializedAgents:
         assert call_args[1]["optimization_goal"] == OptimizationGoal.QUALITY
 
     @patch("gemini_sre_agent.agents.enhanced_specialized.EnhancedBaseAgent.__init__")
-    def test_enhanced_code_agent(self, mock_init, mock_llm_config):
+    def test_enhanced_code_agent(self, mock_init: str, mock_llm_config: str) -> None:
         """Test EnhancedCodeAgent initialization."""
         mock_init.return_value = None
 
@@ -350,7 +350,7 @@ class TestEnhancedSpecializedAgents:
         assert call_args[1]["optimization_goal"] == OptimizationGoal.QUALITY
 
     @patch("gemini_sre_agent.agents.enhanced_specialized.EnhancedBaseAgent.__init__")
-    def test_enhanced_triage_agent(self, mock_init, mock_llm_config):
+    def test_enhanced_triage_agent(self, mock_init: str, mock_llm_config: str) -> None:
         """Test EnhancedTriageAgent initialization."""
         mock_init.return_value = None
 
@@ -365,7 +365,7 @@ class TestEnhancedSpecializedAgents:
         assert call_args[1]["optimization_goal"] == OptimizationGoal.PERFORMANCE
 
     @patch("gemini_sre_agent.agents.enhanced_specialized.EnhancedBaseAgent.__init__")
-    def test_enhanced_remediation_agent(self, mock_init, mock_llm_config):
+    def test_enhanced_remediation_agent(self, mock_init: str, mock_llm_config: str) -> None:
         """Test EnhancedRemediationAgent initialization."""
         mock_init.return_value = None
 
@@ -383,7 +383,7 @@ class TestEnhancedSpecializedAgents:
 class TestEnhancedAgentAdapter:
     """Test EnhancedAgentAdapter functionality."""
 
-    def test_adapter_initialization(self, mock_llm_config):
+    def test_adapter_initialization(self, mock_llm_config: str) -> None:
         """Test adapter initialization."""
         # Create a mock legacy agent
         legacy_agent = MagicMock()
@@ -470,7 +470,7 @@ class TestEnhancedAgentAdapter:
         assert result.text == "Legacy response"
         legacy_agent.execute.assert_called_once()
 
-    def test_adapter_feature_toggle(self, mock_llm_config):
+    def test_adapter_feature_toggle(self, mock_llm_config: str) -> None:
         """Test enabling/disabling enhanced features."""
         # Create a mock legacy agent
         legacy_agent = MagicMock()
@@ -497,7 +497,7 @@ class TestEnhancedAgentAdapter:
 class TestAgentMigrationHelper:
     """Test AgentMigrationHelper functionality."""
 
-    def test_create_enhanced_agent_from_legacy(self, mock_llm_config):
+    def test_create_enhanced_agent_from_legacy(self, mock_llm_config: str) -> None:
         """Test creating enhanced agent from legacy agent."""
         # Create a mock legacy agent
         legacy_agent = MagicMock()
@@ -524,7 +524,7 @@ class TestAgentMigrationHelper:
             assert call_args[1]["max_retries"] == 3
             assert call_args[1]["collect_stats"] is True
 
-    def test_validate_migration_compatibility(self, mock_llm_config):
+    def test_validate_migration_compatibility(self, mock_llm_config: str) -> None:
         """Test migration compatibility validation."""
         # Create a compatible legacy agent
         compatible_agent = MagicMock()
@@ -549,7 +549,7 @@ class TestAgentMigrationHelper:
         assert result["compatible"] is False
         assert len(result["required_changes"]) > 0
 
-    def test_generate_migration_report(self, mock_llm_config):
+    def test_generate_migration_report(self, mock_llm_config: str) -> None:
         """Test migration report generation."""
         # Create mock agents
         compatible_agent = MagicMock()
@@ -581,7 +581,7 @@ class TestAgentMigrationHelper:
 class TestBackwardCompatibilityWrapper:
     """Test BackwardCompatibilityWrapper functionality."""
 
-    def test_wrapper_initialization(self, mock_llm_config):
+    def test_wrapper_initialization(self, mock_llm_config: str) -> None:
         """Test wrapper initialization."""
         with patch(
             "gemini_sre_agent.agents.enhanced_base.EnhancedBaseAgent"
@@ -639,7 +639,7 @@ class TestBackwardCompatibilityWrapper:
             assert result.text == "Wrapped response"
             mock_enhanced_agent.execute.assert_called_once()
 
-    def test_wrapper_stats_summary(self, mock_llm_config):
+    def test_wrapper_stats_summary(self, mock_llm_config: str) -> None:
         """Test wrapper stats summary method."""
         with patch(
             "gemini_sre_agent.agents.enhanced_base.EnhancedBaseAgent"

@@ -7,7 +7,7 @@ from gemini_sre_agent.triage_agent import TriageAgent, TriagePacket
 
 
 @pytest.fixture
-def mock_aiplatform():
+def mock_aiplatform() -> None:
     """
     Mock Aiplatform.
 
@@ -17,7 +17,7 @@ def mock_aiplatform():
 
 
 @pytest.fixture
-def mock_gemini_response():
+def mock_gemini_response() -> None:
     """
     Mock Gemini Response.
 

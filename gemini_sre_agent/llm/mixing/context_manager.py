@@ -60,7 +60,7 @@ class ContextSharingRule:
 class ContextManager:
     """Manages context for multi-model interactions."""
 
-    def __init__(self, max_contexts: int = 100, default_ttl: int = 3600):
+    def __init__(self, max_contexts: int = 100, default_ttl: int = 3600) -> None:
         """
         Initialize the context manager.
 

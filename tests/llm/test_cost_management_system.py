@@ -38,7 +38,7 @@ class TestDynamicCostManager:
     """Test the DynamicCostManager class."""
 
     @pytest.fixture
-    def cost_manager(self):
+    def cost_manager(self) -> None:
         """Create a DynamicCostManager instance for testing."""
         config = CostManagementConfig(
             cache_duration_minutes=5,
@@ -94,7 +94,7 @@ class TestDynamicCostManager:
             assert "openai" in cost_manager.pricing_cache
             assert "gpt-4" in cost_manager.pricing_cache["openai"]
 
-    def test_get_pricing_info(self, cost_manager):
+    def test_get_pricing_info(self, cost_manager: str) -> None:
         """Test getting pricing information."""
         # Add some pricing data
         cost_manager.pricing_cache = {
@@ -116,7 +116,7 @@ class TestDynamicCostManager:
         pricing = cost_manager.get_pricing_info("nonexistent", "model")
         assert pricing is None
 
-    def test_is_pricing_stale(self, cost_manager):
+    def test_is_pricing_stale(self, cost_manager: str) -> None:
         """Test pricing staleness check."""
         # Fresh pricing
         fresh_pricing = ModelPricing(
@@ -137,7 +137,7 @@ class TestCostOptimizer:
     """Test the CostOptimizer class."""
 
     @pytest.fixture
-    def cost_optimizer(self):
+    def cost_optimizer(self) -> None:
         """Create a CostOptimizer instance for testing."""
         config = OptimizationConfig(
             enable_optimization=True,
@@ -169,13 +169,13 @@ class TestCostOptimizer:
                 assert model is not None
                 assert score > 0
 
-    def test_calculate_optimization_score(self, cost_optimizer):
+    def test_calculate_optimization_score(self, cost_optimizer: str) -> None:
         """Test optimization score calculation."""
         score = cost_optimizer._calculate_optimization_score(0.8, 0.9, 0.85)
         expected = 0.4 * 0.8 + 0.3 * 0.9 + 0.3 * 0.85
         assert abs(score - expected) < 0.001
 
-    def test_get_optimization_recommendations(self, cost_optimizer):
+    def test_get_optimization_recommendations(self, cost_optimizer: str) -> None:
         """Test getting optimization recommendations."""
         # Mock usage data
         usage_data = {
@@ -195,7 +195,7 @@ class TestBudgetManager:
     """Test the BudgetManager class."""
 
     @pytest.fixture
-    def budget_manager(self):
+    def budget_manager(self) -> None:
         """Create a BudgetManager instance for testing."""
         config = BudgetConfig(
             budget_limit=100.0,
@@ -205,7 +205,7 @@ class TestBudgetManager:
         )
         return BudgetManager(config)
 
-    def test_add_usage_record(self, budget_manager):
+    def test_add_usage_record(self, budget_manager: str) -> None:
         """Test adding usage records."""
         record = UsageRecord(
             timestamp=datetime.now(),
@@ -224,7 +224,7 @@ class TestBudgetManager:
         assert len(budget_manager.usage_records) == 1
         assert budget_manager.get_current_spend() == 0.06
 
-    def test_budget_status(self, budget_manager):
+    def test_budget_status(self, budget_manager: str) -> None:
         """Test budget status calculation."""
         # Add some usage
         record = UsageRecord(
@@ -247,7 +247,7 @@ class TestBudgetManager:
         assert status.usage_percentage == 50.0
         assert status.status == "healthy"
 
-    def test_can_make_request(self, budget_manager):
+    def test_can_make_request(self, budget_manager: str) -> None:
         """Test request budget check."""
         # Test within budget
         can_make, message = budget_manager.can_make_request(10.0)
@@ -259,7 +259,7 @@ class TestBudgetManager:
         assert not can_make
         assert "exceed budget" in message
 
-    def test_budget_thresholds(self, budget_manager):
+    def test_budget_thresholds(self, budget_manager: str) -> None:
         """Test budget threshold alerts."""
         # Add usage to trigger 50% threshold
         record = UsageRecord(
@@ -280,7 +280,7 @@ class TestBudgetManager:
         assert len(alerts) > 0
         assert any(alert.threshold_percentage == 0.5 for alert in alerts)
 
-    def test_spending_breakdown(self, budget_manager):
+    def test_spending_breakdown(self, budget_manager: str) -> None:
         """Test spending breakdown."""
         # Add usage records
         records = [
@@ -324,12 +324,12 @@ class TestCostAnalytics:
     """Test the CostAnalytics class."""
 
     @pytest.fixture
-    def cost_analytics(self):
+    def cost_analytics(self) -> None:
         """Create a CostAnalytics instance for testing."""
         config = AnalyticsConfig(retention_days=30, cost_optimization_threshold=0.1)
         return CostAnalytics(config)
 
-    def test_add_usage_record(self, cost_analytics):
+    def test_add_usage_record(self, cost_analytics: str) -> None:
         """Test adding usage records."""
         record = UsageRecord(
             timestamp=datetime.now(),
@@ -347,7 +347,7 @@ class TestCostAnalytics:
 
         assert len(cost_analytics.usage_records) == 1
 
-    def test_cost_trends(self, cost_analytics):
+    def test_cost_trends(self, cost_analytics: str) -> None:
         """Test cost trends analysis."""
         # Add usage records for different days
         base_date = datetime.now() - timedelta(days=5)
@@ -373,7 +373,7 @@ class TestCostAnalytics:
         assert trends[0].total_cost == 10.0
         assert trends[-1].total_cost == 14.0
 
-    def test_provider_comparison(self, cost_analytics):
+    def test_provider_comparison(self, cost_analytics: str) -> None:
         """Test provider comparison."""
         # Add usage records for different providers
         records = [
@@ -410,7 +410,7 @@ class TestCostAnalytics:
         assert any(comp.provider == ProviderType.OPENAI for comp in comparisons)
         assert any(comp.provider == ProviderType.ANTHROPIC for comp in comparisons)
 
-    def test_optimization_recommendations(self, cost_analytics):
+    def test_optimization_recommendations(self, cost_analytics: str) -> None:
         """Test optimization recommendations."""
         # Add usage records that would trigger recommendations
         records = [
@@ -448,7 +448,7 @@ class TestCostAnalytics:
         if recommendations:
             assert any(rec.type == "provider_switch" for rec in recommendations)
 
-    def test_cost_summary(self, cost_analytics):
+    def test_cost_summary(self, cost_analytics: str) -> None:
         """Test cost summary generation."""
         # Add some usage records
         records = [
@@ -493,7 +493,7 @@ class TestIntegratedCostManager:
     """Test the IntegratedCostManager class."""
 
     @pytest.fixture
-    def integrated_manager(self):
+    def integrated_manager(self) -> None:
         """Create an IntegratedCostManager instance for testing."""
         return create_default_cost_manager(
             budget_limit=100.0,
@@ -548,7 +548,7 @@ class TestIntegratedCostManager:
             assert model == "gpt-4"
             assert score == 0.85
 
-    def test_record_request(self, integrated_manager):
+    def test_record_request(self, integrated_manager: str) -> None:
         """Test recording a request."""
         integrated_manager.record_request(
             "openai", "gpt-4", 1000, 500, 0.06, True, 1500
@@ -564,7 +564,7 @@ class TestIntegratedCostManager:
         assert record.cost_usd == 0.06
         assert record.success is True
 
-    def test_get_budget_status(self, integrated_manager):
+    def test_get_budget_status(self, integrated_manager: str) -> None:
         """Test getting budget status."""
         status = integrated_manager.get_budget_status()
 
@@ -574,7 +574,7 @@ class TestIntegratedCostManager:
         assert "usage_percentage" in status
         assert "status" in status
 
-    def test_get_cost_analytics(self, integrated_manager):
+    def test_get_cost_analytics(self, integrated_manager: str) -> None:
         """Test getting cost analytics."""
         analytics = integrated_manager.get_cost_analytics()
 
@@ -582,7 +582,7 @@ class TestIntegratedCostManager:
         assert "provider_breakdown" in analytics
         assert "model_breakdown" in analytics
 
-    def test_get_optimization_recommendations(self, integrated_manager):
+    def test_get_optimization_recommendations(self, integrated_manager: str) -> None:
         """Test getting optimization recommendations."""
         recommendations = integrated_manager.get_optimization_recommendations()
 
@@ -590,7 +590,7 @@ class TestIntegratedCostManager:
         # Should be empty for new system
         assert len(recommendations) == 0
 
-    def test_get_system_health(self, integrated_manager):
+    def test_get_system_health(self, integrated_manager: str) -> None:
         """Test getting system health."""
         health = integrated_manager.get_system_health()
 
@@ -600,7 +600,7 @@ class TestIntegratedCostManager:
         assert "recommendations_count" in health
         assert health["status"] == "healthy"  # Should be healthy for new system
 
-    def test_export_analytics_data(self, integrated_manager):
+    def test_export_analytics_data(self, integrated_manager: str) -> None:
         """Test exporting analytics data."""
         data = integrated_manager.export_analytics_data("json")
 
@@ -613,7 +613,7 @@ class TestIntegratedCostManager:
 class TestCreateDefaultCostManager:
     """Test the create_default_cost_manager function."""
 
-    def test_create_default_cost_manager(self):
+    def test_create_default_cost_manager(self) -> None:
         """Test creating a default cost manager."""
         manager = create_default_cost_manager(
             budget_limit=200.0,

@@ -15,7 +15,7 @@ from gemini_sre_agent.llm.providers.bedrock_provider import BedrockProvider
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> None:
     """Create a mock configuration for Bedrock provider."""
     return LLMProviderConfig(
         provider="bedrock",
@@ -37,7 +37,7 @@ def mock_config():
 
 
 @pytest.fixture
-def provider(mock_config):
+def provider(mock_config: str) -> None:
     """Create a Bedrock provider instance."""
     with patch("boto3.Session") as mock_session:
         mock_client = MagicMock()
@@ -48,14 +48,14 @@ def provider(mock_config):
 class TestBedrockProvider:
     """Test cases for Bedrock provider."""
 
-    def test_provider_initialization(self, provider, mock_config):
+    def test_provider_initialization(self, provider: str, mock_config: str) -> None:
         """Test provider initialization."""
         assert provider.region == "us-east-1"
         assert provider.profile == "default"
         assert provider.model == "default"  # Base class sets to "default"
         assert provider.provider_name == "bedrock"
 
-    def test_get_available_models(self, provider):
+    def test_get_available_models(self, provider: str) -> None:
         """Test getting available models."""
         models = provider.get_available_models()
 
@@ -170,14 +170,14 @@ class TestBedrockProvider:
             contentType="application/json",
         )
 
-    def test_token_count(self, provider):
+    def test_token_count(self, provider: str) -> None:
         """Test token counting."""
         result = provider.token_count("Test text with multiple words")
 
         # Should use approximation: 5 words * 1.3 = 6.5 -> 6
         assert result == 6
 
-    def test_cost_estimate_claude_sonnet(self, provider):
+    def test_cost_estimate_claude_sonnet(self, provider: str) -> None:
         """Test cost estimation for Claude Sonnet."""
         provider.model = "anthropic.claude-3-5-sonnet-20241022-v1:0"
         cost = provider.cost_estimate(1000, 500)
@@ -189,7 +189,7 @@ class TestBedrockProvider:
         expected_cost = (1000 / 1000) * 0.003 + (500 / 1000) * 0.015
         assert cost == expected_cost
 
-    def test_cost_estimate_claude_haiku(self, provider):
+    def test_cost_estimate_claude_haiku(self, provider: str) -> None:
         """Test cost estimation for Claude Haiku."""
         provider.model = "anthropic.claude-3-5-haiku-20241022-v1:0"
         cost = provider.cost_estimate(1000, 500)
@@ -201,17 +201,17 @@ class TestBedrockProvider:
         expected_cost = (1000 / 1000) * 0.0008 + (500 / 1000) * 0.004
         assert cost == expected_cost
 
-    def test_validate_config_valid(self, mock_config):
+    def test_validate_config_valid(self, mock_config: str) -> None:
         """Test configuration validation with valid config."""
         # Should not raise any exception
         BedrockProvider.validate_config(mock_config)
 
-    def test_validate_config_missing_region(self):
+    def test_validate_config_missing_region(self) -> None:
         """Test configuration validation with missing AWS region."""
 
         # Create a mock config that bypasses Pydantic validation
         class MockConfig:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.provider_specific = {}  # No aws_region
 
         config = MockConfig()
@@ -219,7 +219,7 @@ class TestBedrockProvider:
         with pytest.raises(ValueError, match="AWS region is required for Bedrock"):
             BedrockProvider.validate_config(config)
 
-    def test_convert_messages_to_bedrock_format(self, provider):
+    def test_convert_messages_to_bedrock_format(self, provider: str) -> None:
         """Test message format conversion."""
         messages = [
             {"role": "user", "content": "Hello"},
@@ -237,7 +237,7 @@ class TestBedrockProvider:
 
         assert result == expected
 
-    def test_extract_content_from_response(self, provider):
+    def test_extract_content_from_response(self, provider: str) -> None:
         """Test content extraction from response."""
         response_body = {"content": [{"text": "Test response"}]}
 
@@ -245,7 +245,7 @@ class TestBedrockProvider:
 
         assert result == "Test response"
 
-    def test_extract_content_from_response_empty(self, provider):
+    def test_extract_content_from_response_empty(self, provider: str) -> None:
         """Test content extraction from empty response."""
         response_body = {}
 
@@ -253,7 +253,7 @@ class TestBedrockProvider:
 
         assert result == ""
 
-    def test_extract_usage_from_response(self, provider):
+    def test_extract_usage_from_response(self, provider: str) -> None:
         """Test usage extraction from response."""
         response_body = {"usage": {"input_tokens": 10, "output_tokens": 5}}
 
@@ -261,7 +261,7 @@ class TestBedrockProvider:
 
         assert result == {"input_tokens": 10, "output_tokens": 5}
 
-    def test_extract_usage_from_response_empty(self, provider):
+    def test_extract_usage_from_response_empty(self, provider: str) -> None:
         """Test usage extraction from empty response."""
         response_body = {}
 
@@ -269,11 +269,11 @@ class TestBedrockProvider:
 
         assert result == {"input_tokens": 0, "output_tokens": 0}
 
-    def test_supports_streaming(self, provider):
+    def test_supports_streaming(self, provider: str) -> None:
         """Test streaming support."""
         assert provider.supports_streaming() is True
 
-    def test_supports_tools(self, provider):
+    def test_supports_tools(self, provider: str) -> None:
         """Test tool calling support."""
         assert provider.supports_tools() is True
 
@@ -302,7 +302,7 @@ class TestBedrockProvider:
         with pytest.raises(Exception, match="Embeddings error"):
             await provider.embeddings("Test text")
 
-    def test_initialization_with_profile(self):
+    def test_initialization_with_profile(self) -> None:
         """Test provider initialization with AWS profile."""
         config = LLMProviderConfig(
             provider="bedrock",
@@ -330,7 +330,7 @@ class TestBedrockProvider:
                 region_name="us-west-2", profile_name="production"
             )
 
-    def test_initialization_without_profile(self):
+    def test_initialization_without_profile(self) -> None:
         """Test provider initialization without AWS profile."""
         config = LLMProviderConfig(
             provider="bedrock",

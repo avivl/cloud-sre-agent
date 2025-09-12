@@ -24,7 +24,7 @@ from gemini_sre_agent.ml.prompt_context_models import (
 class TestIssueType:
     """Test IssueType enum."""
 
-    def test_issue_type_values(self):
+    def test_issue_type_values(self) -> None:
         """Test that issue type values are correct."""
         assert IssueType.DATABASE_ERROR.value == "database_error"
         assert IssueType.API_ERROR.value == "api_error"
@@ -36,7 +36,7 @@ class TestIssueType:
         assert IssueType.AUTHENTICATION_ERROR.value == "authentication_error"
         assert IssueType.UNKNOWN.value == "unknown"
 
-    def test_issue_type_enumeration(self):
+    def test_issue_type_enumeration(self) -> None:
         """Test that all issue types can be enumerated."""
         issue_types = list(IssueType)
         assert len(issue_types) == 9
@@ -47,7 +47,7 @@ class TestIssueType:
 class TestTaskComplexity:
     """Test TaskComplexity enum."""
 
-    def test_complexity_values(self):
+    def test_complexity_values(self) -> None:
         """Test that complexity values are correct."""
         assert TaskComplexity.LOW.value == 1
         assert TaskComplexity.MEDIUM.value == 2
@@ -58,7 +58,7 @@ class TestTaskComplexity:
 class TestBusinessImpact:
     """Test BusinessImpact enum."""
 
-    def test_impact_values(self):
+    def test_impact_values(self) -> None:
         """Test that impact values are correct."""
         assert BusinessImpact.LOW.value == 1
         assert BusinessImpact.MEDIUM.value == 2
@@ -69,7 +69,7 @@ class TestBusinessImpact:
 class TestRepositoryContext:
     """Test RepositoryContext dataclass."""
 
-    def test_repository_context_creation(self):
+    def test_repository_context_creation(self) -> None:
         """Test creating a repository context."""
         context = RepositoryContext(
             architecture_type="microservices",
@@ -88,7 +88,7 @@ class TestRepositoryContext:
         assert len(context.error_handling_patterns) == 2
         assert context.code_quality_metrics["coverage"] == 0.85
 
-    def test_repository_context_to_dict(self):
+    def test_repository_context_to_dict(self) -> None:
         """Test converting repository context to dictionary."""
         context = RepositoryContext(
             architecture_type="monolith",
@@ -113,7 +113,7 @@ class TestRepositoryContext:
 class TestIssueContext:
     """Test IssueContext dataclass."""
 
-    def test_issue_context_creation(self):
+    def test_issue_context_creation(self) -> None:
         """Test creating an issue context."""
         context = IssueContext(
             issue_type=IssueType.DATABASE_ERROR,
@@ -135,7 +135,7 @@ class TestIssueContext:
         assert context.complexity_score == 7
         assert context.context_richness == 0.8
 
-    def test_issue_context_defaults(self):
+    def test_issue_context_defaults(self) -> None:
         """Test issue context with default values."""
         context = IssueContext(
             issue_type=IssueType.API_ERROR,
@@ -152,7 +152,7 @@ class TestIssueContext:
         assert context.complexity_score == 1  # Default value
         assert context.context_richness == 0.5  # Default value
 
-    def test_issue_context_to_dict(self):
+    def test_issue_context_to_dict(self) -> None:
         """Test converting issue context to dictionary."""
         context = IssueContext(
             issue_type=IssueType.SECURITY_ERROR,
@@ -177,7 +177,7 @@ class TestIssueContext:
 class TestTaskContext:
     """Test TaskContext dataclass."""
 
-    def test_task_context_creation(self):
+    def test_task_context_creation(self) -> None:
         """Test creating a task context."""
         context = TaskContext(
             task_type="code_generation",
@@ -201,7 +201,7 @@ class TestTaskContext:
         assert context.frequency == "low"
         assert context.cost_sensitivity == 0.3
 
-    def test_task_context_to_dict(self):
+    def test_task_context_to_dict(self) -> None:
         """Test converting task context to dictionary."""
         context = TaskContext(
             task_type="log_analysis",
@@ -225,7 +225,7 @@ class TestTaskContext:
 class TestPromptContext:
     """Test PromptContext dataclass."""
 
-    def test_prompt_context_creation(self):
+    def test_prompt_context_creation(self) -> None:
         """Test creating a prompt context."""
         repo_context = RepositoryContext(
             architecture_type="microservices",
@@ -265,7 +265,7 @@ class TestPromptContext:
         assert context.validation_feedback["syntax_issues"] == "none"
         assert context.iteration_count == 1
 
-    def test_prompt_context_defaults(self):
+    def test_prompt_context_defaults(self) -> None:
         """Test prompt context with default values."""
         repo_context = RepositoryContext(
             architecture_type="monolith",
@@ -300,7 +300,7 @@ class TestPromptContext:
         assert context.validation_feedback is None
         assert context.iteration_count == 0
 
-    def test_prompt_context_to_dict(self):
+    def test_prompt_context_to_dict(self) -> None:
         """Test converting prompt context to dictionary."""
         repo_context = RepositoryContext(
             architecture_type="serverless",
@@ -342,7 +342,7 @@ class TestPromptContext:
 class TestMetaPromptContext:
     """Test MetaPromptContext dataclass."""
 
-    def test_meta_prompt_context_creation(self):
+    def test_meta_prompt_context_creation(self) -> None:
         """Test creating a meta-prompt context."""
         context = MetaPromptContext(
             issue_context={"type": "database_error", "severity": 8},
@@ -364,7 +364,7 @@ class TestMetaPromptContext:
         assert context.validation_feedback is not None
         assert context.validation_feedback["syntax"] == "good"
 
-    def test_meta_prompt_context_defaults(self):
+    def test_meta_prompt_context_defaults(self) -> None:
         """Test meta-prompt context with default values."""
         context = MetaPromptContext(
             issue_context={},
@@ -378,7 +378,7 @@ class TestMetaPromptContext:
         assert context.previous_attempts is None
         assert context.validation_feedback is None
 
-    def test_meta_prompt_context_to_dict(self):
+    def test_meta_prompt_context_to_dict(self) -> None:
         """Test converting meta-prompt context to dictionary."""
         context = MetaPromptContext(
             issue_context={"type": "api_error"},
@@ -399,7 +399,7 @@ class TestMetaPromptContext:
 class TestValidationResult:
     """Test ValidationResult dataclass."""
 
-    def test_validation_result_creation(self):
+    def test_validation_result_creation(self) -> None:
         """Test creating a validation result."""
         result = ValidationResult(
             success=True, issues=[], suggestions=["Good prompt"], confidence_score=0.95
@@ -410,7 +410,7 @@ class TestValidationResult:
         assert len(result.suggestions) == 1
         assert result.confidence_score == 0.95
 
-    def test_validation_result_defaults(self):
+    def test_validation_result_defaults(self) -> None:
         """Test validation result with default values."""
         result = ValidationResult(
             success=False, issues=["Missing context"], suggestions=[]
@@ -421,7 +421,7 @@ class TestValidationResult:
         assert len(result.suggestions) == 0
         assert result.confidence_score == 0.0  # Default value
 
-    def test_validation_result_to_dict(self):
+    def test_validation_result_to_dict(self) -> None:
         """Test converting validation result to dictionary."""
         result = ValidationResult(
             success=True,

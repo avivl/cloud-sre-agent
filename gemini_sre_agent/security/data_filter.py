@@ -42,7 +42,7 @@ class FilterRule(BaseModel):
 class DataFilter:
     """Filter for removing or masking sensitive data."""
 
-    def __init__(self, custom_rules: Optional[List[FilterRule]] = None):
+    def __init__(self, custom_rules: Optional[List[FilterRule]] = None) -> None:
         """Initialize the data filter.
 
         Args:

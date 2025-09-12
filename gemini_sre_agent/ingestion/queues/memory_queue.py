@@ -45,7 +45,7 @@ class QueueStats:
 class MemoryQueue:
     """Thread-safe in-memory queue for log entries with backpressure management."""
 
-    def __init__(self, config: QueueConfig):
+    def __init__(self, config: QueueConfig) -> None:
         self.config = config
         self._queue: deque = deque(maxlen=config.max_size)
         self._lock = asyncio.Lock()

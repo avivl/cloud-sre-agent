@@ -61,7 +61,7 @@ class GCPPubSubConfig(SourceConfig):
     project_id: str = ""
     subscription_id: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type = SourceType.GCP_PUBSUB
         self.config = {
             "project_id": self.project_id,
@@ -85,7 +85,7 @@ class FileSystemConfig(SourceConfig):
     max_memory_mb: int = 100
     file_path: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type = SourceType.FILE_SYSTEM
         self.config = {
             "file_path": self.file_path,
@@ -193,7 +193,7 @@ class IngestionConfig:
         return sorted(enabled, key=lambda x: x.priority)
 
 
-def test_source_configs():
+def test_source_configs() -> None:
     """Test individual source configuration classes."""
     print("Testing source configurations...")
 
@@ -228,7 +228,7 @@ def test_source_configs():
     print("✅ File System config test passed")
 
 
-def test_global_config():
+def test_global_config() -> None:
     """Test global configuration."""
     print("Testing global configuration...")
 
@@ -246,7 +246,7 @@ def test_global_config():
     print("✅ Global config test passed")
 
 
-def test_ingestion_config():
+def test_ingestion_config() -> None:
     """Test the main ingestion configuration."""
     print("Testing ingestion configuration...")
 
@@ -281,7 +281,7 @@ def test_ingestion_config():
     print("✅ Ingestion config test passed")
 
 
-def test_config_validation():
+def test_config_validation() -> None:
     """Test configuration validation."""
     print("Testing configuration validation...")
 
@@ -328,7 +328,7 @@ def test_config_validation():
     print("✅ Invalid config validation test passed")
 
 
-def test_config_file_loading():
+def test_config_file_loading() -> None:
     """Test loading configuration from files."""
     print("Testing configuration file loading...")
 
@@ -459,7 +459,7 @@ def test_config_file_loading():
         Path(temp_file).unlink()
 
 
-def test_enums():
+def test_enums() -> None:
     """Test enum classes."""
     print("Testing enums...")
 
@@ -479,7 +479,7 @@ def test_enums():
     print("✅ Enums test passed")
 
 
-def main():
+def main() -> None:
     """Run all tests."""
     print("🧪 Testing Ingestion Configuration System")
     print("=" * 50)

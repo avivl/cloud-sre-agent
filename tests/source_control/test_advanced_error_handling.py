@@ -40,7 +40,7 @@ from gemini_sre_agent.source_control.error_handling.monitoring_dashboard import 
 class TestFallbackStrategy(FallbackStrategyBase):
     """Test fallback strategy for testing purposes."""
 
-    def __init__(self, name="test_strategy", priority=1):
+    def __init__(self, name: str = "test_strategy", priority: int = 1) -> None:
         super().__init__(name, priority)
         self.executed = False
 
@@ -66,7 +66,7 @@ class TestAdvancedCircuitBreaker:
     """Test advanced circuit breaker functionality."""
 
     @pytest.fixture
-    def config(self):
+    def config(self) -> None:
         """Create test configuration."""
         config = CircuitBreakerConfig()
         config.failure_threshold = 3
@@ -76,7 +76,7 @@ class TestAdvancedCircuitBreaker:
         return config
 
     @pytest.fixture
-    def circuit_breaker(self, config):
+    def circuit_breaker(self, config: str) -> None:
         """Create test circuit breaker."""
         return AdvancedCircuitBreaker(config, "test_cb")
 
@@ -199,16 +199,16 @@ class TestCustomFallbackStrategies:
     """Test custom fallback strategies."""
 
     @pytest.fixture
-    def fallback_config(self):
+    def fallback_config(self) -> None:
         """Create test fallback configuration."""
         return None  # CustomFallbackManager doesn't need config
 
     @pytest.fixture
-    def fallback_manager(self, fallback_config):
+    def fallback_manager(self, fallback_config: str) -> None:
         """Create test fallback manager."""
         return CustomFallbackManager()
 
-    def test_fallback_manager_initialization(self, fallback_manager):
+    def test_fallback_manager_initialization(self, fallback_manager: str) -> None:
         """Test fallback manager initialization."""
         assert fallback_manager is not None
         assert len(fallback_manager.strategies) >= 0  # May have default strategies
@@ -322,7 +322,7 @@ class TestCustomFallbackStrategies:
         assert result == "fallback_result"
         assert strategy.executed
 
-    def test_fallback_strategy_stats(self, fallback_manager):
+    def test_fallback_strategy_stats(self, fallback_manager: str) -> None:
         """Test fallback strategy statistics."""
         stats = fallback_manager.get_strategy_stats()
         assert "total_strategies" in stats
@@ -334,11 +334,11 @@ class TestErrorRecoveryAutomation:
     """Test error recovery automation."""
 
     @pytest.fixture
-    def self_healing_manager(self):
+    def self_healing_manager(self) -> None:
         """Create test self-healing manager."""
         return SelfHealingManager()
 
-    def test_self_healing_manager_initialization(self, self_healing_manager):
+    def test_self_healing_manager_initialization(self, self_healing_manager: str) -> None:
         """Test self-healing manager initialization."""
         assert len(self_healing_manager.error_patterns) > 0
         assert len(self_healing_manager.recovery_actions) > 0
@@ -403,7 +403,7 @@ class TestErrorRecoveryAutomation:
         assert success is True or success is False
         assert message is not None
 
-    def test_recovery_stats(self, self_healing_manager):
+    def test_recovery_stats(self, self_healing_manager: str) -> None:
         """Test recovery statistics."""
         stats = self_healing_manager.get_recovery_stats()
         assert "total_recovery_attempts" in stats
@@ -411,7 +411,7 @@ class TestErrorRecoveryAutomation:
         assert "overall_success_rate" in stats
         assert "action_statistics" in stats
 
-    def test_health_status(self, self_healing_manager):
+    def test_health_status(self, self_healing_manager: str) -> None:
         """Test health status calculation."""
         health = self_healing_manager.get_health_status()
         assert "health_score" in health
@@ -423,12 +423,12 @@ class TestMonitoringDashboard:
     """Test monitoring dashboard functionality."""
 
     @pytest.fixture
-    def dashboard(self):
+    def dashboard(self) -> None:
         """Create test dashboard."""
         return MonitoringDashboard()
 
     @pytest.fixture
-    def mock_circuit_breaker(self):
+    def mock_circuit_breaker(self) -> None:
         """Create mock circuit breaker."""
         cb = MagicMock()
         cb.get_advanced_stats.return_value = {
@@ -445,13 +445,13 @@ class TestMonitoringDashboard:
         }
         return cb
 
-    def test_dashboard_initialization(self, dashboard):
+    def test_dashboard_initialization(self, dashboard: str) -> None:
         """Test dashboard initialization."""
         assert dashboard.circuit_breakers == {}
         assert dashboard.fallback_manager is None
         assert dashboard.self_healing_manager is None
 
-    def test_register_circuit_breaker(self, dashboard, mock_circuit_breaker):
+    def test_register_circuit_breaker(self, dashboard: str, mock_circuit_breaker: str) -> None:
         """Test registering circuit breaker."""
         dashboard.register_circuit_breaker("test_cb", mock_circuit_breaker)
         assert "test_cb" in dashboard.circuit_breakers
@@ -466,7 +466,7 @@ class TestMonitoringDashboard:
         assert "system_health" in dashboard.dashboard_data
         assert "circuit_breakers" in dashboard.dashboard_data
 
-    def test_get_dashboard_summary(self, dashboard):
+    def test_get_dashboard_summary(self, dashboard: str) -> None:
         """Test getting dashboard summary."""
         # With no data
         summary = dashboard.get_dashboard_summary()
@@ -487,7 +487,7 @@ class TestMonitoringDashboard:
         assert summary["status"] == "healthy"
         assert summary["health_score"] == 85
 
-    def test_get_alerts(self, dashboard):
+    def test_get_alerts(self, dashboard: str) -> None:
         """Test getting alerts."""
         # With no data
         alerts = dashboard.get_alerts()
@@ -503,14 +503,14 @@ class TestMonitoringDashboard:
         assert len(alerts) > 0
         assert any(alert["type"] == "critical" for alert in alerts)
 
-    def test_export_dashboard_data(self, dashboard):
+    def test_export_dashboard_data(self, dashboard: str) -> None:
         """Test exporting dashboard data."""
         dashboard.dashboard_data = {"test": "data"}
         exported = dashboard.export_dashboard_data("json")
         assert "test" in exported
         assert "data" in exported
 
-    def test_get_dashboard_html(self, dashboard):
+    def test_get_dashboard_html(self, dashboard: str) -> None:
         """Test generating HTML dashboard."""
         dashboard.dashboard_data = {
             "system_health": {

@@ -48,7 +48,7 @@ class AnalysisConfig:
     max_file_size_mb: int = 10
     skip_binary_files: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Set default analysis configurations if not provided."""
         if self.basic_analysis is None:
             self.basic_analysis = {
@@ -120,7 +120,7 @@ class PerformanceConfig:
     max_cpu_usage_percent: int = 80
     enable_resource_monitoring: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Set default configurations if not provided."""
         # This method is no longer needed since all fields are required
         pass

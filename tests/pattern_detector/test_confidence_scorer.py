@@ -21,7 +21,7 @@ class TestConfidenceScorer:
     """Test ConfidenceScorer comprehensive scoring engine."""
 
     @pytest.fixture
-    def sample_logs(self):
+    def sample_logs(self) -> None:
         """Create sample log entries for testing."""
         base_time = datetime.now(timezone.utc)
         logs = []
@@ -39,7 +39,7 @@ class TestConfidenceScorer:
         return logs
 
     @pytest.fixture
-    def sample_window(self, sample_logs):
+    def sample_window(self, sample_logs: str) -> None:
         """Create a sample time window with logs."""
         base_time = datetime.now(timezone.utc)
         window = TimeWindow(start_time=base_time, duration_minutes=5)
@@ -48,7 +48,7 @@ class TestConfidenceScorer:
         return window
 
     @pytest.fixture
-    def sample_threshold_results(self, sample_logs):
+    def sample_threshold_results(self, sample_logs: str) -> None:
         """Create sample threshold results."""
         return [
             ThresholdResult(
@@ -79,7 +79,7 @@ class TestConfidenceScorer:
             ),
         ]
 
-    def test_confidence_scorer_initialization(self):
+    def test_confidence_scorer_initialization(self) -> None:
         """Test ConfidenceScorer initialization."""
         scorer = ConfidenceScorer()
         assert scorer.confidence_rules is not None
@@ -123,7 +123,7 @@ class TestConfidenceScorer:
                 assert factor_key in raw_factors
                 assert isinstance(raw_factors[factor_key], float)
 
-    def test_time_concentration_factor(self, sample_window, sample_logs):
+    def test_time_concentration_factor(self, sample_window: str, sample_logs: str) -> None:
         """Test time concentration factor calculation."""
         scorer = ConfidenceScorer()
         concentrated_logs = sample_logs[:5]
@@ -137,7 +137,7 @@ class TestConfidenceScorer:
         )
         assert concentration < 0.5
 
-    def test_service_distribution_factor(self, sample_logs):
+    def test_service_distribution_factor(self, sample_logs: str) -> None:
         """Test service distribution factor calculation."""
         scorer = ConfidenceScorer()
         distribution = scorer._calculate_service_distribution(sample_logs)
@@ -146,7 +146,7 @@ class TestConfidenceScorer:
         distribution = scorer._calculate_service_distribution(uneven_logs)
         assert distribution > 0.5
 
-    def test_message_similarity_factor(self, sample_logs):
+    def test_message_similarity_factor(self, sample_logs: str) -> None:
         """Test error message similarity factor calculation."""
         scorer = ConfidenceScorer()
         similar_logs = [
@@ -186,7 +186,7 @@ class TestConfidenceScorer:
         similarity = scorer._calculate_message_similarity(dissimilar_logs)
         assert similarity < 0.5
 
-    def test_confidence_level_determination(self):
+    def test_confidence_level_determination(self) -> None:
         """Test determination of confidence level from score."""
         scorer = ConfidenceScorer()
         assert scorer._determine_confidence_level(0.95) == "VERY_HIGH"
@@ -195,7 +195,7 @@ class TestConfidenceScorer:
         assert scorer._determine_confidence_level(0.3) == "LOW"
         assert scorer._determine_confidence_level(0.1) == "VERY_LOW"
 
-    def test_explanation_generation(self):
+    def test_explanation_generation(self) -> None:
         """Test generation of human-readable explanation."""
         scorer = ConfidenceScorer()
         factor_scores = {

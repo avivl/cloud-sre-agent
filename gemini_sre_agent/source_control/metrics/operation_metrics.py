@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 class OperationMetrics:
     """Metrics collector specifically for source control operations."""
 
-    def __init__(self, collector: "MetricsCollector"):
+    def __init__(self, collector: "MetricsCollector") -> None:
         self.collector = collector
         self.logger = logging.getLogger("OperationMetrics")
 

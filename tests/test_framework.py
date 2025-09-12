@@ -27,19 +27,19 @@ class TestTestingFramework:
     """Test cases for the TestingFramework class."""
 
     @pytest.fixture
-    def mock_provider_factory(self):
+    def mock_provider_factory(self) -> None:
         """Create a mock provider factory."""
         factory = MockProviderFactory()
         return factory
 
     @pytest.fixture
-    def mock_model_registry(self):
+    def mock_model_registry(self) -> None:
         """Create a mock model registry."""
         registry = MockModelRegistry()
         return registry
 
     @pytest.fixture
-    def testing_framework(self, mock_provider_factory, mock_model_registry):
+    def testing_framework(self, mock_provider_factory: str, mock_model_registry: str) -> None:
         """Create a testing framework instance."""
         return TestingFramework(
             provider_factory=mock_provider_factory,
@@ -47,7 +47,7 @@ class TestTestingFramework:
             enable_mock_testing=True,
         )
 
-    def test_initialization(self, testing_framework):
+    def test_initialization(self, testing_framework: str) -> None:
         """Test framework initialization."""
         assert testing_framework.provider_factory is not None
         assert testing_framework.model_registry is not None
@@ -57,7 +57,7 @@ class TestTestingFramework:
         assert testing_framework.integration_tester is not None
         assert len(testing_framework.test_suites) > 0
 
-    def test_default_test_suites(self, testing_framework):
+    def test_default_test_suites(self, testing_framework: str) -> None:
         """Test that default test suites are created."""
         expected_suites = [
             "provider_validation",
@@ -235,7 +235,7 @@ class TestTestingFramework:
             assert isinstance(results, list)
             assert len(results) > 0
 
-    def test_generate_test_report(self, testing_framework):
+    def test_generate_test_report(self, testing_framework: str) -> None:
         """Test generating a test report."""
         # Add some mock test results
         testing_framework.test_results = [
@@ -383,7 +383,7 @@ class TestTestingFramework:
 class TestTestReport:
     """Test cases for the TestReport dataclass."""
 
-    def test_test_report_creation(self):
+    def test_test_report_creation(self) -> None:
         """Test creating a test report."""
         report = TestReport(
             test_name="test_example",
@@ -401,7 +401,7 @@ class TestTestReport:
         assert report.error_message is None
         assert report.metrics == {"latency": 100.0}
 
-    def test_test_report_defaults(self):
+    def test_test_report_defaults(self) -> None:
         """Test test report with default values."""
         report = TestReport(
             test_name="test_default",
@@ -417,7 +417,7 @@ class TestTestReport:
 class TestTestResult:
     """Test cases for the TestResult enum."""
 
-    def test_test_result_values(self):
+    def test_test_result_values(self) -> None:
         """Test TestResult enum values."""
         assert TestResult.PASSED.value == "passed"
         assert TestResult.FAILED.value == "failed"

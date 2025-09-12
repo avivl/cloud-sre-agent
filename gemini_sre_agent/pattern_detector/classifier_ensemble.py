@@ -47,7 +47,7 @@ class EnsembleConfig:
     # Pattern-specific configurations
     pattern_configs: Optional[Dict[str, PatternMatcherConfig]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Set default pattern configurations."""
         if self.pattern_configs is None:
             self.pattern_configs = self._get_default_pattern_configs()
@@ -429,7 +429,7 @@ class ConsensusVotingStrategy:
 class PatternEnsemble:
     """Ensemble pattern classifier that combines multiple pattern matchers."""
 
-    def __init__(self, config: Optional[EnsembleConfig] = None, confidence_scorer=None):
+    def __init__(self, config: Optional[EnsembleConfig] = None, confidence_scorer: Optional[str] = None) -> None:
         self.config = config or EnsembleConfig()
         self.confidence_scorer = confidence_scorer
         self.logger = setup_logging()

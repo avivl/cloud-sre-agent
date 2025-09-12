@@ -217,7 +217,7 @@ class ServiceAlert:
 class MetricsCollector:
     """Collects and stores metrics for services."""
 
-    def __init__(self, max_series_length: int = 1000):
+    def __init__(self, max_series_length: int = 1000) -> None:
         self.metrics: Dict[str, ServicePerformanceMetrics] = {}
         self.metric_series: Dict[str, MetricSeries] = {}
         self.max_series_length = max_series_length
@@ -283,7 +283,7 @@ class MetricsCollector:
 class AlertManager:
     """Manages alerts and notifications for service metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.alerts: Dict[str, List[ServiceAlert]] = defaultdict(list)
         self.active_alerts: Dict[str, ServiceAlert] = {}
         self.logger = logging.getLogger(__name__)
@@ -364,7 +364,7 @@ class AlertManager:
 class MetricsReporter:
     """Generates reports and dashboards from collected metrics."""
 
-    def __init__(self, metrics_collector: MetricsCollector):
+    def __init__(self, metrics_collector: MetricsCollector) -> None:
         self.metrics_collector = metrics_collector
         self.logger = logging.getLogger(__name__)
 
@@ -478,7 +478,7 @@ class MetricsReporter:
 class ServiceMetricsManager:
     """Main manager for all service metrics operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.collector = MetricsCollector()
         self.alert_manager = AlertManager()
         self.reporter = MetricsReporter(self.collector)

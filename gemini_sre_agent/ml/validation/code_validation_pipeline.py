@@ -24,7 +24,7 @@ from .validation_models import (
 class CodeValidationPipeline:
     """Validates generated code before PR creation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the validation pipeline."""
         self.logger = logging.getLogger(__name__)
 

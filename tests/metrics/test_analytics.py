@@ -7,7 +7,7 @@ from gemini_sre_agent.metrics.metrics_manager import MetricsManager
 
 
 @pytest.fixture
-def mock_metrics_manager():
+def mock_metrics_manager() -> None:
     """Fixture for a mocked MetricsManager."""
     mock_manager = MagicMock(spec=MetricsManager)
     provider1_metrics = MagicMock()
@@ -25,7 +25,7 @@ def mock_metrics_manager():
     return mock_manager
 
 
-def test_calculate_cost_efficiency(mock_metrics_manager):
+def test_calculate_cost_efficiency(mock_metrics_manager: str) -> None:
     """
     Test Calculate Cost Efficiency.
 

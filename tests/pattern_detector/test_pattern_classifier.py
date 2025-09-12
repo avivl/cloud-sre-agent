@@ -20,12 +20,12 @@ class TestPatternClassifier:
     """Test PatternClassifier functionality."""
 
     @pytest.fixture
-    def classifier(self):
+    def classifier(self) -> None:
         """Create a pattern classifier for testing."""
         return PatternClassifier()
 
     @pytest.fixture
-    def cascade_failure_window(self):
+    def cascade_failure_window(self) -> None:
         """Create a window simulating cascade failure."""
         window = TimeWindow(
             start_time=datetime(2025, 1, 27, 10, 0, 0), duration_minutes=5
@@ -46,7 +46,7 @@ class TestPatternClassifier:
         return window
 
     @pytest.fixture
-    def service_degradation_window(self):
+    def service_degradation_window(self) -> None:
         """Create a window simulating service degradation."""
         window = TimeWindow(
             start_time=datetime(2025, 1, 27, 10, 5, 0), duration_minutes=5
@@ -66,7 +66,7 @@ class TestPatternClassifier:
         return window
 
     @pytest.fixture
-    def configuration_issue_window(self):
+    def configuration_issue_window(self) -> None:
         """Create a window simulating configuration issues."""
         window = TimeWindow(
             start_time=datetime(2025, 1, 27, 10, 10, 0), duration_minutes=5
@@ -101,7 +101,7 @@ class TestPatternClassifier:
         return window
 
     @pytest.fixture
-    def triggered_threshold_results(self):
+    def triggered_threshold_results(self) -> None:
         """Create threshold results that should trigger pattern detection."""
         return [
             ThresholdResult(
@@ -122,7 +122,7 @@ class TestPatternClassifier:
             ),
         ]
 
-    def test_classifier_initialization(self, classifier):
+    def test_classifier_initialization(self, classifier: str) -> None:
         """Test PatternClassifier initialization."""
         assert classifier is not None
         assert classifier.classification_rules is not None
@@ -157,7 +157,7 @@ class TestPatternClassifier:
         )
         assert len(patterns) == 0
 
-    def test_severity_level_calculation(self, classifier):
+    def test_severity_level_calculation(self, classifier: str) -> None:
         """Test severity level calculation from logs."""
         critical_logs = [
             LogEntry(
@@ -198,7 +198,7 @@ class TestPatternClassifier:
         severity = classifier._determine_severity_level(info_logs)
         assert severity == "LOW"
 
-    def test_primary_service_identification(self, classifier):
+    def test_primary_service_identification(self, classifier: str) -> None:
         """Test identification of primary service from logs."""
         logs = [
             LogEntry(

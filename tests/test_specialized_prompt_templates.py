@@ -24,7 +24,7 @@ from gemini_sre_agent.ml.specialized_prompt_templates import (
 class TestDatabaseErrorPromptTemplate:
     """Test DatabaseErrorPromptTemplate."""
 
-    def test_database_template_creation(self):
+    def test_database_template_creation(self) -> None:
         """Test creating a database error prompt template."""
         template = DatabaseErrorPromptTemplate("database")
 
@@ -32,7 +32,7 @@ class TestDatabaseErrorPromptTemplate:
         assert "database engineer" in template.system_prompt
         assert "DATABASE ISSUE ANALYSIS REQUEST" in template.user_prompt_template
 
-    def test_database_template_system_prompt(self):
+    def test_database_template_system_prompt(self) -> None:
         """Test database template system prompt content."""
         template = DatabaseErrorPromptTemplate("database")
 
@@ -45,7 +45,7 @@ class TestDatabaseErrorPromptTemplate:
         assert "connection pooling" in system_prompt
         assert "retry mechanisms" in system_prompt
 
-    def test_database_template_context_variables(self):
+    def test_database_template_context_variables(self) -> None:
         """Test context variable extraction for database template."""
         template = DatabaseErrorPromptTemplate("database")
 
@@ -90,7 +90,7 @@ class TestDatabaseErrorPromptTemplate:
         assert "user_service, auth_service" in context_vars["affected_services"]
         assert "db/connection.py" in context_vars["affected_files"]
 
-    def test_database_template_extract_db_config(self):
+    def test_database_template_extract_db_config(self) -> None:
         """Test database configuration extraction."""
         template = DatabaseErrorPromptTemplate("database")
 
@@ -110,7 +110,7 @@ class TestDatabaseErrorPromptTemplate:
         assert "Connection pool" in config
         assert "timeout" in config
 
-    def test_database_template_prompt_generation(self):
+    def test_database_template_prompt_generation(self) -> None:
         """Test full prompt generation with database template."""
         template = DatabaseErrorPromptTemplate("database")
 
@@ -157,7 +157,7 @@ class TestDatabaseErrorPromptTemplate:
 class TestAPIErrorPromptTemplate:
     """Test APIErrorPromptTemplate."""
 
-    def test_api_template_creation(self):
+    def test_api_template_creation(self) -> None:
         """Test creating an API error prompt template."""
         template = APIErrorPromptTemplate("api")
 
@@ -165,7 +165,7 @@ class TestAPIErrorPromptTemplate:
         assert "API engineer" in template.system_prompt
         assert "API ISSUE ANALYSIS REQUEST" in template.user_prompt_template
 
-    def test_api_template_system_prompt(self):
+    def test_api_template_system_prompt(self) -> None:
         """Test API template system prompt content."""
         template = APIErrorPromptTemplate("api")
 
@@ -178,7 +178,7 @@ class TestAPIErrorPromptTemplate:
         assert "circuit breaker" in system_prompt
         assert "exponential backoff" in system_prompt
 
-    def test_api_template_context_variables(self):
+    def test_api_template_context_variables(self) -> None:
         """Test context variable extraction for API template."""
         template = APIErrorPromptTemplate("api")
 
@@ -224,7 +224,7 @@ class TestAPIErrorPromptTemplate:
         assert "api_gateway, user_service" in context_vars["affected_endpoints"]
         assert "api/endpoints.py" in context_vars["affected_files"]
 
-    def test_api_template_extract_auth_method(self):
+    def test_api_template_extract_auth_method(self) -> None:
         """Test authentication method extraction."""
         template = APIErrorPromptTemplate("api")
 
@@ -243,7 +243,7 @@ class TestAPIErrorPromptTemplate:
         auth_method = template._extract_auth_method(repo_context)
         assert auth_method == "JWT"  # Placeholder implementation
 
-    def test_api_template_extract_rate_limiting_config(self):
+    def test_api_template_extract_rate_limiting_config(self) -> None:
         """Test rate limiting configuration extraction."""
         template = APIErrorPromptTemplate("api")
 
@@ -262,7 +262,7 @@ class TestAPIErrorPromptTemplate:
         rate_config = template._extract_rate_limiting_config(repo_context)
         assert "requests/minute" in rate_config  # Placeholder implementation
 
-    def test_api_template_prompt_generation(self):
+    def test_api_template_prompt_generation(self) -> None:
         """Test full prompt generation with API template."""
         template = APIErrorPromptTemplate("api")
 
@@ -309,7 +309,7 @@ class TestAPIErrorPromptTemplate:
 class TestSecurityErrorPromptTemplate:
     """Test SecurityErrorPromptTemplate."""
 
-    def test_security_template_creation(self):
+    def test_security_template_creation(self) -> None:
         """Test creating a security error prompt template."""
         template = SecurityErrorPromptTemplate("security")
 
@@ -317,7 +317,7 @@ class TestSecurityErrorPromptTemplate:
         assert "security engineer" in template.system_prompt
         assert "SECURITY ISSUE ANALYSIS REQUEST" in template.user_prompt_template
 
-    def test_security_template_system_prompt(self):
+    def test_security_template_system_prompt(self) -> None:
         """Test security template system prompt content."""
         template = SecurityErrorPromptTemplate("security")
 
@@ -330,7 +330,7 @@ class TestSecurityErrorPromptTemplate:
         assert "OWASP" in system_prompt
         assert "encryption" in system_prompt
 
-    def test_security_template_context_variables(self):
+    def test_security_template_context_variables(self) -> None:
         """Test context variable extraction for security template."""
         template = SecurityErrorPromptTemplate("security")
 
@@ -376,7 +376,7 @@ class TestSecurityErrorPromptTemplate:
         assert "auth_service, user_service" in context_vars["affected_components"]
         assert "auth/security.py" in context_vars["affected_files"]
 
-    def test_security_template_extract_vulnerability_type(self):
+    def test_security_template_extract_vulnerability_type(self) -> None:
         """Test vulnerability type extraction."""
         template = SecurityErrorPromptTemplate("security")
 
@@ -395,7 +395,7 @@ class TestSecurityErrorPromptTemplate:
         vuln_type = template._extract_vulnerability_type(issue_context)
         assert vuln_type == "Unknown"  # Placeholder implementation
 
-    def test_security_template_extract_attack_vector(self):
+    def test_security_template_extract_attack_vector(self) -> None:
         """Test attack vector extraction."""
         template = SecurityErrorPromptTemplate("security")
 
@@ -414,7 +414,7 @@ class TestSecurityErrorPromptTemplate:
         attack_vector = template._extract_attack_vector(issue_context)
         assert attack_vector == "Unknown"  # Placeholder implementation
 
-    def test_security_template_extract_security_measures(self):
+    def test_security_template_extract_security_measures(self) -> None:
         """Test security measures extraction."""
         template = SecurityErrorPromptTemplate("security")
 
@@ -433,7 +433,7 @@ class TestSecurityErrorPromptTemplate:
         security_measures = template._extract_security_measures(repo_context)
         assert "authentication" in security_measures  # Placeholder implementation
 
-    def test_security_template_prompt_generation(self):
+    def test_security_template_prompt_generation(self) -> None:
         """Test full prompt generation with security template."""
         template = SecurityErrorPromptTemplate("security")
 

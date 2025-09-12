@@ -119,7 +119,7 @@ class LLMProviderFactory:
         return list(cls._instances.keys())
 
     @classmethod
-    def register_provider(cls, name: str, provider_class: Type[LLMProvider]):
+    def register_provider(cls: str, name: str, provider_class: Type[LLMProvider]) -> None:
         """
         Register a new provider type.
 
@@ -134,7 +134,7 @@ class LLMProviderFactory:
         logger.info(f"Registered provider type: {name}")
 
     @classmethod
-    def unregister_provider(cls, name: str):
+    def unregister_provider(cls: str, name: str) -> None:
         """
         Unregister a provider type.
 
@@ -146,7 +146,7 @@ class LLMProviderFactory:
             logger.info(f"Unregistered provider type: {name}")
 
     @classmethod
-    def clear_instances(cls):
+    def clear_instances(cls: str) -> None:
         """Clear all provider instances."""
         cls._instances.clear()
         logger.info("Cleared all provider instances")

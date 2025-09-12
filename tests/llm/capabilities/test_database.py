@@ -5,13 +5,13 @@ from gemini_sre_agent.llm.capabilities.models import ModelCapabilities, ModelCap
 
 
 @pytest.fixture
-def capability_database():
+def capability_database() -> None:
     """Fixture for an empty CapabilityDatabase."""
     return CapabilityDatabase()
 
 
 @pytest.fixture
-def sample_model_capabilities():
+def sample_model_capabilities() -> None:
     """Fixture for sample ModelCapabilities objects."""
     cap1 = ModelCapability(name="text_generation", description="Generates text")
     cap2 = ModelCapability(name="code_generation", description="Generates code")
@@ -27,7 +27,7 @@ def sample_model_capabilities():
     return [model_caps1, model_caps2, model_caps3]
 
 
-def test_add_capabilities(capability_database, sample_model_capabilities):
+def test_add_capabilities(capability_database: str, sample_model_capabilities: str) -> None:
     """
     Test Add Capabilities.
 
@@ -46,7 +46,7 @@ def test_add_capabilities(capability_database, sample_model_capabilities):
     )
 
 
-def test_get_capabilities(capability_database, sample_model_capabilities):
+def test_get_capabilities(capability_database: str, sample_model_capabilities: str) -> None:
     """
     Test Get Capabilities.
 
@@ -61,7 +61,7 @@ def test_get_capabilities(capability_database, sample_model_capabilities):
     assert capability_database.get_capabilities("non_existent_model") is None
 
 
-def test_query_capabilities_by_name(capability_database, sample_model_capabilities):
+def test_query_capabilities_by_name(capability_database: str, sample_model_capabilities: str) -> None:
     """
     Test Query Capabilities By Name.
 
@@ -99,7 +99,7 @@ def test_query_capabilities_by_name(capability_database, sample_model_capabiliti
     assert len(non_existent_caps) == 0
 
 
-def test_query_all_capabilities(capability_database, sample_model_capabilities):
+def test_query_all_capabilities(capability_database: str, sample_model_capabilities: str) -> None:
     """
     Test Query All Capabilities.
 
@@ -116,7 +116,7 @@ def test_query_all_capabilities(capability_database, sample_model_capabilities):
     assert all(c in all_caps for c in sample_model_capabilities)
 
 
-def test_clear_database(capability_database, sample_model_capabilities):
+def test_clear_database(capability_database: str, sample_model_capabilities: str) -> None:
     """
     Test Clear Database.
 

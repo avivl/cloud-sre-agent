@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class BackgroundProcessor:
     """Handles background processing of metrics."""
 
-    def __init__(self, collector: "MetricsCollector"):
+    def __init__(self, collector: "MetricsCollector") -> None:
         self.collector = collector
         self.logger = logging.getLogger("BackgroundProcessor")
         self._cleanup_task: Optional[asyncio.Task] = None

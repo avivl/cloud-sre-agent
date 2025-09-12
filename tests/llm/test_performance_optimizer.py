@@ -38,7 +38,7 @@ class TestPerformanceCache:
     """Test the PerformanceCache class."""
 
     @pytest.fixture
-    def cache(self):
+    def cache(self) -> None:
         """Create a PerformanceCache instance."""
         return PerformanceCache(max_size=3, ttl_seconds=0.1)
 
@@ -92,12 +92,12 @@ class TestModelSelectionCache:
     """Test the ModelSelectionCache class."""
 
     @pytest.fixture
-    def selection_cache(self):
+    def selection_cache(self) -> None:
         """Create a ModelSelectionCache instance."""
         return ModelSelectionCache()
 
     @pytest.fixture
-    def mock_model_info(self):
+    def mock_model_info(self) -> None:
         """Create a mock ModelInfo."""
         return ModelInfo(
             name="test-model",
@@ -113,7 +113,7 @@ class TestModelSelectionCache:
         )
 
     @pytest.fixture
-    def mock_selection_result(self, mock_model_info):
+    def mock_selection_result(self, mock_model_info: str) -> None:
         """Create a mock SelectionResult."""
         return SelectionResult(
             selected_model=mock_model_info,
@@ -201,7 +201,7 @@ class TestOptimizedModelRegistry:
     """Test the OptimizedModelRegistry class."""
 
     @pytest.fixture
-    def mock_base_registry(self):
+    def mock_base_registry(self) -> None:
         """Create a mock base registry."""
         registry = MagicMock()
         model1 = ModelInfo(
@@ -232,7 +232,7 @@ class TestOptimizedModelRegistry:
         return registry
 
     @pytest.fixture
-    def optimized_registry(self, mock_base_registry):
+    def optimized_registry(self, mock_base_registry: str) -> None:
         """Create an OptimizedModelRegistry instance."""
         return OptimizedModelRegistry(mock_base_registry)
 
@@ -284,7 +284,7 @@ class TestOptimizedModelScorer:
     """Test the OptimizedModelScorer class."""
 
     @pytest.fixture
-    def mock_base_scorer(self):
+    def mock_base_scorer(self) -> None:
         """Create a mock base scorer."""
         scorer = MagicMock()
         mock_score = MagicMock()
@@ -294,12 +294,12 @@ class TestOptimizedModelScorer:
         return scorer
 
     @pytest.fixture
-    def optimized_scorer(self, mock_base_scorer):
+    def optimized_scorer(self, mock_base_scorer: str) -> None:
         """Create an OptimizedModelScorer instance."""
         return OptimizedModelScorer(mock_base_scorer)
 
     @pytest.fixture
-    def mock_model_info(self):
+    def mock_model_info(self) -> None:
         """Create a mock ModelInfo."""
         return ModelInfo(
             name="test-model",
@@ -315,7 +315,7 @@ class TestOptimizedModelScorer:
         )
 
     @pytest.fixture
-    def mock_scoring_context(self):
+    def mock_scoring_context(self) -> None:
         """Create a mock ScoringContext."""
         return ScoringContext(
             task_type=ModelType.SMART,
@@ -352,7 +352,7 @@ class TestConnectionPool:
     """Test the ConnectionPool class."""
 
     @pytest.fixture
-    def connection_pool(self):
+    def connection_pool(self) -> None:
         """Create a ConnectionPool instance."""
         return ConnectionPool(max_connections=2)
 
@@ -427,7 +427,7 @@ class TestBatchProcessor:
     """Test the BatchProcessor class."""
 
     @pytest.fixture
-    def batch_processor(self):
+    def batch_processor(self) -> None:
         """Create a BatchProcessor instance."""
         return BatchProcessor(batch_size=3, max_wait_ms=10.0)
 
@@ -481,7 +481,7 @@ class TestPerformanceOptimizer:
     """Test the PerformanceOptimizer class."""
 
     @pytest.fixture
-    def mock_llm_config(self):
+    def mock_llm_config(self) -> None:
         """Create a mock LLMConfig."""
         return LLMConfig(
             default_provider=ProviderType.GEMINI,
@@ -501,7 +501,7 @@ class TestPerformanceOptimizer:
         )
 
     @pytest.fixture
-    def mock_model_registry(self):
+    def mock_model_registry(self) -> None:
         """Create a mock model registry."""
         registry = MagicMock()
         model = ModelInfo(
@@ -520,12 +520,12 @@ class TestPerformanceOptimizer:
         return registry
 
     @pytest.fixture
-    def mock_model_scorer(self):
+    def mock_model_scorer(self) -> None:
         """Create a mock model scorer."""
         return MagicMock()
 
     @pytest.fixture
-    def performance_optimizer(self, mock_llm_config):
+    def performance_optimizer(self, mock_llm_config: str) -> None:
         """Create a PerformanceOptimizer instance."""
         return PerformanceOptimizer(mock_llm_config)
 
@@ -575,7 +575,7 @@ class TestPerformanceOptimizer:
         assert model_info.name == "test-model"
         assert selection_result.score == 0.85
 
-    def test_get_performance_stats(self, performance_optimizer):
+    def test_get_performance_stats(self, performance_optimizer: str) -> None:
         """Test getting performance statistics."""
         stats = performance_optimizer.get_performance_stats()
 
@@ -613,7 +613,7 @@ class TestCachedDecorators:
         assert result3 == 12
         assert call_count == 2
 
-    def test_get_model_type_enum_caching(self):
+    def test_get_model_type_enum_caching(self) -> None:
         """Test that model type enum lookup is cached."""
         # First call
         result1 = get_model_type_enum("smart")
@@ -626,7 +626,7 @@ class TestCachedDecorators:
         # Cache should be working (same object)
         assert result1 is result2
 
-    def test_get_provider_type_enum_caching(self):
+    def test_get_provider_type_enum_caching(self) -> None:
         """Test that provider type enum lookup is cached."""
         # First call
         result1 = get_provider_type_enum("gemini")

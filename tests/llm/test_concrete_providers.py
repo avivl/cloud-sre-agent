@@ -34,7 +34,7 @@ def create_test_config(provider: str, **kwargs) -> LLMProviderConfig:
 class TestGeminiProvider:
     """Test Gemini provider implementation."""
 
-    def test_gemini_provider_creation(self):
+    def test_gemini_provider_creation(self) -> None:
         """Test creating Gemini provider."""
         config = create_test_config(
             provider="gemini",
@@ -47,7 +47,7 @@ class TestGeminiProvider:
         assert provider.api_key == "AIza123456789012345678901234567890"
         assert provider.project_id == "test-project"
 
-    def test_gemini_validate_config_valid(self):
+    def test_gemini_validate_config_valid(self) -> None:
         """Test Gemini config validation with valid config."""
         config = create_test_config(
             provider="gemini", api_key="AIza123456789012345678901234567890"
@@ -56,7 +56,7 @@ class TestGeminiProvider:
         # Should not raise any exception
         GeminiProvider.validate_config(config)
 
-    def test_gemini_validate_config_missing_api_key(self):
+    def test_gemini_validate_config_missing_api_key(self) -> None:
         """Test Gemini config validation with missing API key."""
         # Note: Pydantic validation handles missing API keys at config creation time
         # This test verifies that provider validation works for invalid API key formats
@@ -65,14 +65,14 @@ class TestGeminiProvider:
         with pytest.raises(ValueError, match="Gemini API key must start with 'AIza'"):
             GeminiProvider.validate_config(config)
 
-    def test_gemini_validate_config_invalid_api_key_format(self):
+    def test_gemini_validate_config_invalid_api_key_format(self) -> None:
         """Test Gemini config validation with invalid API key format."""
         config = create_test_config(provider="gemini", api_key="invalid-key")
 
         with pytest.raises(ValueError, match="Gemini API key must start with 'AIza'"):
             GeminiProvider.validate_config(config)
 
-    def test_gemini_supports_streaming(self):
+    def test_gemini_supports_streaming(self) -> None:
         """Test Gemini streaming support."""
         config = create_test_config(
             provider="gemini", api_key="AIza123456789012345678901234567890"
@@ -80,7 +80,7 @@ class TestGeminiProvider:
         provider = GeminiProvider(config)
         assert provider.supports_streaming() is True
 
-    def test_gemini_supports_tools(self):
+    def test_gemini_supports_tools(self) -> None:
         """Test Gemini tools support."""
         config = create_test_config(
             provider="gemini", api_key="AIza123456789012345678901234567890"
@@ -88,7 +88,7 @@ class TestGeminiProvider:
         provider = GeminiProvider(config)
         assert provider.supports_tools() is True
 
-    def test_gemini_get_available_models(self):
+    def test_gemini_get_available_models(self) -> None:
         """Test Gemini available models."""
         config = create_test_config(
             provider="gemini", api_key="AIza123456789012345678901234567890"
@@ -100,7 +100,7 @@ class TestGeminiProvider:
         assert models[ModelType.SMART] == "gemini-1.5-pro"
         assert models[ModelType.DEEP_THINKING] == "gemini-1.5-pro"
 
-    def test_gemini_token_count(self):
+    def test_gemini_token_count(self) -> None:
         """Test Gemini token counting."""
         config = create_test_config(
             provider="gemini", api_key="AIza123456789012345678901234567890"
@@ -111,7 +111,7 @@ class TestGeminiProvider:
         count = provider.token_count(text)
         assert count > 0
 
-    def test_gemini_cost_estimate(self):
+    def test_gemini_cost_estimate(self) -> None:
         """Test Gemini cost estimation."""
         config = create_test_config(
             provider="gemini", api_key="AIza123456789012345678901234567890"
@@ -137,7 +137,7 @@ class TestGeminiProvider:
 class TestOpenAIProvider:
     """Test OpenAI provider implementation."""
 
-    def test_openai_provider_creation(self):
+    def test_openai_provider_creation(self) -> None:
         """Test creating OpenAI provider."""
         config = create_test_config(
             provider="openai",
@@ -150,7 +150,7 @@ class TestOpenAIProvider:
         assert provider.api_key == "sk-123456789012345678901234567890"
         assert provider.organization == "org-123"
 
-    def test_openai_validate_config_valid(self):
+    def test_openai_validate_config_valid(self) -> None:
         """Test OpenAI config validation with valid config."""
         config = create_test_config(
             provider="openai", api_key="sk-123456789012345678901234567890"
@@ -159,7 +159,7 @@ class TestOpenAIProvider:
         # Should not raise any exception
         OpenAIProvider.validate_config(config)
 
-    def test_openai_validate_config_missing_api_key(self):
+    def test_openai_validate_config_missing_api_key(self) -> None:
         """Test OpenAI config validation with missing API key."""
         # Note: Pydantic validation handles missing API keys at config creation time
         # This test verifies that provider validation works for invalid API key formats
@@ -168,14 +168,14 @@ class TestOpenAIProvider:
         with pytest.raises(ValueError, match="OpenAI API key must start with 'sk-'"):
             OpenAIProvider.validate_config(config)
 
-    def test_openai_validate_config_invalid_api_key_format(self):
+    def test_openai_validate_config_invalid_api_key_format(self) -> None:
         """Test OpenAI config validation with invalid API key format."""
         config = create_test_config(provider="openai", api_key="invalid-key")
 
         with pytest.raises(ValueError, match="OpenAI API key must start with 'sk-'"):
             OpenAIProvider.validate_config(config)
 
-    def test_openai_get_available_models(self):
+    def test_openai_get_available_models(self) -> None:
         """Test OpenAI available models."""
         config = create_test_config(
             provider="openai", api_key="sk-123456789012345678901234567890"
@@ -187,7 +187,7 @@ class TestOpenAIProvider:
         assert models[ModelType.SMART] == "gpt-4o-mini"
         assert models[ModelType.DEEP_THINKING] == "gpt-4o"
 
-    def test_openai_cost_estimate(self):
+    def test_openai_cost_estimate(self) -> None:
         """Test OpenAI cost estimation."""
         config = create_test_config(
             provider="openai", api_key="sk-123456789012345678901234567890"
@@ -213,7 +213,7 @@ class TestOpenAIProvider:
 class TestAnthropicProvider:
     """Test Anthropic provider implementation."""
 
-    def test_anthropic_provider_creation(self):
+    def test_anthropic_provider_creation(self) -> None:
         """Test creating Anthropic provider."""
         config = create_test_config(
             provider="anthropic",
@@ -224,7 +224,7 @@ class TestAnthropicProvider:
         assert provider.provider_name == "anthropic"
         assert provider.api_key == "sk-ant-123456789012345678901234567890"
 
-    def test_anthropic_validate_config_valid(self):
+    def test_anthropic_validate_config_valid(self) -> None:
         """Test Anthropic config validation with valid config."""
         config = create_test_config(
             provider="anthropic", api_key="sk-ant-123456789012345678901234567890"
@@ -233,7 +233,7 @@ class TestAnthropicProvider:
         # Should not raise any exception
         AnthropicProvider.validate_config(config)
 
-    def test_anthropic_validate_config_invalid_api_key_format(self):
+    def test_anthropic_validate_config_invalid_api_key_format(self) -> None:
         """Test Anthropic config validation with invalid API key format."""
         config = create_test_config(provider="anthropic", api_key="invalid-key")
 
@@ -242,7 +242,7 @@ class TestAnthropicProvider:
         ):
             AnthropicProvider.validate_config(config)
 
-    def test_anthropic_get_available_models(self):
+    def test_anthropic_get_available_models(self) -> None:
         """Test Anthropic available models."""
         config = create_test_config(
             provider="anthropic", api_key="sk-ant-123456789012345678901234567890"
@@ -258,7 +258,7 @@ class TestAnthropicProvider:
 class TestOllamaProvider:
     """Test Ollama provider implementation."""
 
-    def test_ollama_provider_creation(self):
+    def test_ollama_provider_creation(self) -> None:
         """Test creating Ollama provider."""
         config = create_test_config(
             provider="ollama",
@@ -269,27 +269,27 @@ class TestOllamaProvider:
         assert provider.provider_name == "ollama"
         assert str(provider.base_url) == "http://localhost:11434/"
 
-    def test_ollama_validate_config_valid(self):
+    def test_ollama_validate_config_valid(self) -> None:
         """Test Ollama config validation with valid config."""
         config = create_test_config(provider="ollama")
 
         # Should not raise any exception
         OllamaProvider.validate_config(config)
 
-    def test_ollama_validate_config_with_api_key(self):
+    def test_ollama_validate_config_with_api_key(self) -> None:
         """Test Ollama config validation with API key (should error)."""
         config = create_test_config(provider="ollama", api_key="should-not-have-key")
 
         with pytest.raises(ValueError, match="Ollama does not use API keys"):
             OllamaProvider.validate_config(config)
 
-    def test_ollama_supports_tools(self):
+    def test_ollama_supports_tools(self) -> None:
         """Test Ollama tools support."""
         config = create_test_config(provider="ollama")
         provider = OllamaProvider(config)
         assert provider.supports_tools() is False
 
-    def test_ollama_cost_estimate(self):
+    def test_ollama_cost_estimate(self) -> None:
         """Test Ollama cost estimation (should be free)."""
         config = create_test_config(provider="ollama")
         provider = OllamaProvider(config)
@@ -301,7 +301,7 @@ class TestOllamaProvider:
 class TestGrokProvider:
     """Test Grok provider implementation."""
 
-    def test_grok_provider_creation(self):
+    def test_grok_provider_creation(self) -> None:
         """Test creating Grok provider."""
         config = create_test_config(
             provider="grok",
@@ -312,7 +312,7 @@ class TestGrokProvider:
         assert provider.provider_name == "grok"
         assert provider.api_key == "test123456789012345678901234567890"
 
-    def test_grok_validate_config_valid(self):
+    def test_grok_validate_config_valid(self) -> None:
         """Test Grok config validation with valid config."""
         config = create_test_config(
             provider="grok", api_key="test123456789012345678901234567890"
@@ -321,7 +321,7 @@ class TestGrokProvider:
         # Should not raise any exception
         GrokProvider.validate_config(config)
 
-    def test_grok_validate_config_missing_api_key(self):
+    def test_grok_validate_config_missing_api_key(self) -> None:
         """Test Grok config validation with missing API key."""
         # Note: Pydantic validation handles missing API keys at config creation time
         # This test verifies that provider validation works for invalid API key formats
@@ -334,7 +334,7 @@ class TestGrokProvider:
         # Should not raise any exception
         GrokProvider.validate_config(config)
 
-    def test_grok_supports_tools(self):
+    def test_grok_supports_tools(self) -> None:
         """Test Grok tools support."""
         config = create_test_config(
             provider="grok", api_key="test123456789012345678901234567890"
@@ -342,7 +342,7 @@ class TestGrokProvider:
         provider = GrokProvider(config)
         assert provider.supports_tools() is False  # Not yet supported
 
-    def test_grok_get_available_models(self):
+    def test_grok_get_available_models(self) -> None:
         """Test Grok available models."""
         config = create_test_config(
             provider="grok", api_key="test123456789012345678901234567890"
@@ -358,7 +358,7 @@ class TestGrokProvider:
 class TestBedrockProvider:
     """Test Bedrock provider implementation."""
 
-    def test_bedrock_provider_creation(self):
+    def test_bedrock_provider_creation(self) -> None:
         """Test creating Bedrock provider."""
         config = create_test_config(
             provider="bedrock",
@@ -372,7 +372,7 @@ class TestBedrockProvider:
         assert provider.region == "us-east-1"
         assert provider.profile == "default"
 
-    def test_bedrock_validate_config_valid(self):
+    def test_bedrock_validate_config_valid(self) -> None:
         """Test Bedrock config validation with valid config."""
         config = create_test_config(
             provider="bedrock",
@@ -383,7 +383,7 @@ class TestBedrockProvider:
         # Should not raise any exception
         BedrockProvider.validate_config(config)
 
-    def test_bedrock_validate_config_missing_api_key(self):
+    def test_bedrock_validate_config_missing_api_key(self) -> None:
         """Test Bedrock config validation with missing API key."""
         # Note: Pydantic validation handles missing API keys at config creation time
         # This test verifies that provider validation works for invalid API key formats
@@ -394,7 +394,7 @@ class TestBedrockProvider:
         ):
             BedrockProvider.validate_config(config)
 
-    def test_bedrock_validate_config_invalid_key_length(self):
+    def test_bedrock_validate_config_invalid_key_length(self) -> None:
         """Test Bedrock config validation with invalid key length."""
         config = create_test_config(
             provider="bedrock",
@@ -407,7 +407,7 @@ class TestBedrockProvider:
         ):
             BedrockProvider.validate_config(config)
 
-    def test_bedrock_validate_config_missing_region(self):
+    def test_bedrock_validate_config_missing_region(self) -> None:
         """Test Bedrock config validation with missing region."""
         config = create_test_config(
             provider="bedrock",
@@ -418,7 +418,7 @@ class TestBedrockProvider:
         with pytest.raises(ValueError, match="AWS region is required for Bedrock"):
             BedrockProvider.validate_config(config)
 
-    def test_bedrock_get_available_models(self):
+    def test_bedrock_get_available_models(self) -> None:
         """Test Bedrock available models."""
         config = create_test_config(
             provider="bedrock",
@@ -436,7 +436,7 @@ class TestBedrockProvider:
 class TestProviderIntegration:
     """Test provider integration with factory."""
 
-    def test_all_providers_registered(self):
+    def test_all_providers_registered(self) -> None:
         """Test that all providers are registered with the factory."""
         from gemini_sre_agent.llm.factory import LLMProviderFactory
 
@@ -453,7 +453,7 @@ class TestProviderIntegration:
         for provider in expected_providers:
             assert provider in registered_providers
 
-    def test_provider_creation_via_factory(self):
+    def test_provider_creation_via_factory(self) -> None:
         """Test creating providers via factory."""
         from gemini_sre_agent.llm.factory import LLMProviderFactory
 

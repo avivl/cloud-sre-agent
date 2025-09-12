@@ -400,7 +400,7 @@ class MixingStrategyFactory:
 class StrategyPerformanceMonitor:
     """Monitor performance of different mixing strategies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance monitor."""
         self.strategy_metrics: Dict[MixingStrategy, Dict[str, Any]] = {}
         self.reset_metrics()

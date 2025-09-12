@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class PerformanceCache:
     """High-performance caching system for frequently accessed data."""
 
-    def __init__(self, max_size: int = 1000, ttl_seconds: float = 300.0):
+    def __init__(self, max_size: int = 1000, ttl_seconds: float = 300.0) -> None:
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
         self._cache: Dict[str, Tuple[Any, float]] = {}
@@ -82,7 +82,7 @@ class PerformanceCache:
 class ModelSelectionCache:
     """Optimized caching for model selection results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache = PerformanceCache(max_size=500, ttl_seconds=60.0)
         self._selection_stats: Dict[str, int] = {}
 
@@ -183,7 +183,7 @@ class ModelSelectionCache:
 class OptimizedModelRegistry:
     """Performance-optimized model registry with caching and indexing."""
 
-    def __init__(self, base_registry: ModelRegistry):
+    def __init__(self, base_registry: ModelRegistry) -> None:
         self.base_registry = base_registry
         self._model_cache: Dict[str, ModelInfo] = {}
         self._type_index: Dict[ModelType, List[ModelInfo]] = {}
@@ -246,7 +246,7 @@ class OptimizedModelRegistry:
 class OptimizedModelScorer:
     """Performance-optimized model scorer with caching and precomputation."""
 
-    def __init__(self, base_scorer: ModelScorer):
+    def __init__(self, base_scorer: ModelScorer) -> None:
         self.base_scorer = base_scorer
         self._score_cache = PerformanceCache(max_size=1000, ttl_seconds=300.0)
         self._precomputed_scores: Dict[str, Dict[str, float]] = {}
@@ -295,7 +295,7 @@ class OptimizedModelScorer:
 class ConnectionPool:
     """Connection pool for provider API connections."""
 
-    def __init__(self, max_connections: int = 10):
+    def __init__(self, max_connections: int = 10) -> None:
         self.max_connections = max_connections
         self._pools: Dict[str, asyncio.Queue] = {}
         self._lock = asyncio.Lock()
@@ -335,7 +335,7 @@ class ConnectionPool:
 class PerformanceOptimizer:
     """Main performance optimization orchestrator."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         self.config = config
         self.model_selection_cache = ModelSelectionCache()
         self.connection_pool = ConnectionPool()
@@ -437,10 +437,10 @@ class PerformanceOptimizer:
 
 
 # Performance decorators and utilities
-def cached_model_selection(ttl_seconds: float = 60.0):
+def cached_model_selection(ttl_seconds: float = 60.0) -> None:
     """Decorator for caching model selection results."""
 
-    def decorator(func):
+    def decorator(func: str) -> None:
         """
         Decorator.
 
@@ -490,7 +490,7 @@ def get_provider_type_enum(provider_str: str) -> ProviderType:
 class LazyLoader:
     """Lazy loading utility for expensive operations."""
 
-    def __init__(self, loader_func, *args, **kwargs):
+    def __init__(self, loader_func: str, *args: str, **kwargs: str) -> None:
         self.loader_func = loader_func
         self.args = args
         self.kwargs = kwargs
@@ -515,7 +515,7 @@ class LazyLoader:
 class BatchProcessor:
     """Batch processing utility for multiple operations."""
 
-    def __init__(self, batch_size: int = 10, max_wait_ms: float = 5.0):
+    def __init__(self, batch_size: int = 10, max_wait_ms: float = 5.0) -> None:
         self.batch_size = batch_size
         self.max_wait_ms = max_wait_ms
         self._pending_operations: List[Tuple[Any, asyncio.Future, tuple, dict]] = []

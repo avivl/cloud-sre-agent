@@ -55,7 +55,7 @@ class TestDataConfig:
 class TestDataGenerator:
     """Generator for creating test data for LLM testing."""
 
-    def __init__(self, config: Optional[TestDataConfig] = None):
+    def __init__(self, config: Optional[TestDataConfig] = None) -> None:
         """Initialize the test data generator."""
         self.config = config or TestDataConfig()
 

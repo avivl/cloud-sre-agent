@@ -28,7 +28,7 @@ class SecretsConfig(BaseConfig):
 
     @field_validator("gemini_api_key")
     @classmethod
-    def validate_gemini_api_key_format(cls, v):
+    def validate_gemini_api_key_format(cls: str, v: str) -> None:
         """Validate Gemini API key format."""
         key_value = v.get_secret_value()
         if not key_value:
@@ -45,7 +45,7 @@ class SecretsConfig(BaseConfig):
 
     @field_validator("github_token")
     @classmethod
-    def validate_github_token_format(cls, v):
+    def validate_github_token_format(cls: str, v: str) -> None:
         """Validate GitHub token format if provided."""
         if v is None:
             return v
@@ -64,7 +64,7 @@ class SecretsConfig(BaseConfig):
 
     @field_validator("gcp_service_account_key")
     @classmethod
-    def validate_gcp_service_account_key(cls, v):
+    def validate_gcp_service_account_key(cls: str, v: str) -> None:
         """Validate GCP service account key format if provided."""
         if v is None:
             return v

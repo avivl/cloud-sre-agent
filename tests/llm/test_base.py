@@ -25,7 +25,7 @@ from gemini_sre_agent.llm.base import (
 class MockProvider(LLMProvider):
     """Mock provider for testing."""
 
-    def __init__(self, config):
+    def __init__(self, config: str) -> None:
         super().__init__(config)
         self.mock_responses = []
         self.mock_stream_responses = []
@@ -64,7 +64,7 @@ class MockProvider(LLMProvider):
         """
         return False
 
-    def get_available_models(self):
+    def get_available_models(self) -> None:
         """
         Get Available Models.
 
@@ -102,7 +102,7 @@ class MockProvider(LLMProvider):
         return 0.001
 
     @classmethod
-    def validate_config(cls, config):
+    def validate_config(cls: str, config: str) -> None:
         """
         Validate Config.
 
@@ -117,7 +117,7 @@ class MockProvider(LLMProvider):
 class TestLLMRequest:
     """Test LLMRequest data model."""
 
-    def test_llm_request_creation(self):
+    def test_llm_request_creation(self) -> None:
         """Test basic LLMRequest creation."""
         request = LLMRequest(prompt="Test prompt", temperature=0.8, max_tokens=500)
 
@@ -127,7 +127,7 @@ class TestLLMRequest:
         assert request.stream is False
         assert request.model_type is None
 
-    def test_llm_request_with_model_type(self):
+    def test_llm_request_with_model_type(self) -> None:
         """Test LLMRequest with model type."""
         request = LLMRequest(prompt="Test prompt", model_type=ModelType.FAST)
 
@@ -137,7 +137,7 @@ class TestLLMRequest:
 class TestLLMResponse:
     """Test LLMResponse data model."""
 
-    def test_llm_response_creation(self):
+    def test_llm_response_creation(self) -> None:
         """Test basic LLMResponse creation."""
         response = LLMResponse(
             content="Test response", provider="test-provider", model="test-model"
@@ -152,7 +152,7 @@ class TestLLMResponse:
 class TestLLMProviderError:
     """Test LLMProviderError exception."""
 
-    def test_error_creation(self):
+    def test_error_creation(self) -> None:
         """Test basic error creation."""
         error = LLMProviderError("Test error")
 
@@ -160,7 +160,7 @@ class TestLLMProviderError:
         assert error.severity == ErrorSeverity.TRANSIENT
         assert error.retry_after is None
 
-    def test_error_with_severity(self):
+    def test_error_with_severity(self) -> None:
         """Test error with custom severity."""
         error = LLMProviderError(
             "Critical error", severity=ErrorSeverity.CRITICAL, retry_after=60
@@ -173,7 +173,7 @@ class TestLLMProviderError:
 class TestCircuitBreaker:
     """Test CircuitBreaker functionality."""
 
-    def test_circuit_breaker_initial_state(self):
+    def test_circuit_breaker_initial_state(self) -> None:
         """Test circuit breaker initial state."""
         cb = CircuitBreaker()
 
@@ -181,7 +181,7 @@ class TestCircuitBreaker:
         assert cb.failure_count == 0
         assert cb.is_available() is True
 
-    def test_circuit_breaker_success(self):
+    def test_circuit_breaker_success(self) -> None:
         """Test circuit breaker success handling."""
         cb = CircuitBreaker()
 
@@ -191,7 +191,7 @@ class TestCircuitBreaker:
         assert cb.failure_count == 0
         assert cb.is_available() is True
 
-    def test_circuit_breaker_failure(self):
+    def test_circuit_breaker_failure(self) -> None:
         """Test circuit breaker failure handling."""
         cb = CircuitBreaker(failure_threshold=2)
 
@@ -223,7 +223,7 @@ class TestCircuitBreaker:
 class TestLLMProvider:
     """Test LLMProvider abstract base class."""
 
-    def test_provider_initialization(self):
+    def test_provider_initialization(self) -> None:
         """Test provider initialization."""
         config = Mock()
         config.provider = ProviderType.GEMINI
@@ -268,7 +268,7 @@ class TestLLMProvider:
 
         assert is_healthy is True
 
-    def test_provider_capabilities(self):
+    def test_provider_capabilities(self) -> None:
         """Test provider capability methods."""
         config = Mock()
         config.provider = ProviderType.GEMINI

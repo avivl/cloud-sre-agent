@@ -43,7 +43,7 @@ from .strategy_base import (
 class CostOptimizedStrategy(ModelSelectionStrategy):
     """Strategy that prioritizes cost efficiency over other factors."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None):
+    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
         """Initialize the cost-optimized strategy.
 
         Args:
@@ -149,7 +149,7 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
 class PerformanceOptimizedStrategy(ModelSelectionStrategy):
     """Strategy that prioritizes performance over other factors."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None):
+    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
         """Initialize the performance-optimized strategy.
 
         Args:
@@ -243,7 +243,7 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
 class QualityOptimizedStrategy(ModelSelectionStrategy):
     """Strategy that prioritizes quality over other factors."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None):
+    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
         """Initialize the quality-optimized strategy.
 
         Args:
@@ -337,7 +337,7 @@ class QualityOptimizedStrategy(ModelSelectionStrategy):
 class TimeBasedStrategy(ModelSelectionStrategy):
     """Strategy that selects different models based on time of day."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None):
+    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
         """Initialize the time-based strategy.
 
         Args:
@@ -455,7 +455,7 @@ class TimeBasedStrategy(ModelSelectionStrategy):
 class HybridStrategy(ModelSelectionStrategy):
     """Strategy that balances multiple factors using machine learning insights."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None):
+    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
         """Initialize the hybrid strategy.
 
         Args:

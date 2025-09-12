@@ -91,7 +91,7 @@ class TestEnhancedLLMService:
         provider.provider_name = "openai"
         return provider
 
-    def test_service_initialization(self):
+    def test_service_initialization(self) -> None:
         """Test enhanced service initialization."""
         config = self.create_test_config()
         service = EnhancedLLMService(config)
@@ -103,7 +103,7 @@ class TestEnhancedLLMService:
         assert service.performance_monitor is not None
         assert len(service._selection_stats) == 0
 
-    def test_service_initialization_with_custom_components(self):
+    def test_service_initialization_with_custom_components(self) -> None:
         """Test service initialization with custom components."""
         config = self.create_test_config()
         custom_registry = ModelRegistry()
@@ -412,7 +412,7 @@ class TestEnhancedLLMService:
 
         assert result is False  # One provider is unhealthy
 
-    def test_get_available_models(self):
+    def test_get_available_models(self) -> None:
         """Test getting available models."""
         config = self.create_test_config()
         service = EnhancedLLMService(config)
@@ -426,7 +426,7 @@ class TestEnhancedLLMService:
         assert "openai" in models
         assert models["openai"] == ["gpt-4", "gpt-3.5-turbo"]
 
-    def test_get_model_performance(self):
+    def test_get_model_performance(self) -> None:
         """Test getting model performance metrics."""
         config = self.create_test_config()
         service = EnhancedLLMService(config)
@@ -441,7 +441,7 @@ class TestEnhancedLLMService:
         assert "metrics" in performance
         assert MetricType.LATENCY.value in performance["metrics"]
 
-    def test_get_best_models(self):
+    def test_get_best_models(self) -> None:
         """Test getting best performing models."""
         config = self.create_test_config()
         service = EnhancedLLMService(config)
@@ -458,7 +458,7 @@ class TestEnhancedLLMService:
         if len(best_models) >= 1:
             assert best_models[0][0] == "gpt-3.5-turbo"  # Lower latency is better
 
-    def test_get_selection_stats(self):
+    def test_get_selection_stats(self) -> None:
         """Test getting selection statistics."""
         config = self.create_test_config()
         service = EnhancedLLMService(config)
@@ -474,7 +474,7 @@ class TestEnhancedLLMService:
         assert "performance_cache_stats" in stats
         assert stats["selection_counts"]["gpt-4:best_score"] == 5
 
-    def test_get_model_rankings(self):
+    def test_get_model_rankings(self) -> None:
         """Test getting model rankings."""
         config = self.create_test_config()
         service = EnhancedLLMService(config)

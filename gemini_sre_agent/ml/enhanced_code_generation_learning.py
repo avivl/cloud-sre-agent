@@ -14,7 +14,7 @@ from typing import Any, Dict, List
 class EnhancedCodeGenerationLearning:
     """Handles learning data management and statistics for code generation"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.generation_history: List[Dict[str, Any]] = []
         self.learning_data: Dict[str, Any] = {}
 
@@ -62,7 +62,7 @@ class EnhancedCodeGenerationLearning:
         if len(self.generation_history) > 1000:
             self.generation_history = self.generation_history[-1000:]
 
-    def update_learning_data(self, issue_context, code_generation_result):
+    def update_learning_data(self, issue_context: str, code_generation_result: str) -> None:
         """Update learning data based on generation results"""
         domain = issue_context.issue_type.value.split("_")[0]
 
@@ -190,7 +190,7 @@ class EnhancedCodeGenerationLearning:
             "learning_data": self.learning_data,
         }
 
-    def reset_learning_data(self):
+    def reset_learning_data(self) -> None:
         """Reset learning data (useful for testing or starting fresh)"""
         self.learning_data = {}
         self.generation_history = []

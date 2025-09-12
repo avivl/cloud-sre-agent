@@ -13,13 +13,13 @@ from gemini_sre_agent.security.audit_logger import (
 
 
 @pytest.fixture
-def audit_logger():
+def audit_logger() -> None:
     """Create an AuditLogger instance."""
     return AuditLogger(enable_console=True)
 
 
 @pytest.fixture
-def sample_audit_event():
+def sample_audit_event() -> None:
     """Create a sample audit event."""
     return AuditEvent(
         event_id="test-event-123",
@@ -36,7 +36,7 @@ def sample_audit_event():
 class TestAuditLogger:
     """Test cases for AuditLogger."""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test AuditLogger initialization."""
         logger = AuditLogger()
         assert logger.log_file is None
@@ -44,7 +44,7 @@ class TestAuditLogger:
         assert logger.backup_count == 5
         assert logger.enable_console is False
 
-    def test_initialization_with_params(self):
+    def test_initialization_with_params(self) -> None:
         """Test AuditLogger initialization with parameters."""
         logger = AuditLogger(
             log_file="/tmp/audit.log",
@@ -258,7 +258,7 @@ class TestAuditLogger:
                 user_agent=None,
             )
 
-    def test_get_recent_events(self, audit_logger):
+    def test_get_recent_events(self, audit_logger: str) -> None:
         """Test getting recent events from buffer."""
         # Add some test events
         event1 = AuditEvent(
@@ -358,7 +358,7 @@ class TestAuditLogger:
         assert len(gemini_events) == 1
         assert gemini_events[0].provider == "gemini"
 
-    def test_get_statistics(self, audit_logger):
+    def test_get_statistics(self, audit_logger: str) -> None:
         """Test getting audit log statistics."""
         # Add some test events
         event1 = AuditEvent(
@@ -393,7 +393,7 @@ class TestAuditLogger:
         assert stats["provider_counts"]["gemini"] == 2
         assert stats["provider_counts"]["openai"] == 1
 
-    def test_get_statistics_empty_buffer(self, audit_logger):
+    def test_get_statistics_empty_buffer(self, audit_logger: str) -> None:
         """Test getting statistics with empty buffer."""
         stats = audit_logger.get_statistics()
         assert stats == {}
@@ -449,7 +449,7 @@ class TestAuditLogger:
 class TestAuditEvent:
     """Test cases for AuditEvent model."""
 
-    def test_audit_event_creation(self):
+    def test_audit_event_creation(self) -> None:
         """Test AuditEvent creation."""
         event = AuditEvent(
             event_id="test-event",
@@ -461,7 +461,7 @@ class TestAuditEvent:
         assert event.success is True
         assert event.metadata == {}
 
-    def test_audit_event_with_all_fields(self):
+    def test_audit_event_with_all_fields(self) -> None:
         """Test AuditEvent with all fields."""
         timestamp = datetime.utcnow()
         event = AuditEvent(
@@ -498,7 +498,7 @@ class TestAuditEvent:
 class TestAuditEventType:
     """Test cases for AuditEventType enum."""
 
-    def test_audit_event_types(self):
+    def test_audit_event_types(self) -> None:
         """Test that all expected event types exist."""
         expected_types = [
             "provider_request",

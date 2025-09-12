@@ -17,7 +17,7 @@ class TestSecurityIntegration:
     """Test security tool integration and compliance validation."""
 
     @pytest.fixture
-    def mock_github_provider(self):
+    def mock_github_provider(self) -> None:
         """Create a mock GitHub provider for testing."""
         credentials = CredentialConfig(token_env="GITHUB_TOKEN")
         repo_config = GitHubRepositoryConfig(
@@ -30,7 +30,7 @@ class TestSecurityIntegration:
         provider.repo = MagicMock()
         return provider
 
-    def test_security_scanning_tool_integration(self, mock_github_provider):
+    def test_security_scanning_tool_integration(self, mock_github_provider: str) -> None:
         """Test integration with security scanning tools."""
         # Test security scanning tool configuration
         security_tools = {
@@ -55,7 +55,7 @@ class TestSecurityIntegration:
         assert security_tools["dependency_scanning"]["enabled"] is True
         assert security_tools["secret_scanning"]["enabled"] is True
 
-    def test_compliance_framework_validation(self, mock_github_provider):
+    def test_compliance_framework_validation(self, mock_github_provider: str) -> None:
         """Test compliance framework validation."""
         # Test compliance framework configuration
         compliance_frameworks = {
@@ -86,7 +86,7 @@ class TestSecurityIntegration:
         assert compliance_frameworks["hipaa"]["enabled"] is False
         assert compliance_frameworks["pci"]["enabled"] is True
 
-    def test_security_policy_enforcement(self, mock_github_provider):
+    def test_security_policy_enforcement(self, mock_github_provider: str) -> None:
         """Test security policy enforcement."""
         # Test security policy configuration
         security_policies = {
@@ -115,7 +115,7 @@ class TestSecurityIntegration:
         assert security_policies["access_policy"]["require_mfa"] is True
         assert security_policies["data_policy"]["encryption_at_rest"] is True
 
-    def test_security_integration_validation(self, mock_github_provider):
+    def test_security_integration_validation(self, mock_github_provider: str) -> None:
         """Test security integration validation."""
         # Test security integration configuration
         security_integration = {
@@ -140,7 +140,7 @@ class TestSecurityIntegration:
         assert security_integration["vulnerability_scanner"]["enabled"] is True
         assert security_integration["threat_intelligence"]["enabled"] is True
 
-    def test_security_monitoring_integration(self, mock_github_provider):
+    def test_security_monitoring_integration(self, mock_github_provider: str) -> None:
         """Test security monitoring integration."""
         # Test security monitoring configuration
         security_monitoring = {
@@ -165,7 +165,7 @@ class TestSecurityIntegration:
         assert security_monitoring["log_analysis"]["enabled"] is True
         assert security_monitoring["anomaly_detection"]["enabled"] is True
 
-    def test_security_incident_response(self, mock_github_provider):
+    def test_security_incident_response(self, mock_github_provider: str) -> None:
         """Test security incident response."""
         # Test security incident response configuration
         incident_response = {
@@ -191,7 +191,7 @@ class TestSecurityIntegration:
         assert incident_response["manual_response"]["enabled"] is True
         assert incident_response["recovery_procedures"]["enabled"] is True
 
-    def test_security_compliance_reporting(self, mock_github_provider):
+    def test_security_compliance_reporting(self, mock_github_provider: str) -> None:
         """Test security compliance reporting."""
         # Test security compliance reporting configuration
         compliance_reporting = {
@@ -220,7 +220,7 @@ class TestSecurityIntegration:
         assert compliance_reporting["report_types"]["vulnerability_report"] is True
         assert compliance_reporting["report_recipients"]["security_team"] is True
 
-    def test_security_tool_authentication(self, mock_github_provider):
+    def test_security_tool_authentication(self, mock_github_provider: str) -> None:
         """Test security tool authentication."""
         # Test security tool authentication configuration
         tool_auth = {
@@ -245,7 +245,7 @@ class TestSecurityIntegration:
         assert tool_auth["oauth2_auth"]["enabled"] is True
         assert tool_auth["jwt_auth"]["enabled"] is True
 
-    def test_security_tool_encryption(self, mock_github_provider):
+    def test_security_tool_encryption(self, mock_github_provider: str) -> None:
         """Test security tool encryption."""
         # Test security tool encryption configuration
         tool_encryption = {
@@ -270,7 +270,7 @@ class TestSecurityIntegration:
         assert tool_encryption["transport_encryption"]["enabled"] is True
         assert tool_encryption["key_rotation"]["enabled"] is True
 
-    def test_security_tool_monitoring(self, mock_github_provider):
+    def test_security_tool_monitoring(self, mock_github_provider: str) -> None:
         """Test security tool monitoring."""
         # Test security tool monitoring configuration
         tool_monitoring = {
@@ -295,7 +295,7 @@ class TestSecurityIntegration:
         assert tool_monitoring["performance_monitoring"]["enabled"] is True
         assert tool_monitoring["error_monitoring"]["enabled"] is True
 
-    def test_security_tool_integration_validation(self, mock_github_provider):
+    def test_security_tool_integration_validation(self, mock_github_provider: str) -> None:
         """Test security tool integration validation."""
         # Test security tool integration validation
         integration_validation = {
@@ -323,7 +323,7 @@ class TestSecurityIntegration:
         )
         assert integration_validation["data_validation"]["schema_validation"] is True
 
-    def test_security_tool_error_handling(self, mock_github_provider):
+    def test_security_tool_error_handling(self, mock_github_provider: str) -> None:
         """Test security tool error handling."""
         # Test security tool error handling configuration
         error_handling = {
@@ -348,7 +348,7 @@ class TestSecurityIntegration:
         assert error_handling["fallback_behavior"]["enabled"] is True
         assert error_handling["error_logging"]["enabled"] is True
 
-    def test_security_tool_performance(self, mock_github_provider):
+    def test_security_tool_performance(self, mock_github_provider: str) -> None:
         """Test security tool performance."""
         # Test security tool performance configuration
         performance = {
@@ -373,7 +373,7 @@ class TestSecurityIntegration:
         assert performance["rate_limiting"]["enabled"] is True
         assert performance["resource_limits"]["max_memory_mb"] == 512
 
-    def test_security_tool_scalability(self, mock_github_provider):
+    def test_security_tool_scalability(self, mock_github_provider: str) -> None:
         """Test security tool scalability."""
         # Test security tool scalability configuration
         scalability = {
@@ -399,7 +399,7 @@ class TestSecurityIntegration:
         assert scalability["load_balancing"]["enabled"] is True
         assert scalability["auto_scaling"]["enabled"] is True
 
-    def test_security_tool_reliability(self, mock_github_provider):
+    def test_security_tool_reliability(self, mock_github_provider: str) -> None:
         """Test security tool reliability."""
         # Test security tool reliability configuration
         reliability = {
@@ -424,7 +424,7 @@ class TestSecurityIntegration:
         assert reliability["disaster_recovery"]["enabled"] is True
         assert reliability["monitoring"]["enabled"] is True
 
-    def test_security_tool_compliance(self, mock_github_provider):
+    def test_security_tool_compliance(self, mock_github_provider: str) -> None:
         """Test security tool compliance."""
         # Test security tool compliance configuration
         compliance = {
@@ -451,7 +451,7 @@ class TestSecurityIntegration:
         assert compliance["security_standards"]["iso27001"] is True
         assert compliance["audit_requirements"]["audit_logging"] is True
 
-    def test_security_tool_integration_final(self, mock_github_provider):
+    def test_security_tool_integration_final(self, mock_github_provider: str) -> None:
         """Test final security tool integration validation."""
         # Test final security tool integration validation
         final_integration = {

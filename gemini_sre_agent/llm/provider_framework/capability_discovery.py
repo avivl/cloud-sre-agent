@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ProviderCapability:
     """Represents a specific capability of a provider."""
 
-    def __init__(self, name: str, description: str, required: bool = False):
+    def __init__(self, name: str, description: str, required: bool = False) -> None:
         self.name = name
         self.description = description
         self.required = required
@@ -45,7 +45,7 @@ class ProviderCapabilityDiscovery:
     a registry of capabilities for intelligent provider selection.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.capability_registry: Dict[str, Dict[str, ProviderCapability]] = {}
         self.capability_tests: Dict[str, Any] = {
             "streaming": self._test_streaming_capability,

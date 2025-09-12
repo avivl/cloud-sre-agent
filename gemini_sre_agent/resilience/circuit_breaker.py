@@ -218,7 +218,7 @@ class CircuitBreaker:
 class CircuitBreakerOpenException(Exception):
     """Exception raised when circuit breaker is open."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message)
         self.message = message
 
@@ -226,7 +226,7 @@ class CircuitBreakerOpenException(Exception):
 class CircuitBreakerManager:
     """Manages multiple circuit breakers for different services."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the circuit breaker manager."""
         self._breakers: Dict[str, CircuitBreaker] = {}
 

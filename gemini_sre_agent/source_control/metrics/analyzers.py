@@ -17,7 +17,7 @@ from .collectors import MetricsCollector
 class MetricsAnalyzer:
     """Analyzes metrics to provide insights and recommendations."""
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.logger = logging.getLogger("MetricsAnalyzer")
 

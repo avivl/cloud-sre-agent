@@ -39,7 +39,7 @@ class PatternMatcherConfig:
     external_service_indicators: Optional[List[str]] = None
     gradual_onset_indicators: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Set default values for optional fields."""
         if self.keywords is None:
             self.keywords = []
@@ -62,7 +62,7 @@ class PatternMatcher(Protocol):
 class BasePatternMatcher(ABC):
     """Base class for pattern matchers."""
 
-    def __init__(self, config: PatternMatcherConfig, confidence_scorer=None):
+    def __init__(self, config: PatternMatcherConfig, confidence_scorer: Optional[str] = None) -> None:
         self.config = config
         self.confidence_scorer = confidence_scorer
         self.logger = setup_logging()

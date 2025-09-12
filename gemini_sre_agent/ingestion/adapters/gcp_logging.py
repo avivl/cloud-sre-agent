@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class GCPLoggingAdapter(LogIngestionInterface):
     """Adapter for Google Cloud Logging API log consumption."""
 
-    def __init__(self, config: GCPLoggingConfig):
+    def __init__(self, config: GCPLoggingConfig) -> None:
         self.config = config
         self.project_id = config.project_id
         self.log_filter = config.log_filter

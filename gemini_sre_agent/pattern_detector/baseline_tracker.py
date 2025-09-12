@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class BaselineTracker:
     """Tracks historical baselines for rate-based threshold evaluation."""
 
-    def __init__(self, max_history: int = 100):
+    def __init__(self, max_history: int = 100) -> None:
         self.max_history = max_history
         self.service_baselines: Dict[str, List[float]] = defaultdict(list)
         self.global_baseline: List[float] = []

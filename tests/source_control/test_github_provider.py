@@ -20,19 +20,19 @@ from gemini_sre_agent.source_control.providers.github_provider import GitHubProv
 
 
 @pytest.fixture
-def github_credentials():
+def github_credentials() -> None:
     """Create test GitHub credentials."""
     return CredentialConfig(token="test_token_123")
 
 
 @pytest.fixture
-def repository_config():
+def repository_config() -> None:
     """Create test repository configuration."""
     return GitHubRepositoryConfig(name="test-repo", url="owner/repo", branch="main")
 
 
 @pytest.fixture
-def github_provider(github_credentials, repository_config):
+def github_provider(github_credentials: str, repository_config: str) -> None:
     """Create test GitHub provider."""
     return GitHubProvider(repository_config, github_credentials)
 
@@ -40,19 +40,19 @@ def github_provider(github_credentials, repository_config):
 class TestGitHubProviderInitialization:
     """Test GitHub provider initialization."""
 
-    def test_init_with_credentials(self, github_credentials, repository_config):
+    def test_init_with_credentials(self, github_credentials: str, repository_config: str) -> None:
         """Test initialization with credentials."""
         provider = GitHubProvider(repository_config, github_credentials)
         assert provider.repo_config == repository_config
         assert provider.credentials == github_credentials
         assert provider.base_url == repository_config.api_base_url
 
-    def test_init_without_credentials_raises_error(self, repository_config):
+    def test_init_without_credentials_raises_error(self, repository_config: str) -> None:
         """Test initialization without credentials raises error."""
         with pytest.raises(ValueError, match="GitHub credentials are required"):
             GitHubProvider(repository_config, None)
 
-    def test_init_with_invalid_credentials_raises_error(self, repository_config):
+    def test_init_with_invalid_credentials_raises_error(self, repository_config: str) -> None:
         """Test initialization with invalid credentials raises error."""
         invalid_creds = CredentialConfig()  # No token provided
         GitHubProvider(repository_config, invalid_creds)

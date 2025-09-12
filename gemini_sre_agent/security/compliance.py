@@ -48,7 +48,7 @@ class ComplianceReport(BaseModel):
 class ComplianceReporter:
     """Compliance reporting system."""
 
-    def __init__(self, audit_logger: AuditLogger):
+    def __init__(self, audit_logger: AuditLogger) -> None:
         """Initialize the compliance reporter.
 
         Args:

@@ -38,7 +38,7 @@ def create_test_model_config(name: str, model_type: ModelType, **kwargs) -> Mode
 class TestProviderCapabilities:
     """Test ProviderCapabilities dataclass."""
 
-    def test_provider_capabilities_creation(self):
+    def test_provider_capabilities_creation(self) -> None:
         """Test creating ProviderCapabilities."""
         caps = ProviderCapabilities(
             supports_streaming=True,
@@ -61,7 +61,7 @@ class TestProviderCapabilities:
 class TestOpenAIProviderHandler:
     """Test OpenAI provider handler."""
 
-    def test_openai_handler_creation(self):
+    def test_openai_handler_creation(self) -> None:
         """Test creating OpenAI handler."""
         config = create_test_config(
             provider="openai",
@@ -73,7 +73,7 @@ class TestOpenAIProviderHandler:
         assert handler.provider_name == "openai"
         assert handler.config == config
 
-    def test_openai_validate_config_valid(self):
+    def test_openai_validate_config_valid(self) -> None:
         """Test OpenAI config validation with valid config."""
         config = create_test_config(
             provider="openai",
@@ -85,7 +85,7 @@ class TestOpenAIProviderHandler:
         errors = handler.validate_config()
         assert len(errors) == 0
 
-    def test_openai_validate_config_missing_api_key(self):
+    def test_openai_validate_config_missing_api_key(self) -> None:
         """Test OpenAI config validation with missing API key."""
         # Create a valid config first, then modify it to test validation
         config = create_test_config(
@@ -101,7 +101,7 @@ class TestOpenAIProviderHandler:
         errors = handler.validate_config()
         assert "OpenAI API key is required" in errors
 
-    def test_openai_validate_config_invalid_model(self):
+    def test_openai_validate_config_invalid_model(self) -> None:
         """Test OpenAI config validation with invalid model name."""
         config = create_test_config(
             provider="openai",
@@ -117,7 +117,7 @@ class TestOpenAIProviderHandler:
         errors = handler.validate_config()
         assert "Invalid OpenAI model name: invalid-model" in errors
 
-    def test_openai_validate_credentials_valid(self):
+    def test_openai_validate_credentials_valid(self) -> None:
         """Test OpenAI credential validation with valid key."""
         config = create_test_config(
             provider="openai", api_key="sk-test123456789012345678901234567890"
@@ -128,7 +128,7 @@ class TestOpenAIProviderHandler:
         assert is_valid is True
         assert error is None
 
-    def test_openai_validate_credentials_invalid_format(self):
+    def test_openai_validate_credentials_invalid_format(self) -> None:
         """Test OpenAI credential validation with invalid format."""
         config = create_test_config(provider="openai", api_key="invalid-key")
 
@@ -137,7 +137,7 @@ class TestOpenAIProviderHandler:
         assert is_valid is False
         assert error is not None and "must start with 'sk-'" in error
 
-    def test_openai_get_capabilities(self):
+    def test_openai_get_capabilities(self) -> None:
         """Test OpenAI capabilities."""
         config = create_test_config(provider="openai", api_key="sk-test")
         handler = OpenAIProviderHandler(config)
@@ -149,7 +149,7 @@ class TestOpenAIProviderHandler:
         assert caps.max_context_length == 128000
         assert ModelType.FAST in caps.supported_model_types
 
-    def test_openai_map_models(self):
+    def test_openai_map_models(self) -> None:
         """Test OpenAI model mapping."""
         config = create_test_config(provider="openai", api_key="sk-test")
         handler = OpenAIProviderHandler(config)
@@ -159,7 +159,7 @@ class TestOpenAIProviderHandler:
         assert mapping[ModelType.SMART] == "gpt-4o-mini"
         assert mapping[ModelType.DEEP_THINKING] == "gpt-4o"
 
-    def test_openai_calculate_cost(self):
+    def test_openai_calculate_cost(self) -> None:
         """Test OpenAI cost calculation."""
         config = create_test_config(provider="openai", api_key="sk-test")
         handler = OpenAIProviderHandler(config)
@@ -176,7 +176,7 @@ class TestOpenAIProviderHandler:
 class TestAnthropicProviderHandler:
     """Test Anthropic provider handler."""
 
-    def test_anthropic_handler_creation(self):
+    def test_anthropic_handler_creation(self) -> None:
         """Test creating Anthropic handler."""
         config = create_test_config(
             provider="anthropic",
@@ -191,7 +191,7 @@ class TestAnthropicProviderHandler:
         handler = AnthropicProviderHandler(config)
         assert handler.provider_name == "anthropic"
 
-    def test_anthropic_validate_credentials_valid(self):
+    def test_anthropic_validate_credentials_valid(self) -> None:
         """Test Anthropic credential validation with valid key."""
         config = create_test_config(
             provider="anthropic", api_key="sk-ant-test123456789012345678901234567890"
@@ -202,7 +202,7 @@ class TestAnthropicProviderHandler:
         assert is_valid is True
         assert error is None
 
-    def test_anthropic_validate_credentials_invalid_format(self):
+    def test_anthropic_validate_credentials_invalid_format(self) -> None:
         """Test Anthropic credential validation with invalid format."""
         config = create_test_config(provider="anthropic", api_key="invalid-key")
 
@@ -211,7 +211,7 @@ class TestAnthropicProviderHandler:
         assert is_valid is False
         assert error is not None and "must start with 'sk-ant-'" in error
 
-    def test_anthropic_get_capabilities(self):
+    def test_anthropic_get_capabilities(self) -> None:
         """Test Anthropic capabilities."""
         config = create_test_config(provider="anthropic", api_key="sk-ant-test")
         handler = AnthropicProviderHandler(config)
@@ -221,7 +221,7 @@ class TestAnthropicProviderHandler:
         assert caps.supports_tools is True
         assert caps.max_context_length == 200000
 
-    def test_anthropic_calculate_cost(self):
+    def test_anthropic_calculate_cost(self) -> None:
         """Test Anthropic cost calculation."""
         config = create_test_config(provider="anthropic", api_key="sk-ant-test")
         handler = AnthropicProviderHandler(config)
@@ -233,7 +233,7 @@ class TestAnthropicProviderHandler:
 class TestOllamaProviderHandler:
     """Test Ollama provider handler."""
 
-    def test_ollama_handler_creation(self):
+    def test_ollama_handler_creation(self) -> None:
         """Test creating Ollama handler."""
         config = create_test_config(
             provider="ollama",
@@ -246,7 +246,7 @@ class TestOllamaProviderHandler:
         handler = OllamaProviderHandler(config)
         assert handler.provider_name == "ollama"
 
-    def test_ollama_validate_config_with_api_key(self):
+    def test_ollama_validate_config_with_api_key(self) -> None:
         """Test Ollama config validation with API key (should error)."""
         config = create_test_config(provider="ollama", api_key="should-not-have-key")
 
@@ -254,7 +254,7 @@ class TestOllamaProviderHandler:
         errors = handler.validate_config()
         assert "Ollama does not use API keys" in errors
 
-    def test_ollama_validate_credentials(self):
+    def test_ollama_validate_credentials(self) -> None:
         """Test Ollama credential validation (always valid)."""
         config = create_test_config(provider="ollama")
         handler = OllamaProviderHandler(config)
@@ -263,7 +263,7 @@ class TestOllamaProviderHandler:
         assert is_valid is True
         assert error is None
 
-    def test_ollama_get_capabilities(self):
+    def test_ollama_get_capabilities(self) -> None:
         """Test Ollama capabilities."""
         config = create_test_config(provider="ollama")
         handler = OllamaProviderHandler(config)
@@ -273,7 +273,7 @@ class TestOllamaProviderHandler:
         assert caps.supports_tools is False  # Depends on model
         assert caps.max_context_length == 32768
 
-    def test_ollama_calculate_cost(self):
+    def test_ollama_calculate_cost(self) -> None:
         """Test Ollama cost calculation (free)."""
         config = create_test_config(provider="ollama")
         handler = OllamaProviderHandler(config)
@@ -285,7 +285,7 @@ class TestOllamaProviderHandler:
 class TestGrokProviderHandler:
     """Test Grok provider handler."""
 
-    def test_grok_handler_creation(self):
+    def test_grok_handler_creation(self) -> None:
         """Test creating Grok handler."""
         config = create_test_config(
             provider="grok",
@@ -298,7 +298,7 @@ class TestGrokProviderHandler:
         handler = GrokProviderHandler(config)
         assert handler.provider_name == "grok"
 
-    def test_grok_validate_config_missing_api_key(self):
+    def test_grok_validate_config_missing_api_key(self) -> None:
         """Test Grok config validation with missing API key."""
         # Create a valid config first, then modify it to test validation
         config = create_test_config(
@@ -312,7 +312,7 @@ class TestGrokProviderHandler:
         errors = handler.validate_config()
         assert "Grok API key is required" in errors
 
-    def test_grok_get_capabilities(self):
+    def test_grok_get_capabilities(self) -> None:
         """Test Grok capabilities."""
         config = create_test_config(provider="grok", api_key="test")
         handler = GrokProviderHandler(config)
@@ -326,7 +326,7 @@ class TestGrokProviderHandler:
 class TestBedrockProviderHandler:
     """Test Bedrock provider handler."""
 
-    def test_bedrock_handler_creation(self):
+    def test_bedrock_handler_creation(self) -> None:
         """Test creating Bedrock handler."""
         config = create_test_config(
             provider="bedrock",
@@ -342,7 +342,7 @@ class TestBedrockProviderHandler:
         handler = BedrockProviderHandler(config)
         assert handler.provider_name == "bedrock"
 
-    def test_bedrock_validate_config_missing_region(self):
+    def test_bedrock_validate_config_missing_region(self) -> None:
         """Test Bedrock config validation with missing region."""
         config = create_test_config(provider="bedrock", api_key="AKIAIOSFODNN7EXAMPLE")
 
@@ -350,7 +350,7 @@ class TestBedrockProviderHandler:
         errors = handler.validate_config()
         assert "AWS region is required for Bedrock" in errors
 
-    def test_bedrock_validate_credentials_valid(self):
+    def test_bedrock_validate_credentials_valid(self) -> None:
         """Test Bedrock credential validation with valid credentials."""
         config = create_test_config(
             provider="bedrock", api_key="AKIAIOSFODNN7EXAMPLE", region="us-east-1"
@@ -361,7 +361,7 @@ class TestBedrockProviderHandler:
         assert is_valid is True
         assert error is None
 
-    def test_bedrock_validate_credentials_invalid_key_length(self):
+    def test_bedrock_validate_credentials_invalid_key_length(self) -> None:
         """Test Bedrock credential validation with invalid key length."""
         config = create_test_config(
             provider="bedrock", api_key="short", region="us-east-1"
@@ -376,7 +376,7 @@ class TestBedrockProviderHandler:
 class TestProviderHandlerFactory:
     """Test ProviderHandlerFactory."""
 
-    def test_create_handler_openai(self):
+    def test_create_handler_openai(self) -> None:
         """Test creating OpenAI handler via factory."""
         config = create_test_config(
             provider="openai", api_key="sk-test123456789012345678901234567890"
@@ -385,7 +385,7 @@ class TestProviderHandlerFactory:
         handler = ProviderHandlerFactory.create_handler(config)
         assert isinstance(handler, OpenAIProviderHandler)
 
-    def test_create_handler_anthropic(self):
+    def test_create_handler_anthropic(self) -> None:
         """Test creating Anthropic handler via factory."""
         config = create_test_config(
             provider="anthropic", api_key="sk-ant-test123456789012345678901234567890"
@@ -394,7 +394,7 @@ class TestProviderHandlerFactory:
         handler = ProviderHandlerFactory.create_handler(config)
         assert isinstance(handler, AnthropicProviderHandler)
 
-    def test_create_handler_unsupported(self):
+    def test_create_handler_unsupported(self) -> None:
         """Test creating handler for unsupported provider."""
         # Create a mock config object to bypass Pydantic validation
         config = MagicMock()
@@ -406,7 +406,7 @@ class TestProviderHandlerFactory:
         assert exc_info.value.severity == ErrorSeverity.CRITICAL
         assert "Unsupported provider: unsupported" in str(exc_info.value)
 
-    def test_get_supported_providers(self):
+    def test_get_supported_providers(self) -> None:
         """Test getting supported providers list."""
         providers = ProviderHandlerFactory.get_supported_providers()
         assert "openai" in providers
@@ -415,7 +415,7 @@ class TestProviderHandlerFactory:
         assert "grok" in providers
         assert "bedrock" in providers
 
-    def test_validate_provider_config_openai(self):
+    def test_validate_provider_config_openai(self) -> None:
         """Test validating OpenAI config via factory."""
         config = create_test_config(
             provider="openai", api_key="sk-test123456789012345678901234567890"
@@ -424,7 +424,7 @@ class TestProviderHandlerFactory:
         errors = ProviderHandlerFactory.validate_provider_config(config)
         assert len(errors) == 0
 
-    def test_validate_provider_config_unsupported(self):
+    def test_validate_provider_config_unsupported(self) -> None:
         """Test validating unsupported provider config via factory."""
         # Create a mock config object to bypass Pydantic validation
         config = MagicMock()
@@ -434,7 +434,7 @@ class TestProviderHandlerFactory:
         assert len(errors) == 1
         assert "Unsupported provider: unsupported" in errors[0]
 
-    def test_validate_provider_credentials_openai(self):
+    def test_validate_provider_credentials_openai(self) -> None:
         """Test validating OpenAI credentials via factory."""
         config = create_test_config(
             provider="openai", api_key="sk-test123456789012345678901234567890"
@@ -444,7 +444,7 @@ class TestProviderHandlerFactory:
         assert is_valid is True
         assert error is None
 
-    def test_validate_provider_credentials_unsupported(self):
+    def test_validate_provider_credentials_unsupported(self) -> None:
         """Test validating unsupported provider credentials via factory."""
         # Create a mock config object to bypass Pydantic validation
         config = MagicMock()
@@ -458,7 +458,7 @@ class TestProviderHandlerFactory:
 class TestBaseProviderHandler:
     """Test BaseProviderHandler abstract class."""
 
-    def test_get_model_config(self):
+    def test_get_model_config(self) -> None:
         """Test getting model configuration."""
         config = create_test_config(
             provider="openai",

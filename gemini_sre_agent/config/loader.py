@@ -21,7 +21,7 @@ T = TypeVar("T", bound=BaseConfig)
 class ConfigLoader:
     """Configuration loader with support for multiple sources."""
 
-    def __init__(self, config_dir: str = "config"):
+    def __init__(self, config_dir: str = "config") -> None:
         self.config_dir = Path(config_dir)
         self._cache: Dict[str, Any] = {}
 

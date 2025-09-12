@@ -9,7 +9,7 @@ from gemini_sre_agent.resilience.fallback_manager import FallbackManager
 
 
 @pytest.fixture
-def fallback_manager():
+def fallback_manager() -> None:
     """Create a FallbackManager instance."""
     return FallbackManager(
         providers=["gemini", "openai", "anthropic"],
@@ -18,7 +18,7 @@ def fallback_manager():
 
 
 @pytest.fixture
-def mock_provider_func():
+def mock_provider_func() -> None:
     """Create a mock provider function."""
     return AsyncMock()
 
@@ -26,20 +26,20 @@ def mock_provider_func():
 class TestFallbackManager:
     """Test cases for FallbackManager."""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test FallbackManager initialization."""
         manager = FallbackManager(providers=[])
         assert manager.providers == []
         assert manager.fallback_timeout == 30.0
         assert manager._provider_health == {}
 
-    def test_initialization_with_params(self, fallback_manager):
+    def test_initialization_with_params(self, fallback_manager: str) -> None:
         """Test FallbackManager initialization with parameters."""
         assert fallback_manager.providers == ["gemini", "openai", "anthropic"]
         assert fallback_manager.fallback_timeout == 0.5
         assert len(fallback_manager._provider_health) == 3
 
-    def test_add_provider(self, fallback_manager):
+    def test_add_provider(self, fallback_manager: str) -> None:
         """Test adding a provider."""
         initial_count = len(fallback_manager.providers)
 
@@ -48,7 +48,7 @@ class TestFallbackManager:
         assert len(fallback_manager.providers) == initial_count + 1
         assert "new_provider" in fallback_manager.providers
 
-    def test_remove_provider(self, fallback_manager):
+    def test_remove_provider(self, fallback_manager: str) -> None:
         """Test removing a provider."""
         initial_count = len(fallback_manager.providers)
 
@@ -58,7 +58,7 @@ class TestFallbackManager:
         assert len(fallback_manager.providers) == initial_count - 1
         assert "gemini" not in fallback_manager.providers
 
-    def test_remove_provider_nonexistent(self, fallback_manager):
+    def test_remove_provider_nonexistent(self, fallback_manager: str) -> None:
         """Test removing a non-existent provider."""
         result = fallback_manager.remove_provider("nonexistent")
         assert result is False
@@ -159,7 +159,7 @@ class TestFallbackManager:
         """Test fallback with synchronous function."""
         call_count = 0
 
-        def sync_func(*args, **kwargs):
+        def sync_func(*args: str, **kwargs: str) -> None:
             """
             Sync Func.
 
@@ -186,7 +186,7 @@ class TestFallbackManager:
         """Test fallback with synchronous function that always fails."""
         call_count = 0
 
-        def sync_fail_func(*args, **kwargs):
+        def sync_fail_func(*args: str, **kwargs: str) -> None:
             """
             Sync Fail Func.
 
@@ -255,7 +255,7 @@ class TestFallbackManager:
         assert mock_provider_func.call_args_list[0] == expected_call
         assert mock_provider_func.call_args_list[1] == expected_call
 
-    def test_get_provider_stats(self, fallback_manager):
+    def test_get_provider_stats(self, fallback_manager: str) -> None:
         """Test getting provider statistics."""
         stats = fallback_manager.get_provider_stats("gemini")
 
@@ -266,7 +266,7 @@ class TestFallbackManager:
         assert stats["success_rate"] == 0.0
         assert stats["average_response_time"] == 0.0
 
-    def test_get_provider_stats_nonexistent(self, fallback_manager):
+    def test_get_provider_stats_nonexistent(self, fallback_manager: str) -> None:
         """Test getting statistics for non-existent provider."""
         stats = fallback_manager.get_provider_stats("nonexistent")
 
@@ -277,7 +277,7 @@ class TestFallbackManager:
         assert stats["success_rate"] == 0.0
         assert stats["average_response_time"] == 0.0
 
-    def test_get_all_provider_stats(self, fallback_manager):
+    def test_get_all_provider_stats(self, fallback_manager: str) -> None:
         """Test getting statistics for all providers."""
         all_stats = fallback_manager.get_all_stats()
 
@@ -292,7 +292,7 @@ class TestFallbackManager:
             assert stats["failures"] == 0
             assert stats["usage"] == 0
 
-    def test_reset_provider_stats(self, fallback_manager):
+    def test_reset_provider_stats(self, fallback_manager: str) -> None:
         """Test resetting provider statistics."""
         # Simulate some stats
         fallback_manager._provider_usage["gemini"] = 10
@@ -303,12 +303,12 @@ class TestFallbackManager:
         assert stats["failures"] == 0
         assert stats["usage"] == 0
 
-    def test_reset_provider_stats_nonexistent(self, fallback_manager):
+    def test_reset_provider_stats_nonexistent(self, fallback_manager: str) -> None:
         """Test resetting statistics for non-existent provider."""
         fallback_manager.reset_provider_stats("nonexistent")
         # Should not raise an exception
 
-    def test_reset_all_provider_stats(self, fallback_manager):
+    def test_reset_all_provider_stats(self, fallback_manager: str) -> None:
         """Test resetting all provider statistics."""
         # Simulate some stats for all providers
         for provider in fallback_manager.providers:
@@ -321,7 +321,7 @@ class TestFallbackManager:
             assert stats["failures"] == 0
             assert stats["usage"] == 0
 
-    def test_provider_health_tracking(self, fallback_manager):
+    def test_provider_health_tracking(self, fallback_manager: str) -> None:
         """Test provider health tracking."""
         # Test initial health state
         assert fallback_manager._provider_health["gemini"] is True
@@ -332,7 +332,7 @@ class TestFallbackManager:
         fallback_manager._provider_health["gemini"] = False
         assert fallback_manager._provider_health["gemini"] is False
 
-    def test_provider_failure_tracking(self, fallback_manager):
+    def test_provider_failure_tracking(self, fallback_manager: str) -> None:
         """Test provider failure tracking."""
         # Test initial failure count
         assert fallback_manager._provider_failures["gemini"] == 0
@@ -341,7 +341,7 @@ class TestFallbackManager:
         fallback_manager._provider_failures["gemini"] = 5
         assert fallback_manager._provider_failures["gemini"] == 5
 
-    def test_provider_usage_tracking(self, fallback_manager):
+    def test_provider_usage_tracking(self, fallback_manager: str) -> None:
         """Test provider usage tracking."""
         # Test initial usage count
         assert fallback_manager._provider_usage["gemini"] == 0
@@ -419,7 +419,7 @@ class TestFallbackManager:
             assert result == "success"
             assert provider == primary
 
-    def test_provider_stats_tracking(self, fallback_manager):
+    def test_provider_stats_tracking(self, fallback_manager: str) -> None:
         """Test that provider statistics are tracked correctly."""
         # Simulate some stats
         fallback_manager._provider_usage["gemini"] = 10
@@ -431,7 +431,7 @@ class TestFallbackManager:
         assert stats["usage"] == 10
         assert stats["failures"] == 0
 
-    def test_provider_stats_success_rate_calculation(self, fallback_manager):
+    def test_provider_stats_success_rate_calculation(self, fallback_manager: str) -> None:
         """Test success rate calculation."""
         # Test with no requests
         stats = fallback_manager.get_provider_stats("gemini")

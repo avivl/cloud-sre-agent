@@ -12,7 +12,7 @@ from .credential_manager import CredentialManager
 class ProviderFactory:
     """Creates and manages source control provider instances."""
 
-    def __init__(self, credential_manager: CredentialManager):
+    def __init__(self, credential_manager: CredentialManager) -> None:
         self.credential_manager = credential_manager
         self.provider_registry: Dict[str, Type[SourceControlProvider]] = {}
         self.logger = logging.getLogger(__name__)

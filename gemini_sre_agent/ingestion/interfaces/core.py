@@ -61,7 +61,7 @@ class LogEntry:
     trace_id: Optional[str] = None
     span_id: Optional[str] = None
 
-    def get_field(self, key: str, default=None):
+    def get_field(self, key: str, default: Optional[str] = None) -> None:
         """Safely get field from metadata or attributes."""
         return getattr(self, key, self.metadata.get(key, default))
 

@@ -58,7 +58,7 @@ class ModelRegistry:
     to specific provider models with support for fallback chains.
     """
 
-    def __init__(self, config: Optional[ModelRegistryConfig] = None):
+    def __init__(self, config: Optional[ModelRegistryConfig] = None) -> None:
         """Initialize the ModelRegistry with configuration."""
         self.config = config or ModelRegistryConfig()
         self._models: Dict[str, ModelInfo] = {}

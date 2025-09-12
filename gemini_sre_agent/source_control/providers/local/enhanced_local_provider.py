@@ -32,7 +32,7 @@ from .local_git_operations import LocalGitOperations
 class EnhancedLocalProvider(EnhancedBaseSourceControlProvider):
     """Enhanced Local provider with comprehensive error handling."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]: str) -> None:
         """Initialize the enhanced Local provider."""
         super().__init__(config)
 

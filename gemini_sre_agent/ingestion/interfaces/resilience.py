@@ -49,7 +49,7 @@ class AsyncCircuitBreaker:
         else:
             self.circuit_breaker = None
 
-    def __call__(self, func):
+    def __call__(self, func: str) -> None:
         if self.circuit_breaker:
             # For async functions, we need to handle them differently
             if asyncio.iscoroutinefunction(func):
@@ -65,7 +65,7 @@ class AsyncCircuitBreaker:
         return func
 
     @property
-    def state(self):
+    def state(self) -> None:
         """
         State.
 
@@ -75,7 +75,7 @@ class AsyncCircuitBreaker:
         return "closed"
 
     @property
-    def failure_count(self):
+    def failure_count(self) -> None:
         """
         Failure Count.
 
@@ -108,7 +108,7 @@ class AsyncRetry:
         else:
             self.retry = None
 
-    def __call__(self, func):
+    def __call__(self, func: str) -> None:
         if self.retry:
             return self.retry(func)
         return func
@@ -117,7 +117,7 @@ class AsyncRetry:
 class AsyncTimeout:
     """Timeout implementation using asyncio."""
 
-    def __init__(self, timeout: int):
+    def __init__(self, timeout: int) -> None:
         self.timeout = timeout
 
     async def __call__(self, func):
@@ -130,7 +130,7 @@ class AsyncTimeout:
 class AsyncBulkhead:
     """Simple bulkhead implementation."""
 
-    def __init__(self, capacity: int = 10, queue_size: int = 5, **kwargs):
+    def __init__(self, capacity: int = 10, queue_size: int = 5, **kwargs: str) -> None:
         self.capacity = capacity
         self.queue_size = queue_size
         self.active_count = 0
@@ -149,7 +149,7 @@ class AsyncBulkhead:
 class AsyncRateLimit:
     """Simple rate limiting implementation."""
 
-    def __init__(self, rate: int = 10, burst: int = 20, **kwargs):
+    def __init__(self, rate: int = 10, burst: int = 20, **kwargs: str) -> None:
         self.rate = rate
         self.burst = burst
         self.tokens = self.burst
@@ -193,7 +193,7 @@ class HyxResilientClient:
     Provides circuit breaker, retry, timeout, bulkhead, and rate limiting.
     """
 
-    def __init__(self, config: ResilienceConfig):
+    def __init__(self, config: ResilienceConfig) -> None:
         if not HYX_AVAILABLE:
             import warnings
 
@@ -366,7 +366,7 @@ def create_resilience_config(environment: str = "development") -> ResilienceConf
 class BackpressureManager:
     """Manage backpressure across sources using memory buffering."""
 
-    def __init__(self, max_queue_size: int = 10000):
+    def __init__(self, max_queue_size: int = 10000) -> None:
         self.max_queue_size = max_queue_size
         self.current_queue_size = 0
         self.dropped_items = 0

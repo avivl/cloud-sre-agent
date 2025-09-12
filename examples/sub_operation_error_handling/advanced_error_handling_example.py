@@ -34,7 +34,7 @@ from gemini_sre_agent.source_control.providers.sub_operation_config import (
 class FailingFileOperations(LocalFileOperations):
     """A test implementation that can simulate various failure scenarios."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: str, **kwargs: str) -> None:
         super().__init__(*args, **kwargs)
         self.failure_count = 0
         self.max_failures = 3

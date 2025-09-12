@@ -19,7 +19,7 @@ from .core import ErrorType, CircuitState
 class ErrorHandlingMetrics:
     """Metrics collector for error handling and resilience patterns."""
 
-    def __init__(self, metrics_collector: Optional[MetricsCollector] = None):
+    def __init__(self, metrics_collector: Optional[MetricsCollector] = None) -> None:
         """Initialize error handling metrics."""
         self.metrics_collector = metrics_collector or MetricsCollector()
         self.logger = logging.getLogger("ErrorHandlingMetrics")

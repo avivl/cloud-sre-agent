@@ -31,7 +31,7 @@ class FewShotManager:
     few-shot examples that can be used to improve code generation quality.
     """
 
-    def __init__(self, max_examples: int = 100):
+    def __init__(self, max_examples: int = 100) -> None:
         """
         Initialize the few-shot manager.
 

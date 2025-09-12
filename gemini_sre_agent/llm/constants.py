@@ -127,7 +127,7 @@ DEBUG_ENV = f"{ENV_PREFIX}DEBUG"
 class DynamicConstants:
     """Dynamic constants that can be overridden by environment variables."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         import os
 
         self.MAX_CONCURRENT_REQUESTS = int(os.getenv("MAX_CONCURRENT_REQUESTS", "5"))
@@ -154,7 +154,7 @@ class DynamicConstants:
         # Validate configuration values
         self.validate()
 
-    def validate(self):
+    def validate(self) -> None:
         """Validate configuration values."""
         if self.MAX_CONCURRENT_REQUESTS <= 0:
             raise ValueError("MAX_CONCURRENT_REQUESTS must be positive")

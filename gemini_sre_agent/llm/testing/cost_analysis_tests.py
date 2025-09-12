@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class CostAnalysisTester:
     """Tester for cost analysis and budget enforcement."""
 
-    def __init__(self, cost_manager: IntegratedCostManager):
+    def __init__(self, cost_manager: IntegratedCostManager) -> None:
         """Initialize the cost analysis tester."""
         self.cost_manager = cost_manager
         self.test_data_generator = TestDataGenerator()

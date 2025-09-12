@@ -28,7 +28,7 @@ from gemini_sre_agent.ml.performance.async_optimizer import (
 class TestAsyncTask:
     """Test the AsyncTask dataclass."""
 
-    def test_async_task_creation(self):
+    def test_async_task_creation(self) -> None:
         """Test creating an AsyncTask."""
 
         async def dummy_coroutine():
@@ -53,7 +53,7 @@ class TestAsyncTask:
         assert task.max_retries == 2
         assert task.retry_count == 0
 
-    def test_async_task_defaults(self):
+    def test_async_task_defaults(self) -> None:
         """Test AsyncTask with default values."""
 
         async def dummy_coroutine():
@@ -72,7 +72,7 @@ class TestAsyncOptimizer:
     """Test the AsyncOptimizer class."""
 
     @pytest.fixture
-    def optimizer(self):
+    def optimizer(self) -> None:
         """Create an AsyncOptimizer instance for testing."""
         return AsyncOptimizer(
             max_concurrent_tasks=3,
@@ -82,7 +82,7 @@ class TestAsyncOptimizer:
         )
 
     @pytest.fixture
-    def simple_task(self):
+    def simple_task(self) -> None:
         """Create a simple async task."""
 
         async def simple_coroutine(value):
@@ -92,7 +92,7 @@ class TestAsyncOptimizer:
         return AsyncTask(task_id="simple_task", coroutine=simple_coroutine, args=(42,))
 
     @pytest.fixture
-    def failing_task(self):
+    def failing_task(self) -> None:
         """Create a task that fails."""
 
         async def failing_coroutine():
@@ -104,7 +104,7 @@ class TestAsyncOptimizer:
         )
 
     @pytest.fixture
-    def timeout_task(self):
+    def timeout_task(self) -> None:
         """Create a task that times out."""
 
         async def timeout_coroutine():
@@ -266,7 +266,7 @@ class TestAsyncOptimizer:
         issue_results = results["issue"]
         assert len(issue_results) == 2
 
-    def test_group_tasks_by_type(self, optimizer):
+    def test_group_tasks_by_type(self, optimizer: str) -> None:
         """Test task grouping by type."""
 
         async def repo_coroutine():
@@ -292,7 +292,7 @@ class TestAsyncOptimizer:
         assert len(grouped["issue"]) == 1
         assert len(grouped["general"]) == 1
 
-    def test_extract_task_type(self, optimizer):
+    def test_extract_task_type(self, optimizer: str) -> None:
         """Test task type extraction."""
 
         async def test_coroutine():
@@ -313,7 +313,7 @@ class TestAsyncOptimizer:
         task3 = AsyncTask("task_1", test_coroutine)
         assert optimizer._extract_task_type(task3) == "task"
 
-    def test_get_optimizer_stats(self, optimizer):
+    def test_get_optimizer_stats(self, optimizer: str) -> None:
         """Test getting optimizer statistics."""
         stats = optimizer.get_optimizer_stats()
 
@@ -354,7 +354,7 @@ class TestAsyncOptimizer:
 class TestGlobalAsyncOptimizer:
     """Test the global async optimizer functions."""
 
-    def test_get_async_optimizer_singleton(self):
+    def test_get_async_optimizer_singleton(self) -> None:
         """Test that get_async_optimizer returns a singleton."""
         optimizer1 = get_async_optimizer()
         optimizer2 = get_async_optimizer()
@@ -380,7 +380,7 @@ class TestAsyncOptimizerIntegration:
     """Integration tests for AsyncOptimizer with performance monitoring."""
 
     @pytest.fixture
-    def monitoring_optimizer(self):
+    def monitoring_optimizer(self) -> None:
         """Create an AsyncOptimizer with monitoring enabled."""
         return AsyncOptimizer(
             max_concurrent_tasks=2, batch_size=2, enable_monitoring=True

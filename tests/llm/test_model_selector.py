@@ -63,7 +63,7 @@ class TestModelSelector:
         scorer.score_model = Mock()
         return scorer
 
-    def test_selector_initialization(self):
+    def test_selector_initialization(self) -> None:
         """Test ModelSelector initialization."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -75,7 +75,7 @@ class TestModelSelector:
         assert len(selector._selection_cache) == 0
         assert len(selector._selection_stats) == 0
 
-    def test_selector_initialization_with_default_scorer(self):
+    def test_selector_initialization_with_default_scorer(self) -> None:
         """Test ModelSelector initialization with default scorer."""
         registry = self.create_mock_registry()
 
@@ -84,7 +84,7 @@ class TestModelSelector:
         assert selector.model_registry == registry
         assert isinstance(selector.model_scorer, ModelScorer)
 
-    def test_select_model_basic(self):
+    def test_select_model_basic(self) -> None:
         """Test basic model selection."""
         # Setup mocks
         registry = self.create_mock_registry()
@@ -115,7 +115,7 @@ class TestModelSelector:
         assert len(result.fallback_chain) >= 1
         assert result.fallback_chain[0] == model
 
-    def test_select_model_with_criteria(self):
+    def test_select_model_with_criteria(self) -> None:
         """Test model selection with specific criteria."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -156,7 +156,7 @@ class TestModelSelector:
         assert call_args[1]["max_cost"] == 0.01
         assert call_args[1]["min_performance"] == 0.7
 
-    def test_select_model_different_strategies(self):
+    def test_select_model_different_strategies(self) -> None:
         """Test model selection with different strategies."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -202,7 +202,7 @@ class TestModelSelector:
             result.selected_model == model2
         )  # Should select model with highest reliability
 
-    def test_select_model_with_fallback(self):
+    def test_select_model_with_fallback(self) -> None:
         """Test model selection with fallback support."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -244,7 +244,7 @@ class TestModelSelector:
         assert len(result.fallback_chain) >= 3  # Primary + configured fallbacks
         assert result.fallback_chain[0] == primary_model
 
-    def test_select_model_without_fallback(self):
+    def test_select_model_without_fallback(self) -> None:
         """Test model selection without fallback support."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -271,7 +271,7 @@ class TestModelSelector:
         assert len(result.fallback_chain) == 1  # Only primary model
         assert result.fallback_chain[0] == model
 
-    def test_select_model_with_fallback_execution(self):
+    def test_select_model_with_fallback_execution(self) -> None:
         """Test select_model_with_fallback method."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -315,7 +315,7 @@ class TestModelSelector:
         )  # Result still shows primary as selected
         assert len(result.fallback_chain) >= 2
 
-    def test_meets_criteria(self):
+    def test_meets_criteria(self) -> None:
         """Test criteria matching logic."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -337,7 +337,7 @@ class TestModelSelector:
         criteria = SelectionCriteria(max_latency_ms=1000)  # Higher latency requirement
         assert selector._meets_criteria(model, criteria)
 
-    def test_selection_caching(self):
+    def test_selection_caching(self) -> None:
         """Test selection result caching."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -368,7 +368,7 @@ class TestModelSelector:
             result1.timestamp == result2.timestamp
         )  # Same timestamp indicates cache hit
 
-    def test_selection_caching_disabled(self):
+    def test_selection_caching_disabled(self) -> None:
         """Test selection with caching disabled."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -399,7 +399,7 @@ class TestModelSelector:
         # Results should be different instances
         assert result1 is not result2
 
-    def test_selection_stats(self):
+    def test_selection_stats(self) -> None:
         """Test selection statistics tracking."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -436,7 +436,7 @@ class TestModelSelector:
         )  # criteria1 and criteria3 are identical
         assert stats["selection_counts"]["fastest"] == 1
 
-    def test_clear_cache(self):
+    def test_clear_cache(self) -> None:
         """Test cache clearing."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -465,7 +465,7 @@ class TestModelSelector:
         selector.clear_cache()
         assert len(selector._selection_cache) == 0
 
-    def test_no_candidates_error(self):
+    def test_no_candidates_error(self) -> None:
         """Test error handling when no candidates are found."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -478,7 +478,7 @@ class TestModelSelector:
         with pytest.raises(ValueError, match="No models found matching criteria"):
             selector.select_model(criteria)
 
-    def test_custom_strategy_without_weights(self):
+    def test_custom_strategy_without_weights(self) -> None:
         """Test custom strategy without custom weights."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()
@@ -502,7 +502,7 @@ class TestModelSelector:
         with pytest.raises(ValueError, match="Custom weights required"):
             selector.select_model(criteria)
 
-    def test_custom_strategy_with_weights(self):
+    def test_custom_strategy_with_weights(self) -> None:
         """Test custom strategy with custom weights."""
         registry = self.create_mock_registry()
         scorer = self.create_mock_scorer()

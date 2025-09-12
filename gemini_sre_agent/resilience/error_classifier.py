@@ -25,7 +25,7 @@ class ErrorCategory(str, Enum):
 class ErrorClassifier:
     """Classifies errors into categories for appropriate handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the error classifier with default patterns."""
         self._error_patterns: Dict[ErrorCategory, list] = {
             ErrorCategory.RATE_LIMITED: [

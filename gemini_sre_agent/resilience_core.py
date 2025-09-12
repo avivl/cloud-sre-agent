@@ -39,7 +39,7 @@ class HyxResilientClient:
     Provides circuit breaker, retry, timeout, bulkhead, and rate limiting.
     """
 
-    def __init__(self, config: ResilienceConfig):
+    def __init__(self, config: ResilienceConfig) -> None:
         """
         Initializes the HyxResilientClient with a given resilience configuration.
 

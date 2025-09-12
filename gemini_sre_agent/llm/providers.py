@@ -35,7 +35,7 @@ class ProviderCapabilities:
 class BaseProviderHandler(ABC):
     """Base class for provider-specific configuration handlers."""
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         self.config = config
         self.provider_name = config.provider
 

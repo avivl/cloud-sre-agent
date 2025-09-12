@@ -90,7 +90,7 @@ class AccessRequest(BaseModel):
 class AccessController:
     """Role-based access control system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the access controller."""
         self._users: Dict[str, User] = {}
         self._roles: Dict[str, Role] = {}

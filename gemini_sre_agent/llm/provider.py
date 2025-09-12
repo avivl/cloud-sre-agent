@@ -21,7 +21,7 @@ class LLMProvider(ABC):
     of different provider APIs and formats.
     """
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._client = None

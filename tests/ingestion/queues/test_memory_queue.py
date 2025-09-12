@@ -21,7 +21,7 @@ class TestMemoryQueue:
     """Test cases for MemoryQueue."""
 
     @pytest.fixture
-    def config(self):
+    def config(self) -> None:
         """Create a test configuration."""
         return QueueConfig(
             max_size=100,
@@ -31,12 +31,12 @@ class TestMemoryQueue:
         )
 
     @pytest.fixture
-    def queue(self, config):
+    def queue(self, config: str) -> None:
         """Create a test queue instance."""
         return MemoryQueue(config)
 
     @pytest.fixture
-    def sample_log_entry(self):
+    def sample_log_entry(self) -> None:
         """Create a sample log entry."""
         return LogEntry(
             id="test-123",
@@ -47,7 +47,7 @@ class TestMemoryQueue:
             metadata={"key": "value"},
         )
 
-    def test_init(self, queue, config):
+    def test_init(self, queue: str, config: str) -> None:
         """Test queue initialization."""
         assert queue.config == config
         assert queue.max_size == config.max_size
@@ -302,7 +302,7 @@ class TestMemoryQueue:
             # Should either return False or raise a specific exception
             pass
 
-    def test_queue_config_validation(self):
+    def test_queue_config_validation(self) -> None:
         """Test queue configuration validation."""
         # Test valid config
         valid_config = QueueConfig(

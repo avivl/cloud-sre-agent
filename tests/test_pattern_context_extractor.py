@@ -227,7 +227,7 @@ class TestTemporalAnalysis:
 
         assert "Accelerating pattern" in temporal_features["burst_pattern"]
 
-    def test_check_acceleration(self, extractor):
+    def test_check_acceleration(self, extractor: str) -> None:
         """Test acceleration detection algorithm."""
         # Accelerating intervals (decreasing)
         accelerating = [120, 60, 40, 20, 10]
@@ -386,7 +386,7 @@ class TestErrorPatternAnalysis:
         """
         return PatternContextExtractor()
 
-    def test_error_type_classification(self, extractor):
+    def test_error_type_classification(self, extractor: str) -> None:
         """Test error message classification."""
         # Database errors
         assert (
@@ -415,7 +415,7 @@ class TestErrorPatternAnalysis:
         # Generic errors
         assert extractor._classify_error_type("Something went wrong") == "generic_error"
 
-    def test_message_similarity_calculation(self, extractor):
+    def test_message_similarity_calculation(self, extractor: str) -> None:
         """Test error message similarity scoring."""
         # Identical messages
         identical = ["Database timeout", "Database timeout"]
@@ -540,7 +540,7 @@ class TestCodeContextFormatting:
         """
         return PatternContextExtractor()
 
-    def test_format_code_context(self, extractor):
+    def test_format_code_context(self, extractor: str) -> None:
         """Test code context formatting."""
         code_analysis = {
             "git_context": {
@@ -569,7 +569,7 @@ class TestCodeContextFormatting:
         assert formatted["code_quality_metrics"]["coverage"] == 0.85
         assert "CVE-2024-1234" in formatted["dependency_vulnerabilities"]
 
-    def test_format_static_analysis_findings(self, extractor):
+    def test_format_static_analysis_findings(self, extractor: str) -> None:
         """Test static analysis findings formatting."""
         static_analysis = {
             "pylint": Mock(
@@ -589,7 +589,7 @@ class TestCodeContextFormatting:
         assert formatted["pylint"]["files_analyzed"] == 5
         assert formatted["failed_tool"]["error"] == "Tool failed"
 
-    def test_empty_code_context(self, extractor):
+    def test_empty_code_context(self, extractor: str) -> None:
         """Test empty code context generation."""
         empty_context = extractor._empty_code_context()
 

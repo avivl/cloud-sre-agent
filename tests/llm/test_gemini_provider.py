@@ -17,7 +17,7 @@ class TestGeminiProvider:
     """Test cases for GeminiProvider."""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Create a mock configuration for testing."""
         return LLMProviderConfig(
             provider="gemini",
@@ -36,7 +36,7 @@ class TestGeminiProvider:
         )
 
     @pytest.fixture
-    def mock_gemini_response(self):
+    def mock_gemini_response(self) -> None:
         """Create a mock Gemini API response."""
         mock_response = MagicMock()
         mock_response.text = "This is a test response from Gemini"
@@ -46,7 +46,7 @@ class TestGeminiProvider:
         return mock_response
 
     @pytest.fixture
-    def mock_streaming_response(self):
+    def mock_streaming_response(self) -> None:
         """Create mock streaming responses."""
         chunks = [
             MagicMock(text="This "),
@@ -187,7 +187,7 @@ class TestGeminiProvider:
                 result = await provider.health_check()
                 assert result is False
 
-    def test_supports_streaming(self, mock_config):
+    def test_supports_streaming(self, mock_config: str) -> None:
         """Test streaming support."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -196,7 +196,7 @@ class TestGeminiProvider:
             provider = GeminiProvider(mock_config)
             assert provider.supports_streaming() is True
 
-    def test_supports_tools(self, mock_config):
+    def test_supports_tools(self, mock_config: str) -> None:
         """Test tool calling support."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -205,7 +205,7 @@ class TestGeminiProvider:
             provider = GeminiProvider(mock_config)
             assert provider.supports_tools() is True
 
-    def test_get_available_models(self, mock_config):
+    def test_get_available_models(self, mock_config: str) -> None:
         """Test getting available models."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -241,7 +241,7 @@ class TestGeminiProvider:
                 assert len(embeddings) == 768
                 assert embeddings[0] == 0.1
 
-    def test_token_count(self, mock_config):
+    def test_token_count(self, mock_config: str) -> None:
         """Test token counting."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -258,7 +258,7 @@ class TestGeminiProvider:
             count = provider.token_count("Test text")
             assert count == 10
 
-    def test_token_count_fallback(self, mock_config):
+    def test_token_count_fallback(self, mock_config: str) -> None:
         """Test token counting fallback."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -276,7 +276,7 @@ class TestGeminiProvider:
             # Should fallback to approximation: 5 words * 1.3 = 6.5 -> 6
             assert count == 6
 
-    def test_cost_estimate_flash_model(self, mock_config):
+    def test_cost_estimate_flash_model(self, mock_config: str) -> None:
         """Test cost estimation for Flash model."""
         # Create a new config with flash model
         flash_config = LLMProviderConfig(
@@ -302,7 +302,7 @@ class TestGeminiProvider:
             expected = (1000 / 1000) * 0.000075 + (500 / 1000) * 0.0003
             assert abs(cost - expected) < 0.000001
 
-    def test_cost_estimate_pro_model(self, mock_config):
+    def test_cost_estimate_pro_model(self, mock_config: str) -> None:
         """Test cost estimation for Pro model."""
         # Create a new config with pro model
         pro_config = LLMProviderConfig(
@@ -328,7 +328,7 @@ class TestGeminiProvider:
             expected = (1000 / 1000) * 0.00125 + (500 / 1000) * 0.005
             assert abs(cost - expected) < 0.000001
 
-    def test_convert_messages_to_prompt(self, mock_config):
+    def test_convert_messages_to_prompt(self, mock_config: str) -> None:
         """Test message conversion to prompt."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -347,7 +347,7 @@ class TestGeminiProvider:
             expected = "System: You are a helpful assistant.\n\nUser: Hello!\n\nAssistant: Hi there!"
             assert prompt == expected
 
-    def test_extract_usage(self, mock_config):
+    def test_extract_usage(self, mock_config: str) -> None:
         """Test usage extraction from response."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -365,7 +365,7 @@ class TestGeminiProvider:
             assert usage["input_tokens"] == 15
             assert usage["output_tokens"] == 8
 
-    def test_extract_usage_no_metadata(self, mock_config):
+    def test_extract_usage_no_metadata(self, mock_config: str) -> None:
         """Test usage extraction when metadata is missing."""
         with patch("google.generativeai.configure"), patch(
             "google.generativeai.GenerativeModel"
@@ -381,11 +381,11 @@ class TestGeminiProvider:
             assert usage["input_tokens"] == 0
             assert usage["output_tokens"] == 0
 
-    def test_validate_config_valid(self, mock_config):
+    def test_validate_config_valid(self, mock_config: str) -> None:
         """Test configuration validation with valid config."""
         GeminiProvider.validate_config(mock_config)
 
-    def test_validate_config_missing_api_key(self):
+    def test_validate_config_missing_api_key(self) -> None:
         """Test configuration validation with missing API key."""
         mock_config = MagicMock()
         mock_config.api_key = None
@@ -393,7 +393,7 @@ class TestGeminiProvider:
         with pytest.raises(ValueError, match="Gemini API key is required"):
             GeminiProvider.validate_config(mock_config)
 
-    def test_validate_config_invalid_api_key(self):
+    def test_validate_config_invalid_api_key(self) -> None:
         """Test configuration validation with invalid API key."""
         mock_config = MagicMock()
         mock_config.api_key = "invalid-key"
@@ -401,7 +401,7 @@ class TestGeminiProvider:
         with pytest.raises(ValueError, match="Gemini API key must start with 'AIza'"):
             GeminiProvider.validate_config(mock_config)
 
-    def test_validate_config_invalid_model(self):
+    def test_validate_config_invalid_model(self) -> None:
         """Test configuration validation with invalid model."""
         mock_config = MagicMock()
         mock_config.api_key = "AIzaValidKey123456789"

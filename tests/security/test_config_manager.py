@@ -13,7 +13,7 @@ from gemini_sre_agent.security.config_manager import (
 
 
 @pytest.fixture
-def mock_config_manager():
+def mock_config_manager() -> None:
     """Create a mock SecureConfigManager."""
     return SecureConfigManager(
         encryption_key="test-key",
@@ -23,7 +23,7 @@ def mock_config_manager():
 
 
 @pytest.fixture
-def sample_api_key():
+def sample_api_key() -> None:
     """Create a sample API key info."""
     return APIKeyInfo(
         key_id="test-key-123",
@@ -36,14 +36,14 @@ def sample_api_key():
 class TestSecureConfigManager:
     """Test cases for SecureConfigManager."""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test SecureConfigManager initialization."""
         manager = SecureConfigManager()
         assert manager.encryption_key is None
         assert manager.aws_region == "us-east-1"
         assert manager.secrets_manager_secret_name is None
 
-    def test_initialization_with_params(self):
+    def test_initialization_with_params(self) -> None:
         """Test SecureConfigManager initialization with parameters."""
         manager = SecureConfigManager(
             encryption_key="test-key",
@@ -54,7 +54,7 @@ class TestSecureConfigManager:
         assert manager.aws_region == "eu-west-1"
         assert manager.secrets_manager_secret_name == "my-secret"
 
-    def test_hash_key(self, mock_config_manager):
+    def test_hash_key(self, mock_config_manager: str) -> None:
         """Test API key hashing."""
         key = "test-api-key-123"
         hash1 = mock_config_manager._hash_key(key)
@@ -106,7 +106,7 @@ class TestSecureConfigManager:
         key_value = await mock_config_manager.get_key("test-key-123")
         assert key_value is None
 
-    def test_set_rotation_policy(self, mock_config_manager):
+    def test_set_rotation_policy(self, mock_config_manager: str) -> None:
         """Test setting rotation policy."""
         policy = RotationPolicy(
             max_age_days=30,
@@ -121,7 +121,7 @@ class TestSecureConfigManager:
         assert stored_policy.max_age_days == 30
         assert stored_policy.max_usage_count == 5000
 
-    def test_get_rotation_policy_nonexistent(self, mock_config_manager):
+    def test_get_rotation_policy_nonexistent(self, mock_config_manager: str) -> None:
         """Test getting rotation policy for non-existent provider."""
         policy = mock_config_manager.get_rotation_policy("nonexistent")
         assert policy is None
@@ -299,7 +299,7 @@ class TestSecureConfigManager:
 class TestAPIKeyInfo:
     """Test cases for APIKeyInfo model."""
 
-    def test_api_key_info_creation(self):
+    def test_api_key_info_creation(self) -> None:
         """Test APIKeyInfo creation."""
         key_info = APIKeyInfo(
             key_id="test-key",
@@ -313,7 +313,7 @@ class TestAPIKeyInfo:
         assert key_info.is_active is True
         assert key_info.usage_count == 0
 
-    def test_api_key_info_with_optional_fields(self):
+    def test_api_key_info_with_optional_fields(self) -> None:
         """Test APIKeyInfo with optional fields."""
         expires_at = datetime.utcnow()
         key_info = APIKeyInfo(
@@ -333,7 +333,7 @@ class TestAPIKeyInfo:
 class TestRotationPolicy:
     """Test cases for RotationPolicy model."""
 
-    def test_rotation_policy_creation(self):
+    def test_rotation_policy_creation(self) -> None:
         """Test RotationPolicy creation."""
         policy = RotationPolicy(
             max_age_days=90,
@@ -347,7 +347,7 @@ class TestRotationPolicy:
         assert policy.rotation_grace_period_hours == 24
         assert policy.auto_rotate is True
 
-    def test_rotation_policy_defaults(self):
+    def test_rotation_policy_defaults(self) -> None:
         """Test RotationPolicy with default values."""
         policy = RotationPolicy()
 

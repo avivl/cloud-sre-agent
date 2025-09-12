@@ -22,7 +22,7 @@ from .metrics_integration import ErrorHandlingMetrics
 class MonitoringDashboard:
     """Comprehensive monitoring dashboard for error handling system."""
 
-    def __init__(self, metrics: Optional[ErrorHandlingMetrics] = None):
+    def __init__(self, metrics: Optional[ErrorHandlingMetrics] = None) -> None:
         self.metrics = metrics
         self.logger = logging.getLogger("MonitoringDashboard")
         self.circuit_breakers: Dict[str, AdvancedCircuitBreaker] = {}

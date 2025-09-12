@@ -19,13 +19,13 @@ from gemini_sre_agent.llm.capabilities.models import ModelCapabilities, ModelCap
 class MockLLMProvider(LLMProvider):
     """Mock LLM provider for testing."""
 
-    def __init__(self, name: str, models: Dict[str, Any]):
+    def __init__(self, name: str, models: Dict[str, Any]: str) -> None:
         self.name = name
         self.models = models
         self.config = Mock()
         self.config.models = models
 
-    def get_available_models(self):
+    def get_available_models(self) -> None:
         """Return available models."""
         return list(self.models.keys())
 
@@ -33,7 +33,7 @@ class MockLLMProvider(LLMProvider):
         """Mock generate method."""
         return Mock(content="Mock response")
 
-    def cost_estimate(self, request):
+    def cost_estimate(self, request: str) -> None:
         """Mock cost estimate method."""
         return 0.01
 
@@ -45,7 +45,7 @@ class MockLLMProvider(LLMProvider):
         """Mock streaming generate method."""
         yield Mock(content="Mock streaming response")
 
-    def get_custom_capabilities(self):
+    def get_custom_capabilities(self) -> None:
         """Mock custom capabilities method."""
         return []
 
@@ -53,25 +53,25 @@ class MockLLMProvider(LLMProvider):
         """Mock health check method."""
         return True
 
-    def supports_streaming(self):
+    def supports_streaming(self) -> None:
         """Mock streaming support method."""
         return True
 
-    def supports_tools(self):
+    def supports_tools(self) -> None:
         """Mock tools support method."""
         return True
 
-    def token_count(self, text: str):
+    def token_count(self, text: str) -> None:
         """Mock token count method."""
         return len(text.split())
 
-    def validate_config(self):
+    def validate_config(self) -> None:
         """Mock config validation method."""
         return True
 
 
 @pytest.fixture
-def mock_providers():
+def mock_providers() -> None:
     """Create mock providers for testing."""
     providers = {
         "openai": MockLLMProvider(
@@ -93,7 +93,7 @@ def mock_providers():
 
 
 @pytest.fixture
-def capability_config():
+def capability_config() -> None:
     """Create a test capability configuration."""
     config = CapabilityConfig()
 
@@ -122,7 +122,7 @@ def capability_config():
 
 
 @pytest.fixture
-def discovery_system(mock_providers, capability_config):
+def discovery_system(mock_providers: str, capability_config: str) -> None:
     """Create a capability discovery system for testing."""
     with patch(
         "gemini_sre_agent.llm.capabilities.discovery.get_capability_config",
@@ -183,7 +183,7 @@ async def test_force_refresh(discovery_system):
     assert metrics["discovery_attempts"] == 2
 
 
-def test_get_model_capabilities(discovery_system):
+def test_get_model_capabilities(discovery_system: str) -> None:
     """Test getting capabilities for a specific model."""
     # This would need to be run after discovery
     # For now, just test the method exists and handles missing models
@@ -191,7 +191,7 @@ def test_get_model_capabilities(discovery_system):
     assert result is None
 
 
-def test_find_models_by_capability(discovery_system):
+def test_find_models_by_capability(discovery_system: str) -> None:
     """Test finding models by capability."""
     # Add some test capabilities
     discovery_system.model_capabilities = {
@@ -214,7 +214,7 @@ def test_find_models_by_capability(discovery_system):
     assert "openai/gpt-4" in models
 
 
-def test_find_models_by_capabilities(discovery_system):
+def test_find_models_by_capabilities(discovery_system: str) -> None:
     """Test finding models by multiple capabilities."""
     # Add test capabilities
     discovery_system.model_capabilities = {
@@ -252,7 +252,7 @@ def test_find_models_by_capabilities(discovery_system):
     assert "openai/gpt-4" in models
 
 
-def test_capability_summary(discovery_system):
+def test_capability_summary(discovery_system: str) -> None:
     """Test capability summary functionality."""
     # Add test capabilities
     discovery_system.model_capabilities = {
@@ -288,7 +288,7 @@ def test_capability_summary(discovery_system):
     assert summary["text_generation"] == 2
 
 
-def test_metrics_tracking(discovery_system):
+def test_metrics_tracking(discovery_system: str) -> None:
     """Test metrics tracking functionality."""
     # Get initial metrics
     metrics = discovery_system.get_metrics()
@@ -308,7 +308,7 @@ def test_metrics_tracking(discovery_system):
         assert key in metrics
 
 
-def test_health_status(discovery_system):
+def test_health_status(discovery_system: str) -> None:
     """Test health status functionality."""
     # Get health status
     health = discovery_system.get_health_status()
@@ -330,7 +330,7 @@ def test_health_status(discovery_system):
     assert health["status"] in ["healthy", "degraded", "unhealthy"]
 
 
-def test_cache_management(discovery_system):
+def test_cache_management(discovery_system: str) -> None:
     """Test cache management functionality."""
     # Add some test data
     discovery_system.model_capabilities = {
@@ -346,7 +346,7 @@ def test_cache_management(discovery_system):
     assert len(discovery_system._cache_timestamps) == 0
 
 
-def test_metrics_reset(discovery_system):
+def test_metrics_reset(discovery_system: str) -> None:
     """Test metrics reset functionality."""
     # Modify some metrics
     discovery_system._metrics["discovery_attempts"] = 5
@@ -358,7 +358,7 @@ def test_metrics_reset(discovery_system):
     assert discovery_system._metrics["discovery_attempts"] == 0
 
 
-def test_task_validation(discovery_system):
+def test_task_validation(discovery_system: str) -> None:
     """Test task requirement validation."""
     # Add test capabilities
     discovery_system.model_capabilities = {
@@ -384,7 +384,7 @@ def test_task_validation(discovery_system):
     assert isinstance(result, dict)
 
 
-def test_find_models_for_task(discovery_system):
+def test_find_models_for_task(discovery_system: str) -> None:
     """Test finding models for specific tasks."""
     # Add test capabilities
     discovery_system.model_capabilities = {
@@ -407,7 +407,7 @@ def test_find_models_for_task(discovery_system):
     assert isinstance(models, list)
 
 
-def test_configuration_loading(capability_config):
+def test_configuration_loading(capability_config: str) -> None:
     """Test capability configuration loading."""
     # Test getting capabilities
     capabilities = capability_config.get_all_capabilities()
@@ -424,7 +424,7 @@ def test_configuration_loading(capability_config):
     assert "code_generation" in names
 
 
-def test_provider_capabilities(capability_config):
+def test_provider_capabilities(capability_config: str) -> None:
     """Test provider capability mappings."""
     # Test getting provider capabilities
     capabilities = capability_config.get_provider_capabilities("openai")
@@ -435,7 +435,7 @@ def test_provider_capabilities(capability_config):
     assert isinstance(model_capabilities, list)
 
 
-def test_task_requirements(capability_config):
+def test_task_requirements(capability_config: str) -> None:
     """Test task requirement definitions."""
     # Test getting task requirements
     requirements = capability_config.get_task_requirements("text_completion")
@@ -450,7 +450,7 @@ def test_task_requirements(capability_config):
     assert isinstance(optional, list)
 
 
-def test_requirement_validation(capability_config):
+def test_requirement_validation(capability_config: str) -> None:
     """Test capability requirement validation."""
     # Test validation
     result = capability_config.validate_capability_requirements(
@@ -465,7 +465,7 @@ def test_requirement_validation(capability_config):
     assert "coverage_score" in result
 
 
-def test_performance_thresholds(capability_config):
+def test_performance_thresholds(capability_config: str) -> None:
     """Test performance threshold configuration."""
     # Test getting performance thresholds
     thresholds = capability_config.get_performance_thresholds()
@@ -476,7 +476,7 @@ def test_performance_thresholds(capability_config):
     assert isinstance(cost_thresholds, dict)
 
 
-def test_configuration_management(capability_config):
+def test_configuration_management(capability_config: str) -> None:
     """Test configuration management functionality."""
     # Test adding capability
     new_cap = ModelCapability(

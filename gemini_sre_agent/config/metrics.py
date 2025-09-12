@@ -26,7 +26,7 @@ class ConfigMetrics:
 class ConfigMetricsCollector:
     """Collect and report configuration metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics_history: list[ConfigMetrics] = []
         self.alert_thresholds = {
             "max_load_time_ms": 1000,
@@ -57,7 +57,7 @@ class ConfigMetricsCollector:
         self.metrics_history.append(metrics)
         self._check_alert_thresholds(metrics)
 
-    def record_config_reload(self, reload_duration_ms: float):
+    def record_config_reload(self, reload_duration_ms: float) -> None:
         """Record configuration reload duration."""
         if self.metrics_history:
             self.metrics_history[-1].last_reload_duration_ms = reload_duration_ms

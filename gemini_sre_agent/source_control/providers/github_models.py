@@ -47,7 +47,7 @@ class GitHubCredentials:
     private_key: Optional[str] = None
     api_url: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate credentials based on auth type."""
         if self.auth_type == GitHubAuthType.TOKEN and not self.token:
             raise ValueError("Token is required when auth_type is 'token'")
@@ -81,7 +81,7 @@ class PullRequestInfo:
     assignees: Optional[List[str]] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.labels is None:
             self.labels = []
@@ -121,7 +121,7 @@ class GitHubFileInfo:
     last_modified: Optional[datetime] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.additional_info is None:
             self.additional_info = {}
@@ -152,7 +152,7 @@ class GitHubRepositoryInfo:
     topics: Optional[List[str]] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.topics is None:
             self.topics = []
@@ -178,7 +178,7 @@ class GitHubCommitInfo:
     files: Optional[List[Dict[str, Any]]] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.parents is None:
             self.parents = []
@@ -203,7 +203,7 @@ class GitHubWebhookInfo:
     last_response: Optional[Dict[str, Any]] = None
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.additional_info is None:
             self.additional_info = {}
@@ -229,7 +229,7 @@ class GitHubIssueInfo:
     html_url: str = ""
     additional_info: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.labels is None:
             self.labels = []

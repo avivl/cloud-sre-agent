@@ -34,7 +34,7 @@ processes: Dict[str, subprocess.Popen] = {}
 class DogfoodOrchestrator:
     """Orchestrates the dogfooding environment."""
 
-    def __init__(self, single_agent=False):
+    def __init__(self, single_agent: bool = False) -> None:
         self.scenarios = [
             "division",
             "memory",
@@ -315,7 +315,7 @@ async def main():
     orchestrator = DogfoodOrchestrator(single_agent=args.single_agent)
 
     # Set up signal handlers for graceful shutdown
-    def signal_handler(signum, frame):
+    def signal_handler(signum: str, frame: str) -> None:
         """
         Signal Handler.
 

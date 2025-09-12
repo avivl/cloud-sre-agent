@@ -18,7 +18,7 @@ from gemini_sre_agent.config.source_control_remediation import (
 class TestRemediationStrategyConfig:
     """Test cases for RemediationStrategyConfig."""
 
-    def test_default_configuration(self):
+    def test_default_configuration(self) -> None:
         """Test default configuration values."""
         config = RemediationStrategyConfig()
 
@@ -40,7 +40,7 @@ class TestRemediationStrategyConfig:
         assert config.max_retries == 3
         assert config.retry_delay_seconds == 5
 
-    def test_custom_configuration(self):
+    def test_custom_configuration(self) -> None:
         """Test custom configuration values."""
         config = RemediationStrategyConfig(
             strategy=RemediationStrategy.DIRECT_COMMIT,
@@ -80,7 +80,7 @@ class TestRemediationStrategyConfig:
         assert config.max_retries == 5
         assert config.retry_delay_seconds == 10
 
-    def test_label_validation(self):
+    def test_label_validation(self) -> None:
         """Test label validation."""
         # Valid labels
         config = RemediationStrategyConfig(labels=["bug", "urgent", "sre-fix"])
@@ -101,7 +101,7 @@ class TestRemediationStrategyConfig:
             RemediationStrategyConfig(labels=["invalid@label"])
         assert "Labels can only contain alphanumeric characters" in str(exc_info.value)
 
-    def test_user_validation(self):
+    def test_user_validation(self) -> None:
         """Test user validation for assignees and reviewers."""
         # Valid users
         config = RemediationStrategyConfig(
@@ -120,7 +120,7 @@ class TestRemediationStrategyConfig:
             RemediationStrategyConfig(assignees=["a" * 101])
         assert "Usernames cannot exceed 100 characters" in str(exc_info.value)
 
-    def test_commit_message_template_validation(self):
+    def test_commit_message_template_validation(self) -> None:
         """Test commit message template validation."""
         # Valid template
         config = RemediationStrategyConfig(
@@ -151,7 +151,7 @@ class TestRemediationStrategyConfig:
             RemediationStrategyConfig(commit_message_template="Fix: {description}")
         assert "Commit message template must include {issue_id}" in str(exc_info.value)
 
-    def test_output_path_validation(self):
+    def test_output_path_validation(self) -> None:
         """Test output path validation."""
         # Valid absolute path
         config = RemediationStrategyConfig(output_path="/tmp/patches")
@@ -167,7 +167,7 @@ class TestRemediationStrategyConfig:
             RemediationStrategyConfig(output_path="patches")
         assert "Output path must be absolute" in str(exc_info.value)
 
-    def test_branch_component_validation(self):
+    def test_branch_component_validation(self) -> None:
         """Test branch prefix and suffix validation."""
         # Valid components
         config = RemediationStrategyConfig(
@@ -193,7 +193,7 @@ class TestRemediationStrategyConfig:
             exc_info.value
         )
 
-    def test_get_branch_name(self):
+    def test_get_branch_name(self) -> None:
         """Test branch name generation."""
         config = RemediationStrategyConfig(
             branch_prefix="sre-fix", branch_suffix="urgent"
@@ -207,7 +207,7 @@ class TestRemediationStrategyConfig:
         branch_name = config_no_suffix.get_branch_name("456")
         assert branch_name == "sre-fix-456"
 
-    def test_get_commit_message(self):
+    def test_get_commit_message(self) -> None:
         """Test commit message generation."""
         config = RemediationStrategyConfig(
             commit_message_template="Fix: {issue_id} - {description}"
@@ -221,7 +221,7 @@ class TestRemediationStrategyConfig:
         message = config_no_template.get_commit_message("456", "Fix another bug")
         assert message == "SRE Fix: 456 - Fix another bug"
 
-    def test_strategy_checks(self):
+    def test_strategy_checks(self) -> None:
         """Test strategy type checks."""
         # Patch strategy
         patch_config = RemediationStrategyConfig(strategy=RemediationStrategy.PATCH)

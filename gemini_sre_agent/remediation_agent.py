@@ -24,7 +24,7 @@ class RemediationAgent:
     based on log analysis and remediation plans.
     """
 
-    def __init__(self, github_token: str, repo_name: str, use_local_patches: bool = False, patch_dir: str = "/tmp/real_patches"):
+    def __init__(self, github_token: str, repo_name: str, use_local_patches: bool = False, patch_dir: str = "/tmp/real_patches") -> None:
         # Type annotations for attributes
         self.github: Optional[GitHubClient] = None
         self.repo: Optional[Repository] = None

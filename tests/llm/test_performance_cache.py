@@ -17,7 +17,7 @@ from gemini_sre_agent.llm.performance_cache import (
 class TestPerformanceMetric:
     """Test the PerformanceMetric dataclass."""
 
-    def test_metric_creation(self):
+    def test_metric_creation(self) -> None:
         """Test creating a performance metric."""
         metric = PerformanceMetric(
             metric_type=MetricType.LATENCY,
@@ -33,7 +33,7 @@ class TestPerformanceMetric:
         assert isinstance(metric.timestamp, float)
         assert metric.timestamp > 0
 
-    def test_metric_with_context(self):
+    def test_metric_with_context(self) -> None:
         """Test creating a metric with context and metadata."""
         context = {"task_type": "classification", "input_length": 100}
         metadata = {"source": "test", "version": "1.0"}
@@ -53,7 +53,7 @@ class TestPerformanceMetric:
 class TestModelPerformanceStats:
     """Test the ModelPerformanceStats class."""
 
-    def test_stats_creation(self):
+    def test_stats_creation(self) -> None:
         """Test creating performance stats."""
         stats = ModelPerformanceStats(
             model_name="test-model", provider=ProviderType.OPENAI
@@ -64,7 +64,7 @@ class TestModelPerformanceStats:
         assert stats.sample_count == 0
         assert len(stats.metric_counts) == 0
 
-    def test_add_metric(self):
+    def test_add_metric(self) -> None:
         """Test adding metrics to stats."""
         stats = ModelPerformanceStats(
             model_name="test-model", provider=ProviderType.OPENAI
@@ -87,7 +87,7 @@ class TestModelPerformanceStats:
         assert stats.metric_mins[MetricType.LATENCY] == 100.0
         assert stats.metric_maxs[MetricType.LATENCY] == 200.0
 
-    def test_get_average(self):
+    def test_get_average(self) -> None:
         """Test getting average metric values."""
         stats = ModelPerformanceStats(
             model_name="test-model", provider=ProviderType.OPENAI
@@ -107,7 +107,7 @@ class TestModelPerformanceStats:
         avg_none = stats.get_average(MetricType.THROUGHPUT)
         assert avg_none is None
 
-    def test_get_percentile(self):
+    def test_get_percentile(self) -> None:
         """Test getting percentile values."""
         stats = ModelPerformanceStats(
             model_name="test-model", provider=ProviderType.OPENAI
@@ -128,7 +128,7 @@ class TestModelPerformanceStats:
 class TestPerformanceCache:
     """Test the PerformanceCache class."""
 
-    def test_cache_initialization(self):
+    def test_cache_initialization(self) -> None:
         """Test cache initialization."""
         cache = PerformanceCache(max_cache_size=1000, default_ttl=1800)
 
@@ -137,7 +137,7 @@ class TestPerformanceCache:
         assert len(cache._metrics) == 0
         assert len(cache._model_stats) == 0
 
-    def test_add_metric(self):
+    def test_add_metric(self) -> None:
         """Test adding metrics to cache."""
         cache = PerformanceCache()
 
@@ -154,7 +154,7 @@ class TestPerformanceCache:
         assert "test-model" in cache._model_stats
         assert len(cache._model_index["test-model"]) == 1
 
-    def test_get_model_stats(self):
+    def test_get_model_stats(self) -> None:
         """Test getting model statistics."""
         cache = PerformanceCache()
 
@@ -174,7 +174,7 @@ class TestPerformanceCache:
         assert stats.sample_count == 5
         assert stats.get_average(MetricType.LATENCY) == 120.0
 
-    def test_get_metrics_filtering(self):
+    def test_get_metrics_filtering(self) -> None:
         """Test filtering metrics by various criteria."""
         cache = PerformanceCache()
 
@@ -214,7 +214,7 @@ class TestPerformanceCache:
         assert len(model1_latency) == 1
         assert model1_latency[0].value == 100.0
 
-    def test_get_performance_summary(self):
+    def test_get_performance_summary(self) -> None:
         """Test getting performance summary."""
         cache = PerformanceCache()
 
@@ -242,7 +242,7 @@ class TestPerformanceCache:
         assert latency_metrics["min"] == 100.0
         assert latency_metrics["max"] == 200.0
 
-    def test_get_top_models(self):
+    def test_get_top_models(self) -> None:
         """Test getting top performing models."""
         cache = PerformanceCache()
 
@@ -274,7 +274,7 @@ class TestPerformanceCache:
         assert slowest[0][0] == "slow-model"
         assert slowest[0][1] == 200.0
 
-    def test_get_model_rankings(self):
+    def test_get_model_rankings(self) -> None:
         """Test getting model rankings based on multiple metrics."""
         cache = PerformanceCache()
 
@@ -311,7 +311,7 @@ class TestPerformanceCache:
         # Rankings should be sorted by combined score
         assert rankings[0][0] in ["model1", "model2", "model3"]
 
-    def test_clear_cache(self):
+    def test_clear_cache(self) -> None:
         """Test clearing the cache."""
         cache = PerformanceCache()
 
@@ -333,7 +333,7 @@ class TestPerformanceCache:
         assert len(cache._model_stats) == 0
         assert len(cache._model_index) == 0
 
-    def test_get_cache_stats(self):
+    def test_get_cache_stats(self) -> None:
         """Test getting cache statistics."""
         cache = PerformanceCache()
 
@@ -359,7 +359,7 @@ class TestPerformanceCache:
 class TestPerformanceMonitor:
     """Test the PerformanceMonitor class."""
 
-    def test_monitor_initialization(self):
+    def test_monitor_initialization(self) -> None:
         """Test monitor initialization."""
         monitor = PerformanceMonitor()
         assert isinstance(monitor.cache, PerformanceCache)
@@ -369,7 +369,7 @@ class TestPerformanceMonitor:
         monitor = PerformanceMonitor(custom_cache)
         assert monitor.cache == custom_cache
 
-    def test_record_latency(self):
+    def test_record_latency(self) -> None:
         """Test recording latency metrics."""
         monitor = PerformanceMonitor()
 
@@ -379,7 +379,7 @@ class TestPerformanceMonitor:
         assert stats is not None
         assert stats.get_average(MetricType.LATENCY) == 150.0
 
-    def test_record_throughput(self):
+    def test_record_throughput(self) -> None:
         """Test recording throughput metrics."""
         monitor = PerformanceMonitor()
 
@@ -389,7 +389,7 @@ class TestPerformanceMonitor:
         assert stats is not None
         assert stats.get_average(MetricType.THROUGHPUT) == 25.0
 
-    def test_record_success(self):
+    def test_record_success(self) -> None:
         """Test recording success/failure metrics."""
         monitor = PerformanceMonitor()
 
@@ -404,7 +404,7 @@ class TestPerformanceMonitor:
         assert stats.metric_counts[MetricType.SUCCESS_RATE] == 1
         assert stats.metric_counts[MetricType.ERROR_RATE] == 1
 
-    def test_record_cost_efficiency(self):
+    def test_record_cost_efficiency(self) -> None:
         """Test recording cost efficiency metrics."""
         monitor = PerformanceMonitor()
 
@@ -414,7 +414,7 @@ class TestPerformanceMonitor:
         assert stats is not None
         assert stats.get_average(MetricType.COST_EFFICIENCY) == 0.001
 
-    def test_record_quality_score(self):
+    def test_record_quality_score(self) -> None:
         """Test recording quality score metrics."""
         monitor = PerformanceMonitor()
 
@@ -424,7 +424,7 @@ class TestPerformanceMonitor:
         assert stats is not None
         assert stats.get_average(MetricType.QUALITY_SCORE) == 0.85
 
-    def test_get_model_performance(self):
+    def test_get_model_performance(self) -> None:
         """Test getting model performance summary."""
         monitor = PerformanceMonitor()
 
@@ -440,7 +440,7 @@ class TestPerformanceMonitor:
         assert MetricType.LATENCY.value in performance["metrics"]
         assert MetricType.THROUGHPUT.value in performance["metrics"]
 
-    def test_get_best_models(self):
+    def test_get_best_models(self) -> None:
         """Test getting best performing models."""
         monitor = PerformanceMonitor()
 
@@ -460,7 +460,7 @@ class TestPerformanceMonitor:
         assert best_models[0][0] == "fast-model"  # Lowest latency is best
         assert best_models[0][1] == 50.0
 
-    def test_get_worst_models(self):
+    def test_get_worst_models(self) -> None:
         """Test getting worst performing models."""
         monitor = PerformanceMonitor()
 
@@ -480,7 +480,7 @@ class TestPerformanceMonitor:
         assert worst_models[0][0] == "slow-model"  # Highest latency is worst
         assert worst_models[0][1] == 200.0
 
-    def test_get_model_rankings(self):
+    def test_get_model_rankings(self) -> None:
         """Test getting model rankings."""
         monitor = PerformanceMonitor()
 
@@ -502,7 +502,7 @@ class TestPerformanceMonitor:
         # Should be sorted by combined score
         assert isinstance(rankings[0][1], float)
 
-    def test_get_cache_stats(self):
+    def test_get_cache_stats(self) -> None:
         """Test getting cache statistics."""
         monitor = PerformanceMonitor()
 

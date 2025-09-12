@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class BedrockProvider(LLMProvider):
     """AWS Bedrock provider implementation."""
 
-    def __init__(self, config: LLMProviderConfig):
+    def __init__(self, config: LLMProviderConfig) -> None:
         super().__init__(config)
         self.region = (
             config.provider_specific.get("aws_region", "us-east-1")

@@ -22,7 +22,7 @@ from gemini_sre_agent.pattern_detector.models import (
 class TestLogEntry:
     """Test LogEntry creation and parsing functionality."""
 
-    def test_log_entry_basic_creation(self):
+    def test_log_entry_basic_creation(self) -> None:
         """Test basic LogEntry creation with all fields provided."""
         timestamp = datetime.now(timezone.utc)
         raw_data = {"severity": "ERROR", "textPayload": "Test error"}
@@ -43,7 +43,7 @@ class TestLogEntry:
         assert log_entry.error_message == "Test error"
         assert log_entry.raw_data == raw_data
 
-    def test_log_entry_timestamp_extraction(self):
+    def test_log_entry_timestamp_extraction(self) -> None:
         """Test automatic timestamp extraction from raw data."""
         raw_data = {
             "timestamp": "2025-01-27T10:00:00Z",
@@ -58,7 +58,7 @@ class TestLogEntry:
         assert log_entry.timestamp.day == 27
         assert log_entry.timestamp.hour == 10
 
-    def test_log_entry_service_name_extraction(self):
+    def test_log_entry_service_name_extraction(self) -> None:
         """Test automatic service name extraction from resource labels."""
         raw_data = {
             "timestamp": "2025-01-27T10:00:00Z",
@@ -76,7 +76,7 @@ class TestLogEntry:
 
         assert log_entry.service_name == "billing-service"
 
-    def test_log_entry_function_name_extraction(self):
+    def test_log_entry_function_name_extraction(self) -> None:
         """Test service name extraction from function_name label."""
         raw_data = {
             "timestamp": "2025-01-27T10:00:00Z",
@@ -91,7 +91,7 @@ class TestLogEntry:
 
         assert log_entry.service_name == "payment-processor"
 
-    def test_log_entry_error_message_extraction(self):
+    def test_log_entry_error_message_extraction(self) -> None:
         """Test automatic error message extraction from textPayload."""
         raw_data = {
             "timestamp": "2025-01-27T10:00:00Z",
@@ -105,7 +105,7 @@ class TestLogEntry:
             log_entry.error_message == "Database connection failed: timeout after 30s"
         )
 
-    def test_log_entry_invalid_timestamp_fallback(self):
+    def test_log_entry_invalid_timestamp_fallback(self) -> None:
         """Test fallback to current time for invalid timestamps."""
         raw_data = {"timestamp": "invalid-timestamp", "severity": "ERROR"}
 
@@ -119,7 +119,7 @@ class TestLogEntry:
 class TestTimeWindow:
     """Test TimeWindow functionality."""
 
-    def test_time_window_creation(self):
+    def test_time_window_creation(self) -> None:
         """Test basic TimeWindow creation."""
         start_time = datetime(2025, 1, 27, 10, 0, 0)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -129,7 +129,7 @@ class TestTimeWindow:
         assert window.end_time == datetime(2025, 1, 27, 10, 5, 0)
         assert len(window.logs) == 0
 
-    def test_time_window_is_active(self):
+    def test_time_window_is_active(self) -> None:
         """Test window active status checking."""
         start_time = datetime(2025, 1, 27, 10, 0, 0)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -138,7 +138,7 @@ class TestTimeWindow:
         assert window.is_active(datetime(2025, 1, 27, 10, 5, 0)) is False
         assert window.is_active(datetime(2025, 1, 27, 10, 6, 0)) is False
 
-    def test_time_window_is_expired(self):
+    def test_time_window_is_expired(self) -> None:
         """Test window expiration checking."""
         start_time = datetime(2025, 1, 27, 10, 0, 0)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -147,7 +147,7 @@ class TestTimeWindow:
         assert window.is_expired(datetime(2025, 1, 27, 10, 5, 0)) is True
         assert window.is_expired(datetime(2025, 1, 27, 10, 6, 0)) is True
 
-    def test_time_window_accepts_log(self):
+    def test_time_window_accepts_log(self) -> None:
         """Test log acceptance logic."""
         start_time = datetime(2025, 1, 27, 10, 0, 0)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -175,7 +175,7 @@ class TestTimeWindow:
         assert window.accepts_log(log_within) is True
         assert window.accepts_log(log_after) is False
 
-    def test_time_window_add_log(self):
+    def test_time_window_add_log(self) -> None:
         """Test adding logs to window."""
         start_time = datetime(2025, 1, 27, 10, 0, 0)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -200,7 +200,7 @@ class TestTimeWindow:
         assert window.add_log(invalid_log) is False
         assert len(window.logs) == 1
 
-    def test_time_window_get_error_logs(self):
+    def test_time_window_get_error_logs(self) -> None:
         """Test filtering for error-level logs."""
         start_time = datetime(2025, 1, 27, 10, 0, 0)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -234,7 +234,7 @@ class TestTimeWindow:
         assert error_logs[0].severity == "ERROR"
         assert error_logs[1].severity == "CRITICAL"
 
-    def test_time_window_get_service_groups(self):
+    def test_time_window_get_service_groups(self) -> None:
         """Test grouping logs by service."""
         start_time = datetime(2025, 1, 27, 10, 0, 0)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
@@ -283,7 +283,7 @@ class TestTimeWindow:
 class TestThresholdConfig:
     """Test ThresholdConfig functionality."""
 
-    def test_threshold_config_creation(self):
+    def test_threshold_config_creation(self) -> None:
         """Test basic ThresholdConfig creation."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.ERROR_FREQUENCY,
@@ -296,7 +296,7 @@ class TestThresholdConfig:
         assert config.min_error_count == 3
         assert config.min_rate_increase == 10.0
 
-    def test_threshold_config_defaults(self):
+    def test_threshold_config_defaults(self) -> None:
         """Test ThresholdConfig default values."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.ERROR_RATE, min_value=15.0
@@ -313,7 +313,7 @@ class TestThresholdConfig:
 class TestPatternType:
     """Test PatternType enumeration."""
 
-    def test_pattern_type_constants(self):
+    def test_pattern_type_constants(self) -> None:
         """Test that all pattern types are defined correctly."""
         assert PatternType.SPORADIC_ERRORS == "sporadic_errors"
         assert PatternType.SERVICE_DEGRADATION == "service_degradation"
@@ -327,7 +327,7 @@ class TestPatternType:
 class TestPatternMatch:
     """Test PatternMatch dataclass."""
 
-    def test_pattern_match_creation(self):
+    def test_pattern_match_creation(self) -> None:
         """Test creating PatternMatch objects."""
         pattern = PatternMatch(
             pattern_type=PatternType.SERVICE_DEGRADATION,
@@ -353,7 +353,7 @@ class TestPatternMatch:
 class TestConfidenceFactors:
     """Test ConfidenceFactors enumeration."""
 
-    def test_confidence_factors_enum_values(self):
+    def test_confidence_factors_enum_values(self) -> None:
         """Test that all confidence factors are properly defined."""
         expected_factors = [
             "TIME_CONCENTRATION",
@@ -383,7 +383,7 @@ class TestConfidenceFactors:
 class TestConfidenceRule:
     """Test ConfidenceRule data structure."""
 
-    def test_confidence_rule_creation(self):
+    def test_confidence_rule_creation(self) -> None:
         """Test ConfidenceRule creation with all parameters."""
         rule = ConfidenceRule(
             factor_type=ConfidenceFactors.ERROR_FREQUENCY,
@@ -401,7 +401,7 @@ class TestConfidenceRule:
         assert rule.decay_function == "linear"
         assert rule.parameters == {"min_value": 5, "max_value": 100}
 
-    def test_confidence_rule_defaults(self):
+    def test_confidence_rule_defaults(self) -> None:
         """Test ConfidenceRule default values."""
         rule = ConfidenceRule(
             factor_type=ConfidenceFactors.TIME_CONCENTRATION, weight=0.5
@@ -416,7 +416,7 @@ class TestConfidenceRule:
 class TestConfidenceScore:
     """Test ConfidenceScore data structure."""
 
-    def test_confidence_score_creation(self):
+    def test_confidence_score_creation(self) -> None:
         """Test ConfidenceScore creation with comprehensive data."""
         factor_scores = {
             ConfidenceFactors.ERROR_FREQUENCY: 0.8,

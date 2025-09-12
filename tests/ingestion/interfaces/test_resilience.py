@@ -17,7 +17,7 @@ from gemini_sre_agent.ingestion.interfaces.resilience import (
 class TestResilienceConfig:
     """Test the ResilienceConfig dataclass."""
 
-    def test_resilience_config_creation(self):
+    def test_resilience_config_creation(self) -> None:
         """Test creating a ResilienceConfig instance."""
         config = ResilienceConfig(
             retry={"max_attempts": 3, "initial_delay": 1},
@@ -37,7 +37,7 @@ class TestResilienceConfig:
 class TestHyxResilientClient:
     """Test the HyxResilientClient integration."""
 
-    def test_client_creation(self):
+    def test_client_creation(self) -> None:
         """Test creating a HyxResilientClient instance."""
         config = ResilienceConfig(
             retry={"max_attempts": 3, "initial_delay": 1},
@@ -101,7 +101,7 @@ class TestHyxResilientClient:
 class TestCreateResilienceConfig:
     """Test the create_resilience_config utility function."""
 
-    def test_create_default_config(self):
+    def test_create_default_config(self) -> None:
         """Test creating a default resilience config."""
         config = create_resilience_config()
 
@@ -112,7 +112,7 @@ class TestCreateResilienceConfig:
         assert "limit" in config.bulkhead
         assert "requests_per_second" in config.rate_limit
 
-    def test_create_production_config(self):
+    def test_create_production_config(self) -> None:
         """Test creating a production resilience config."""
         config = create_resilience_config("production")
 
@@ -122,7 +122,7 @@ class TestCreateResilienceConfig:
         assert config.bulkhead["limit"] == 10
         assert config.rate_limit["requests_per_second"] == 8
 
-    def test_create_staging_config(self):
+    def test_create_staging_config(self) -> None:
         """Test creating a staging resilience config."""
         config = create_resilience_config("staging")
 

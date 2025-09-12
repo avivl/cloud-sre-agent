@@ -81,19 +81,19 @@ class LLMResponse:
 class CircuitBreaker:
     """Circuit breaker pattern for provider resilience."""
 
-    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60):
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "closed"  # closed, open, half-open
 
-    def call_succeeded(self):
+    def call_succeeded(self) -> None:
         """Record a successful call."""
         self.failure_count = 0
         self.state = "closed"
 
-    def call_failed(self):
+    def call_failed(self) -> None:
         """Record a failed call."""
         self.failure_count += 1
         if self.failure_count >= self.failure_threshold:
@@ -129,7 +129,7 @@ class CircuitBreaker:
 class LLMProvider(ABC):
     """Abstract base class for all LLM providers."""
 
-    def __init__(self, config: Any):
+    def __init__(self, config: Any) -> None:
         self.config = config
         self.provider_type = config.provider
         # For backward compatibility, set a default model if not specified

@@ -111,7 +111,7 @@ class TaskDecomposer(ABC):
 class SimpleTaskDecomposer(TaskDecomposer):
     """Simple task decomposer for basic task splitting."""
 
-    def __init__(self, model_registry: ModelRegistry):
+    def __init__(self, model_registry: ModelRegistry) -> None:
         """Initialize the simple task decomposer."""
         self.model_registry = model_registry
 

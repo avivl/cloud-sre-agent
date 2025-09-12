@@ -22,7 +22,7 @@ from gemini_sre_agent.ml.prompt_context_models import IssueType
 class TestEnhancedAnalysisConfig:
     """Test EnhancedAnalysisConfig dataclass."""
 
-    def test_config_creation(self):
+    def test_config_creation(self) -> None:
         """Test creating an enhanced analysis config."""
         config = EnhancedAnalysisConfig(
             project_id="test-project", location="us-central1"
@@ -37,7 +37,7 @@ class TestEnhancedAnalysisConfig:
         assert config.max_retries == 3
         assert config.timeout_seconds == 30
 
-    def test_config_custom_values(self):
+    def test_config_custom_values(self) -> None:
         """Test config with custom values."""
         config = EnhancedAnalysisConfig(
             project_id="custom-project",
@@ -64,12 +64,12 @@ class TestEnhancedAnalysisAgent:
     """Test EnhancedAnalysisAgent class."""
 
     @pytest.fixture
-    def config(self):
+    def config(self) -> None:
         """Create test configuration."""
         return EnhancedAnalysisConfig(project_id="test-project", location="us-central1")
 
     @pytest.fixture
-    def agent(self, config):
+    def agent(self, config: str) -> None:
         """Create test agent with mocked dependencies."""
         with patch("gemini_sre_agent.ml.enhanced_analysis_agent.GenerativeModel"):
             with patch(
@@ -80,7 +80,7 @@ class TestEnhancedAnalysisAgent:
                 ):
                     return EnhancedAnalysisAgent(config)
 
-    def test_agent_initialization(self, config):
+    def test_agent_initialization(self, config: str) -> None:
         """Test agent initialization."""
         with patch("gemini_sre_agent.ml.enhanced_analysis_agent.GenerativeModel"):
             with patch(
@@ -97,7 +97,7 @@ class TestEnhancedAnalysisAgent:
                     assert agent.adaptive_strategy is not None
                     assert agent.meta_prompt_generator is not None
 
-    def test_classify_issue_type_database(self, agent):
+    def test_classify_issue_type_database(self, agent: str) -> None:
         """Test issue type classification for database errors."""
         triage_packet = {
             "error_patterns": ["database connection timeout", "sql error"],
@@ -107,7 +107,7 @@ class TestEnhancedAnalysisAgent:
         issue_type = agent._classify_issue_type(triage_packet)
         assert issue_type == IssueType.DATABASE_ERROR
 
-    def test_classify_issue_type_api(self, agent):
+    def test_classify_issue_type_api(self, agent: str) -> None:
         """Test issue type classification for API errors."""
         triage_packet = {
             "error_patterns": ["api timeout", "http 500"],
@@ -117,7 +117,7 @@ class TestEnhancedAnalysisAgent:
         issue_type = agent._classify_issue_type(triage_packet)
         assert issue_type == IssueType.API_ERROR
 
-    def test_classify_issue_type_security(self, agent):
+    def test_classify_issue_type_security(self, agent: str) -> None:
         """Test issue type classification for security errors."""
         triage_packet = {
             "error_patterns": ["security vulnerability", "authentication failed"],
@@ -127,7 +127,7 @@ class TestEnhancedAnalysisAgent:
         issue_type = agent._classify_issue_type(triage_packet)
         assert issue_type == IssueType.SECURITY_ERROR
 
-    def test_classify_issue_type_unknown(self, agent):
+    def test_classify_issue_type_unknown(self, agent: str) -> None:
         """Test issue type classification for unknown errors."""
         triage_packet = {
             "error_patterns": ["unknown error"],
@@ -137,7 +137,7 @@ class TestEnhancedAnalysisAgent:
         issue_type = agent._classify_issue_type(triage_packet)
         assert issue_type == IssueType.UNKNOWN
 
-    def test_determine_generator_type(self, agent):
+    def test_determine_generator_type(self, agent: str) -> None:
         """Test generator type determination."""
         from gemini_sre_agent.ml.prompt_context_models import IssueContext
 
@@ -167,7 +167,7 @@ class TestEnhancedAnalysisAgent:
         generator_type = agent._determine_generator_type(issue_context)
         assert generator_type == "security_error"
 
-    def test_calculate_complexity_score(self, agent):
+    def test_calculate_complexity_score(self, agent: str) -> None:
         """Test complexity score calculation."""
         # Simple case
         triage_packet = {
@@ -199,7 +199,7 @@ class TestEnhancedAnalysisAgent:
         score = agent._calculate_complexity_score(triage_packet)
         assert score == 10  # Capped at 10
 
-    def test_calculate_context_richness(self, agent):
+    def test_calculate_context_richness(self, agent: str) -> None:
         """Test context richness calculation."""
         # Empty case
         triage_packet = {}
@@ -224,7 +224,7 @@ class TestEnhancedAnalysisAgent:
         richness = agent._calculate_context_richness(triage_packet)
         assert richness == 0.4  # 2 out of 5 elements
 
-    def test_extract_issue_context(self, agent):
+    def test_extract_issue_context(self, agent: str) -> None:
         """Test issue context extraction."""
         triage_packet = {
             "affected_files": ["db.py", "models.py"],
@@ -250,7 +250,7 @@ class TestEnhancedAnalysisAgent:
         assert issue_context.complexity_score > 1
         assert issue_context.context_richness > 0.0
 
-    def test_extract_repository_context(self, agent):
+    def test_extract_repository_context(self, agent: str) -> None:
         """Test repository context extraction."""
         configs = {
             "architecture_type": "microservices",

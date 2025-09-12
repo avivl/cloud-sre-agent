@@ -35,7 +35,7 @@ class ConfidenceCalculator(Protocol):
 class BaseConfidenceCalculator(ABC):
     """Base class for confidence calculators."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = None  # Will be set by the parent scorer
 
     @abstractmethod
@@ -309,7 +309,7 @@ class ContextualConfidenceCalculator(BaseConfidenceCalculator):
 class ConfidenceScoreProcessor:
     """Processor for confidence score calculation and rule application."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.calculators = {
             "temporal": TemporalConfidenceCalculator(),
             "service": ServiceConfidenceCalculator(),

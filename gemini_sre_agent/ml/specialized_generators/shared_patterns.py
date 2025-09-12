@@ -117,7 +117,7 @@ def get_api_patterns() -> list[CodePattern]:
             pattern_type="rate_limiting",
             code_template="""def rate_limited_request(func):
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: str, **kwargs: str) -> None:
         try:
             return func(*args, **kwargs)
         except RateLimitExceeded:

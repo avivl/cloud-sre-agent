@@ -30,7 +30,7 @@ class PromptManager:
     Provides prompt loading, caching, and basic management capabilities.
     """
 
-    def __init__(self, prompt_directory: str = "prompts"):
+    def __init__(self, prompt_directory: str = "prompts") -> None:
         """Initialize the prompt manager."""
         self.prompt_directory = prompt_directory
         self.prompts: Dict[str, str] = {}  # Changed from Prompt to str

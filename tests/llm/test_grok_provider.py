@@ -15,7 +15,7 @@ from gemini_sre_agent.llm.providers.grok_provider import GrokProvider
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> None:
     """Create a mock configuration for Grok provider."""
     return LLMProviderConfig(
         provider="grok",
@@ -35,7 +35,7 @@ def mock_config():
 
 
 @pytest.fixture
-def provider(mock_config):
+def provider(mock_config: str) -> None:
     """Create a Grok provider instance."""
     return GrokProvider(mock_config)
 
@@ -43,14 +43,14 @@ def provider(mock_config):
 class TestGrokProvider:
     """Test cases for Grok provider."""
 
-    def test_provider_initialization(self, provider, mock_config):
+    def test_provider_initialization(self, provider: str, mock_config: str) -> None:
         """Test provider initialization."""
         assert provider.api_key == "xai-test123456789"
         assert str(provider.base_url) == "https://api.x.ai/v1"
         assert provider.model == "default"  # Base class sets to "default"
         assert provider.provider_name == "grok"
 
-    def test_get_available_models(self, provider):
+    def test_get_available_models(self, provider: str) -> None:
         """Test getting available models."""
         models = provider.get_available_models()
 
@@ -112,7 +112,7 @@ class TestGrokProvider:
 
         # Create a proper async context manager mock
         class MockAsyncContextManager:
-            def __init__(self, response):
+            def __init__(self, response: str) -> None:
                 self.response = response
 
             async def __aenter__(self):
@@ -178,14 +178,14 @@ class TestGrokProvider:
             json={"model": "grok-embedding", "input": "Test text"},
         )
 
-    def test_token_count(self, provider):
+    def test_token_count(self, provider: str) -> None:
         """Test token counting."""
         result = provider.token_count("Test text with multiple words")
 
         # Should use approximation: 5 words * 1.3 = 6.5 -> 6
         assert result == 6
 
-    def test_cost_estimate(self, provider):
+    def test_cost_estimate(self, provider: str) -> None:
         """Test cost estimation."""
         cost = provider.cost_estimate(1000, 500)
 
@@ -196,12 +196,12 @@ class TestGrokProvider:
         expected_cost = (1000 / 1000) * 0.0001 + (500 / 1000) * 0.0001
         assert cost == expected_cost
 
-    def test_validate_config_valid(self, mock_config):
+    def test_validate_config_valid(self, mock_config: str) -> None:
         """Test configuration validation with valid config."""
         # Should not raise any exception
         GrokProvider.validate_config(mock_config)
 
-    def test_validate_config_invalid_key(self):
+    def test_validate_config_invalid_key(self) -> None:
         """Test configuration validation with invalid API key."""
         config = LLMProviderConfig(
             provider="grok",
@@ -217,12 +217,12 @@ class TestGrokProvider:
         # Should not raise any exception
         GrokProvider.validate_config(config)
 
-    def test_validate_config_missing_key(self):
+    def test_validate_config_missing_key(self) -> None:
         """Test configuration validation with missing API key."""
 
         # Create a mock config object that bypasses Pydantic validation
         class MockConfig:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.api_key = None
 
         config = MockConfig()
@@ -230,7 +230,7 @@ class TestGrokProvider:
         with pytest.raises(ValueError, match="Grok API key is required"):
             GrokProvider.validate_config(config)
 
-    def test_convert_messages_to_grok_format(self, provider):
+    def test_convert_messages_to_grok_format(self, provider: str) -> None:
         """Test message format conversion."""
         messages = [
             {"role": "system", "content": "You are a helpful assistant"},
@@ -250,7 +250,7 @@ class TestGrokProvider:
 
         assert result == expected
 
-    def test_extract_usage(self, provider):
+    def test_extract_usage(self, provider: str) -> None:
         """Test usage extraction from response."""
         # Test with usage dict
         usage = {"prompt_tokens": 10, "completion_tokens": 5}
@@ -259,17 +259,17 @@ class TestGrokProvider:
 
         assert result == {"input_tokens": 10, "output_tokens": 5}
 
-    def test_extract_usage_none(self, provider):
+    def test_extract_usage_none(self, provider: str) -> None:
         """Test usage extraction with None usage."""
         result = provider._extract_usage(None)
 
         assert result == {"input_tokens": 0, "output_tokens": 0}
 
-    def test_supports_streaming(self, provider):
+    def test_supports_streaming(self, provider: str) -> None:
         """Test streaming support."""
         assert provider.supports_streaming() is True
 
-    def test_supports_tools(self, provider):
+    def test_supports_tools(self, provider: str) -> None:
         """Test tool calling support."""
         assert provider.supports_tools() is False
 

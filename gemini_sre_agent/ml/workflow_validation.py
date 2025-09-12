@@ -22,7 +22,7 @@ class WorkflowValidationEngine:
     quality checks, and validation result processing with proper error handling.
     """
 
-    def __init__(self, performance_config: Optional[PerformanceConfig]):
+    def __init__(self, performance_config: Optional[PerformanceConfig]) -> None:
         """
         Initialize the workflow validation engine.
 

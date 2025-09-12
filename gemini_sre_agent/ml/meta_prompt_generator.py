@@ -35,7 +35,7 @@ class MetaPromptConfig:
 class MetaPromptGenerator:
     """Generates optimized prompts for code generation using Gemini."""
 
-    def __init__(self, config: MetaPromptConfig):
+    def __init__(self, config: MetaPromptConfig) -> None:
         """
         Initialize the meta-prompt generator.
 

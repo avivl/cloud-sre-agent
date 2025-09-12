@@ -25,7 +25,7 @@ from app import _get_error_category, app, log_error
 class TestErrorEndpoints(unittest.TestCase):
     """Test error endpoint functionality."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.app = app.test_client()
         self.app.testing = True
@@ -38,13 +38,13 @@ class TestErrorEndpoints(unittest.TestCase):
         self.log_patcher = patch("app.log_file", self.temp_log.name)
         self.log_patcher.start()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test environment."""
         self.log_patcher.stop()
         if os.path.exists(self.temp_log.name):
             os.unlink(self.temp_log.name)
 
-    def test_health_check(self):
+    def test_health_check(self) -> None:
         """Test the health check endpoint."""
         response = self.app.get("/")
         self.assertEqual(response.status_code, 200)
@@ -54,7 +54,7 @@ class TestErrorEndpoints(unittest.TestCase):
         self.assertEqual(data["service"], "dogfood_service")
         self.assertEqual(data["version"], "1.0.0")
 
-    def test_status_endpoint(self):
+    def test_status_endpoint(self) -> None:
         """Test the status endpoint."""
         response = self.app.get("/status")
         self.assertEqual(response.status_code, 200)
@@ -65,7 +65,7 @@ class TestErrorEndpoints(unittest.TestCase):
         self.assertIn("endpoints", data)
         self.assertIn("log_file", data)
 
-    def test_division_error(self):
+    def test_division_error(self) -> None:
         """Test division by zero error endpoint."""
         response = self.app.get("/error/division")
         self.assertEqual(response.status_code, 500)
@@ -77,7 +77,7 @@ class TestErrorEndpoints(unittest.TestCase):
         # Check that error was logged
         self._verify_error_logged("ZeroDivisionError", "/error/division")
 
-    def test_memory_error(self):
+    def test_memory_error(self) -> None:
         """Test memory error endpoint."""
         response = self.app.get("/error/memory")
         self.assertEqual(response.status_code, 500)
@@ -89,7 +89,7 @@ class TestErrorEndpoints(unittest.TestCase):
         # Check that error was logged
         self._verify_error_logged("MemoryError", "/error/memory")
 
-    def test_timeout_error(self):
+    def test_timeout_error(self) -> None:
         """Test timeout error endpoint."""
         # Use a short timeout for testing
         with patch("app.time.sleep", side_effect=Exception("Timeout simulation")):
@@ -103,7 +103,7 @@ class TestErrorEndpoints(unittest.TestCase):
         # Check that error was logged
         self._verify_error_logged("TimeoutError", "/error/timeout")
 
-    def test_json_error(self):
+    def test_json_error(self) -> None:
         """Test JSON parsing error endpoint."""
         response = self.app.get("/error/json")
         self.assertEqual(response.status_code, 400)
@@ -152,7 +152,7 @@ class TestErrorEndpoints(unittest.TestCase):
 class TestUtilityFunctions(unittest.TestCase):
     """Test utility functions."""
 
-    def test_get_error_category(self):
+    def test_get_error_category(self) -> None:
         """Test error category mapping."""
         self.assertEqual(_get_error_category("ZeroDivisionError"), "mathematical")
         self.assertEqual(_get_error_category("MemoryError"), "resource")
@@ -160,7 +160,7 @@ class TestUtilityFunctions(unittest.TestCase):
         self.assertEqual(_get_error_category("JSONDecodeError"), "data")
         self.assertEqual(_get_error_category("UnknownError"), "unknown")
 
-    def test_log_error_function(self):
+    def test_log_error_function(self) -> None:
         """Test the log_error function."""
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_log:
             temp_log.close()
@@ -183,12 +183,12 @@ class TestUtilityFunctions(unittest.TestCase):
 class TestErrorScenarios(unittest.TestCase):
     """Test complete error scenarios."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.app = app.test_client()
         self.app.testing = True
 
-    def test_all_error_endpoints_exist(self):
+    def test_all_error_endpoints_exist(self) -> None:
         """Test that all expected error endpoints exist."""
         endpoints = [
             "/error/division",
@@ -202,7 +202,7 @@ class TestErrorScenarios(unittest.TestCase):
             # Should return an error status (4xx or 5xx)
             self.assertGreaterEqual(response.status_code, 400)
 
-    def test_error_endpoints_return_json(self):
+    def test_error_endpoints_return_json(self) -> None:
         """Test that error endpoints return valid JSON."""
         endpoints = [
             "/error/division",

@@ -21,7 +21,7 @@ class TestAWSCloudWatchAdapter:
     """Test cases for AWSCloudWatchAdapter."""
 
     @pytest.fixture
-    def config(self):
+    def config(self) -> None:
         """Create a test configuration."""
         return AWSCloudWatchConfig(
             name="test_cloudwatch",
@@ -34,11 +34,11 @@ class TestAWSCloudWatchAdapter:
         )
 
     @pytest.fixture
-    def adapter(self, config):
+    def adapter(self, config: str) -> None:
         """Create a test adapter instance."""
         return AWSCloudWatchAdapter(config)
 
-    def test_init(self, adapter, config):
+    def test_init(self, adapter: str, config: str) -> None:
         """Test adapter initialization."""
         assert adapter.config == config
         assert adapter.region == config.region
@@ -219,7 +219,7 @@ class TestAWSCloudWatchAdapter:
         assert "log_group_name" in metrics
         assert "resilience_stats" in metrics
 
-    def test_get_config(self, adapter, config):
+    def test_get_config(self, adapter: str, config: str) -> None:
         """Test getting configuration."""
         returned_config = adapter.get_config()
         assert returned_config == config

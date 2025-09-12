@@ -36,7 +36,7 @@ class TriageAgent:
     A class responsible for triaging log entries using a Gemini model.
     """
 
-    def __init__(self, project_id: str, location: str, triage_model: str):
+    def __init__(self, project_id: str, location: str, triage_model: str) -> None:
         """
         Initializes the TriageAgent with GCP project, location, and the triage model to use.
 

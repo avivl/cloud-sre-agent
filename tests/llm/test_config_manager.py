@@ -23,13 +23,13 @@ from gemini_sre_agent.llm.config_manager import (
 class TestConfigManager:
     """Test the ConfigManager class."""
 
-    def test_config_manager_initialization(self):
+    def test_config_manager_initialization(self) -> None:
         """Test ConfigManager initialization."""
         manager = ConfigManager()
         assert manager._config is not None
         assert isinstance(manager._config, LLMConfig)
 
-    def test_config_manager_with_file_path(self):
+    def test_config_manager_with_file_path(self) -> None:
         """Test ConfigManager initialization with file path."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(
@@ -59,7 +59,7 @@ agents: {}
         finally:
             os.unlink(temp_path)
 
-    def test_load_from_environment(self):
+    def test_load_from_environment(self) -> None:
         """Test loading configuration from environment variables."""
         with patch.dict(
             os.environ,
@@ -78,7 +78,7 @@ agents: {}
             assert config.providers["openai"].api_key == "test-openai-key"
             assert config.providers["anthropic"].api_key == "test-anthropic-key"
 
-    def test_get_provider_config(self):
+    def test_get_provider_config(self) -> None:
         """Test getting provider-specific configuration."""
         manager = ConfigManager()
 
@@ -90,7 +90,7 @@ agents: {}
         provider_config = manager.get_provider_config("nonexistent")
         assert provider_config is None
 
-    def test_get_agent_config(self):
+    def test_get_agent_config(self) -> None:
         """Test getting agent-specific configuration."""
         manager = ConfigManager()
 
@@ -102,7 +102,7 @@ agents: {}
         agent_config = manager.get_agent_config("nonexistent")
         assert agent_config is None
 
-    def test_update_config(self):
+    def test_update_config(self) -> None:
         """Test updating configuration programmatically."""
         manager = ConfigManager()
 
@@ -130,7 +130,7 @@ agents: {}
         assert config.providers["openai"].api_key == "new-api-key"
         assert config.providers["openai"].models["gpt-4"].max_tokens == 8000
 
-    def test_reload_config(self):
+    def test_reload_config(self) -> None:
         """Test reloading configuration."""
         manager = ConfigManager()
         original_provider = manager.get_config().default_provider
@@ -143,13 +143,13 @@ agents: {}
         manager.reload_config()
         assert manager.get_config().default_provider == original_provider
 
-    def test_config_callbacks(self):
+    def test_config_callbacks(self) -> None:
         """Test configuration change callbacks."""
         manager = ConfigManager()
         callback_called = False
         callback_config = None
 
-        def test_callback(config):
+        def test_callback(config: str) -> None:
             """
             Test Callback.
 
@@ -170,7 +170,7 @@ agents: {}
         assert callback_config is not None
         assert callback_config.default_provider == "anthropic"
 
-    def test_validate_config(self):
+    def test_validate_config(self) -> None:
         """Test configuration validation."""
         manager = ConfigManager()
 
@@ -198,7 +198,7 @@ agents: {}
                 }
             )
 
-    def test_get_config_summary(self):
+    def test_get_config_summary(self) -> None:
         """Test getting configuration summary."""
         manager = ConfigManager()
         summary = manager.get_config_summary()
@@ -210,7 +210,7 @@ agents: {}
         assert "agents" in summary
         assert "sources" in summary
 
-    def test_export_config_yaml(self):
+    def test_export_config_yaml(self) -> None:
         """Test exporting configuration to YAML."""
         manager = ConfigManager()
 
@@ -231,7 +231,7 @@ agents: {}
             if Path(temp_path).exists():
                 os.unlink(temp_path)
 
-    def test_export_config_json(self):
+    def test_export_config_json(self) -> None:
         """Test exporting configuration to JSON."""
         manager = ConfigManager()
 
@@ -252,7 +252,7 @@ agents: {}
             if Path(temp_path).exists():
                 os.unlink(temp_path)
 
-    def test_export_config_invalid_format(self):
+    def test_export_config_invalid_format(self) -> None:
         """Test exporting configuration with invalid format."""
         manager = ConfigManager()
 
@@ -271,7 +271,7 @@ agents: {}
 class TestConfigSource:
     """Test the ConfigSource dataclass."""
 
-    def test_config_source_creation(self):
+    def test_config_source_creation(self) -> None:
         """Test ConfigSource creation."""
         source = ConfigSource(
             source_type="file",
@@ -285,7 +285,7 @@ class TestConfigSource:
         assert source.priority == 1
         assert source.metadata == {"format": "yaml"}
 
-    def test_config_source_defaults(self):
+    def test_config_source_defaults(self) -> None:
         """Test ConfigSource with default values."""
         source = ConfigSource(source_type="env")
 
@@ -298,7 +298,7 @@ class TestConfigSource:
 class TestGlobalConfigManager:
     """Test global configuration manager functions."""
 
-    def test_get_config_manager(self):
+    def test_get_config_manager(self) -> None:
         """Test getting the global configuration manager."""
         manager = get_config_manager()
         assert isinstance(manager, ConfigManager)
@@ -307,7 +307,7 @@ class TestGlobalConfigManager:
         manager2 = get_config_manager()
         assert manager is manager2
 
-    def test_initialize_config(self):
+    def test_initialize_config(self) -> None:
         """Test initializing the global configuration manager."""
         manager = initialize_config()
         assert isinstance(manager, ConfigManager)
@@ -316,7 +316,7 @@ class TestGlobalConfigManager:
         manager2 = get_config_manager()
         assert manager is manager2
 
-    def test_initialize_config_with_path(self):
+    def test_initialize_config_with_path(self) -> None:
         """Test initializing the global configuration manager with path."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(

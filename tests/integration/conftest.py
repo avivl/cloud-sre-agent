@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.fixture(scope="session")
-def mock_integration_config():
+def mock_integration_config() -> None:
     """Provide mock config for integration tests when real config is unavailable"""
     return {
         "gemini_cloud_log_monitor": {

@@ -29,7 +29,7 @@ class TestOptimizedBaseAgent:
     """Test the OptimizedBaseAgent class."""
 
     @pytest.fixture
-    def mock_llm_config(self):
+    def mock_llm_config(self) -> None:
         """Create a mock LLMConfig."""
         return LLMConfig(
             default_provider=ProviderType.GEMINI,
@@ -49,7 +49,7 @@ class TestOptimizedBaseAgent:
         )
 
     @pytest.fixture
-    def optimized_agent(self, mock_llm_config):
+    def optimized_agent(self, mock_llm_config: str) -> None:
         """Create an OptimizedBaseAgent instance."""
         return OptimizedBaseAgent(
             llm_config=mock_llm_config,
@@ -61,7 +61,7 @@ class TestOptimizedBaseAgent:
         )
 
     @pytest.fixture
-    def mock_llm_service(self):
+    def mock_llm_service(self) -> None:
         """Create a mock optimized LLM service."""
         service = AsyncMock()
         service.generate_structured = AsyncMock(
@@ -201,14 +201,14 @@ class TestOptimizedBaseAgent:
             assert models == ["model1", "model2"]
             mock_llm_service.get_available_models.assert_called_once()
 
-    def test_get_available_providers(self, optimized_agent):
+    def test_get_available_providers(self, optimized_agent: str) -> None:
         """Test getting available providers."""
         providers = asyncio.run(optimized_agent.get_available_providers())
 
         assert len(providers) > 0
         assert ProviderType.GEMINI in providers
 
-    def test_update_optimization_goal(self, optimized_agent):
+    def test_update_optimization_goal(self, optimized_agent: str) -> None:
         """Test updating optimization goal."""
         original_goal = optimized_agent.optimization_goal
         optimized_agent.update_optimization_goal(OptimizationGoal.COST_OPTIMIZED)
@@ -216,14 +216,14 @@ class TestOptimizedBaseAgent:
         assert optimized_agent.optimization_goal == OptimizationGoal.COST_OPTIMIZED
         assert optimized_agent.optimization_goal != original_goal
 
-    def test_update_provider_preference(self, optimized_agent):
+    def test_update_provider_preference(self, optimized_agent: str) -> None:
         """Test updating provider preference."""
         new_providers = [ProviderType.OPENAI, ProviderType.CLAUDE]
         optimized_agent.update_provider_preference(new_providers)
 
         assert optimized_agent.provider_preference == new_providers
 
-    def test_update_cost_constraints(self, optimized_agent):
+    def test_update_cost_constraints(self, optimized_agent: str) -> None:
         """Test updating cost constraints."""
         optimized_agent.update_cost_constraints(
             max_cost=0.01,
@@ -235,7 +235,7 @@ class TestOptimizedBaseAgent:
         assert optimized_agent.min_performance == 0.8
         assert optimized_agent.min_quality == 0.7
 
-    def test_get_performance_stats(self, optimized_agent, mock_llm_service):
+    def test_get_performance_stats(self, optimized_agent: str, mock_llm_service: str) -> None:
         """Test getting performance statistics."""
         with patch.object(optimized_agent, "llm_service", mock_llm_service):
             stats = optimized_agent.get_performance_stats()
@@ -250,7 +250,7 @@ class TestOptimizedBaseAgent:
             assert "constraints" in stats
             assert "optimizations_enabled" in stats
 
-    def test_conversation_context(self, optimized_agent, mock_llm_service):
+    def test_conversation_context(self, optimized_agent: str, mock_llm_service: str) -> None:
         """Test conversation context management."""
         with patch.object(optimized_agent, "llm_service", mock_llm_service):
             # Initial context should be empty
@@ -314,7 +314,7 @@ class TestOptimizedBaseAgent:
                     use_fallback=False,  # Disable fallback to test error propagation
                 )
 
-    def test_prompt_caching(self, optimized_agent):
+    def test_prompt_caching(self, optimized_agent: str) -> None:
         """Test that prompts are cached."""
         # Get a prompt twice
         prompt1 = optimized_agent._get_prompt("test_prompt")
@@ -324,7 +324,7 @@ class TestOptimizedBaseAgent:
         assert prompt1 is prompt2
         assert "test_prompt" in optimized_agent._prompts
 
-    def test_default_prompt_creation(self, optimized_agent):
+    def test_default_prompt_creation(self, optimized_agent: str) -> None:
         """Test default prompt creation."""
         prompt = optimized_agent._create_default_prompt("generate_text")
         assert "Generate text based on the following input" in prompt
@@ -337,7 +337,7 @@ class TestPerformanceBenchmarks:
     """Test performance benchmarks for the optimized agent."""
 
     @pytest.fixture
-    def mock_llm_config(self):
+    def mock_llm_config(self) -> None:
         """Create a mock LLMConfig."""
         return LLMConfig(
             default_provider=ProviderType.GEMINI,

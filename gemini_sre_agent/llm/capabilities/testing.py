@@ -15,7 +15,7 @@ class CapabilityTest(ABC):
     Abstract base class for a single capability test.
     """
 
-    def __init__(self, capability: ModelCapability):
+    def __init__(self, capability: ModelCapability) -> None:
         self.capability = capability
 
     @abstractmethod
@@ -38,7 +38,7 @@ class TextGenerationTest(CapabilityTest):
     Tests the text generation capability of a model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             ModelCapability(
                 name="text_generation",
@@ -77,7 +77,7 @@ class CodeGenerationTest(CapabilityTest):
     Tests the code generation capability of a model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             ModelCapability(
                 name="code_generation",
@@ -116,7 +116,7 @@ class CapabilityTester:
     Runs a suite of capability tests against LLM models.
     """
 
-    def __init__(self, providers: Dict[str, LLMProvider], tests: List[CapabilityTest]):
+    def __init__(self, providers: Dict[str, LLMProvider]: str, tests: List[CapabilityTest]) -> None:
         self.providers = providers
         self.tests = tests
 

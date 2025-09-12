@@ -112,7 +112,7 @@ class ModelScorer:
     for different use cases and requirements.
     """
 
-    def __init__(self, default_weights: Optional[ScoringWeights] = None):
+    def __init__(self, default_weights: Optional[ScoringWeights] = None) -> None:
         """Initialize the ModelScorer with default weights."""
         self.default_weights = default_weights or ScoringWeights()
         self._custom_scorers: Dict[ScoringDimension, Callable] = {}

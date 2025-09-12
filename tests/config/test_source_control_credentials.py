@@ -17,14 +17,14 @@ from gemini_sre_agent.config.source_control_credentials import CredentialConfig
 class TestCredentialConfig:
     """Test cases for CredentialConfig."""
 
-    def test_minimal_valid_config(self):
+    def test_minimal_valid_config(self) -> None:
         """Test minimal valid configuration."""
         config = CredentialConfig(token_env="GITHUB_TOKEN")
         assert config.token_env == "GITHUB_TOKEN"
         assert config.token is None
         assert config.username is None
 
-    def test_token_from_env(self):
+    def test_token_from_env(self) -> None:
         """Test getting token from environment variable."""
         config = CredentialConfig(token_env="GITHUB_TOKEN")
 
@@ -32,7 +32,7 @@ class TestCredentialConfig:
             token = config.get_token()
             assert token == "test_token_123"
 
-    def test_token_from_file(self):
+    def test_token_from_file(self) -> None:
         """Test getting token from file."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("test_token_from_file")
@@ -45,13 +45,13 @@ class TestCredentialConfig:
         finally:
             os.unlink(temp_file)
 
-    def test_token_direct_value(self):
+    def test_token_direct_value(self) -> None:
         """Test getting token from direct value."""
         config = CredentialConfig(token="direct_token")
         token = config.get_token()
         assert token == "direct_token"
 
-    def test_username_from_env(self):
+    def test_username_from_env(self) -> None:
         """Test getting username from environment variable."""
         config = CredentialConfig(username_env="GITHUB_USERNAME")
 
@@ -59,13 +59,13 @@ class TestCredentialConfig:
             username = config.get_username()
             assert username == "testuser"
 
-    def test_username_direct_value(self):
+    def test_username_direct_value(self) -> None:
         """Test getting username from direct value."""
         config = CredentialConfig(username="direct_user")
         username = config.get_username()
         assert username == "direct_user"
 
-    def test_password_from_env(self):
+    def test_password_from_env(self) -> None:
         """Test getting password from environment variable."""
         config = CredentialConfig(
             token_env="GITHUB_TOKEN", password_env="GITHUB_PASSWORD"
@@ -75,13 +75,13 @@ class TestCredentialConfig:
             password = config.get_password()
             assert password == "testpass"
 
-    def test_password_direct_value(self):
+    def test_password_direct_value(self) -> None:
         """Test getting password from direct value."""
         config = CredentialConfig(token_env="GITHUB_TOKEN", password="direct_pass")
         password = config.get_password()
         assert password == "direct_pass"
 
-    def test_ssh_key_path_validation(self):
+    def test_ssh_key_path_validation(self) -> None:
         """Test SSH key path validation."""
         # Test with non-existent path
         with pytest.raises(ValidationError) as exc_info:
@@ -98,14 +98,14 @@ class TestCredentialConfig:
         finally:
             os.unlink(temp_file)
 
-    def test_ssh_key_path_not_file(self):
+    def test_ssh_key_path_not_file(self) -> None:
         """Test SSH key path validation when path is not a file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             with pytest.raises(ValidationError) as exc_info:
                 CredentialConfig(ssh_key_path=temp_dir)
             assert "SSH key path is not a file" in str(exc_info.value)
 
-    def test_service_account_key_file_validation(self):
+    def test_service_account_key_file_validation(self) -> None:
         """Test service account key file validation."""
         # Test with non-existent path
         with pytest.raises(ValidationError) as exc_info:
@@ -123,14 +123,14 @@ class TestCredentialConfig:
         finally:
             os.unlink(temp_file)
 
-    def test_service_account_key_file_not_file(self):
+    def test_service_account_key_file_not_file(self) -> None:
         """Test service account key file validation when path is not a file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             with pytest.raises(ValidationError) as exc_info:
                 CredentialConfig(service_account_key_file=temp_dir)
             assert "Service account key file is not a file" in str(exc_info.value)
 
-    def test_no_auth_method_raises_error(self):
+    def test_no_auth_method_raises_error(self) -> None:
         """Test that no authentication method raises validation error."""
         with pytest.raises(ValidationError) as exc_info:
             CredentialConfig()
@@ -138,7 +138,7 @@ class TestCredentialConfig:
             exc_info.value
         )
 
-    def test_get_service_account_key_from_env(self):
+    def test_get_service_account_key_from_env(self) -> None:
         """Test getting service account key from environment variable."""
         config = CredentialConfig(service_account_key_env="SERVICE_ACCOUNT_KEY")
 
@@ -152,7 +152,7 @@ class TestCredentialConfig:
             key = config.get_service_account_key()
             assert key == key_data
 
-    def test_get_service_account_key_from_file(self):
+    def test_get_service_account_key_from_file(self) -> None:
         """Test getting service account key from file."""
         key_data = {"type": "service_account", "project_id": "test"}
 
@@ -169,7 +169,7 @@ class TestCredentialConfig:
         finally:
             os.unlink(temp_file)
 
-    def test_get_client_credentials(self):
+    def test_get_client_credentials(self) -> None:
         """Test getting OAuth client credentials."""
         config = CredentialConfig(
             client_id_env="CLIENT_ID", client_secret_env="CLIENT_SECRET"
@@ -183,7 +183,7 @@ class TestCredentialConfig:
             assert client_id == "test_client_id"
             assert client_secret == "test_client_secret"
 
-    def test_get_client_credentials_direct(self):
+    def test_get_client_credentials_direct(self) -> None:
         """Test getting OAuth client credentials from direct values."""
         config = CredentialConfig(
             client_id="direct_client_id", client_secret="direct_client_secret"
@@ -193,7 +193,7 @@ class TestCredentialConfig:
         assert client_id == "direct_client_id"
         assert client_secret == "direct_client_secret"
 
-    def test_ssh_key_passphrase_from_env(self):
+    def test_ssh_key_passphrase_from_env(self) -> None:
         """Test getting SSH key passphrase from environment variable."""
         config = CredentialConfig(
             token_env="GITHUB_TOKEN", ssh_key_passphrase_env="SSH_PASSPHRASE"
@@ -203,7 +203,7 @@ class TestCredentialConfig:
             passphrase = config.get_ssh_key_passphrase()
             assert passphrase == "test_passphrase"
 
-    def test_ssh_key_passphrase_direct(self):
+    def test_ssh_key_passphrase_direct(self) -> None:
         """Test getting SSH key passphrase from direct value."""
         config = CredentialConfig(
             token_env="GITHUB_TOKEN", ssh_key_passphrase="direct_passphrase"
@@ -211,7 +211,7 @@ class TestCredentialConfig:
         passphrase = config.get_ssh_key_passphrase()
         assert passphrase == "direct_passphrase"
 
-    def test_token_file_read_error(self):
+    def test_token_file_read_error(self) -> None:
         """Test error handling when reading token file fails."""
         config = CredentialConfig(token_file="/non/existent/file")
 
@@ -219,7 +219,7 @@ class TestCredentialConfig:
             config.get_token()
         assert "Failed to read token from file" in str(exc_info.value)
 
-    def test_service_account_key_invalid_json(self):
+    def test_service_account_key_invalid_json(self) -> None:
         """Test error handling for invalid JSON in service account key."""
         config = CredentialConfig(service_account_key_env="INVALID_JSON")
 
@@ -228,7 +228,7 @@ class TestCredentialConfig:
                 config.get_service_account_key()
             assert "Invalid JSON in service account key" in str(exc_info.value)
 
-    def test_service_account_key_file_read_error(self):
+    def test_service_account_key_file_read_error(self) -> None:
         """Test error handling when reading service account key file fails."""
         # Create a temporary file first, then delete it to simulate read error
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:

@@ -72,7 +72,7 @@ class StrategyResult:
 class ModelSelectionStrategy(ABC):
     """Abstract base class for model selection strategies."""
 
-    def __init__(self, name: str, model_scorer: Optional[ModelScorer] = None):
+    def __init__(self, name: str, model_scorer: Optional[ModelScorer] = None) -> None:
         """Initialize the strategy.
 
         Args:
@@ -209,7 +209,7 @@ class ModelSelectionStrategy(ABC):
         """
         return self._selection_history.copy()
 
-    def reset_metrics(self):
+    def reset_metrics(self) -> None:
         """Reset all performance metrics."""
         self._performance_metrics = {
             "total_selections": 0.0,

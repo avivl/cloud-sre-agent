@@ -87,7 +87,7 @@ class OptimizationRecommendation:
 class CostAnalytics:
     """Comprehensive cost analytics and reporting system."""
 
-    def __init__(self, config: AnalyticsConfig):
+    def __init__(self, config: AnalyticsConfig) -> None:
         self.config = config
         self.usage_records: List[UsageRecord] = []
 

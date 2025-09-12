@@ -13,7 +13,7 @@ class TestRepositoryManager:
     """Test the RepositoryManager class."""
 
     @pytest.fixture
-    def mock_provider_factory(self):
+    def mock_provider_factory(self) -> None:
         """
         Mock Provider Factory.
 
@@ -21,7 +21,7 @@ class TestRepositoryManager:
         return MagicMock(spec=ProviderFactory)
 
     @pytest.fixture
-    def mock_global_config(self):
+    def mock_global_config(self) -> None:
         """
         Mock Global Config.
 
@@ -31,7 +31,7 @@ class TestRepositoryManager:
         )
 
     @pytest.fixture
-    def repository_manager(self, mock_global_config, mock_provider_factory):
+    def repository_manager(self, mock_global_config: str, mock_provider_factory: str) -> None:
         """
         Repository Manager.
 
@@ -43,7 +43,7 @@ class TestRepositoryManager:
         return RepositoryManager(mock_global_config, mock_provider_factory)
 
     @pytest.fixture
-    def mock_provider(self):
+    def mock_provider(self) -> None:
         """
         Mock Provider.
 
@@ -304,7 +304,7 @@ class TestRepositoryManager:
         assert "error" in results["repo2"]
         assert "Apply failed" in results["repo2"]["error"]
 
-    def test_initialization_with_empty_config(self):
+    def test_initialization_with_empty_config(self) -> None:
         """Test initialization with empty configuration."""
         empty_config = SourceControlGlobalConfig(
             default_credentials=None, default_remediation_strategy=None
@@ -315,7 +315,7 @@ class TestRepositoryManager:
         # Should not raise an exception
         assert len(manager.repositories) == 0
 
-    def test_logger_initialization(self, repository_manager):
+    def test_logger_initialization(self, repository_manager: str) -> None:
         """Test that logger is properly initialized."""
         assert repository_manager.logger is not None
         assert (

@@ -119,6 +119,6 @@ class BaseAgent(Generic[T]):
         """Get a summary of agent statistics."""
         return self.stats.get_summary()
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset agent statistics."""
         self.stats.reset()

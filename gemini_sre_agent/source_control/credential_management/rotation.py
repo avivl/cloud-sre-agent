@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class CredentialRotationManager:
     """Manages credential rotation and validation."""
 
-    def __init__(self, credential_manager: "CredentialManager"):
+    def __init__(self, credential_manager: "CredentialManager") -> None:
         self.credential_manager = credential_manager
         self.logger = logging.getLogger("CredentialRotationManager")
         self.rotation_schedule: Dict[str, datetime] = {}

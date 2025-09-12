@@ -62,7 +62,7 @@ class ProviderHealth:
 class LLMHealthChecker:
     """Health checker for LLM providers and models."""
 
-    def __init__(self, provider_factory: LLMProviderFactory):
+    def __init__(self, provider_factory: LLMProviderFactory) -> None:
         """Initialize the LLM health checker."""
         self.provider_factory = provider_factory
         self.provider_health: Dict[str, ProviderHealth] = {}

@@ -252,7 +252,7 @@ class MockLLMProvider(LLMProvider):
 class MockProviderFactory(LLMProviderFactory):
     """Factory for creating mock providers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the mock provider factory."""
         self.providers: Dict[str, MockLLMProvider] = {}
         self._initialize_mock_providers()
@@ -345,7 +345,7 @@ class MockProviderFactory(LLMProviderFactory):
 class MockModelRegistry(ModelRegistry):
     """Mock model registry for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the mock model registry."""
         super().__init__()
         self.models = {
@@ -439,7 +439,7 @@ class MockModelRegistry(ModelRegistry):
 class MockCostManager:
     """Mock cost manager for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the mock cost manager."""
         self.total_cost = 0.0
         self.request_count = 0

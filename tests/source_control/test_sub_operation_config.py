@@ -25,7 +25,7 @@ from gemini_sre_agent.source_control.providers.sub_operation_config import (
 class TestSubOperationConfig:
     """Test the SubOperationConfig class."""
 
-    def test_config_creation(self):
+    def test_config_creation(self) -> None:
         """Test creating a basic configuration."""
         config = SubOperationConfig(
             operation_name="file_operations", provider_type="local"
@@ -37,7 +37,7 @@ class TestSubOperationConfig:
         assert config.default_timeout == 30.0
         assert config.file_operation_timeout == 60.0
 
-    def test_config_with_custom_settings(self):
+    def test_config_with_custom_settings(self) -> None:
         """Test creating configuration with custom settings."""
         circuit_config = CircuitBreakerConfig(
             failure_threshold=5,
@@ -72,7 +72,7 @@ class TestSubOperationConfig:
         assert config.log_level == "DEBUG"
         assert config.enable_metrics is True
 
-    def test_get_operation_timeout(self):
+    def test_get_operation_timeout(self) -> None:
         """Test getting operation-specific timeouts."""
         config = SubOperationConfig(
             operation_name="test",
@@ -89,7 +89,7 @@ class TestSubOperationConfig:
         assert config.get_operation_timeout("git") == 15.0
         assert config.get_operation_timeout("unknown") == 30.0  # default
 
-    def test_get_operation_retries(self):
+    def test_get_operation_retries(self) -> None:
         """Test getting operation-specific retry counts."""
         config = SubOperationConfig(
             operation_name="test",
@@ -106,7 +106,7 @@ class TestSubOperationConfig:
         assert config.get_operation_retries("git") == 4
         assert config.get_operation_retries("unknown") == 2  # default
 
-    def test_to_dict(self):
+    def test_to_dict(self) -> None:
         """Test converting configuration to dictionary."""
         config = SubOperationConfig(
             operation_name="test_ops",
@@ -122,7 +122,7 @@ class TestSubOperationConfig:
         assert config_dict["file_operation_timeout"] == 45.0
         assert config_dict["custom_settings"]["test_key"] == "test_value"
 
-    def test_from_dict(self):
+    def test_from_dict(self) -> None:
         """Test creating configuration from dictionary."""
         config_data = {
             "operation_name": "test_ops",
@@ -142,7 +142,7 @@ class TestSubOperationConfig:
         assert config.log_level == "WARNING"
         assert config.custom_settings["key"] == "value"
 
-    def test_from_dict_with_circuit_breaker(self):
+    def test_from_dict_with_circuit_breaker(self) -> None:
         """Test creating configuration from dictionary with circuit breaker config."""
         config_data = {
             "operation_name": "test_ops",
@@ -166,11 +166,11 @@ class TestSubOperationConfigManager:
     """Test the SubOperationConfigManager class."""
 
     @pytest.fixture
-    def config_manager(self):
+    def config_manager(self) -> None:
         """Create a configuration manager for testing."""
         return SubOperationConfigManager()
 
-    def test_register_config(self, config_manager):
+    def test_register_config(self, config_manager: str) -> None:
         """Test registering a configuration."""
         config = SubOperationConfig(operation_name="file_ops", provider_type="local")
 
@@ -179,7 +179,7 @@ class TestSubOperationConfigManager:
         retrieved_config = config_manager.get_config("local", "file_ops")
         assert retrieved_config == config
 
-    def test_get_config(self, config_manager):
+    def test_get_config(self, config_manager: str) -> None:
         """Test retrieving a configuration."""
         config = SubOperationConfig(operation_name="branch_ops", provider_type="github")
 
@@ -192,7 +192,7 @@ class TestSubOperationConfigManager:
         non_existent = config_manager.get_config("gitlab", "unknown")
         assert non_existent is None
 
-    def test_create_default_config(self, config_manager):
+    def test_create_default_config(self, config_manager: str) -> None:
         """Test creating default configuration."""
         config = config_manager.create_default_config("local", "file_operations")
 
@@ -201,7 +201,7 @@ class TestSubOperationConfigManager:
         assert config.file_operation_timeout == 60.0  # Local default
         assert config.file_operation_retries == 2  # Local default
 
-    def test_create_default_config_with_custom_settings(self, config_manager):
+    def test_create_default_config_with_custom_settings(self, config_manager: str) -> None:
         """Test creating default configuration with custom settings."""
         custom_settings = {
             "file_operation_timeout": 90.0,
@@ -217,7 +217,7 @@ class TestSubOperationConfigManager:
         assert config.log_level == "DEBUG"
         assert config.custom_settings["custom_key"] == "custom_value"
 
-    def test_list_configs(self, config_manager):
+    def test_list_configs(self, config_manager: str) -> None:
         """Test listing registered configurations."""
         config1 = SubOperationConfig("ops1", "local")
         config2 = SubOperationConfig("ops2", "github")
@@ -230,7 +230,7 @@ class TestSubOperationConfigManager:
         assert "local_ops1" in configs
         assert "github_ops2" in configs
 
-    def test_clear_configs(self, config_manager):
+    def test_clear_configs(self, config_manager: str) -> None:
         """Test clearing all configurations."""
         config = SubOperationConfig("test_ops", "local")
         config_manager.register_config(config)
@@ -240,7 +240,7 @@ class TestSubOperationConfigManager:
         config_manager.clear_configs()
         assert len(config_manager.list_configs()) == 0
 
-    def test_provider_defaults(self, config_manager):
+    def test_provider_defaults(self, config_manager: str) -> None:
         """Test provider-specific default settings."""
         # Test GitHub defaults
         github_config = config_manager.create_default_config("github", "test")
@@ -262,14 +262,14 @@ class TestSubOperationConfigManager:
 class TestGlobalFunctions:
     """Test global configuration functions."""
 
-    def test_create_sub_operation_config(self):
+    def test_create_sub_operation_config(self) -> None:
         """Test creating sub-operation configuration."""
         config = create_sub_operation_config("local", "file_operations")
 
         assert config.operation_name == "file_operations"
         assert config.provider_type == "local"
 
-    def test_create_sub_operation_config_with_custom_settings(self):
+    def test_create_sub_operation_config_with_custom_settings(self) -> None:
         """Test creating sub-operation configuration with custom settings."""
         custom_settings = {"file_operation_timeout": 90.0, "log_level": "DEBUG"}
 
@@ -280,7 +280,7 @@ class TestGlobalFunctions:
         assert config.file_operation_timeout == 90.0
         assert config.log_level == "DEBUG"
 
-    def test_register_and_get_sub_operation_config(self):
+    def test_register_and_get_sub_operation_config(self) -> None:
         """Test registering and getting sub-operation configuration."""
         config = SubOperationConfig("test_ops", "local")
 
@@ -289,7 +289,7 @@ class TestGlobalFunctions:
 
         assert retrieved_config == config
 
-    def test_get_nonexistent_config(self):
+    def test_get_nonexistent_config(self) -> None:
         """Test getting non-existent configuration."""
         config = get_sub_operation_config("unknown", "nonexistent")
         assert config is None

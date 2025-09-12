@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 
-def test_sre_agent(single_agent=False):
+def test_sre_agent(single_agent: bool = False) -> None:
     """Quick test of SRE agent functionality."""
 
     mode = "Single Agent" if single_agent else "Dual Agent"
@@ -97,7 +97,7 @@ def test_sre_agent(single_agent=False):
         time.sleep(1)
 
 
-def main():
+def main() -> None:
     """Main function with argument parsing."""
     parser = argparse.ArgumentParser(description="Quick SRE Agent Test")
     parser.add_argument(

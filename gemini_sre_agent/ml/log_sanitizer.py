@@ -19,7 +19,7 @@ class LogSanitizer:
     or storage to ensure no sensitive information is exposed.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the log sanitizer."""
         # Common patterns for sensitive data
         self.sensitive_patterns = [

@@ -207,7 +207,7 @@ class MetricValidationSchema(BaseModel):
 
     @field_validator("name")
     @classmethod
-    def validate_name(cls, v):
+    def validate_name(cls: str, v: str) -> None:
         """
         Validate Name.
 
@@ -220,7 +220,7 @@ class MetricValidationSchema(BaseModel):
 
     @field_validator("value")
     @classmethod
-    def validate_value(cls, v):
+    def validate_value(cls: str, v: str) -> None:
         """
         Validate Value.
 
@@ -233,7 +233,7 @@ class MetricValidationSchema(BaseModel):
 
     @field_validator("timestamp")
     @classmethod
-    def validate_timestamp(cls, v):
+    def validate_timestamp(cls: str, v: str) -> None:
         """
         Validate Timestamp.
 
@@ -258,7 +258,7 @@ class LogValidationSchema(BaseModel):
 
     @field_validator("level")
     @classmethod
-    def validate_level(cls, v):
+    def validate_level(cls: str, v: str) -> None:
         """
         Validate Level.
 
@@ -274,7 +274,7 @@ class LogValidationSchema(BaseModel):
 
     @field_validator("message")
     @classmethod
-    def validate_message(cls, v):
+    def validate_message(cls: str, v: str) -> None:
         """
         Validate Message.
 
@@ -287,7 +287,7 @@ class LogValidationSchema(BaseModel):
 
     @field_validator("timestamp")
     @classmethod
-    def validate_timestamp(cls, v):
+    def validate_timestamp(cls: str, v: str) -> None:
         """
         Validate Timestamp.
 
@@ -312,7 +312,7 @@ class CodeAnalysisValidationSchema(BaseModel):
 
     @field_validator("file_path")
     @classmethod
-    def validate_file_path(cls, v):
+    def validate_file_path(cls: str, v: str) -> None:
         """
         Validate File Path.
 
@@ -325,7 +325,7 @@ class CodeAnalysisValidationSchema(BaseModel):
 
     @field_validator("severity")
     @classmethod
-    def validate_severity(cls, v):
+    def validate_severity(cls: str, v: str) -> None:
         """
         Validate Severity.
 
@@ -338,7 +338,7 @@ class CodeAnalysisValidationSchema(BaseModel):
 
     @field_validator("confidence")
     @classmethod
-    def validate_confidence(cls, v):
+    def validate_confidence(cls: str, v: str) -> None:
         """
         Validate Confidence.
 
@@ -351,7 +351,7 @@ class CodeAnalysisValidationSchema(BaseModel):
 
     @field_validator("message")
     @classmethod
-    def validate_message(cls, v):
+    def validate_message(cls: str, v: str) -> None:
         """
         Validate Message.
 
@@ -382,7 +382,7 @@ def validate_with_schema(schema_class: type) -> Callable:
             Callable: Description of return value.
 
         """
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: str, **kwargs: str) -> None:
             """
             Wrapper.
 
@@ -402,7 +402,7 @@ def validate_with_schema(schema_class: type) -> Callable:
 def validate_confidence(func: Callable) -> Callable:
     """Decorator to validate confidence parameters."""
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: str, **kwargs: str) -> None:
         """
         Wrapper.
 
@@ -417,7 +417,7 @@ def validate_confidence(func: Callable) -> Callable:
 def validate_severity(func: Callable) -> Callable:
     """Decorator to validate severity parameters."""
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: str, **kwargs: str) -> None:
         """
         Wrapper.
 

@@ -13,7 +13,7 @@ class MetricsManager:
     Central manager for collecting and managing metrics for all LLM providers.
     """
 
-    def __init__(self, config_manager: ConfigManager):
+    def __init__(self, config_manager: ConfigManager) -> None:
         """
         Initialize the MetricsManager.
 

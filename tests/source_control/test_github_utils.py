@@ -27,57 +27,57 @@ from gemini_sre_agent.source_control.providers.github_utils import (
 class TestParseGitHubUrl:
     """Test GitHub URL parsing functionality."""
 
-    def test_parse_full_https_url(self):
+    def test_parse_full_https_url(self) -> None:
         """Test parsing full HTTPS GitHub URL."""
         owner, repo = parse_github_url("https://github.com/owner/repo")
         assert owner == "owner"
         assert repo == "repo"
 
-    def test_parse_full_http_url(self):
+    def test_parse_full_http_url(self) -> None:
         """Test parsing full HTTP GitHub URL."""
         owner, repo = parse_github_url("http://github.com/owner/repo")
         assert owner == "owner"
         assert repo == "repo"
 
-    def test_parse_owner_repo_format(self):
+    def test_parse_owner_repo_format(self) -> None:
         """Test parsing owner/repo format."""
         owner, repo = parse_github_url("owner/repo")
         assert owner == "owner"
         assert repo == "repo"
 
-    def test_parse_url_with_trailing_slash(self):
+    def test_parse_url_with_trailing_slash(self) -> None:
         """Test parsing URL with trailing slash."""
         owner, repo = parse_github_url("https://github.com/owner/repo/")
         assert owner == "owner"
         assert repo == "repo"
 
-    def test_parse_url_with_additional_path(self):
+    def test_parse_url_with_additional_path(self) -> None:
         """Test parsing URL with additional path."""
         owner, repo = parse_github_url("https://github.com/owner/repo/issues/123")
         assert owner == "owner"
         assert repo == "repo"
 
-    def test_parse_invalid_url_raises_error(self):
+    def test_parse_invalid_url_raises_error(self) -> None:
         """Test parsing invalid URL raises error."""
         with pytest.raises(ValueError, match="Not a GitHub URL"):
             parse_github_url("https://gitlab.com/owner/repo")
 
-    def test_parse_invalid_format_raises_error(self):
+    def test_parse_invalid_format_raises_error(self) -> None:
         """Test parsing invalid format raises error."""
         with pytest.raises(ValueError, match="Invalid GitHub URL format"):
             parse_github_url("https://github.com/owner")
 
-    def test_parse_owner_repo_invalid_format_raises_error(self):
+    def test_parse_owner_repo_invalid_format_raises_error(self) -> None:
         """Test parsing invalid owner/repo format raises error."""
         with pytest.raises(ValueError, match="Invalid GitHub repository format"):
             parse_github_url("owner")
 
-    def test_parse_invalid_owner_name_raises_error(self):
+    def test_parse_invalid_owner_name_raises_error(self) -> None:
         """Test parsing invalid owner name raises error."""
         with pytest.raises(ValueError, match="Invalid owner name"):
             parse_github_url("owner@invalid/repo")
 
-    def test_parse_invalid_repo_name_raises_error(self):
+    def test_parse_invalid_repo_name_raises_error(self) -> None:
         """Test parsing invalid repo name raises error."""
         with pytest.raises(ValueError, match="Invalid repository name"):
             parse_github_url("owner/repo@invalid")
@@ -86,43 +86,43 @@ class TestParseGitHubUrl:
 class TestSanitizeBranchName:
     """Test branch name sanitization functionality."""
 
-    def test_sanitize_valid_branch_name(self):
+    def test_sanitize_valid_branch_name(self) -> None:
         """Test sanitizing valid branch name."""
         result = sanitize_branch_name("feature-branch")
         assert result == "feature-branch"
 
-    def test_sanitize_branch_name_with_invalid_characters(self):
+    def test_sanitize_branch_name_with_invalid_characters(self) -> None:
         """Test sanitizing branch name with invalid characters."""
         result = sanitize_branch_name("feature@branch#with$invalid%chars")
         assert result == "feature-branch-with-invalid-chars"
 
-    def test_sanitize_branch_name_with_consecutive_separators(self):
+    def test_sanitize_branch_name_with_consecutive_separators(self) -> None:
         """Test sanitizing branch name with consecutive separators."""
         result = sanitize_branch_name("feature--branch..with...separators")
         assert result == "feature-branch-with-separators"
 
-    def test_sanitize_branch_name_with_leading_trailing_separators(self):
+    def test_sanitize_branch_name_with_leading_trailing_separators(self) -> None:
         """Test sanitizing branch name with leading/trailing separators."""
         result = sanitize_branch_name("---feature-branch---")
         assert result == "feature-branch"
 
-    def test_sanitize_branch_name_starting_with_dot(self):
+    def test_sanitize_branch_name_starting_with_dot(self) -> None:
         """Test sanitizing branch name starting with dot."""
         result = sanitize_branch_name(".hidden-branch")
         assert result == "branch-hidden-branch"
 
-    def test_sanitize_empty_branch_name(self):
+    def test_sanitize_empty_branch_name(self) -> None:
         """Test sanitizing empty branch name."""
         result = sanitize_branch_name("")
         assert result == "branch"
 
-    def test_sanitize_branch_name_too_long(self):
+    def test_sanitize_branch_name_too_long(self) -> None:
         """Test sanitizing branch name that's too long."""
         long_name = "a" * 300
         result = sanitize_branch_name(long_name)
         assert len(result) == 255
 
-    def test_sanitize_branch_name_with_slashes(self):
+    def test_sanitize_branch_name_with_slashes(self) -> None:
         """Test sanitizing branch name with slashes."""
         result = sanitize_branch_name("feature/branch/name")
         assert result == "feature-branch-name"
@@ -131,36 +131,36 @@ class TestSanitizeBranchName:
 class TestSanitizeCommitMessage:
     """Test commit message sanitization functionality."""
 
-    def test_sanitize_valid_commit_message(self):
+    def test_sanitize_valid_commit_message(self) -> None:
         """Test sanitizing valid commit message."""
         message = "Add new feature"
         result = sanitize_commit_message(message)
         assert result == message
 
-    def test_sanitize_commit_message_with_control_characters(self):
+    def test_sanitize_commit_message_with_control_characters(self) -> None:
         """Test sanitizing commit message with control characters."""
         message = "Add\x00new\x01feature\x02with\x03control\x04chars"
         result = sanitize_commit_message(message)
         assert result == "Addnewfeaturewithcontrolchars"
 
-    def test_sanitize_empty_commit_message(self):
+    def test_sanitize_empty_commit_message(self) -> None:
         """Test sanitizing empty commit message."""
         result = sanitize_commit_message("")
         assert result == "SRE Fix: Automated remediation"
 
-    def test_sanitize_commit_message_with_whitespace_only(self):
+    def test_sanitize_commit_message_with_whitespace_only(self) -> None:
         """Test sanitizing commit message with only whitespace."""
         result = sanitize_commit_message("   \n\t   ")
         assert result == "SRE Fix: Automated remediation"
 
-    def test_sanitize_commit_message_too_long_first_line(self):
+    def test_sanitize_commit_message_too_long_first_line(self) -> None:
         """Test sanitizing commit message with too long first line."""
         long_message = "A" * 80 + "\nSecond line"
         result = sanitize_commit_message(long_message)
         assert len(result.split("\n")[0]) == 72
         assert result.endswith("...")
 
-    def test_sanitize_commit_message_preserves_newlines(self):
+    def test_sanitize_commit_message_preserves_newlines(self) -> None:
         """Test sanitizing commit message preserves newlines."""
         message = "First line\nSecond line\nThird line"
         result = sanitize_commit_message(message)
@@ -170,17 +170,17 @@ class TestSanitizeCommitMessage:
 class TestFormatPullRequestTitle:
     """Test pull request title formatting functionality."""
 
-    def test_format_title_without_issue_id(self):
+    def test_format_title_without_issue_id(self) -> None:
         """Test formatting title without issue id."""
         result = format_pull_request_title("Fix critical bug")
         assert result == "Fix critical bug"
 
-    def test_format_title_with_issue_id(self):
+    def test_format_title_with_issue_id(self) -> None:
         """Test formatting title with issue id."""
         result = format_pull_request_title("Fix critical bug", "ISSUE-123")
         assert result == "[ISSUE-123] Fix critical bug"
 
-    def test_format_title_with_empty_issue_id(self):
+    def test_format_title_with_empty_issue_id(self) -> None:
         """Test formatting title with empty issue id."""
         result = format_pull_request_title("Fix critical bug", "")
         assert result == "Fix critical bug"
@@ -189,19 +189,19 @@ class TestFormatPullRequestTitle:
 class TestFormatPullRequestBody:
     """Test pull request body formatting functionality."""
 
-    def test_format_body_minimal(self):
+    def test_format_body_minimal(self) -> None:
         """Test formatting minimal body."""
         result = format_pull_request_body("Fix critical bug")
         expected = "**Description:**\nFix critical bug\n\n---\n*This PR was created automatically by the SRE Agent*"
         assert result == expected
 
-    def test_format_body_with_issue_id(self):
+    def test_format_body_with_issue_id(self) -> None:
         """Test formatting body with issue id."""
         result = format_pull_request_body("Fix critical bug", "ISSUE-123")
         expected = "**Issue ID:** ISSUE-123\n\n**Description:**\nFix critical bug\n\n---\n*This PR was created automatically by the SRE Agent*"
         assert result == expected
 
-    def test_format_body_with_additional_info(self):
+    def test_format_body_with_additional_info(self) -> None:
         """Test formatting body with additional info."""
         additional_info = {"severity": "high", "component": "auth"}
         result = format_pull_request_body(
@@ -220,43 +220,43 @@ class TestFormatPullRequestBody:
 class TestParseGitHubError:
     """Test GitHub error parsing functionality."""
 
-    def test_parse_rate_limit_error(self):
+    def test_parse_rate_limit_error(self) -> None:
         """Test parsing rate limit error."""
         result = parse_github_error("API rate limit exceeded")
         assert result["type"] == "rate_limit"
         assert result["retryable"] is True
 
-    def test_parse_unauthorized_error(self):
+    def test_parse_unauthorized_error(self) -> None:
         """Test parsing unauthorized error."""
         result = parse_github_error("Unauthorized access")
         assert result["type"] == "authentication"
         assert result["retryable"] is False
 
-    def test_parse_forbidden_error(self):
+    def test_parse_forbidden_error(self) -> None:
         """Test parsing forbidden error."""
         result = parse_github_error("Forbidden access")
         assert result["type"] == "authentication"
         assert result["retryable"] is False
 
-    def test_parse_not_found_error(self):
+    def test_parse_not_found_error(self) -> None:
         """Test parsing not found error."""
         result = parse_github_error("Resource not found")
         assert result["type"] == "not_found"
         assert result["retryable"] is False
 
-    def test_parse_validation_error(self):
+    def test_parse_validation_error(self) -> None:
         """Test parsing validation error."""
         result = parse_github_error("Validation failed")
         assert result["type"] == "validation"
         assert result["retryable"] is False
 
-    def test_parse_server_error(self):
+    def test_parse_server_error(self) -> None:
         """Test parsing server error."""
         result = parse_github_error("Internal server error")
         assert result["type"] == "server_error"
         assert result["retryable"] is True
 
-    def test_parse_unknown_error(self):
+    def test_parse_unknown_error(self) -> None:
         """Test parsing unknown error."""
         result = parse_github_error("Some random error")
         assert result["type"] == "unknown"
@@ -266,12 +266,12 @@ class TestParseGitHubError:
 class TestExtractGitHubLinks:
     """Test GitHub link extraction functionality."""
 
-    def test_extract_no_links(self):
+    def test_extract_no_links(self) -> None:
         """Test extracting no links from text."""
         result = extract_github_links("No links here")
         assert result == []
 
-    def test_extract_repository_links(self):
+    def test_extract_repository_links(self) -> None:
         """Test extracting repository links."""
         text = "Check out https://github.com/owner/repo for more info"
         result = extract_github_links(text)
@@ -280,7 +280,7 @@ class TestExtractGitHubLinks:
         assert result[0]["repo"] == "repo"
         assert result[0]["type"] == "repo"
 
-    def test_extract_issue_links(self):
+    def test_extract_issue_links(self) -> None:
         """Test extracting issue links."""
         text = "See issue https://github.com/owner/repo/issues/123"
         result = extract_github_links(text)
@@ -289,7 +289,7 @@ class TestExtractGitHubLinks:
         assert result[0]["repo"] == "repo"
         assert result[0]["type"] == "issue"
 
-    def test_extract_pull_request_links(self):
+    def test_extract_pull_request_links(self) -> None:
         """Test extracting pull request links."""
         text = "See PR https://github.com/owner/repo/pulls/456"
         result = extract_github_links(text)
@@ -298,7 +298,7 @@ class TestExtractGitHubLinks:
         assert result[0]["repo"] == "repo"
         assert result[0]["type"] == "pull"
 
-    def test_extract_commit_links(self):
+    def test_extract_commit_links(self) -> None:
         """Test extracting commit links."""
         text = "See commit https://github.com/owner/repo/commit/abc123"
         result = extract_github_links(text)
@@ -307,7 +307,7 @@ class TestExtractGitHubLinks:
         assert result[0]["repo"] == "repo"
         assert result[0]["type"] == "commit"
 
-    def test_extract_multiple_links(self):
+    def test_extract_multiple_links(self) -> None:
         """Test extracting multiple links."""
         text = "See https://github.com/owner1/repo1 and https://github.com/owner2/repo2"
         result = extract_github_links(text)
@@ -321,7 +321,7 @@ class TestExtractGitHubLinks:
 class TestValidateGitHubWebhookSignature:
     """Test GitHub webhook signature validation functionality."""
 
-    def test_validate_valid_signature(self):
+    def test_validate_valid_signature(self) -> None:
         """Test validating valid signature."""
         payload = '{"test": "data"}'
         secret = "test_secret"
@@ -339,7 +339,7 @@ class TestValidateGitHubWebhookSignature:
         )
         assert result is True
 
-    def test_validate_invalid_signature(self):
+    def test_validate_invalid_signature(self) -> None:
         """Test validating invalid signature."""
         payload = '{"test": "data"}'
         secret = "test_secret"
@@ -348,7 +348,7 @@ class TestValidateGitHubWebhookSignature:
         result = validate_github_webhook_signature(payload, invalid_signature, secret)
         assert result is False
 
-    def test_validate_invalid_signature_format(self):
+    def test_validate_invalid_signature_format(self) -> None:
         """Test validating signature with invalid format."""
         payload = '{"test": "data"}'
         secret = "test_secret"
@@ -361,7 +361,7 @@ class TestValidateGitHubWebhookSignature:
 class TestGetGitHubEmojiForStatus:
     """Test GitHub emoji for status functionality."""
 
-    def test_get_emoji_for_known_status(self):
+    def test_get_emoji_for_known_status(self) -> None:
         """Test getting emoji for known status."""
         assert get_github_emoji_for_status("success") == "✅"
         assert get_github_emoji_for_status("failure") == "❌"
@@ -369,11 +369,11 @@ class TestGetGitHubEmojiForStatus:
         assert get_github_emoji_for_status("open") == "🔓"
         assert get_github_emoji_for_status("closed") == "🔒"
 
-    def test_get_emoji_for_unknown_status(self):
+    def test_get_emoji_for_unknown_status(self) -> None:
         """Test getting emoji for unknown status."""
         assert get_github_emoji_for_status("unknown") == "❓"
 
-    def test_get_emoji_case_insensitive(self):
+    def test_get_emoji_case_insensitive(self) -> None:
         """Test getting emoji is case insensitive."""
         assert get_github_emoji_for_status("SUCCESS") == "✅"
         assert get_github_emoji_for_status("Success") == "✅"
@@ -382,17 +382,17 @@ class TestGetGitHubEmojiForStatus:
 class TestFormatGitHubMarkdownTable:
     """Test GitHub markdown table formatting functionality."""
 
-    def test_format_empty_data(self):
+    def test_format_empty_data(self) -> None:
         """Test formatting empty data."""
         result = format_github_markdown_table([], [])
         assert result == ""
 
-    def test_format_empty_headers(self):
+    def test_format_empty_headers(self) -> None:
         """Test formatting with empty headers."""
         result = format_github_markdown_table([{"col1": "val1"}], [])
         assert result == ""
 
-    def test_format_simple_table(self):
+    def test_format_simple_table(self) -> None:
         """Test formatting simple table."""
         data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
         headers = ["name", "age"]
@@ -401,7 +401,7 @@ class TestFormatGitHubMarkdownTable:
         expected = "| name | age |\n| --- | --- |\n| Alice | 30 |\n| Bob | 25 |"
         assert result == expected
 
-    def test_format_table_with_missing_values(self):
+    def test_format_table_with_missing_values(self) -> None:
         """Test formatting table with missing values."""
         data = [{"name": "Alice", "age": 30}, {"name": "Bob"}]  # Missing age
         headers = ["name", "age"]
@@ -410,7 +410,7 @@ class TestFormatGitHubMarkdownTable:
         expected = "| name | age |\n| --- | --- |\n| Alice | 30 |\n| Bob |  |"
         assert result == expected
 
-    def test_format_table_with_pipe_characters(self):
+    def test_format_table_with_pipe_characters(self) -> None:
         """Test formatting table with pipe characters in values."""
         data = [{"description": "Fix | bug", "status": "done"}]
         headers = ["description", "status"]

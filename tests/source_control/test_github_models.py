@@ -29,7 +29,7 @@ from gemini_sre_agent.source_control.providers.github_models import (
 class TestGitHubAuthType:
     """Test GitHub authentication type enum."""
 
-    def test_auth_type_values(self):
+    def test_auth_type_values(self) -> None:
         """Test authentication type enum values."""
         assert GitHubAuthType.TOKEN == "token"
         assert GitHubAuthType.APP == "app"
@@ -38,7 +38,7 @@ class TestGitHubAuthType:
 class TestGitHubCredentials:
     """Test GitHub credentials model."""
 
-    def test_token_credentials_valid(self):
+    def test_token_credentials_valid(self) -> None:
         """Test valid token credentials."""
         creds = GitHubCredentials(
             auth_type=GitHubAuthType.TOKEN, token="test_token_123"
@@ -48,7 +48,7 @@ class TestGitHubCredentials:
         assert creds.app_id is None
         assert creds.private_key is None
 
-    def test_app_credentials_valid(self):
+    def test_app_credentials_valid(self) -> None:
         """Test valid app credentials."""
         creds = GitHubCredentials(
             auth_type=GitHubAuthType.APP,
@@ -63,14 +63,14 @@ class TestGitHubCredentials:
         )
         assert creds.token is None
 
-    def test_token_credentials_missing_token_raises_error(self):
+    def test_token_credentials_missing_token_raises_error(self) -> None:
         """Test token credentials without token raises error."""
         with pytest.raises(
             ValueError, match="Token is required when auth_type is 'token'"
         ):
             GitHubCredentials(auth_type=GitHubAuthType.TOKEN)
 
-    def test_app_credentials_missing_app_id_raises_error(self):
+    def test_app_credentials_missing_app_id_raises_error(self) -> None:
         """Test app credentials without app_id raises error."""
         with pytest.raises(
             ValueError,
@@ -81,7 +81,7 @@ class TestGitHubCredentials:
                 private_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
             )
 
-    def test_app_credentials_missing_private_key_raises_error(self):
+    def test_app_credentials_missing_private_key_raises_error(self) -> None:
         """Test app credentials without private_key raises error."""
         with pytest.raises(
             ValueError,
@@ -89,7 +89,7 @@ class TestGitHubCredentials:
         ):
             GitHubCredentials(auth_type=GitHubAuthType.APP, app_id="12345")
 
-    def test_credentials_with_api_url(self):
+    def test_credentials_with_api_url(self) -> None:
         """Test credentials with custom API URL."""
         creds = GitHubCredentials(
             auth_type=GitHubAuthType.TOKEN,
@@ -102,7 +102,7 @@ class TestGitHubCredentials:
 class TestPullRequestStatus:
     """Test pull request status enum."""
 
-    def test_status_values(self):
+    def test_status_values(self) -> None:
         """Test pull request status enum values."""
         assert PullRequestStatus.OPEN == "open"
         assert PullRequestStatus.CLOSED == "closed"
@@ -113,7 +113,7 @@ class TestPullRequestStatus:
 class TestMergeMethod:
     """Test merge method enum."""
 
-    def test_merge_method_values(self):
+    def test_merge_method_values(self) -> None:
         """Test merge method enum values."""
         assert MergeMethod.MERGE == "merge"
         assert MergeMethod.SQUASH == "squash"
@@ -123,7 +123,7 @@ class TestMergeMethod:
 class TestPullRequestInfo:
     """Test pull request info model."""
 
-    def test_pull_request_info_minimal(self):
+    def test_pull_request_info_minimal(self) -> None:
         """Test minimal pull request info."""
         pr = PullRequestInfo(
             id=123,
@@ -152,7 +152,7 @@ class TestPullRequestInfo:
         assert pr.assignees == []
         assert pr.additional_info == {}
 
-    def test_pull_request_info_complete(self):
+    def test_pull_request_info_complete(self) -> None:
         """Test complete pull request info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
         updated_at = datetime(2023, 1, 2, 12, 0, 0)
@@ -196,7 +196,7 @@ class TestPullRequestInfo:
 class TestGitHubBranchInfo:
     """Test GitHub branch info model."""
 
-    def test_branch_info_minimal(self):
+    def test_branch_info_minimal(self) -> None:
         """Test minimal branch info."""
         branch = GitHubBranchInfo(name="main", commit_id="abc123", protected=True)
 
@@ -208,7 +208,7 @@ class TestGitHubBranchInfo:
         assert branch.ahead_count == 0
         assert branch.behind_count == 0
 
-    def test_branch_info_complete(self):
+    def test_branch_info_complete(self) -> None:
         """Test complete branch info."""
         branch = GitHubBranchInfo(
             name="feature-branch",
@@ -232,7 +232,7 @@ class TestGitHubBranchInfo:
 class TestGitHubFileInfo:
     """Test GitHub file info model."""
 
-    def test_file_info_minimal(self):
+    def test_file_info_minimal(self) -> None:
         """Test minimal file info."""
         file_info = GitHubFileInfo(
             path="src/main.py",
@@ -253,7 +253,7 @@ class TestGitHubFileInfo:
         assert file_info.last_modified is None
         assert file_info.additional_info == {}
 
-    def test_file_info_complete(self):
+    def test_file_info_complete(self) -> None:
         """Test complete file info."""
         last_modified = datetime(2023, 1, 1, 12, 0, 0)
 
@@ -289,7 +289,7 @@ class TestGitHubFileInfo:
 class TestGitHubRepositoryInfo:
     """Test GitHub repository info model."""
 
-    def test_repository_info_minimal(self):
+    def test_repository_info_minimal(self) -> None:
         """Test minimal repository info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
         updated_at = datetime(2023, 12, 1, 12, 0, 0)
@@ -329,7 +329,7 @@ class TestGitHubRepositoryInfo:
         assert repo.topics == []
         assert repo.additional_info == {}
 
-    def test_repository_info_complete(self):
+    def test_repository_info_complete(self) -> None:
         """Test complete repository info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
         updated_at = datetime(2023, 12, 1, 12, 0, 0)
@@ -371,7 +371,7 @@ class TestGitHubRepositoryInfo:
 class TestGitHubCommitInfo:
     """Test GitHub commit info model."""
 
-    def test_commit_info_minimal(self):
+    def test_commit_info_minimal(self) -> None:
         """Test minimal commit info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
 
@@ -401,7 +401,7 @@ class TestGitHubCommitInfo:
         assert commit.files == []
         assert commit.additional_info == {}
 
-    def test_commit_info_complete(self):
+    def test_commit_info_complete(self) -> None:
         """Test complete commit info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
 
@@ -430,7 +430,7 @@ class TestGitHubCommitInfo:
 class TestGitHubWebhookInfo:
     """Test GitHub webhook info model."""
 
-    def test_webhook_info_minimal(self):
+    def test_webhook_info_minimal(self) -> None:
         """Test minimal webhook info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
         updated_at = datetime(2023, 1, 2, 12, 0, 0)
@@ -457,7 +457,7 @@ class TestGitHubWebhookInfo:
         assert webhook.last_response is None
         assert webhook.additional_info == {}
 
-    def test_webhook_info_complete(self):
+    def test_webhook_info_complete(self) -> None:
         """Test complete webhook info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
         updated_at = datetime(2023, 1, 2, 12, 0, 0)
@@ -482,7 +482,7 @@ class TestGitHubWebhookInfo:
 class TestGitHubIssueInfo:
     """Test GitHub issue info model."""
 
-    def test_issue_info_minimal(self):
+    def test_issue_info_minimal(self) -> None:
         """Test minimal issue info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
         updated_at = datetime(2023, 1, 2, 12, 0, 0)
@@ -513,7 +513,7 @@ class TestGitHubIssueInfo:
         assert issue.html_url == ""
         assert issue.additional_info == {}
 
-    def test_issue_info_complete(self):
+    def test_issue_info_complete(self) -> None:
         """Test complete issue info."""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
         updated_at = datetime(2023, 1, 2, 12, 0, 0)

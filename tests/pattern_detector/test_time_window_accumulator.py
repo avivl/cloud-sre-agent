@@ -18,11 +18,11 @@ class TestLogAccumulator:
     """Test LogAccumulator functionality."""
 
     @pytest.fixture
-    def mock_callback(self):
+    def mock_callback(self) -> None:
         """Create mock callback for testing."""
         return MagicMock()
 
-    def test_log_accumulator_initialization(self, mock_callback):
+    def test_log_accumulator_initialization(self, mock_callback: str) -> None:
         """Test LogAccumulator initialization."""
         accumulator = LogAccumulator(
             window_duration_minutes=5, max_windows=10, on_window_ready=mock_callback
@@ -33,7 +33,7 @@ class TestLogAccumulator:
         assert accumulator.on_window_ready == mock_callback
         assert len(accumulator.windows) == 0
 
-    def test_log_accumulator_round_to_window_start(self, mock_callback):
+    def test_log_accumulator_round_to_window_start(self, mock_callback: str) -> None:
         """Test timestamp rounding to window boundaries."""
         accumulator = LogAccumulator(
             window_duration_minutes=5, on_window_ready=mock_callback
@@ -49,7 +49,7 @@ class TestLogAccumulator:
             result = accumulator._round_to_window_start(input_time)
             assert result == expected_start
 
-    def test_log_accumulator_add_log(self, mock_callback):
+    def test_log_accumulator_add_log(self, mock_callback: str) -> None:
         """Test adding logs to accumulator."""
         accumulator = LogAccumulator(
             window_duration_minutes=5, on_window_ready=mock_callback
@@ -69,7 +69,7 @@ class TestLogAccumulator:
         assert len(window.logs) == 1
         assert window.logs[0].insert_id == "test-123"
 
-    def test_log_accumulator_multiple_windows(self, mock_callback):
+    def test_log_accumulator_multiple_windows(self, mock_callback: str) -> None:
         """Test creation of multiple windows for different time ranges."""
         accumulator = LogAccumulator(
             window_duration_minutes=5, on_window_ready=mock_callback
@@ -91,7 +91,7 @@ class TestLogAccumulator:
 
         assert len(accumulator.windows) == 2
 
-    def test_log_accumulator_window_eviction(self, mock_callback):
+    def test_log_accumulator_window_eviction(self, mock_callback: str) -> None:
         """Test window eviction when max_windows is exceeded."""
         accumulator = LogAccumulator(
             window_duration_minutes=5, max_windows=2, on_window_ready=mock_callback
@@ -131,11 +131,11 @@ class TestWindowManager:
     """Test WindowManager functionality."""
 
     @pytest.fixture
-    def mock_pattern_callback(self):
+    def mock_pattern_callback(self) -> None:
         """Create mock pattern callback for testing."""
         return MagicMock()
 
-    def test_window_manager_initialization(self, mock_pattern_callback):
+    def test_window_manager_initialization(self, mock_pattern_callback: str) -> None:
         """Test WindowManager initialization."""
         manager = WindowManager(
             fast_window_minutes=5,
@@ -168,7 +168,7 @@ class TestWindowManager:
         manager.fast_accumulator.stop.assert_called_once()
         manager.trend_accumulator.stop.assert_called_once()
 
-    def test_window_manager_add_log(self, mock_pattern_callback):
+    def test_window_manager_add_log(self, mock_pattern_callback: str) -> None:
         """Test adding logs to both accumulators."""
         manager = WindowManager(pattern_callback=mock_pattern_callback)
 
@@ -186,7 +186,7 @@ class TestWindowManager:
         manager.fast_accumulator.add_log.assert_called_once_with(log_data)
         manager.trend_accumulator.add_log.assert_called_once_with(log_data)
 
-    def test_window_manager_fast_window_callback(self, mock_pattern_callback):
+    def test_window_manager_fast_window_callback(self, mock_pattern_callback: str) -> None:
         """Test fast window completion callback."""
         manager = WindowManager(pattern_callback=mock_pattern_callback)
 
@@ -199,7 +199,7 @@ class TestWindowManager:
 
         mock_pattern_callback.assert_called_once_with(mock_window)
 
-    def test_window_manager_trend_window_callback(self, mock_pattern_callback):
+    def test_window_manager_trend_window_callback(self, mock_pattern_callback: str) -> None:
         """Test trend window completion callback."""
         manager = WindowManager(pattern_callback=mock_pattern_callback)
 
@@ -212,7 +212,7 @@ class TestWindowManager:
 
         mock_pattern_callback.assert_called_once_with(mock_window)
 
-    def test_window_manager_callback_error_handling(self, mock_pattern_callback):
+    def test_window_manager_callback_error_handling(self, mock_pattern_callback: str) -> None:
         """Test error handling in window callbacks."""
         mock_pattern_callback.side_effect = RuntimeError("Test error")
         manager = WindowManager(pattern_callback=mock_pattern_callback)

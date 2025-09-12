@@ -25,7 +25,7 @@ from gemini_sre_agent.llm.testing.mock_providers import (
 
 
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop() -> None:
     """Create an instance of the default event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -33,19 +33,19 @@ def event_loop():
 
 
 @pytest.fixture
-def mock_provider_factory():
+def mock_provider_factory() -> None:
     """Create a mock provider factory for testing."""
     return MockProviderFactory()
 
 
 @pytest.fixture
-def mock_model_registry():
+def mock_model_registry() -> None:
     """Create a mock model registry for testing."""
     return MockModelRegistry()
 
 
 @pytest.fixture
-def mock_cost_manager():
+def mock_cost_manager() -> None:
     """Create a mock cost manager for testing."""
     return MockCostManager()
 
@@ -76,7 +76,7 @@ def testing_framework(
 
 
 @pytest.fixture
-def sample_llm_request():
+def sample_llm_request() -> None:
     """Create a sample LLM request for testing."""
     from gemini_sre_agent.llm.base import LLMRequest, ModelType
 
@@ -89,7 +89,7 @@ def sample_llm_request():
 
 
 @pytest.fixture
-def sample_llm_response():
+def sample_llm_response() -> None:
     """Create a sample LLM response for testing."""
     from gemini_sre_agent.llm.base import LLMResponse, ModelType
 
@@ -106,7 +106,7 @@ def sample_llm_response():
 
 
 @pytest.fixture
-def test_data_config():
+def test_data_config() -> None:
     """Create test data configuration."""
     return {
         "min_length": 10,
@@ -119,7 +119,7 @@ def test_data_config():
 
 
 @pytest.fixture
-def benchmark_config():
+def benchmark_config() -> None:
     """Create benchmark configuration."""
     return {
         "duration_seconds": 10,  # Short duration for testing
@@ -135,7 +135,7 @@ def benchmark_config():
 
 
 @pytest.fixture
-def mock_provider_config():
+def mock_provider_config() -> None:
     """Create mock provider configuration."""
     return {
         "response_time_ms": 50,
@@ -153,7 +153,7 @@ def mock_provider_config():
 pytest_plugins = []
 
 
-def pytest_configure(config):
+def pytest_configure(config: str) -> None:
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "unit: mark test as a unit test")
     config.addinivalue_line("markers", "integration: mark test as an integration test")
@@ -166,7 +166,7 @@ def pytest_configure(config):
     )
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: str, items: str) -> None:
     """Modify test collection to add markers based on test names."""
     for item in items:
         # Add markers based on test file names
@@ -202,7 +202,7 @@ async def async_test_runner():
 
 # Test data generators
 @pytest.fixture
-def test_prompts():
+def test_prompts() -> None:
     """Generate various test prompts."""
     from gemini_sre_agent.llm.testing.test_data_generators import (
         PromptType,
@@ -224,7 +224,7 @@ def test_prompts():
 
 
 @pytest.fixture
-def test_scenarios():
+def test_scenarios() -> None:
     """Generate various test scenarios."""
     from gemini_sre_agent.llm.testing.test_data_generators import (
         TestDataGenerator,
@@ -248,7 +248,7 @@ def test_scenarios():
 
 # Performance test utilities
 @pytest.fixture
-def performance_test_data():
+def performance_test_data() -> None:
     """Generate performance test data."""
     from gemini_sre_agent.llm.testing.test_data_generators import TestDataGenerator
 
@@ -263,7 +263,7 @@ def performance_test_data():
 
 # Mock data for testing
 @pytest.fixture
-def mock_provider_stats():
+def mock_provider_stats() -> None:
     """Mock provider statistics."""
     return {
         "mock_openai_fast": {
@@ -288,7 +288,7 @@ def mock_provider_stats():
 
 
 @pytest.fixture
-def mock_cost_data():
+def mock_cost_data() -> None:
     """Mock cost data for testing."""
     return {
         "total_cost": 0.15,
@@ -304,14 +304,14 @@ def mock_cost_data():
 
 # Test environment setup
 @pytest.fixture(autouse=True)
-def setup_test_environment():
+def setup_test_environment() -> None:
     """Setup test environment before each test."""
     # This runs before each test
     pass
 
 
 @pytest.fixture(autouse=True)
-def cleanup_test_environment():
+def cleanup_test_environment() -> None:
     """Cleanup test environment after each test."""
     # This runs after each test
     yield

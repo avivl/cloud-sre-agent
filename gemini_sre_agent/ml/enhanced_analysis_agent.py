@@ -50,7 +50,7 @@ class EnhancedAnalysisAgent:
     to create context-aware, adaptive prompts and high-quality code fixes.
     """
 
-    def __init__(self, config: EnhancedAnalysisConfig):
+    def __init__(self, config: EnhancedAnalysisConfig) -> None:
         """
         Initialize the enhanced analysis agent.
 

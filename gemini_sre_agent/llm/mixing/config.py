@@ -188,7 +188,7 @@ class IntegratedConfig:
     monitoring: MonitoringConfig
     security: SecurityConfig
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate all configurations after initialization."""
         self.mixing.validate()
         self.monitoring.validate()

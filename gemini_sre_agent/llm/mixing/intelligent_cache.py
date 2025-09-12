@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class IntelligentCache:
     """Smart caching for model mixing results."""
 
-    def __init__(self, max_size: int = 1000, ttl_seconds: int = 3600):
+    def __init__(self, max_size: int = 1000, ttl_seconds: int = 3600) -> None:
         """Initialize intelligent cache.
 
         Args:

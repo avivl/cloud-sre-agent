@@ -81,7 +81,7 @@ class ResponseValidator(ABC):
 class ContentLengthValidator(ResponseValidator):
     """Validates response content length."""
 
-    def __init__(self, min_length: int = 1, max_length: int = 10000):
+    def __init__(self, min_length: int = 1, max_length: int = 10000) -> None:
         self.min_length = min_length
         self.max_length = max_length
 
@@ -105,7 +105,7 @@ class ContentLengthValidator(ResponseValidator):
 class JSONStructureValidator(ResponseValidator):
     """Validates JSON structure in responses."""
 
-    def __init__(self, required_fields: Optional[List[str]] = None):
+    def __init__(self, required_fields: Optional[List[str]] = None) -> None:
         self.required_fields = required_fields or []
 
     def validate(self, response: ClientResponse) -> Dict[str, Any]:
@@ -147,7 +147,7 @@ class JSONStructureValidator(ResponseValidator):
 class RegexPatternValidator(ResponseValidator):
     """Validates response against regex patterns."""
 
-    def __init__(self, patterns: Dict[str, str]):
+    def __init__(self, patterns: Dict[str, str]: str) -> None:
         self.patterns = {
             name: re.compile(pattern) for name, pattern in patterns.items()
         }
@@ -208,7 +208,7 @@ class TextCleanerTransformer(ResponseTransformer):
 class JSONFormatterTransformer(ResponseTransformer):
     """Formats JSON content with proper indentation."""
 
-    def __init__(self, indent: int = 2):
+    def __init__(self, indent: int = 2) -> None:
         self.indent = indent
 
     def transform(self, response: ClientResponse) -> str:
@@ -223,7 +223,7 @@ class JSONFormatterTransformer(ResponseTransformer):
 class MarkdownFormatterTransformer(ResponseTransformer):
     """Formats content as Markdown."""
 
-    def __init__(self, add_headers: bool = True, wrap_code: bool = True):
+    def __init__(self, add_headers: bool = True, wrap_code: bool = True) -> None:
         self.add_headers = add_headers
         self.wrap_code = wrap_code
 
@@ -245,7 +245,7 @@ class MarkdownFormatterTransformer(ResponseTransformer):
 class QualityAssessor:
     """Assesses the quality of responses."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
     def assess_quality(self, response: ClientResponse) -> tuple[ResponseQuality, float]:
@@ -368,7 +368,7 @@ class QualityAssessor:
 class ResponseProcessor:
     """Main response processor with validation, transformation, and quality assessment."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.validators: List[ResponseValidator] = []
         self.transformers: List[ResponseTransformer] = []
         self.quality_assessor = QualityAssessor()

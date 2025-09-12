@@ -16,7 +16,7 @@ from gemini_sre_agent.pattern_detector.models import LogEntry
 class TestLogSanitizerInit:
     """Test LogSanitizer initialization."""
 
-    def test_init_creates_patterns(self):
+    def test_init_creates_patterns(self) -> None:
         """Test initialization creates all expected patterns."""
         sanitizer = LogSanitizer()
 
@@ -37,7 +37,7 @@ class TestLogSanitizerInit:
             assert pattern_name in sanitizer.sensitive_patterns
             assert pattern_name in sanitizer.replacements
 
-    def test_init_creates_compiled_patterns(self):
+    def test_init_creates_compiled_patterns(self) -> None:
         """Test that patterns are properly compiled regex objects."""
         sanitizer = LogSanitizer()
 
@@ -50,11 +50,11 @@ class TestLogSanitizerTextSanitization:
     """Test text sanitization functionality."""
 
     @pytest.fixture
-    def sanitizer(self):
+    def sanitizer(self) -> None:
         """Create sanitizer instance for tests."""
         return LogSanitizer()
 
-    def test_sanitize_ip_addresses(self, sanitizer):
+    def test_sanitize_ip_addresses(self, sanitizer: str) -> None:
         """Test IP address sanitization."""
         text = "Error connecting to server 192.168.1.100 and 10.0.0.1"
         sanitized = sanitizer.sanitize_text(text)
@@ -63,7 +63,7 @@ class TestLogSanitizerTextSanitization:
         assert "10.0.0.1" not in sanitized
         assert "[IP_REDACTED]" in sanitized
 
-    def test_sanitize_email_addresses(self, sanitizer):
+    def test_sanitize_email_addresses(self, sanitizer: str) -> None:
         """Test email address sanitization."""
         text = "User john.doe@example.com reported error"
         sanitized = sanitizer.sanitize_text(text)
@@ -71,7 +71,7 @@ class TestLogSanitizerTextSanitization:
         assert "john.doe@example.com" not in sanitized
         assert "[EMAIL_REDACTED]" in sanitized
 
-    def test_sanitize_credit_cards(self, sanitizer):
+    def test_sanitize_credit_cards(self, sanitizer: str) -> None:
         """Test credit card number sanitization."""
         text = "Payment failed for card 4111-1111-1111-1111"  # Standard test card
         sanitized = sanitizer.sanitize_text(text)
@@ -79,7 +79,7 @@ class TestLogSanitizerTextSanitization:
         assert "4111-1111-1111-1111" not in sanitized
         assert "[CC_REDACTED]" in sanitized
 
-    def test_sanitize_social_security(self, sanitizer):
+    def test_sanitize_social_security(self, sanitizer: str) -> None:
         """Test social security number sanitization."""
         text = "SSN validation failed for 123-45-6789"
         sanitized = sanitizer.sanitize_text(text)
@@ -87,7 +87,7 @@ class TestLogSanitizerTextSanitization:
         assert "123-45-6789" not in sanitized
         assert "[SSN_REDACTED]" in sanitized
 
-    def test_sanitize_phone_numbers(self, sanitizer):
+    def test_sanitize_phone_numbers(self, sanitizer: str) -> None:
         """Test phone number sanitization."""
         text = "Contact support at 555-123-4567"
         sanitized = sanitizer.sanitize_text(text)
@@ -95,7 +95,7 @@ class TestLogSanitizerTextSanitization:
         assert "555-123-4567" not in sanitized
         assert "[PHONE_REDACTED]" in sanitized
 
-    def test_sanitize_api_keys(self, sanitizer):
+    def test_sanitize_api_keys(self, sanitizer: str) -> None:
         """Test API key sanitization."""
         text = "API key " + "a" * 32 + "b" * 8  # Create 40-char test key
         sanitized = sanitizer.sanitize_text(text)
@@ -103,7 +103,7 @@ class TestLogSanitizerTextSanitization:
         assert ("a" * 32 + "b" * 8) not in sanitized
         assert "[API_KEY_REDACTED]" in sanitized
 
-    def test_sanitize_jwt_tokens(self, sanitizer):
+    def test_sanitize_jwt_tokens(self, sanitizer: str) -> None:
         """Test JWT token sanitization."""
         jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.test_signature_here_not_real"
         text = f"Authorization failed with token {jwt}"
@@ -112,7 +112,7 @@ class TestLogSanitizerTextSanitization:
         assert jwt not in sanitized
         assert "[JWT_REDACTED]" in sanitized
 
-    def test_sanitize_passwords(self, sanitizer):
+    def test_sanitize_passwords(self, sanitizer: str) -> None:
         """Test password sanitization."""
         test_cases = [
             'password="secretpass123"',
@@ -127,7 +127,7 @@ class TestLogSanitizerTextSanitization:
             assert "hidden123" not in sanitized
             assert "[PASSWORD_REDACTED]" in sanitized
 
-    def test_sanitize_secrets(self, sanitizer):
+    def test_sanitize_secrets(self, sanitizer: str) -> None:
         """Test secret sanitization."""
         test_cases = [
             'secret="mysecretkey"',
@@ -142,7 +142,7 @@ class TestLogSanitizerTextSanitization:
             assert "confidential" not in sanitized
             assert "[SECRET_REDACTED]" in sanitized
 
-    def test_sanitize_auth_tokens(self, sanitizer):
+    def test_sanitize_auth_tokens(self, sanitizer: str) -> None:
         """Test authentication token sanitization."""
         test_cases = [
             'token="bearer_abc123"',
@@ -157,7 +157,7 @@ class TestLogSanitizerTextSanitization:
             assert "refresh_token_456" not in sanitized
             assert "[TOKEN_REDACTED]" in sanitized
 
-    def test_sanitize_multiple_patterns(self, sanitizer):
+    def test_sanitize_multiple_patterns(self, sanitizer: str) -> None:
         """Test sanitization of multiple patterns in one text."""
         text = "User admin@company.com with IP 192.168.1.1 failed login with password=secret123"
         sanitized = sanitizer.sanitize_text(text)
@@ -169,12 +169,12 @@ class TestLogSanitizerTextSanitization:
         assert "[IP_REDACTED]" in sanitized
         assert "[PASSWORD_REDACTED]" in sanitized
 
-    def test_sanitize_empty_text(self, sanitizer):
+    def test_sanitize_empty_text(self, sanitizer: str) -> None:
         """Test sanitization of empty or None text."""
         assert sanitizer.sanitize_text("") == ""
         assert sanitizer.sanitize_text(None) is None
 
-    def test_sanitize_text_without_sensitive_data(self, sanitizer):
+    def test_sanitize_text_without_sensitive_data(self, sanitizer: str) -> None:
         """Test text with no sensitive patterns remains unchanged."""
         text = "Normal error message without sensitive data"
         sanitized = sanitizer.sanitize_text(text)
@@ -185,12 +185,12 @@ class TestLogSanitizerLogSanitization:
     """Test log entry sanitization functionality."""
 
     @pytest.fixture
-    def sanitizer(self):
+    def sanitizer(self) -> None:
         """Create sanitizer instance for tests."""
         return LogSanitizer()
 
     @pytest.fixture
-    def sample_log_entry(self):
+    def sample_log_entry(self) -> None:
         """Create sample log entry with sensitive data."""
         return LogEntry(
             insert_id="test_log_1",
@@ -201,7 +201,7 @@ class TestLogSanitizerLogSanitization:
             raw_data={},
         )
 
-    def test_sanitize_single_log(self, sanitizer, sample_log_entry):
+    def test_sanitize_single_log(self, sanitizer: str, sample_log_entry: str) -> None:
         """Test sanitization of single log entry."""
         sanitized_logs = sanitizer.sanitize_logs([sample_log_entry])
 
@@ -220,7 +220,7 @@ class TestLogSanitizerLogSanitization:
         assert "[EMAIL_REDACTED]" in sanitized_log.error_message
         assert "[IP_REDACTED]" in sanitized_log.error_message
 
-    def test_sanitize_multiple_logs(self, sanitizer):
+    def test_sanitize_multiple_logs(self, sanitizer: str) -> None:
         """Test sanitization of multiple log entries."""
         logs = [
             LogEntry(
@@ -247,7 +247,7 @@ class TestLogSanitizerLogSanitization:
         assert "[EMAIL_REDACTED]" in sanitized_logs[0].error_message
         assert "[IP_REDACTED]" in sanitized_logs[1].error_message
 
-    def test_sanitize_log_with_none_error_message(self, sanitizer):
+    def test_sanitize_log_with_none_error_message(self, sanitizer: str) -> None:
         """Test sanitization of log with None error message."""
         log = LogEntry(
             insert_id="log1",
@@ -262,7 +262,7 @@ class TestLogSanitizerLogSanitization:
         assert len(sanitized_logs) == 1
         assert sanitized_logs[0].error_message is None
 
-    def test_sanitize_empty_log_list(self, sanitizer):
+    def test_sanitize_empty_log_list(self, sanitizer: str) -> None:
         """Test sanitization of empty log list."""
         sanitized_logs = sanitizer.sanitize_logs([])
         assert len(sanitized_logs) == 0
@@ -272,11 +272,11 @@ class TestLogSanitizerValidation:
     """Test sanitization validation functionality."""
 
     @pytest.fixture
-    def sanitizer(self):
+    def sanitizer(self) -> None:
         """Create sanitizer instance for tests."""
         return LogSanitizer()
 
-    def test_validate_sanitization_with_removals(self, sanitizer):
+    def test_validate_sanitization_with_removals(self, sanitizer: str) -> None:
         """Test validation counts removed sensitive items."""
         original = "User admin@test.com at 192.168.1.1 with secret=password123"
         sanitized = sanitizer.sanitize_text(original)
@@ -292,7 +292,7 @@ class TestLogSanitizerValidation:
         assert validation_result["credit_cards"] == 0
         assert validation_result["phone_numbers"] == 0
 
-    def test_validate_sanitization_no_sensitive_data(self, sanitizer):
+    def test_validate_sanitization_no_sensitive_data(self, sanitizer: str) -> None:
         """Test validation with no sensitive data."""
         original = "Normal log message without sensitive information"
         sanitized = sanitizer.sanitize_text(original)
@@ -303,7 +303,7 @@ class TestLogSanitizerValidation:
         for count in validation_result.values():
             assert count == 0
 
-    def test_validate_sanitization_multiple_same_pattern(self, sanitizer):
+    def test_validate_sanitization_multiple_same_pattern(self, sanitizer: str) -> None:
         """Test validation with multiple instances of same pattern."""
         original = "Servers 192.168.1.1 and 10.0.0.1 and 172.16.0.1 failed"
         sanitized = sanitizer.sanitize_text(original)

@@ -22,7 +22,7 @@ class TestKubernetesAdapter:
     """Test cases for KubernetesAdapter."""
 
     @pytest.fixture
-    def config(self):
+    def config(self) -> None:
         """Create a test configuration."""
         return KubernetesConfig(
             name="test_kubernetes",
@@ -36,11 +36,11 @@ class TestKubernetesAdapter:
         )
 
     @pytest.fixture
-    def adapter(self, config):
+    def adapter(self, config: str) -> None:
         """Create a test adapter instance."""
         return KubernetesAdapter(config)
 
-    def test_init(self, adapter, config):
+    def test_init(self, adapter: str, config: str) -> None:
         """Test adapter initialization."""
         assert adapter.config == config
         assert adapter.namespace == config.namespace
@@ -209,7 +209,7 @@ class TestKubernetesAdapter:
         assert "pod_count" in metrics
         assert "resilience_stats" in metrics
 
-    def test_get_config(self, adapter, config):
+    def test_get_config(self, adapter: str, config: str) -> None:
         """Test getting configuration."""
         returned_config = adapter.get_config()
         assert returned_config == config

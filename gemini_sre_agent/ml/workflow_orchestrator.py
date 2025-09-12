@@ -42,7 +42,7 @@ class WorkflowOrchestrator:
     maintainable under 200 LOC.
     """
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig) -> None:
         """
         Initialize the workflow orchestrator.
 

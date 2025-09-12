@@ -17,7 +17,7 @@ from .core import ErrorClassification, ErrorType
 class ErrorClassifier:
     """Classifies errors and determines retry behavior."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("ErrorClassifier")
 
         # Error classification rules (ordered by specificity)

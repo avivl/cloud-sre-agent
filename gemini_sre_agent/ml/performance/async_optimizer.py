@@ -34,11 +34,11 @@ class AsyncTask:
     retry_count: int = 0
     max_retries: int = 3
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.kwargs is None:
             self.kwargs = {}
 
-    def __lt__(self, other):
+    def __lt__(self, other: str) -> None:
         """Make AsyncTask comparable for priority queue."""
         if not isinstance(other, AsyncTask):
             return NotImplemented

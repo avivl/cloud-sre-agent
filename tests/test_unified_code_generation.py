@@ -25,7 +25,7 @@ class TestUnifiedCodeGeneration:
     """Test the unified code generation system."""
 
     @pytest.fixture
-    def config(self):
+    def config(self) -> None:
         """Create a test configuration."""
         return EnhancedAnalysisConfig(
             project_id="test-project",
@@ -37,7 +37,7 @@ class TestUnifiedCodeGeneration:
         )
 
     @pytest.fixture
-    def triage_packet(self):
+    def triage_packet(self) -> None:
         """Create a test triage packet."""
         return {
             "issue_id": "test-issue-123",
@@ -52,7 +52,7 @@ class TestUnifiedCodeGeneration:
         }
 
     @pytest.fixture
-    def historical_logs(self):
+    def historical_logs(self) -> None:
         """Create test historical logs."""
         return [
             '{"timestamp": "2024-01-01T00:00:00Z", "severity": "ERROR", "message": "Database connection failed"}',
@@ -60,7 +60,7 @@ class TestUnifiedCodeGeneration:
         ]
 
     @pytest.fixture
-    def configs(self):
+    def configs(self) -> None:
         """Create test configuration data."""
         return {
             "architecture_type": "microservices",

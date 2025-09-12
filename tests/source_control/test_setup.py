@@ -18,7 +18,7 @@ class TestSetupRepositorySystem:
     """Test the setup_repository_system function."""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """
         Mock Config.
 
@@ -117,7 +117,7 @@ class TestSetupRepositorySystem:
 class TestCreateDefaultConfig:
     """Test the create_default_config function."""
 
-    def test_create_default_config(self):
+    def test_create_default_config(self) -> None:
         """Test creating default configuration."""
         config = create_default_config()
 
@@ -129,7 +129,7 @@ class TestCreateDefaultConfig:
         assert github_repo.name == "test-github-repo"
         assert github_repo.url == "test/repo"
 
-    def test_create_default_config_repository_types(self):
+    def test_create_default_config_repository_types(self) -> None:
         """Test that default config creates correct repository types."""
         config = create_default_config()
 
@@ -139,7 +139,7 @@ class TestCreateDefaultConfig:
 
         assert isinstance(config.repositories[0], GitHubRepositoryConfig)
 
-    def test_create_default_config_immutable(self):
+    def test_create_default_config_immutable(self) -> None:
         """Test that default config can be created multiple times independently."""
         config1 = create_default_config()
         config2 = create_default_config()

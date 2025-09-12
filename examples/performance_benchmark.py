@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class PerformanceBenchmark:
     """Benchmark the enhanced LLM system performance."""
     
-    def __init__(self, config_path: str = "examples/llm_configs/multi_provider_config.yaml"):
+    def __init__(self, config_path: str = "examples/llm_configs/multi_provider_config.yaml") -> None:
         """Initialize the benchmark."""
         self.config_manager = ConfigManager(config_path)
         self.llm_config = self.config_manager.get_config()

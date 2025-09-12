@@ -28,7 +28,7 @@ class TestOptimizedLLMService:
     """Test the OptimizedLLMService class."""
 
     @pytest.fixture
-    def mock_llm_config(self):
+    def mock_llm_config(self) -> None:
         """Create a mock LLMConfig."""
         return LLMConfig(
             default_provider=ProviderType.GEMINI,
@@ -48,7 +48,7 @@ class TestOptimizedLLMService:
         )
 
     @pytest.fixture
-    def optimized_service(self, mock_llm_config):
+    def optimized_service(self, mock_llm_config: str) -> None:
         """Create an OptimizedLLMService instance."""
         return OptimizedLLMService(
             mock_llm_config,
@@ -58,7 +58,7 @@ class TestOptimizedLLMService:
         )
 
     @pytest.fixture
-    def mock_enhanced_service(self):
+    def mock_enhanced_service(self) -> None:
         """Create a mock enhanced service."""
         service = AsyncMock()
         service.generate_structured = AsyncMock(
@@ -265,7 +265,7 @@ class TestOptimizedLLMService:
             assert len(results) == 2
             assert all(isinstance(result, TestResponse) for result in results)
 
-    def test_get_performance_stats(self, optimized_service):
+    def test_get_performance_stats(self, optimized_service: str) -> None:
         """Test getting performance statistics."""
         stats = optimized_service.get_performance_stats()
 
@@ -392,7 +392,7 @@ class TestPerformanceBenchmarks:
     """Test performance benchmarks for the optimized service."""
 
     @pytest.fixture
-    def mock_llm_config(self):
+    def mock_llm_config(self) -> None:
         """Create a mock LLMConfig."""
         return LLMConfig(
             default_provider=ProviderType.GEMINI,

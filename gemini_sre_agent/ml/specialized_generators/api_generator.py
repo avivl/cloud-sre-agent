@@ -77,27 +77,27 @@ from unittest.mock import Mock, patch
 from your_module import {code_fix.fix_description.split()[0]}
 
 class TestAPIFunctionality:
-    def test_authentication_success(self):
+    def test_authentication_success(self) -> None:
         '''Test successful authentication'''
         # Test implementation here
         pass
     
-    def test_authentication_failure(self):
+    def test_authentication_failure(self) -> None:
         '''Test authentication failure handling'''
         # Test implementation here
         pass
     
-    def test_input_validation(self):
+    def test_input_validation(self) -> None:
         '''Test input validation'''
         # Test implementation here
         pass
     
-    def test_error_handling(self):
+    def test_error_handling(self) -> None:
         '''Test error handling'''
         # Test implementation here
         pass
     
-    def test_rate_limiting(self):
+    def test_rate_limiting(self) -> None:
         '''Test rate limiting functionality'''
         # Test implementation here
         pass
@@ -105,7 +105,7 @@ class TestAPIFunctionality:
 # Integration tests
 @pytest.mark.integration
 class TestAPIIntegration:
-    def test_end_to_end_flow(self):
+    def test_end_to_end_flow(self) -> None:
         '''Test complete API flow'''
         # Test implementation here
         pass"""

@@ -304,7 +304,7 @@ class GeminiAPIClient:
             ),
         }
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset client statistics."""
         self.total_requests = 0
         self.successful_requests = 0

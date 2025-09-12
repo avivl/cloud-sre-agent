@@ -112,7 +112,7 @@ class DynamicCostManager:
         cost = cost_manager.estimate_cost(...)
     """
 
-    def __init__(self, config: CostManagementConfig):
+    def __init__(self, config: CostManagementConfig) -> None:
         self.config = config
         # These will be set by the integration layer
         self.provider_factory: Optional["LLMProviderFactory"] = None

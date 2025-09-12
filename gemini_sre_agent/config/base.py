@@ -55,7 +55,7 @@ class BaseConfig(BaseSettings):
 
     @field_validator("schema_version")
     @classmethod
-    def validate_schema_version(cls, v):
+    def validate_schema_version(cls: str, v: str) -> None:
         """Validate configuration schema version."""
         supported_versions = ["1.0.0"]
         if v not in supported_versions:
@@ -66,7 +66,7 @@ class BaseConfig(BaseSettings):
 
     @field_validator("log_level")
     @classmethod
-    def validate_log_level(cls, v):
+    def validate_log_level(cls: str, v: str) -> None:
         """Validate log level."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:

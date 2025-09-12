@@ -25,7 +25,7 @@ class ProviderValidator:
     all requirements for the provider framework.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.validation_rules = {
             "inheritance": self._validate_inheritance,
             "abstract_methods": self._validate_abstract_methods,

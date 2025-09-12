@@ -24,7 +24,7 @@ from gemini_sre_agent.source_control.providers.sub_operation_config import (
 class MockSubOperation(BaseSubOperation):
     """Test implementation of BaseSubOperation for testing."""
 
-    def __init__(self, logger, error_handling_components=None, config=None):
+    def __init__(self, logger: str, error_handling_components: Optional[str] = None, config: Optional[str] = None) -> None:
         super().__init__(
             logger=logger,
             error_handling_components=error_handling_components,
@@ -52,12 +52,12 @@ class TestBaseSubOperation:
     """Test the BaseSubOperation class."""
 
     @pytest.fixture
-    def mock_logger(self):
+    def mock_logger(self) -> None:
         """Create a mock logger."""
         return MagicMock(spec=logging.Logger)
 
     @pytest.fixture
-    def test_config(self):
+    def test_config(self) -> None:
         """Create a test configuration."""
         return SubOperationConfig(
             operation_name="test_operations",
@@ -68,7 +68,7 @@ class TestBaseSubOperation:
         )
 
     @pytest.fixture
-    def mock_error_handling_components(self):
+    def mock_error_handling_components(self) -> None:
         """Create mock error handling components."""
         resilient_manager = MagicMock()
 
@@ -82,7 +82,7 @@ class TestBaseSubOperation:
         return {"resilient_manager": resilient_manager}
 
     @pytest.fixture
-    def sub_operation(self, mock_logger, mock_error_handling_components, test_config):
+    def sub_operation(self, mock_logger: str, mock_error_handling_components: str, test_config: str) -> None:
         """Create a test sub-operation instance."""
         return MockSubOperation(
             logger=mock_logger,
@@ -90,7 +90,7 @@ class TestBaseSubOperation:
             config=test_config,
         )
 
-    def test_initialization(self, mock_logger, test_config):
+    def test_initialization(self, mock_logger: str, test_config: str) -> None:
         """Test sub-operation initialization."""
         sub_op = MockSubOperation(logger=mock_logger, config=test_config)
 
@@ -101,7 +101,7 @@ class TestBaseSubOperation:
         assert sub_op._operation_count == 0
         assert sub_op._error_count == 0
 
-    def test_initialization_with_default_config(self, mock_logger):
+    def test_initialization_with_default_config(self, mock_logger: str) -> None:
         """Test initialization with default configuration."""
         sub_op = MockSubOperation(logger=mock_logger)
 
@@ -205,7 +205,7 @@ class TestBaseSubOperation:
             "resilient_manager"
         ].execute_with_retry.assert_called_once()
 
-    def test_get_performance_stats(self, sub_operation):
+    def test_get_performance_stats(self, sub_operation: str) -> None:
         """Test getting performance statistics."""
         # Simulate some operations
         sub_operation._operation_count = 10
@@ -222,7 +222,7 @@ class TestBaseSubOperation:
         assert stats["average_duration"] == 0.5
         assert stats["total_duration"] == 5.0
 
-    def test_update_config(self, sub_operation, test_config):
+    def test_update_config(self, sub_operation: str, test_config: str) -> None:
         """Test updating configuration."""
         new_config = SubOperationConfig(
             operation_name="updated_ops", provider_type="test", log_level="DEBUG"
@@ -233,13 +233,13 @@ class TestBaseSubOperation:
         assert sub_operation.config == new_config
         assert sub_operation.config.log_level == "DEBUG"
 
-    def test_get_config(self, sub_operation, test_config):
+    def test_get_config(self, sub_operation: str, test_config: str) -> None:
         """Test getting current configuration."""
         config = sub_operation.get_config()
 
         assert config == test_config
 
-    def test_reset_stats(self, sub_operation):
+    def test_reset_stats(self, sub_operation: str) -> None:
         """Test resetting performance statistics."""
         # Set some stats
         sub_operation._operation_count = 10
@@ -275,7 +275,7 @@ class TestBaseSubOperation:
         result = await sub_operation.health_check()
         assert result is True
 
-    def test_logging_setup(self, mock_logger, test_config):
+    def test_logging_setup(self, mock_logger: str, test_config: str) -> None:
         """Test logging setup."""
         test_config.log_level = "DEBUG"
 

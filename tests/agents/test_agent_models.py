@@ -41,7 +41,7 @@ from gemini_sre_agent.agents.agent_models import (
 class TestBaseAgentResponse:
     """Test the BaseAgentResponse model."""
 
-    def test_valid_base_response(self):
+    def test_valid_base_response(self) -> None:
         """Test creating a valid base response."""
         response = BaseAgentResponse(
             agent_id="test-agent-1",
@@ -60,7 +60,7 @@ class TestBaseAgentResponse:
         assert response.timestamp is not None
         assert response.validation_errors == []
 
-    def test_base_response_with_optional_fields(self):
+    def test_base_response_with_optional_fields(self) -> None:
         """Test base response with optional fields."""
         response = BaseAgentResponse(
             agent_id="test-agent-1",
@@ -77,7 +77,7 @@ class TestBaseAgentResponse:
         assert response.provider_used == "openai"
         assert response.cost_usd == 0.05
 
-    def test_base_response_serialization(self):
+    def test_base_response_serialization(self) -> None:
         """Test JSON serialization of base response."""
         response = BaseAgentResponse(
             agent_id="test-agent-1",
@@ -102,7 +102,7 @@ class TestBaseAgentResponse:
 class TestTriageResult:
     """Test the TriageResult model."""
 
-    def test_valid_triage_result(self):
+    def test_valid_triage_result(self) -> None:
         """Test creating a valid triage result."""
         result = TriageResult(
             agent_id="triage-agent-1",
@@ -137,7 +137,7 @@ class TestTriageResult:
         assert result.summary == "Memory leak detected in application"
         assert result.urgency == "high"
 
-    def test_triage_result_confidence_validation(self):
+    def test_triage_result_confidence_validation(self) -> None:
         """Test confidence validation in triage result."""
         # Test valid confidence
         result = TriageResult(
@@ -189,7 +189,7 @@ class TestTriageResult:
 
         assert "Confidence score below acceptable threshold" in str(exc_info.value)
 
-    def test_triage_result_confidence_level_mapping(self):
+    def test_triage_result_confidence_level_mapping(self) -> None:
         """Test automatic confidence level mapping."""
         test_cases = [
             (0.95, ConfidenceLevel.VERY_HIGH),
@@ -222,7 +222,7 @@ class TestTriageResult:
             )
             assert result.confidence_level == expected_level
 
-    def test_triage_result_factory(self):
+    def test_triage_result_factory(self) -> None:
         """Test the triage result factory function."""
         result = create_triage_result(
             issue_type="performance_issue",
@@ -252,7 +252,7 @@ class TestTriageResult:
 class TestAnalysisResult:
     """Test the AnalysisResult model."""
 
-    def test_valid_analysis_result(self):
+    def test_valid_analysis_result(self) -> None:
         """Test creating a valid analysis result."""
         finding = AnalysisFinding(
             title="Memory leak in service",
@@ -292,7 +292,7 @@ class TestAnalysisResult:
         assert result.overall_severity == SeverityLevel.HIGH
         assert result.overall_confidence == 0.85
 
-    def test_analysis_result_with_root_cause(self):
+    def test_analysis_result_with_root_cause(self) -> None:
         """Test analysis result with root cause analysis."""
         root_cause = RootCauseAnalysis(
             primary_cause="Unclosed database connections",
@@ -330,7 +330,7 @@ class TestAnalysisResult:
         )
         assert result.root_cause_analysis.confidence == 0.9
 
-    def test_analysis_result_confidence_validation(self):
+    def test_analysis_result_confidence_validation(self) -> None:
         """Test confidence validation in analysis result."""
         with pytest.raises(ValidationError) as exc_info:
             AnalysisResult(
@@ -357,7 +357,7 @@ class TestAnalysisResult:
 
         assert "Overall confidence below acceptable threshold" in str(exc_info.value)
 
-    def test_analysis_result_factory(self):
+    def test_analysis_result_factory(self) -> None:
         """Test the analysis result factory function."""
         finding = AnalysisFinding(
             title="Test finding",
@@ -393,7 +393,7 @@ class TestAnalysisResult:
 class TestRemediationPlan:
     """Test the RemediationPlan model."""
 
-    def test_valid_remediation_plan(self):
+    def test_valid_remediation_plan(self) -> None:
         """Test creating a valid remediation plan."""
         step1 = RemediationStep(
             order=1,
@@ -453,7 +453,7 @@ class TestRemediationPlan:
         assert plan.automated_steps == 1
         assert plan.manual_steps == 1
 
-    def test_remediation_plan_step_validation(self):
+    def test_remediation_plan_step_validation(self) -> None:
         """Test step validation in remediation plan."""
         # Test invalid step order
         with pytest.raises(ValidationError) as exc_info:
@@ -507,7 +507,7 @@ class TestRemediationPlan:
 
         assert "Steps must be numbered consecutively" in str(exc_info.value)
 
-    def test_remediation_plan_factory(self):
+    def test_remediation_plan_factory(self) -> None:
         """Test the remediation plan factory function."""
         step = RemediationStep(
             order=1,
@@ -549,7 +549,7 @@ class TestRemediationPlan:
 class TestHealthCheckResponse:
     """Test the HealthCheckResponse model."""
 
-    def test_valid_health_check_response(self):
+    def test_valid_health_check_response(self) -> None:
         """Test creating a valid health check response."""
         component1 = ComponentHealth(
             component_name="database",
@@ -606,7 +606,7 @@ class TestHealthCheckResponse:
         assert response.resource_utilization.cpu_usage_percent == 45.0
         assert response.health_score == 100.0  # Both components are healthy
 
-    def test_health_check_response_auto_calculation(self):
+    def test_health_check_response_auto_calculation(self) -> None:
         """Test automatic health score calculation."""
         healthy_component = ComponentHealth(
             component_name="healthy_service",
@@ -653,7 +653,7 @@ class TestHealthCheckResponse:
         # Should calculate 50% health score (1 healthy out of 2 components)
         assert response.health_score == 50.0
 
-    def test_health_check_response_factory(self):
+    def test_health_check_response_factory(self) -> None:
         """Test the health check response factory function."""
         component = ComponentHealth(
             component_name="test_component",
@@ -695,7 +695,7 @@ class TestHealthCheckResponse:
 class TestTextResponse:
     """Test the TextResponse model."""
 
-    def test_valid_text_response(self):
+    def test_valid_text_response(self) -> None:
         """Test creating a valid text response."""
         response = TextResponse(
             agent_id="text-agent-1",
@@ -723,7 +723,7 @@ class TestTextResponse:
         assert response.sentiment == "positive"
         assert "testing" in response.topics
 
-    def test_text_response_auto_calculation(self):
+    def test_text_response_auto_calculation(self) -> None:
         """Test automatic word and character count calculation."""
         response = TextResponse(
             agent_id="text-agent-1",
@@ -749,7 +749,7 @@ class TestTextResponse:
 class TestCodeResponse:
     """Test the CodeResponse model."""
 
-    def test_valid_code_response(self):
+    def test_valid_code_response(self) -> None:
         """Test creating a valid code response."""
         code = """def hello_world():
     print("Hello, World!")
@@ -789,7 +789,7 @@ if __name__ == "__main__":
         assert "hello_world" in response.functions
         assert response.complexity_score == 2.0
 
-    def test_code_response_auto_calculation(self):
+    def test_code_response_auto_calculation(self) -> None:
         """Test automatic line count calculation."""
         code = "line1\nline2\nline3"
 
@@ -823,7 +823,7 @@ if __name__ == "__main__":
 class TestModelRegistry:
     """Test the model registry and utility functions."""
 
-    def test_get_response_model(self):
+    def test_get_response_model(self) -> None:
         """Test getting response models by agent type."""
         from gemini_sre_agent.agents.agent_models import get_response_model
 
@@ -834,7 +834,7 @@ class TestModelRegistry:
         assert get_response_model("text") == TextResponse
         assert get_response_model("code") == CodeResponse
 
-    def test_get_response_model_invalid(self):
+    def test_get_response_model_invalid(self) -> None:
         """Test getting response model for invalid agent type."""
         from gemini_sre_agent.agents.agent_models import get_response_model
 
@@ -843,7 +843,7 @@ class TestModelRegistry:
 
         assert "Unknown agent type" in str(exc_info.value)
 
-    def test_validate_response_model(self):
+    def test_validate_response_model(self) -> None:
         """Test validating response model from raw data."""
         from gemini_sre_agent.agents.agent_models import validate_response_model
 
@@ -874,7 +874,7 @@ class TestModelRegistry:
 class TestSerialization:
     """Test serialization and deserialization of models."""
 
-    def test_triage_result_serialization(self):
+    def test_triage_result_serialization(self) -> None:
         """Test JSON serialization of TriageResult."""
         result = create_triage_result(
             issue_type="test_issue",
@@ -901,7 +901,7 @@ class TestSerialization:
         assert reconstructed.category == result.category
         assert reconstructed.severity == result.severity
 
-    def test_analysis_result_serialization(self):
+    def test_analysis_result_serialization(self) -> None:
         """Test JSON serialization of AnalysisResult."""
         finding = AnalysisFinding(
             title="Test finding",
@@ -940,7 +940,7 @@ class TestSerialization:
 class TestValidationErrors:
     """Test validation error handling."""
 
-    def test_validation_error_model(self):
+    def test_validation_error_model(self) -> None:
         """Test ValidationError model."""
         error = ModelValidationError(
             field="confidence",
@@ -954,7 +954,7 @@ class TestValidationErrors:
         assert error.value == 1.5
         assert error.code == "VALUE_ERROR"
 
-    def test_validation_errors_in_response(self):
+    def test_validation_errors_in_response(self) -> None:
         """Test validation errors in agent response."""
         validation_error = ModelValidationError(
             field="confidence",

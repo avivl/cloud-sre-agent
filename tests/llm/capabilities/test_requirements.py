@@ -4,7 +4,7 @@ from gemini_sre_agent.llm.capabilities.requirements import CapabilityRequirement
 from gemini_sre_agent.llm.common.enums import ModelType
 
 
-def test_capability_requirements_initialization():
+def test_capability_requirements_initialization() -> None:
     """
     Test Capability Requirements Initialization.
 
@@ -28,7 +28,7 @@ def test_capability_requirements_initialization():
     assert reqs.custom_criteria == {"domain": "finance"}
 
 
-def test_capability_requirements_defaults():
+def test_capability_requirements_defaults() -> None:
     """
     Test Capability Requirements Defaults.
 
@@ -42,7 +42,7 @@ def test_capability_requirements_defaults():
     assert reqs.custom_criteria == {}
 
 
-def test_capability_requirements_validation():
+def test_capability_requirements_validation() -> None:
     """
     Test Capability Requirements Validation.
 

@@ -24,7 +24,7 @@ class MockResponseModel(BaseModel):
 
 
 @pytest.fixture
-def mock_llm_service():
+def mock_llm_service() -> None:
     """Mock LLM service for testing."""
     service = AsyncMock()
     service.generate_structured = AsyncMock()
@@ -32,7 +32,7 @@ def mock_llm_service():
 
 
 @pytest.fixture
-def test_agent(mock_llm_service):
+def test_agent(mock_llm_service: str) -> None:
     """Test agent instance."""
     return BaseAgent(
         llm_service=mock_llm_service,
@@ -45,7 +45,7 @@ def test_agent(mock_llm_service):
 class TestAgentStats:
     """Test the AgentStats class."""
 
-    def test_stats_initialization(self):
+    def test_stats_initialization(self) -> None:
         """Test stats initialization."""
         stats = AgentStats("test_agent")
         assert stats.agent_name == "test_agent"
@@ -53,7 +53,7 @@ class TestAgentStats:
         assert stats.success_count == 0
         assert stats.error_count == 0
 
-    def test_record_success(self):
+    def test_record_success(self) -> None:
         """Test recording successful execution."""
         stats = AgentStats("test_agent")
         stats.record_success("smart", 100, "test_prompt")
@@ -65,7 +65,7 @@ class TestAgentStats:
         assert stats.model_usage["smart"] == 1
         assert stats.prompt_usage["test_prompt"] == 1
 
-    def test_record_error(self):
+    def test_record_error(self) -> None:
         """Test recording failed execution."""
         stats = AgentStats("test_agent")
         stats.record_error("smart", "Test error", "test_prompt")
@@ -77,7 +77,7 @@ class TestAgentStats:
         assert stats.model_usage["smart"] == 1
         assert stats.prompt_usage["test_prompt"] == 1
 
-    def test_get_summary(self):
+    def test_get_summary(self) -> None:
         """Test getting stats summary."""
         stats = AgentStats("test_agent")
         stats.record_success("smart", 100)
@@ -94,7 +94,7 @@ class TestAgentStats:
         assert summary["model_usage"]["fast"] == 1
         assert summary["error_count_by_model"]["fast"] == 1
 
-    def test_reset(self):
+    def test_reset(self) -> None:
         """Test resetting stats."""
         stats = AgentStats("test_agent")
         stats.record_success("smart", 100)
@@ -112,7 +112,7 @@ class TestAgentStats:
 class TestBaseAgent:
     """Test the BaseAgent class."""
 
-    def test_agent_initialization(self, test_agent):
+    def test_agent_initialization(self, test_agent: str) -> None:
         """Test agent initialization."""
         assert test_agent.primary_model == "smart"
         assert test_agent.fallback_model == "fast"
@@ -197,13 +197,13 @@ class TestBaseAgent:
         assert test_agent.stats.success_count == 0
         assert test_agent.stats.error_count == 1
 
-    def test_get_stats_summary(self, test_agent):
+    def test_get_stats_summary(self, test_agent: str) -> None:
         """Test getting stats summary."""
         summary = test_agent.get_stats_summary()
         assert summary["agent_name"] == "BaseAgent"
         assert summary["request_count"] == 0
 
-    def test_reset_stats(self, test_agent):
+    def test_reset_stats(self, test_agent: str) -> None:
         """Test resetting stats."""
         # Add some stats
         test_agent.stats.record_success("smart", 100)

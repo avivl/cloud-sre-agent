@@ -22,7 +22,7 @@ from gemini_sre_agent.config.ingestion_config import (
 )
 
 
-def test_source_configs():
+def test_source_configs() -> None:
     """Test individual source configuration classes."""
     print("Testing source configurations...")
 
@@ -68,7 +68,7 @@ def test_source_configs():
     print("✅ GCP Logging config test passed")
 
 
-def test_global_config():
+def test_global_config() -> None:
     """Test global configuration."""
     print("Testing global configuration...")
 
@@ -86,7 +86,7 @@ def test_global_config():
     print("✅ Global config test passed")
 
 
-def test_ingestion_config():
+def test_ingestion_config() -> None:
     """Test the main ingestion configuration."""
     print("Testing ingestion configuration...")
 
@@ -119,7 +119,7 @@ def test_ingestion_config():
     print("✅ Ingestion config test passed")
 
 
-def test_config_validation():
+def test_config_validation() -> None:
     """Test configuration validation."""
     print("Testing configuration validation...")
 
@@ -164,7 +164,7 @@ def test_config_validation():
     print("✅ Invalid config validation test passed")
 
 
-def test_config_manager():
+def test_config_manager() -> None:
     """Test the configuration manager."""
     print("Testing configuration manager...")
 
@@ -291,7 +291,7 @@ def test_config_manager():
         Path(temp_file).unlink()
 
 
-def test_enums():
+def test_enums() -> None:
     """Test enum classes."""
     print("Testing enums...")
 
@@ -311,7 +311,7 @@ def test_enums():
     print("✅ Enums test passed")
 
 
-def main():
+def main() -> None:
     """Run all tests."""
     print("🧪 Testing Ingestion Configuration System")
     print("=" * 50)

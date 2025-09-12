@@ -6,7 +6,7 @@ from gemini_sre_agent.log_ingestion import LogIngestor
 
 
 @pytest.fixture
-def mock_logging_client():
+def mock_logging_client() -> None:
     """
     Mock Logging Client.
 
@@ -15,7 +15,7 @@ def mock_logging_client():
         yield mock_client
 
 
-def test_get_logs(mock_logging_client):
+def test_get_logs(mock_logging_client: str) -> None:
     """
     Test Get Logs.
 

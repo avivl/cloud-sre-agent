@@ -27,7 +27,7 @@ class ConfigChangeEvent:
 class ConfigMonitoring:
     """Configuration monitoring and audit logging."""
 
-    def __init__(self, enable_audit_logging: bool = True):
+    def __init__(self, enable_audit_logging: bool = True) -> None:
         self.enable_audit_logging = enable_audit_logging
         self.change_history: list[ConfigChangeEvent] = []
         self.metrics = {

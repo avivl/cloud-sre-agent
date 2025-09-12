@@ -23,7 +23,7 @@ from gemini_sre_agent.ml.rate_limiter_config import UrgencyLevel
 class TestGeminiRequest:
     """Test GeminiRequest model validation."""
 
-    def test_valid_request(self):
+    def test_valid_request(self) -> None:
         """Test creating valid request."""
         request = GeminiRequest(
             model="gemini-pro",
@@ -34,7 +34,7 @@ class TestGeminiRequest:
         assert request.temperature == 0.7
         assert len(request.messages) == 1
 
-    def test_request_with_schema(self):
+    def test_request_with_schema(self) -> None:
         """Test request with response schema."""
         schema = {
             "type": "object",
@@ -48,7 +48,7 @@ class TestGeminiRequest:
         )
         assert request.response_schema == schema
 
-    def test_invalid_temperature(self):
+    def test_invalid_temperature(self) -> None:
         """Test validation of temperature parameter."""
         with pytest.raises(ValueError):
             GeminiRequest(
@@ -61,7 +61,7 @@ class TestGeminiRequest:
 class TestGeminiResponse:
     """Test GeminiResponse model."""
 
-    def test_successful_response(self):
+    def test_successful_response(self) -> None:
         """Test successful response creation."""
         response = GeminiResponse(
             success=True,
@@ -75,7 +75,7 @@ class TestGeminiResponse:
         assert response.tokens_used == 50
         assert response.latency_ms == 150.0
 
-    def test_error_response(self):
+    def test_error_response(self) -> None:
         """Test error response creation."""
         response = GeminiResponse(
             success=False, error_message="API error", model_used="gemini-pro"
@@ -90,7 +90,7 @@ class TestGeminiAPIClientInit:
 
     @patch("gemini_sre_agent.ml.gemini_api_client.GENAI_AVAILABLE", True)
     @patch("gemini_sre_agent.ml.gemini_api_client.genai")
-    def test_successful_init(self, mock_genai):
+    def test_successful_init(self, mock_genai: str) -> None:
         """Test successful client initialization."""
         client = GeminiAPIClient(api_key="test_key")
 
@@ -100,7 +100,7 @@ class TestGeminiAPIClientInit:
         mock_genai.configure.assert_called_once_with(api_key="test_key")
 
     @patch("gemini_sre_agent.ml.gemini_api_client.GENAI_AVAILABLE", False)
-    def test_init_without_genai(self):
+    def test_init_without_genai(self) -> None:
         """Test initialization when google-generativeai not available."""
         with pytest.raises(
             ImportError, match="google-generativeai package is required"
@@ -109,7 +109,7 @@ class TestGeminiAPIClientInit:
 
     @patch("gemini_sre_agent.ml.gemini_api_client.GENAI_AVAILABLE", True)
     @patch("gemini_sre_agent.ml.gemini_api_client.genai")
-    def test_init_with_monitoring_components(self, mock_genai):
+    def test_init_with_monitoring_components(self, mock_genai: str) -> None:
         """Test initialization with cost tracker and rate limiter."""
         cost_tracker = Mock(spec=CostTracker)
         rate_limiter = Mock(spec=AdaptiveRateLimiter)
@@ -126,7 +126,7 @@ class TestGeminiAPIClientGeneration:
     """Test response generation functionality."""
 
     @pytest.fixture
-    def mock_client_setup(self):
+    def mock_client_setup(self) -> None:
         """Setup mock client with dependencies."""
         # Create comprehensive mock for genai module
         mock_genai = Mock()
@@ -312,12 +312,12 @@ class TestGeminiAPIClientHelpers:
 
     @patch("gemini_sre_agent.ml.gemini_api_client.GENAI_AVAILABLE", True)
     @patch("gemini_sre_agent.ml.gemini_api_client.genai")
-    def setUp(self, mock_genai):
+    def setUp(self, mock_genai: str) -> None:
         """Setup client for helper tests."""
         self.client = GeminiAPIClient(api_key="test_key")
         return mock_genai
 
-    def test_build_generation_config(self):
+    def test_build_generation_config(self) -> None:
         """Test generation config building."""
         self.setUp()
 
@@ -334,7 +334,7 @@ class TestGeminiAPIClientHelpers:
         assert config["max_output_tokens"] == 1000
         assert config["candidate_count"] == 1
 
-    def test_build_generation_config_with_schema(self):
+    def test_build_generation_config_with_schema(self) -> None:
         """Test config building with response schema."""
         self.setUp()
 
@@ -350,7 +350,7 @@ class TestGeminiAPIClientHelpers:
         assert config["response_mime_type"] == "application/json"
         assert config["response_schema"] == schema
 
-    def test_format_messages(self):
+    def test_format_messages(self) -> None:
         """Test message formatting."""
         self.setUp()
 
@@ -369,7 +369,7 @@ class TestGeminiAPIClientHelpers:
         )
         assert formatted == expected
 
-    def test_parse_structured_output_json(self):
+    def test_parse_structured_output_json(self) -> None:
         """Test JSON parsing from structured output."""
         self.setUp()
 
@@ -381,7 +381,7 @@ class TestGeminiAPIClientHelpers:
         assert result["confidence"] == 0.95
         assert result["pattern"] == "cpu_spike"
 
-    def test_parse_structured_output_markdown(self):
+    def test_parse_structured_output_markdown(self) -> None:
         """Test parsing JSON wrapped in markdown."""
         self.setUp()
 
@@ -392,7 +392,7 @@ class TestGeminiAPIClientHelpers:
 
         assert result["confidence"] == 0.75
 
-    def test_parse_structured_output_invalid_json(self):
+    def test_parse_structured_output_invalid_json(self) -> None:
         """Test handling invalid JSON."""
         self.setUp()
 
@@ -403,7 +403,7 @@ class TestGeminiAPIClientHelpers:
 
         assert result == {}
 
-    def test_estimate_tokens(self):
+    def test_estimate_tokens(self) -> None:
         """Test token estimation."""
         self.setUp()
 
@@ -415,7 +415,7 @@ class TestGeminiAPIClientHelpers:
         assert tokens == expected_tokens
         assert tokens > 0
 
-    def test_performance_stats(self):
+    def test_performance_stats(self) -> None:
         """Test performance statistics."""
         self.setUp()
 

@@ -22,13 +22,13 @@ class TestFileSystemQueue:
     """Test cases for FileSystemQueue."""
 
     @pytest.fixture
-    def temp_dir(self):
+    def temp_dir(self) -> None:
         """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def config(self, temp_dir):
+    def config(self, temp_dir: str) -> None:
         """Create a test configuration."""
         return FileQueueConfig(
             max_size=100,
@@ -43,12 +43,12 @@ class TestFileSystemQueue:
         )
 
     @pytest.fixture
-    def queue(self, config):
+    def queue(self, config: str) -> None:
         """Create a test queue instance."""
         return FileSystemQueue(config)
 
     @pytest.fixture
-    def sample_log_entry(self):
+    def sample_log_entry(self) -> None:
         """Create a sample log entry."""
         return LogEntry(
             id="test-123",
@@ -59,7 +59,7 @@ class TestFileSystemQueue:
             metadata={"key": "value"},
         )
 
-    def test_init(self, queue, config):
+    def test_init(self, queue: str, config: str) -> None:
         """Test queue initialization."""
         assert queue.config == config
         assert queue.max_size == config.max_size
@@ -379,7 +379,7 @@ class TestFileSystemQueue:
         stats = queue.get_stats()
         assert stats.total_enqueued == 3
 
-    def test_file_queue_config_validation(self):
+    def test_file_queue_config_validation(self) -> None:
         """Test file queue configuration validation."""
         # Test valid config
         valid_config = FileQueueConfig(

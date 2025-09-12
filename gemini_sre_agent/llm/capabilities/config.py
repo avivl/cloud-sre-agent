@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class CapabilityConfig:
     """Manages capability definitions loaded from configuration files."""
     
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """
         Initialize the capability configuration.
         

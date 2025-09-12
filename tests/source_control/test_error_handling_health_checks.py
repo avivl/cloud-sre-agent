@@ -18,7 +18,7 @@ class TestHealthCheckManager:
     """Test cases for HealthCheckManager."""
 
     @pytest.fixture
-    def mock_resilient_manager(self):
+    def mock_resilient_manager(self) -> None:
         """Create a mock ResilientOperationManager."""
         manager = MagicMock()
         manager.circuit_breakers = {}
@@ -26,12 +26,12 @@ class TestHealthCheckManager:
         return manager
 
     @pytest.fixture
-    def health_check_manager(self, mock_resilient_manager):
+    def health_check_manager(self, mock_resilient_manager: str) -> None:
         """Create a HealthCheckManager instance for testing."""
         return HealthCheckManager(mock_resilient_manager)
 
     @pytest.fixture
-    def mock_circuit_breaker(self):
+    def mock_circuit_breaker(self) -> None:
         """Create a mock circuit breaker."""
         cb = MagicMock()
         cb.name = "test_circuit"
@@ -67,7 +67,7 @@ class TestHealthCheckManager:
         assert "stats" in result
         assert "message" in result
 
-    def test_get_circuit_breaker_health_nonexistent_circuit(self, health_check_manager):
+    def test_get_circuit_breaker_health_nonexistent_circuit(self, health_check_manager: str) -> None:
         """Test getting health status for a non-existent circuit breaker."""
         result = health_check_manager.get_circuit_breaker_health("nonexistent")
 
@@ -89,7 +89,7 @@ class TestHealthCheckManager:
         assert result["status"] == "unhealthy"
         assert result["state"] == "open"
 
-    def test_get_circuit_breaker_health_all_circuits(self, health_check_manager):
+    def test_get_circuit_breaker_health_all_circuits(self, health_check_manager: str) -> None:
         """Test getting health status for all circuit breakers."""
         cb1 = MagicMock()
         cb1.state = CircuitState.CLOSED
@@ -138,7 +138,7 @@ class TestHealthCheckManager:
         assert result["healthy_circuits"] == 1
         assert result["open_circuits"] == 0
 
-    def test_get_operation_type_health_nonexistent_type(self, health_check_manager):
+    def test_get_operation_type_health_nonexistent_type(self, health_check_manager: str) -> None:
         """Test getting health status for a non-existent operation type."""
         result = health_check_manager.get_operation_type_health("nonexistent_type")
 
@@ -146,7 +146,7 @@ class TestHealthCheckManager:
         assert "not found" in result["message"]
         assert result["operation_type"] == "nonexistent_type"
 
-    def test_get_overall_health(self, health_check_manager, mock_circuit_breaker):
+    def test_get_overall_health(self, health_check_manager: str, mock_circuit_breaker: str) -> None:
         """Test getting overall health status."""
         health_check_manager.resilient_manager.circuit_breakers["test_circuit"] = (
             mock_circuit_breaker
@@ -159,7 +159,7 @@ class TestHealthCheckManager:
         assert "operation_types" in result
         assert "message" in result
 
-    def test_circuit_state_enum(self):
+    def test_circuit_state_enum(self) -> None:
         """Test CircuitState enum values."""
         assert CircuitState.CLOSED.value == "closed"
         assert CircuitState.OPEN.value == "open"
