@@ -8,14 +8,14 @@ including task decomposition, parallel execution, result aggregation, and
 context sharing between multiple models.
 """
 
+from abc import ABC, abstractmethod
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import re
 import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..base import LLMRequest, LLMResponse, ModelType
 from ..constants import (
@@ -66,8 +66,8 @@ class ModelConfig:
     temperature: float = 0.7
     timeout: int = 30
     retry_attempts: int = 2
-    specialized_for: Optional[TaskType] = None
-    cost_limit: Optional[float] = None
+    specialized_for: TaskType | None = None
+    cost_limit: float | None = None
 
 
 @dataclass
@@ -75,15 +75,15 @@ class MixingResult:
     """Result from model mixing operation."""
 
     primary_result: LLMResponse
-    secondary_results: List[LLMResponse] = field(default_factory=list)
-    aggregated_result: Optional[str] = None
+    secondary_results: list[LLMResponse] = field(default_factory=list)
+    aggregated_result: str | None = None
     confidence_score: float = 0.0
     execution_time_ms: float = 0.0
     total_cost: float = 0.0
     strategy_used: MixingStrategy = MixingStrategy.PARALLEL
-    model_configs: List[ModelConfig] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    model_configs: list[ModelConfig] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -91,9 +91,9 @@ class TaskDecomposition:
     """Decomposition of a complex task into subtasks."""
 
     original_task: str
-    subtasks: List[str]
-    dependencies: Dict[int, List[int]] = field(default_factory=dict)
-    priority_order: List[int] = field(default_factory=list)
+    subtasks: list[str]
+    dependencies: dict[int, list[int]] = field(default_factory=dict)
+    priority_order: list[int] = field(default_factory=list)
     estimated_complexity: float = 1.0
 
 
@@ -102,7 +102,7 @@ class TaskDecomposer(ABC):
 
     @abstractmethod
     async def decompose_task(
-        self, task: str, context: Dict[str, Any]
+        self, task: str, context: dict[str, Any]
     ) -> TaskDecomposition:
         """Decompose a complex task into subtasks."""
         pass
@@ -116,7 +116,7 @@ class SimpleTaskDecomposer(TaskDecomposer):
         self.model_registry = model_registry
 
     async def decompose_task(
-        self, task: str, context: Dict[str, Any]
+        self, task: str, context: dict[str, Any]
     ) -> TaskDecomposition:
         """Decompose a task using simple heuristics."""
         # Simple decomposition based on task length and keywords
@@ -146,10 +146,10 @@ class ResultAggregator(ABC):
     @abstractmethod
     async def aggregate_results(
         self,
-        results: List[LLMResponse],
-        configs: List[ModelConfig],
+        results: list[LLMResponse],
+        configs: list[ModelConfig],
         strategy: MixingStrategy,
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """Aggregate multiple model results into a single result."""
         pass
 
@@ -159,10 +159,10 @@ class SimpleResultAggregator(ResultAggregator):
 
     async def aggregate_results(
         self,
-        results: List[LLMResponse],
-        configs: List[ModelConfig],
+        results: list[LLMResponse],
+        configs: list[ModelConfig],
         strategy: MixingStrategy,
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """Aggregate results using simple strategies."""
         if not results:
             return "", 0.0
@@ -178,8 +178,8 @@ class SimpleResultAggregator(ResultAggregator):
             return results[0].content, 0.8
 
     def _voting_aggregation(
-        self, results: List[LLMResponse], configs: List[ModelConfig]
-    ) -> Tuple[str, float]:
+        self, results: list[LLMResponse], configs: list[ModelConfig]
+    ) -> tuple[str, float]:
         """Aggregate results using majority voting."""
         # Simple voting: count occurrences of each response
         response_counts = {}
@@ -196,8 +196,8 @@ class SimpleResultAggregator(ResultAggregator):
         return "", 0.0
 
     def _weighted_aggregation(
-        self, results: List[LLMResponse], configs: List[ModelConfig]
-    ) -> Tuple[str, float]:
+        self, results: list[LLMResponse], configs: list[ModelConfig]
+    ) -> tuple[str, float]:
         """Aggregate results using weighted combination."""
         if len(results) != len(configs):
             return results[0].content if results else "", 0.5
@@ -216,8 +216,8 @@ class SimpleResultAggregator(ResultAggregator):
         return best_response[0], best_response[1]
 
     def _cascade_aggregation(
-        self, results: List[LLMResponse], configs: List[ModelConfig]
-    ) -> Tuple[str, float]:
+        self, results: list[LLMResponse], configs: list[ModelConfig]
+    ) -> tuple[str, float]:
         """Aggregate results from cascade execution."""
         # In cascade mode, the last result is typically the final result
         if results:
@@ -232,7 +232,7 @@ class ModelMixer:
         self,
         provider_factory: LLMProviderFactory,
         model_registry: ModelRegistry,
-        cost_manager: Optional[IntegratedCostManager] = None,
+        cost_manager: IntegratedCostManager | None = None,
         max_concurrent_requests: int = MAX_CONCURRENT_REQUESTS,
     ):
         """Initialize the model mixer."""
@@ -259,7 +259,7 @@ class ModelMixer:
 
         logger.info("ModelMixer initialized with specialized mixers")
 
-    def _create_code_generation_mixer(self) -> List[ModelConfig]:
+    def _create_code_generation_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for code generation tasks."""
         return [
             ModelConfig(
@@ -285,7 +285,7 @@ class ModelMixer:
             ),
         ]
 
-    def _create_analysis_mixer(self) -> List[ModelConfig]:
+    def _create_analysis_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for analysis tasks."""
         return [
             ModelConfig(
@@ -311,7 +311,7 @@ class ModelMixer:
             ),
         ]
 
-    def _create_creative_writing_mixer(self) -> List[ModelConfig]:
+    def _create_creative_writing_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for creative writing tasks."""
         return [
             ModelConfig(
@@ -340,7 +340,7 @@ class ModelMixer:
             ),
         ]
 
-    def _create_translation_mixer(self) -> List[ModelConfig]:
+    def _create_translation_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for translation tasks."""
         return [
             ModelConfig(
@@ -366,7 +366,7 @@ class ModelMixer:
             ),
         ]
 
-    def _create_summarization_mixer(self) -> List[ModelConfig]:
+    def _create_summarization_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for summarization tasks."""
         return [
             ModelConfig(
@@ -392,7 +392,7 @@ class ModelMixer:
             ),
         ]
 
-    def _create_qa_mixer(self) -> List[ModelConfig]:
+    def _create_qa_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for question answering tasks."""
         return [
             ModelConfig(
@@ -418,7 +418,7 @@ class ModelMixer:
             ),
         ]
 
-    def _create_problem_solving_mixer(self) -> List[ModelConfig]:
+    def _create_problem_solving_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for problem solving tasks."""
         return [
             ModelConfig(
@@ -444,7 +444,7 @@ class ModelMixer:
             ),
         ]
 
-    def _create_data_processing_mixer(self) -> List[ModelConfig]:
+    def _create_data_processing_mixer(self) -> list[ModelConfig]:
         """Create specialized mixer for data processing tasks."""
         return [
             ModelConfig(
@@ -515,7 +515,7 @@ class ModelMixer:
 
         return sanitized.strip()
 
-    def _validate_model_configs(self, model_configs: List[ModelConfig]) -> None:
+    def _validate_model_configs(self, model_configs: list[ModelConfig]) -> None:
         """Validate model configuration list."""
         if not model_configs:
             raise ValueError("At least one model configuration is required")
@@ -528,8 +528,8 @@ class ModelMixer:
         prompt: str,
         task_type: TaskType,
         strategy: MixingStrategy = MixingStrategy.PARALLEL,
-        custom_configs: Optional[List[ModelConfig]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        custom_configs: list[ModelConfig] | None = None,
+        context: dict[str, Any] | None = None,
     ) -> MixingResult:
         """Mix multiple models for a complex task."""
         # Input validation
@@ -625,8 +625,8 @@ class ModelMixer:
         )
 
     async def _apply_cost_aware_filtering(
-        self, model_configs: List[ModelConfig], prompt: str
-    ) -> List[ModelConfig]:
+        self, model_configs: list[ModelConfig], prompt: str
+    ) -> list[ModelConfig]:
         """Apply cost-aware filtering to model configurations."""
         if not self.cost_manager:
             return model_configs
@@ -664,10 +664,10 @@ class ModelMixer:
 
     async def _execute_parallel(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
-    ) -> List[Optional[LLMResponse]]:
+        context: dict[str, Any] | None,
+    ) -> list[LLMResponse | None]:
         """Execute models in parallel."""
         tasks = []
         for config in model_configs:
@@ -677,7 +677,7 @@ class ModelMixer:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Preserve alignment between results and model_configs
-        aligned_results: List[Optional[LLMResponse]] = []
+        aligned_results: list[LLMResponse | None] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(
@@ -691,10 +691,10 @@ class ModelMixer:
 
     async def _execute_sequential(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
-    ) -> List[Optional[LLMResponse]]:
+        context: dict[str, Any] | None,
+    ) -> list[LLMResponse | None]:
         """Execute models sequentially."""
         results = []
         for config in model_configs:
@@ -709,10 +709,10 @@ class ModelMixer:
 
     async def _execute_cascade(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
-    ) -> List[Optional[LLMResponse]]:
+        context: dict[str, Any] | None,
+    ) -> list[LLMResponse | None]:
         """Execute models in cascade (results feed into next model)."""
         results = []
         current_prompt = prompt
@@ -737,7 +737,7 @@ class ModelMixer:
         return results
 
     async def _execute_single_model(
-        self, config: ModelConfig, prompt: str, context: Optional[Dict[str, Any]]
+        self, config: ModelConfig, prompt: str, context: dict[str, Any] | None
     ) -> LLMResponse:
         """Execute a single model with the given configuration."""
         async with self._semaphore:  # Limit concurrent requests
@@ -764,7 +764,7 @@ class ModelMixer:
                     provider.generate(request), timeout=config.timeout
                 )
                 return response
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 raise TimeoutError(
                     f"Model {config.provider}:{config.model} timed out after {config.timeout}s"
                 ) from e
@@ -774,8 +774,8 @@ class ModelMixer:
         complex_task: str,
         task_type: TaskType,
         strategy: MixingStrategy = MixingStrategy.PARALLEL,
-        context: Optional[Dict[str, Any]] = None,
-    ) -> List[MixingResult]:
+        context: dict[str, Any] | None = None,
+    ) -> list[MixingResult]:
         """Decompose a complex task and mix models for each subtask."""
         # Decompose the task
         decomposition = await self.task_decomposer.decompose_task(
@@ -797,7 +797,7 @@ class ModelMixer:
                 # Create error result
                 error_result = MixingResult(
                     primary_result=LLMResponse(content="", usage=None),
-                    aggregated_result=f"Error processing subtask: {str(e)}",
+                    aggregated_result=f"Error processing subtask: {e!s}",
                     confidence_score=0.0,
                     strategy_used=strategy,
                     errors=[str(e)],

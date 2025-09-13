@@ -2,7 +2,6 @@
 
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Optional
 
 from .enums import ErrorCategory
 
@@ -23,10 +22,10 @@ class ProviderMetrics:
         self.request_count = 0
         self.success_count = 0
         self.error_count = 0
-        self.latency_ms: List[float] = []
+        self.latency_ms: list[float] = []
         self.token_counts = {"input": 0, "output": 0}
-        self.costs: List[float] = []
-        self.last_error_time: Optional[datetime] = None
+        self.costs: list[float] = []
+        self.last_error_time: datetime | None = None
         self.error_categories: defaultdict[ErrorCategory, int] = defaultdict(int)
         self.health_score = 1.0  # 0.0-1.0 scale
 
@@ -37,7 +36,7 @@ class ProviderMetrics:
         output_tokens: int,
         cost: float,
         success: bool,
-        error_category: Optional[ErrorCategory] = None,
+        error_category: ErrorCategory | None = None,
     ) -> None:
         """
         Record metrics for a single request.

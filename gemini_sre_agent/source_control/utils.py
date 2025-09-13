@@ -5,16 +5,17 @@ Utility functions for source control operations.
 """
 
 import asyncio
+from collections.abc import Awaitable, Callable
 import logging
-from typing import Any, Awaitable, Callable, Dict, Optional, Type
+from typing import Any
 
 from .base import SourceControlProvider
 from .models import OperationStatus, ProviderHealth
 
 
 async def with_provider(
-    provider_class: Type[SourceControlProvider],
-    config: Dict[str, Any],
+    provider_class: type[SourceControlProvider],
+    config: dict[str, Any],
     operation: Callable[[SourceControlProvider], Awaitable[Any]],
 ) -> Any:
     """
@@ -92,7 +93,7 @@ async def execute_with_retry(
 
 async def health_check_providers(
     providers: list[SourceControlProvider],
-) -> Dict[str, ProviderHealth]:
+) -> dict[str, ProviderHealth]:
     """
     Perform health checks on multiple providers concurrently.
 
@@ -209,7 +210,7 @@ async def timeout_operation(
 
 
 def create_operation_id(
-    operation_type: str, path: Optional[str] = None, timestamp: Optional[float] = None
+    operation_type: str, path: str | None = None, timestamp: float | None = None
 ) -> str:
     """
     Create a unique operation ID.

@@ -7,15 +7,15 @@ This module provides a configuration-driven system for mapping semantic model na
 to specific provider models, enabling easy model selection across different providers.
 """
 
-import logging
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any
 
 import yaml
 
 from .capabilities.database import CapabilityDatabase
-from .capabilities.models import ModelCapability, ModelCapabilities
+from .capabilities.models import ModelCapabilities, ModelCapability
 from .common.enums import ModelType, ProviderType
 
 logger = logging.getLogger(__name__)
@@ -28,24 +28,24 @@ class ModelInfo:
     name: str
     provider: ProviderType
     semantic_type: ModelType
-    capabilities: List[ModelCapability] = field(default_factory=list)
+    capabilities: list[ModelCapability] = field(default_factory=list)
     cost_per_1k_tokens: float = 0.0
     max_tokens: int = 4096
     context_window: int = 4096
     performance_score: float = 0.5  # 0.0 to 1.0
     reliability_score: float = 0.5  # 0.0 to 1.0
-    fallback_models: List[str] = field(default_factory=list)
-    provider_specific: Dict[str, Any] = field(default_factory=dict)
+    fallback_models: list[str] = field(default_factory=list)
+    provider_specific: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ModelRegistryConfig:
     """Configuration for the ModelRegistry."""
 
-    config_file: Optional[Union[str, Path]] = None
+    config_file: str | Path | None = None
     auto_reload: bool = False
     cache_ttl: int = 300  # 5 minutes
-    default_weights: Dict[str, float] = field(
+    default_weights: dict[str, float] = field(
         default_factory=lambda: {"cost": 0.3, "performance": 0.4, "reliability": 0.3}
     )
 
@@ -58,20 +58,20 @@ class ModelRegistry:
     to specific provider models with support for fallback chains.
     """
 
-    def __init__(self, config: Optional[ModelRegistryConfig] = None) -> None:
+    def __init__(self, config: ModelRegistryConfig | None = None) -> None:
         """Initialize the ModelRegistry with configuration."""
         self.config = config or ModelRegistryConfig()
-        self._models: Dict[str, ModelInfo] = {}
-        self._semantic_mappings: Dict[ModelType, List[str]] = {}
-        self._provider_models: Dict[ProviderType, List[str]] = {}
-        self._capability_index: Dict[str, Set[str]] = {}  # Change key type to str
+        self._models: dict[str, ModelInfo] = {}
+        self._semantic_mappings: dict[ModelType, list[str]] = {}
+        self._provider_models: dict[ProviderType, list[str]] = {}
+        self._capability_index: dict[str, set[str]] = {}  # Change key type to str
         self.capability_database = CapabilityDatabase()  # Add this line
-        self._last_loaded: Optional[float] = None
+        self._last_loaded: float | None = None
 
         if self.config.config_file:
             self.load_from_config(self.config.config_file)
 
-    def load_from_config(self, config_path: Union[str, Path]) -> None:
+    def load_from_config(self, config_path: str | Path) -> None:
         """Load model mappings from a configuration file."""
         config_path = Path(config_path)
 
@@ -80,7 +80,7 @@ class ModelRegistry:
             return
 
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
                     data = yaml.safe_load(f)
                 else:
@@ -108,7 +108,7 @@ class ModelRegistry:
             )
             raise
 
-    def _load_models_from_data(self, data: Dict[str, Any]) -> None:
+    def _load_models_from_data(self, data: dict[str, Any]) -> None:
         """Load models from parsed configuration data."""
         models_data = data.get("models", {})
 
@@ -120,7 +120,7 @@ class ModelRegistry:
                 logger.error(f"Failed to load model {model_name}: {e}")
                 continue
 
-    def _create_model_info(self, name: str, data: Dict[str, Any]) -> ModelInfo:
+    def _create_model_info(self, name: str, data: dict[str, Any]) -> ModelInfo:
         """Create a ModelInfo object from configuration data."""
         # Parse capabilities
         capabilities = []  # Change set() to []
@@ -197,23 +197,23 @@ class ModelRegistry:
             return True
         return False
 
-    def get_model(self, model_name: str) -> Optional[ModelInfo]:
+    def get_model(self, model_name: str) -> ModelInfo | None:
         """Get model information by name."""
         return self._models.get(model_name)
 
-    def get_models_by_semantic_type(self, semantic_type: ModelType) -> List[ModelInfo]:
+    def get_models_by_semantic_type(self, semantic_type: ModelType) -> list[ModelInfo]:
         """Get all models of a specific semantic type."""
         model_names = self._semantic_mappings.get(semantic_type, [])
         return [self._models[name] for name in model_names if name in self._models]
 
-    def get_models_by_provider(self, provider: ProviderType) -> List[ModelInfo]:
+    def get_models_by_provider(self, provider: ProviderType) -> list[ModelInfo]:
         """Get all models from a specific provider."""
         model_names = self._provider_models.get(provider, [])
         return [self._models[name] for name in model_names if name in self._models]
 
     def get_models_by_capability(
         self, capability: str
-    ) -> List[ModelInfo]:  # Change type hint to str
+    ) -> list[ModelInfo]:  # Change type hint to str
         """Get all models with a specific capability."""
         model_caps_list = self.capability_database.query_capabilities(
             capability_name=capability
@@ -225,7 +225,7 @@ class ModelRegistry:
             if name.split("/")[-1] in self._models
         ]  # Extract model name from model_id
 
-    def get_fallback_chain(self, model_name: str) -> List[ModelInfo]:
+    def get_fallback_chain(self, model_name: str) -> list[ModelInfo]:
         """Get the fallback chain for a model."""
         model_info = self.get_model(model_name)
         if not model_info:
@@ -241,13 +241,13 @@ class ModelRegistry:
 
     def query_models(
         self,
-        semantic_type: Optional[ModelType] = None,
-        provider: Optional[ProviderType] = None,
-        capabilities: Optional[List[str]] = None,  # Change type hint to List[str]
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_reliability: Optional[float] = None,
-    ) -> List[ModelInfo]:
+        semantic_type: ModelType | None = None,
+        provider: ProviderType | None = None,
+        capabilities: list[str] | None = None,  # Change type hint to List[str]
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_reliability: float | None = None,
+    ) -> list[ModelInfo]:
         """Query models with multiple filter criteria."""
         candidates = list(self._models.values())
 
@@ -302,7 +302,7 @@ class ModelRegistry:
 
         return candidates
 
-    def get_all_models(self) -> List[ModelInfo]:
+    def get_all_models(self) -> list[ModelInfo]:
         """Get all registered models."""
         return list(self._models.values())
 

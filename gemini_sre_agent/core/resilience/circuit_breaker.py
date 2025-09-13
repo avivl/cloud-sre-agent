@@ -1,17 +1,18 @@
 """Circuit breaker implementation for fault tolerance."""
 
-import time
-import threading
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+import threading
+import time
+from typing import Any
 
-from .exceptions import CircuitBreakerError, CircuitOpenError, CircuitHalfOpenError
+from .exceptions import CircuitOpenError
 
 
 class CircuitState(Enum):
     """Circuit breaker states."""
-    
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -30,14 +31,14 @@ class CircuitBreakerConfig:
         name: Name of the circuit breaker
         timeout: Timeout for individual operations
     """
-    
+
     failure_threshold: int = 5
     recovery_timeout: float = 60.0
     success_threshold: int = 3
-    expected_exception: Union[Type[Exception], tuple[Type[Exception], ...]] = Exception
-    ignored_exception: Union[Type[Exception], tuple[Type[Exception], ...]] = ()
+    expected_exception: type[Exception] | tuple[type[Exception], ...] = Exception
+    ignored_exception: type[Exception] | tuple[type[Exception], ...] = ()
     name: str = "default"
-    timeout: Optional[float] = None
+    timeout: float | None = None
 
 
 class CircuitBreaker:
@@ -49,8 +50,8 @@ class CircuitBreaker:
     - OPEN: Circuit is open, calls fail immediately
     - HALF_OPEN: Testing if service has recovered
     """
-    
-    def __init__(self, config: Optional[CircuitBreakerConfig] = None):
+
+    def __init__(self, config: CircuitBreakerConfig | None = None):
         """Initialize the circuit breaker.
         
         Args:
@@ -63,9 +64,9 @@ class CircuitBreaker:
         self._last_failure_time = 0.0
         self._lock = threading.RLock()
         self._call_count = 0
-        self._call_history: List[Dict[str, Any]] = []
+        self._call_history: list[dict[str, Any]] = []
         self._max_history = 100
-    
+
     @property
     def state(self) -> CircuitState:
         """Get current circuit state.
@@ -74,7 +75,7 @@ class CircuitBreaker:
             Current circuit state
         """
         return self._state
-    
+
     @property
     def failure_count(self) -> int:
         """Get current failure count.
@@ -83,7 +84,7 @@ class CircuitBreaker:
             Current failure count
         """
         return self._failure_count
-    
+
     @property
     def success_count(self) -> int:
         """Get current success count.
@@ -92,7 +93,7 @@ class CircuitBreaker:
             Current success count
         """
         return self._success_count
-    
+
     @property
     def call_count(self) -> int:
         """Get total call count.
@@ -101,7 +102,7 @@ class CircuitBreaker:
             Total number of calls made
         """
         return self._call_count
-    
+
     def call(self, func: Callable[..., Any], *args, **kwargs) -> Any:
         """Execute a function with circuit breaker protection.
         
@@ -120,19 +121,19 @@ class CircuitBreaker:
         """
         with self._lock:
             self._call_count += 1
-            
+
             # Check if circuit should be opened
             if self._state == CircuitState.CLOSED:
                 if self._failure_count >= self._config.failure_threshold:
                     self._state = CircuitState.OPEN
                     self._last_failure_time = time.time()
-            
+
             # Check if circuit should be half-opened
             elif self._state == CircuitState.OPEN:
                 if time.time() - self._last_failure_time >= self._config.recovery_timeout:
                     self._state = CircuitState.HALF_OPEN
                     self._success_count = 0
-            
+
             # Handle different states
             if self._state == CircuitState.OPEN:
                 raise CircuitOpenError(
@@ -140,17 +141,17 @@ class CircuitBreaker:
                     self._failure_count,
                     self._config.failure_threshold
                 )
-            
+
             # Execute the function
             try:
                 result = func(*args, **kwargs)
                 self._on_success()
                 return result
-                
+
             except Exception as e:
                 self._on_failure(e)
                 raise
-    
+
     def _on_success(self) -> None:
         """Handle successful call.
         
@@ -166,10 +167,10 @@ class CircuitBreaker:
             elif self._state == CircuitState.CLOSED:
                 # Reset failure count on success
                 self._failure_count = 0
-            
+
             # Record success in history
             self._record_call(True, None)
-    
+
     def _on_failure(self, exception: Exception) -> None:
         """Handle failed call.
         
@@ -180,23 +181,23 @@ class CircuitBreaker:
             # Check if exception should be ignored
             if isinstance(exception, self._config.ignored_exception):
                 return
-            
+
             # Check if exception is expected
             if not isinstance(exception, self._config.expected_exception):
                 return
-            
+
             self._failure_count += 1
             self._last_failure_time = time.time()
-            
+
             # If in half-open state, open the circuit on failure
             if self._state == CircuitState.HALF_OPEN:
                 self._state = CircuitState.OPEN
                 self._success_count = 0
-            
+
             # Record failure in history
             self._record_call(False, str(exception))
-    
-    def _record_call(self, success: bool, error: Optional[str]) -> None:
+
+    def _record_call(self, success: bool, error: str | None) -> None:
         """Record a call in the history.
         
         Args:
@@ -211,13 +212,13 @@ class CircuitBreaker:
             "failure_count": self._failure_count,
             "success_count": self._success_count
         }
-        
+
         self._call_history.append(call_record)
-        
+
         # Trim history if needed
         if len(self._call_history) > self._max_history:
             self._call_history = self._call_history[-self._max_history:]
-    
+
     def reset(self) -> None:
         """Reset the circuit breaker to closed state.
         
@@ -229,8 +230,8 @@ class CircuitBreaker:
             self._success_count = 0
             self._last_failure_time = 0.0
             self._call_history.clear()
-    
-    def get_stats(self) -> Dict[str, Any]:
+
+    def get_stats(self) -> dict[str, Any]:
         """Get circuit breaker statistics.
         
         Returns:
@@ -240,9 +241,9 @@ class CircuitBreaker:
             total_calls = len(self._call_history)
             successful_calls = sum(1 for call in self._call_history if call["success"])
             failed_calls = total_calls - successful_calls
-            
+
             success_rate = (successful_calls / total_calls * 100) if total_calls > 0 else 0.0
-            
+
             return {
                 "name": self._config.name,
                 "state": self._state.value,
@@ -260,8 +261,8 @@ class CircuitBreaker:
                     "timeout": self._config.timeout
                 }
             }
-    
-    def get_call_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+
+    def get_call_history(self, limit: int | None = None) -> list[dict[str, Any]]:
         """Get call history.
         
         Args:
@@ -274,7 +275,7 @@ class CircuitBreaker:
             if limit is None:
                 return self._call_history.copy()
             return self._call_history[-limit:]
-    
+
     def is_available(self) -> bool:
         """Check if circuit breaker is available for calls.
         
@@ -282,8 +283,8 @@ class CircuitBreaker:
             True if circuit is closed or half-open, False if open
         """
         return self._state != CircuitState.OPEN
-    
-    def get_state_info(self) -> Dict[str, Any]:
+
+    def get_state_info(self) -> dict[str, Any]:
         """Get detailed state information.
         
         Returns:
@@ -304,7 +305,7 @@ class CircuitBreaker:
                     "timeout": self._config.timeout
                 }
             }
-    
+
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """Make circuit breaker callable as a decorator.
         
@@ -316,9 +317,9 @@ class CircuitBreaker:
         """
         def wrapper(*args, **kwargs):
             return self.call(func, *args, **kwargs)
-        
+
         return wrapper
-    
+
     def __enter__(self):
         """Context manager entry.
         
@@ -326,7 +327,7 @@ class CircuitBreaker:
             Self
         """
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit.
         

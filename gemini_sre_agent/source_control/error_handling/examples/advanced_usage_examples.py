@@ -9,7 +9,7 @@ in real-world scenarios with comprehensive examples.
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..advanced_circuit_breaker import AdvancedCircuitBreaker
 from ..core import CircuitBreakerConfig, ErrorType
@@ -28,7 +28,7 @@ class GitHubAPIFallbackStrategy(FallbackStrategyBase):
         super().__init__(name="github_api_fallback", priority=1)
 
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if this strategy can handle the error."""
         return (
@@ -60,7 +60,7 @@ class DatabaseFallbackStrategy(FallbackStrategyBase):
         super().__init__(name="database_fallback", priority=1)
 
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if this strategy can handle the error."""
         return (
@@ -93,10 +93,10 @@ class AdvancedErrorHandlingExample:
         self.setup_logging()
 
         # Initialize components
-        self.circuit_breakers: Dict[str, AdvancedCircuitBreaker] = {}
-        self.fallback_manager: Optional[CustomFallbackManager] = None
-        self.self_healing_manager: Optional[SelfHealingManager] = None
-        self.dashboard: Optional[MonitoringDashboard] = None
+        self.circuit_breakers: dict[str, AdvancedCircuitBreaker] = {}
+        self.fallback_manager: CustomFallbackManager | None = None
+        self.self_healing_manager: SelfHealingManager | None = None
+        self.dashboard: MonitoringDashboard | None = None
 
     def setup_logging(self) -> None:
         """Setup logging configuration."""
@@ -166,7 +166,7 @@ class AdvancedErrorHandlingExample:
         self.fallback_manager.add_strategy(db_fallback)
 
     async def _github_api_fallback_action(
-        self, error_type: ErrorType, error_message: str, context: Dict[str, Any]
+        self, error_type: ErrorType, error_message: str, context: dict[str, Any]
     ) -> Any:
         """GitHub API fallback action."""
         self.logger.info("Executing GitHub API fallback strategy")
@@ -187,7 +187,7 @@ class AdvancedErrorHandlingExample:
         return {"status": "fallback_failed", "message": "Unsupported error type"}
 
     async def _database_fallback_action(
-        self, error_type: ErrorType, error_message: str, context: Dict[str, Any]
+        self, error_type: ErrorType, error_message: str, context: dict[str, Any]
     ) -> Any:
         """Database fallback action."""
         self.logger.info("Executing database fallback strategy")
@@ -235,7 +235,7 @@ class AdvancedErrorHandlingExample:
         github_cb = self.circuit_breakers["github_api"]
 
         # Simulate GitHub API calls
-        async def github_api_call(operation: str, **kwargs) -> Dict[str, Any]:
+        async def github_api_call(operation: str, **kwargs) -> dict[str, Any]:
             """Simulate GitHub API call with potential failures."""
             if (
                 operation == "get_repository"

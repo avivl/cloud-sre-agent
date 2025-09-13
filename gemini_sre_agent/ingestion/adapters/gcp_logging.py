@@ -7,9 +7,10 @@ This adapter implements the LogIngestionInterface for consuming logs
 from Google Cloud Logging API.
 """
 
-import logging
+from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta
-from typing import Any, AsyncGenerator, Dict, Optional
+import logging
+from typing import Any
 
 from ...config.ingestion_config import GCPLoggingConfig
 from ..interfaces.core import (
@@ -67,7 +68,8 @@ class GCPLoggingAdapter(LogIngestionInterface):
             # Initialize logging client
             if self.credentials_path:
                 import os
-                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.credentials_path
+
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.credentials_path
                 self._logging_client = logging_v2.Client()
             else:
                 self._logging_client = logging_v2.Client()
@@ -106,7 +108,10 @@ class GCPLoggingAdapter(LogIngestionInterface):
             )
 
             # Build filter with time range
-            time_filter = f'timestamp>="{start_time.isoformat()}Z" timestamp<="{current_time.isoformat()}Z"'
+            time_filter = (
+                f'timestamp>="{start_time.isoformat()}Z" '
+                f'timestamp<="{current_time.isoformat()}Z"'
+            )
             full_filter = f"{self.log_filter} AND {time_filter}"
 
             # Fetch logs with resilience
@@ -149,7 +154,7 @@ class GCPLoggingAdapter(LogIngestionInterface):
                 f"Failed to get logs from Cloud Logging: {e}"
             ) from e
 
-    def _parse_log_entry(self, entry) -> Optional[LogEntry]:
+    def _parse_log_entry(self, entry) -> LogEntry | None:
         """Parse a Cloud Logging entry into a LogEntry."""
         try:
             # Extract basic fields
@@ -215,9 +220,7 @@ class GCPLoggingAdapter(LogIngestionInterface):
         error_rate = self._total_logs_failed / max(total_logs, 1)
 
         # Determine health status
-        if not self._is_running:
-            status = "unhealthy"
-        elif self._consecutive_failures > 5:
+        if not self._is_running or self._consecutive_failures > 5:
             status = "unhealthy"
         elif error_rate > 0.1:  # 10% error rate
             status = "degraded"
@@ -266,17 +269,23 @@ class GCPLoggingAdapter(LogIngestionInterface):
         else:
             raise ValueError("Config must be GCPLoggingConfig")
 
-    async def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
+    async def handle_error(self, error: Exception, context: dict[str, Any]) -> bool:
         """Handle errors with context. Return True if recoverable."""
         logger.error(f"GCP Logging adapter error: {error} in context: {context}")
         self._consecutive_failures += 1
 
         # Consider GCP API errors as potentially recoverable
-        if hasattr(error, "code") and getattr(error, "code", None) in [429, 500, 502, 503, 504]:
+        if hasattr(error, "code") and getattr(error, "code", None) in [
+            429,
+            500,
+            502,
+            503,
+            504,
+        ]:
             return True
         return False
 
-    async def get_health_metrics(self) -> Dict[str, Any]:
+    async def get_health_metrics(self) -> dict[str, Any]:
         """Get detailed health and performance metrics."""
         return {
             "is_running": self._is_running,

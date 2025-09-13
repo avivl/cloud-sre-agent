@@ -7,10 +7,10 @@ This module handles context building, caching, and management for workflow
 operations, providing a centralized context management system.
 """
 
+from dataclasses import dataclass, field
 import logging
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...core.interfaces import StatefulComponent
 from ...core.types import ConfigDict, Timestamp
@@ -48,12 +48,12 @@ class WorkflowContext:
     # Workflow state
     current_step: str = "initialized"
     error_count: int = 0
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     # Metadata
     workflow_id: str = ""
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
+    user_id: str | None = None
+    session_id: str | None = None
 
     def get_duration(self) -> float:
         """Get total workflow duration."""
@@ -72,7 +72,7 @@ class WorkflowContext:
         """Check if the workflow context is healthy."""
         return self.error_count == 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert context to dictionary."""
         return {
             "workflow_id": self.workflow_id,
@@ -113,7 +113,7 @@ class WorkflowContextManager(StatefulComponent):
         self,
         component_id: str = "workflow_context_manager",
         name: str = "Workflow Context Manager",
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the workflow context manager.
@@ -139,8 +139,8 @@ class WorkflowContextManager(StatefulComponent):
     async def build_repository_context(
         self,
         repository_path: str,
-        file_paths: List[str],
-        commit_hash: Optional[str] = None,
+        file_paths: list[str],
+        commit_hash: str | None = None,
     ) -> RepositoryContext:
         """
         Build repository context from given parameters.
@@ -198,7 +198,7 @@ class WorkflowContextManager(StatefulComponent):
         self,
         issue_description: str,
         issue_type: IssueType,
-        affected_files: List[str],
+        affected_files: list[str],
         severity: str = "medium",
     ) -> IssueContext:
         """
@@ -260,7 +260,7 @@ class WorkflowContextManager(StatefulComponent):
         self,
         repository_context: RepositoryContext,
         issue_context: IssueContext,
-        additional_context: Optional[Dict[str, Any]] = None,
+        additional_context: dict[str, Any] | None = None,
     ) -> PromptContext:
         """
         Build prompt context from repository and issue contexts.
@@ -314,8 +314,8 @@ class WorkflowContextManager(StatefulComponent):
         issue_context: IssueContext,
         prompt_context: PromptContext,
         workflow_id: str,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
     ) -> WorkflowContext:
         """
         Create a complete workflow context.
@@ -394,7 +394,7 @@ class WorkflowContextManager(StatefulComponent):
             await self.repository_context_cache.clear()
         logger.info("Cleared all context caches")
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """
         Get the component's health status.
 

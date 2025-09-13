@@ -3,8 +3,8 @@ Tests for the configuration management system.
 """
 
 import os
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest
@@ -222,7 +222,7 @@ agents: {}
 
             # Verify file was created and contains expected content
             assert Path(temp_path).exists()
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 content = f.read()
                 assert "default_provider" in content
                 assert "providers" in content
@@ -243,7 +243,7 @@ agents: {}
 
             # Verify file was created and contains expected content
             assert Path(temp_path).exists()
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 content = f.read()
                 assert "default_provider" in content
                 assert "providers" in content

@@ -8,8 +8,8 @@ retry behavior, circuit breaker actions, and error handling strategies.
 """
 
 import asyncio
+from collections.abc import Callable
 import logging
-from typing import Callable, List, Optional
 
 from .core import ErrorClassification, ErrorType
 
@@ -21,8 +21,8 @@ class ErrorClassifier:
         self.logger = logging.getLogger("ErrorClassifier")
 
         # Error classification rules (ordered by specificity)
-        self.classification_rules: List[
-            Callable[[Exception], Optional[ErrorClassification]]
+        self.classification_rules: list[
+            Callable[[Exception], ErrorClassification | None]
         ] = [
             self._classify_provider_errors,
             self._classify_network_errors,
@@ -55,7 +55,7 @@ class ErrorClassifier:
 
     def _classify_network_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify network-related errors."""
         if isinstance(error, (ConnectionError, OSError)):
             return ErrorClassification(
@@ -70,7 +70,7 @@ class ErrorClassifier:
 
     def _classify_timeout_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify timeout errors."""
         if isinstance(error, (asyncio.TimeoutError, TimeoutError)):
             return ErrorClassification(
@@ -85,7 +85,7 @@ class ErrorClassifier:
 
     def _classify_rate_limit_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify rate limit errors."""
         error_str = str(error).lower()
         if any(
@@ -101,7 +101,7 @@ class ErrorClassifier:
             )
         return None
 
-    def _classify_http_errors(self, error: Exception) -> Optional[ErrorClassification]:
+    def _classify_http_errors(self, error: Exception) -> ErrorClassification | None:
         """Classify HTTP status code errors."""
         if hasattr(error, "status"):
             status = getattr(error, "status", None)
@@ -140,7 +140,7 @@ class ErrorClassifier:
 
     def _classify_authentication_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify authentication errors."""
         error_str = str(error).lower()
         if any(
@@ -159,7 +159,7 @@ class ErrorClassifier:
 
     def _classify_validation_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify validation errors."""
         if isinstance(error, (ValueError, TypeError)):
             return ErrorClassification(
@@ -174,7 +174,7 @@ class ErrorClassifier:
 
     def _classify_provider_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify provider-specific errors."""
         error_str = str(error).lower()
         error_type = type(error).__name__.lower()
@@ -202,7 +202,7 @@ class ErrorClassifier:
 
     def _classify_github_errors(
         self, error: Exception, error_str: str
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify GitHub-specific errors."""
         # Rate limiting
         if any(
@@ -342,7 +342,7 @@ class ErrorClassifier:
 
     def _classify_gitlab_errors(
         self, error: Exception, error_str: str
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify GitLab-specific errors."""
         # Rate limiting
         if any(
@@ -471,7 +471,7 @@ class ErrorClassifier:
 
     def _classify_local_git_errors(
         self, error: Exception, error_str: str
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify local Git errors."""
         # Repository not found
         if any(
@@ -601,7 +601,7 @@ class ErrorClassifier:
 
     def _classify_local_file_errors(
         self, error: Exception, error_str: str
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify local file system errors."""
         # Permission errors
         if any(term in error_str for term in ["permission denied", "access denied"]):
@@ -638,7 +638,7 @@ class ErrorClassifier:
 
     def _classify_file_system_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify file system errors."""
         error_str = str(error).lower()
 
@@ -708,7 +708,7 @@ class ErrorClassifier:
 
     def _classify_security_errors(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Classify security-related errors."""
         error_str = str(error).lower()
 
@@ -749,7 +749,7 @@ class ErrorClassifier:
 
         return None
 
-    def _classify_api_errors(self, error: Exception) -> Optional[ErrorClassification]:
+    def _classify_api_errors(self, error: Exception) -> ErrorClassification | None:
         """Classify API and service errors."""
         error_str = str(error).lower()
 

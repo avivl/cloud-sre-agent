@@ -2,10 +2,10 @@
 
 """Compliance reporting tools for usage patterns and audit trails."""
 
-import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List
+import logging
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -33,14 +33,14 @@ class ComplianceReport(BaseModel):
     generated_at: datetime = Field(default_factory=datetime.utcnow)
     period_start: datetime = Field(..., description="Report period start")
     period_end: datetime = Field(..., description="Report period end")
-    summary: Dict[str, Any] = Field(default_factory=dict, description="Report summary")
-    findings: List[Dict[str, Any]] = Field(
+    summary: dict[str, Any] = Field(default_factory=dict, description="Report summary")
+    findings: list[dict[str, Any]] = Field(
         default_factory=list, description="Compliance findings"
     )
-    recommendations: List[str] = Field(
+    recommendations: list[str] = Field(
         default_factory=list, description="Recommendations"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
 
@@ -55,7 +55,7 @@ class ComplianceReporter:
             audit_logger: Audit logger instance for accessing events
         """
         self.audit_logger = audit_logger
-        self._compliance_rules: Dict[ComplianceStandard, List[Dict[str, Any]]] = {}
+        self._compliance_rules: dict[ComplianceStandard, list[dict[str, Any]]] = {}
         self._initialize_default_rules()
 
     def _initialize_default_rules(self) -> None:
@@ -193,7 +193,7 @@ class ComplianceReporter:
                         "description": rule["description"],
                         "severity": rule["severity"],
                         "status": "error",
-                        "details": f"Error running check: {str(e)}",
+                        "details": f"Error running check: {e!s}",
                         "evidence": [],
                     }
                 )
@@ -217,8 +217,8 @@ class ComplianceReporter:
         )
 
     def _generate_summary(
-        self, findings: List[Dict[str, Any]], events: List[AuditEvent]
-    ) -> Dict[str, Any]:
+        self, findings: list[dict[str, Any]], events: list[AuditEvent]
+    ) -> dict[str, Any]:
         """Generate report summary."""
         total_checks = len(findings)
         passed_checks = sum(1 for f in findings if f["status"] == "pass")
@@ -252,8 +252,8 @@ class ComplianceReporter:
         }
 
     def _generate_recommendations(
-        self, findings: List[Dict[str, Any]], standard: ComplianceStandard
-    ) -> List[str]:
+        self, findings: list[dict[str, Any]], standard: ComplianceStandard
+    ) -> list[str]:
         """Generate recommendations based on findings."""
         recommendations = []
 
@@ -295,8 +295,8 @@ class ComplianceReporter:
 
     # Compliance check functions
     async def _check_access_controls(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check access control compliance."""
         access_events = [
             e
@@ -341,8 +341,8 @@ class ComplianceReporter:
         }
 
     async def _check_data_encryption(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check data encryption compliance."""
         # This is a simplified check - in reality, you'd check actual encryption status
         provider_events = [e for e in events if e.provider]
@@ -380,8 +380,8 @@ class ComplianceReporter:
         }
 
     async def _check_audit_logging(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check audit logging compliance."""
         if not events:
             return {
@@ -422,8 +422,8 @@ class ComplianceReporter:
         }
 
     async def _check_incident_response(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check incident response compliance."""
         error_events = [e for e in events if not e.success]
 
@@ -459,8 +459,8 @@ class ComplianceReporter:
         }
 
     async def _check_data_minimization(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check GDPR data minimization compliance."""
         # This is a simplified check - in reality, you'd analyze actual data usage
         provider_events = [e for e in events if e.provider]
@@ -498,8 +498,8 @@ class ComplianceReporter:
         }
 
     async def _check_consent_management(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check GDPR consent management compliance."""
         # This would check for consent-related events
         consent_events = [e for e in events if "consent" in e.metadata.get("tags", [])]
@@ -518,8 +518,8 @@ class ComplianceReporter:
         }
 
     async def _check_data_retention(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check GDPR data retention compliance."""
         # This would check data retention policies
         return {
@@ -529,8 +529,8 @@ class ComplianceReporter:
         }
 
     async def _check_right_to_erasure(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check GDPR right to erasure compliance."""
         # This would check for data deletion events
         deletion_events = [
@@ -544,8 +544,8 @@ class ComplianceReporter:
         }
 
     async def _check_phi_protection(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check HIPAA PHI protection compliance."""
         # This would check for PHI-related events and protections
         phi_events = [e for e in events if e.metadata.get("contains_phi", False)]
@@ -573,21 +573,21 @@ class ComplianceReporter:
         }
 
     async def _check_hipaa_access_controls(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check HIPAA access controls compliance."""
         # Similar to general access controls but with HIPAA-specific requirements
         return await self._check_access_controls(events, period_start, period_end)
 
     async def _check_audit_controls(
-        self, events: List[AuditEvent], period_start: datetime, period_end: datetime
-    ) -> Dict[str, Any]:
+        self, events: list[AuditEvent], period_start: datetime, period_end: datetime
+    ) -> dict[str, Any]:
         """Check HIPAA audit controls compliance."""
         # Similar to general audit logging but with HIPAA-specific requirements
         return await self._check_audit_logging(events, period_start, period_end)
 
     def add_custom_rule(
-        self, standard: ComplianceStandard, rule: Dict[str, Any]
+        self, standard: ComplianceStandard, rule: dict[str, Any]
     ) -> None:
         """Add a custom compliance rule."""
         if standard not in self._compliance_rules:
@@ -595,12 +595,12 @@ class ComplianceReporter:
 
         self._compliance_rules[standard].append(rule)
 
-    def get_supported_standards(self) -> List[ComplianceStandard]:
+    def get_supported_standards(self) -> list[ComplianceStandard]:
         """Get list of supported compliance standards."""
         return list(self._compliance_rules.keys())
 
     def get_rules_for_standard(
         self, standard: ComplianceStandard
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get rules for a specific compliance standard."""
         return self._compliance_rules.get(standard, [])

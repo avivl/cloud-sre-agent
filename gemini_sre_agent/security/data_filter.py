@@ -2,10 +2,10 @@
 
 """Data filtering and privacy controls for sensitive information."""
 
+from enum import Enum
 import logging
 import re
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -42,20 +42,20 @@ class FilterRule(BaseModel):
 class DataFilter:
     """Filter for removing or masking sensitive data."""
 
-    def __init__(self, custom_rules: Optional[List[FilterRule]] = None) -> None:
+    def __init__(self, custom_rules: list[FilterRule] | None = None) -> None:
         """Initialize the data filter.
 
         Args:
             custom_rules: Custom filtering rules to add
         """
-        self.rules: List[FilterRule] = []
+        self.rules: list[FilterRule] = []
         self._initialize_default_rules()
 
         if custom_rules:
             self.rules.extend(custom_rules)
 
         # Compile regex patterns for performance
-        self._compiled_patterns: Dict[str, re.Pattern] = {}
+        self._compiled_patterns: dict[str, re.Pattern] = {}
         self._compile_patterns()
 
     def _initialize_default_rules(self) -> None:
@@ -220,7 +220,7 @@ class DataFilter:
 
         return filtered_text
 
-    def filter_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def filter_dict(self, data: dict[str, Any]) -> dict[str, Any]:
         """Filter sensitive data from a dictionary.
 
         Args:
@@ -252,7 +252,7 @@ class DataFilter:
 
         return filtered_data
 
-    def filter_list(self, data: List[Any]) -> List[Any]:
+    def filter_list(self, data: list[Any]) -> list[Any]:
         """Filter sensitive data from a list.
 
         Args:
@@ -320,7 +320,7 @@ class DataFilter:
 
         return False
 
-    def get_sensitive_data_types(self, text: str) -> Set[SensitiveDataType]:
+    def get_sensitive_data_types(self, text: str) -> set[SensitiveDataType]:
         """Get the types of sensitive data found in text.
 
         Args:
@@ -344,19 +344,19 @@ class DataFilter:
 
         return found_types
 
-    def get_rules_by_type(self, data_type: SensitiveDataType) -> List[FilterRule]:
+    def get_rules_by_type(self, data_type: SensitiveDataType) -> list[FilterRule]:
         """Get all rules for a specific data type."""
         return [rule for rule in self.rules if rule.data_type == data_type]
 
-    def get_enabled_rules(self) -> List[FilterRule]:
+    def get_enabled_rules(self) -> list[FilterRule]:
         """Get all enabled rules."""
         return [rule for rule in self.rules if rule.enabled]
 
-    def get_disabled_rules(self) -> List[FilterRule]:
+    def get_disabled_rules(self) -> list[FilterRule]:
         """Get all disabled rules."""
         return [rule for rule in self.rules if not rule.enabled]
 
-    def validate_rules(self) -> List[str]:
+    def validate_rules(self) -> list[str]:
         """Validate all rules and return any errors."""
         errors = []
 

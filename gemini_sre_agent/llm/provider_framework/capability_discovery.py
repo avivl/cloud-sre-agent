@@ -9,7 +9,7 @@ enabling intelligent provider selection based on required features.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..base import LLMProvider
 
@@ -24,9 +24,9 @@ class ProviderCapability:
         self.description = description
         self.required = required
         self.supported = False
-        self.details: Dict[str, Any] = {}
+        self.details: dict[str, Any] = {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert capability to dictionary."""
         return {
             "name": self.name,
@@ -46,8 +46,8 @@ class ProviderCapabilityDiscovery:
     """
 
     def __init__(self) -> None:
-        self.capability_registry: Dict[str, Dict[str, ProviderCapability]] = {}
-        self.capability_tests: Dict[str, Any] = {
+        self.capability_registry: dict[str, dict[str, ProviderCapability]] = {}
+        self.capability_tests: dict[str, Any] = {
             "streaming": self._test_streaming_capability,
             "tools": self._test_tools_capability,
             "embeddings": self._test_embeddings_capability,
@@ -60,7 +60,7 @@ class ProviderCapabilityDiscovery:
 
     async def discover_provider_capabilities(
         self, provider: LLMProvider
-    ) -> Dict[str, ProviderCapability]:
+    ) -> dict[str, ProviderCapability]:
         """
         Discover all capabilities of a provider.
 
@@ -227,7 +227,7 @@ class ProviderCapabilityDiscovery:
 
     async def _get_capability_details(
         self, provider: LLMProvider, capability_name: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get detailed information about a capability."""
         details = {}
 
@@ -280,11 +280,11 @@ class ProviderCapabilityDiscovery:
 
     def get_provider_capabilities(
         self, provider_name: str
-    ) -> Optional[Dict[str, ProviderCapability]]:
+    ) -> dict[str, ProviderCapability] | None:
         """Get capabilities for a specific provider."""
         return self.capability_registry.get(provider_name)
 
-    def get_capability_summary(self) -> Dict[str, Any]:
+    def get_capability_summary(self) -> dict[str, Any]:
         """Get a summary of all provider capabilities."""
         summary = {
             "total_providers": len(self.capability_registry),
@@ -306,7 +306,7 @@ class ProviderCapabilityDiscovery:
 
         return summary
 
-    def find_providers_with_capability(self, capability_name: str) -> List[str]:
+    def find_providers_with_capability(self, capability_name: str) -> list[str]:
         """Find all providers that support a specific capability."""
         providers = []
 
@@ -320,8 +320,8 @@ class ProviderCapabilityDiscovery:
         return providers
 
     def find_providers_matching_requirements(
-        self, required_capabilities: List[str]
-    ) -> List[str]:
+        self, required_capabilities: list[str]
+    ) -> list[str]:
         """Find providers that support all required capabilities."""
         matching_providers = []
 
@@ -341,7 +341,7 @@ class ProviderCapabilityDiscovery:
 
         return matching_providers
 
-    def get_capability_compatibility_matrix(self) -> Dict[str, Dict[str, bool]]:
+    def get_capability_compatibility_matrix(self) -> dict[str, dict[str, bool]]:
         """Get a compatibility matrix of providers and capabilities."""
         matrix = {}
 
@@ -354,7 +354,7 @@ class ProviderCapabilityDiscovery:
 
     def validate_provider_for_use_case(
         self, provider_name: str, use_case: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Validate if a provider is suitable for a specific use case.
 
@@ -413,8 +413,8 @@ class ProviderCapabilityDiscovery:
         return validation_result
 
     def discover_all_providers(
-        self, providers: List[LLMProvider]
-    ) -> Dict[str, Dict[str, ProviderCapability]]:
+        self, providers: list[LLMProvider]
+    ) -> dict[str, dict[str, ProviderCapability]]:
         """
         Discover capabilities for all providers.
 
@@ -437,7 +437,7 @@ class ProviderCapabilityDiscovery:
 
         return all_capabilities
 
-    def export_capability_report(self) -> Dict[str, Any]:
+    def export_capability_report(self) -> dict[str, Any]:
         """Export a comprehensive capability report."""
         return {
             "summary": self.get_capability_summary(),
@@ -463,7 +463,7 @@ def get_capability_discovery() -> ProviderCapabilityDiscovery:
 
 async def discover_provider_capabilities(
     provider: LLMProvider,
-) -> Dict[str, ProviderCapability]:
+) -> dict[str, ProviderCapability]:
     """
     Convenience function to discover capabilities for a provider.
 

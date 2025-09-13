@@ -8,8 +8,8 @@ This module tests the LLMService class that integrates LiteLLM, Instructor, and 
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from pydantic import BaseModel
+import pytest
 
 # Mock the dependencies before importing the service
 with patch.dict(
@@ -187,7 +187,9 @@ class TestLLMService:
         all_models = mock_llm_service.get_available_models()
         assert "openai" in all_models
 
-    def test_get_available_models_nonexistent_provider(self, mock_llm_service: str) -> None:
+    def test_get_available_models_nonexistent_provider(
+        self, mock_llm_service: str
+    ) -> None:
         """Test getting models for nonexistent provider."""
         models = mock_llm_service.get_available_models(provider="nonexistent")
         assert models == {}

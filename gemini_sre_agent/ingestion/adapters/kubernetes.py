@@ -4,9 +4,10 @@
 Kubernetes adapter for log ingestion from pods and containers.
 """
 
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict, List
+from typing import Any
 
 from ...config.ingestion_config import KubernetesConfig
 from ..interfaces.core import (
@@ -51,7 +52,7 @@ class KubernetesAdapter(LogIngestionInterface):
         """Start the Kubernetes adapter."""
         if not KUBERNETES_AVAILABLE or config is None or client is None:
             raise SourceConnectionError("Kubernetes client not available")
-            
+
         try:
             # Load Kubernetes configuration
             if self.config.kubeconfig_path:
@@ -70,7 +71,7 @@ class KubernetesAdapter(LogIngestionInterface):
             await self._test_connection()
 
             self.running = True
-            self._last_check_time = datetime.now(timezone.utc)
+            self._last_check_time = datetime.now(UTC)
             logger.info(
                 f"Started Kubernetes adapter for namespace: {self.config.namespace}"
             )
@@ -157,7 +158,7 @@ class KubernetesAdapter(LogIngestionInterface):
 
             return SourceHealth(
                 is_healthy=True,
-                last_success=datetime.now(timezone.utc).isoformat(),
+                last_success=datetime.now(UTC).isoformat(),
                 error_count=self._error_count,
                 last_error=self._last_error,
                 metrics={
@@ -198,7 +199,7 @@ class KubernetesAdapter(LogIngestionInterface):
         else:
             raise ValueError("Invalid config type for Kubernetes adapter")
 
-    async def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
+    async def handle_error(self, error: Exception, context: dict[str, Any]) -> bool:
         """Handle errors from the adapter."""
         logger.error(
             f"Kubernetes error in {context.get('operation', 'unknown')}: {error}"
@@ -215,7 +216,7 @@ class KubernetesAdapter(LogIngestionInterface):
                 return True  # Retry server errors
         return True
 
-    async def get_health_metrics(self) -> Dict[str, Any]:
+    async def get_health_metrics(self) -> dict[str, Any]:
         """Get detailed health metrics."""
         return {
             "namespace": self.config.namespace,
@@ -235,7 +236,7 @@ class KubernetesAdapter(LogIngestionInterface):
         """Test the Kubernetes connection."""
         if self.v1 is None:
             raise SourceConnectionError("Kubernetes client not initialized")
-            
+
         try:
             # Try to list namespaces
             self.v1.list_namespace(limit=1)
@@ -249,11 +250,11 @@ class KubernetesAdapter(LogIngestionInterface):
         except Exception as e:
             raise SourceConnectionError(f"Kubernetes connection failed: {e}") from e
 
-    async def _get_pods(self) -> List[Any]:
+    async def _get_pods(self) -> list[Any]:
         """Get pods matching the selector."""
         if self.v1 is None:
             return []
-            
+
         try:
             kwargs = {"namespace": self.config.namespace, "limit": self.config.max_pods}
 
@@ -267,7 +268,7 @@ class KubernetesAdapter(LogIngestionInterface):
             logger.error(f"Error getting pods: {e}")
             return []
 
-    async def _get_pod_containers(self, pod: Any) -> List[str]:
+    async def _get_pod_containers(self, pod: Any) -> list[str]:
         """Get container names from a pod."""
         containers = []
 
@@ -281,7 +282,7 @@ class KubernetesAdapter(LogIngestionInterface):
 
         return containers
 
-    async def _get_pod_logs(self, pod_name: str, container_name: str) -> List[str]:
+    async def _get_pod_logs(self, pod_name: str, container_name: str) -> list[str]:
         """Get logs from a specific pod and container."""
         try:
             kwargs = {
@@ -298,7 +299,7 @@ class KubernetesAdapter(LogIngestionInterface):
 
             if self.v1 is None:
                 return []
-                
+
             response = self.v1.read_namespaced_pod_log(**kwargs)
 
             # Split into lines and filter empty ones
@@ -314,7 +315,7 @@ class KubernetesAdapter(LogIngestionInterface):
     ) -> LogEntry:
         """Convert Kubernetes log line to LogEntry."""
         # Parse timestamp if present (Kubernetes logs include timestamps)
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         message = log_line
 
         # Try to extract timestamp from log line

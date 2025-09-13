@@ -4,7 +4,7 @@ Performance tests for metrics collection to ensure minimal impact on operations.
 
 import asyncio
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
@@ -19,7 +19,7 @@ class MockMetricsCollector:
     """Mock metrics collector that simulates real collection behavior."""
 
     def __init__(self) -> None:
-        self.metrics: List[Dict[str, Any]] = []
+        self.metrics: list[dict[str, Any]] = []
         self.record_calls = 0
         self.total_time = 0.0
 
@@ -28,7 +28,7 @@ class MockMetricsCollector:
         name: str,
         value: float,
         metric_type: MetricType,
-        tags: Dict[str, str],
+        tags: dict[str, str],
         unit: str = None,
     ):
         """Simulate metrics recording with realistic timing."""
@@ -338,7 +338,7 @@ class TestMetricsPerformance:
                 name: str,
                 value: float,
                 metric_type: MetricType,
-                tags: Dict[str, str],
+                tags: dict[str, str],
                 unit: str = None,
             ):
                 self.call_count += 1

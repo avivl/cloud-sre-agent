@@ -6,8 +6,8 @@ Unit tests for OpenAI provider implementation.
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from pydantic import HttpUrl
+import pytest
 
 from gemini_sre_agent.llm.base import LLMRequest, ModelType
 from gemini_sre_agent.llm.config import LLMProviderConfig

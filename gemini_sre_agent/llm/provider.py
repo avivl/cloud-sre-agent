@@ -1,8 +1,9 @@
 # gemini_sre_agent/llm/provider.py
 
-import logging
 from abc import ABC, abstractmethod
-from typing import Any, AsyncGenerator, List, Optional, Type, TypeVar
+from collections.abc import AsyncGenerator
+import logging
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
@@ -34,7 +35,7 @@ class LLMProvider(ABC):
 
     @abstractmethod
     async def generate_text(
-        self, prompt: str, model: Optional[str] = None, **kwargs: Any
+        self, prompt: str, model: str | None = None, **kwargs: Any
     ) -> str:
         """Generate text response using LiteLLM."""
         pass
@@ -43,8 +44,8 @@ class LLMProvider(ABC):
     async def generate_structured(
         self,
         prompt: str,
-        response_model: Type[T],
-        model: Optional[str] = None,
+        response_model: type[T],
+        model: str | None = None,
         **kwargs: Any,
     ) -> T:
         """Generate structured response using Instructor + LiteLLM."""
@@ -52,7 +53,7 @@ class LLMProvider(ABC):
 
     @abstractmethod
     def generate_stream(
-        self, prompt: str, model: Optional[str] = None, **kwargs: Any
+        self, prompt: str, model: str | None = None, **kwargs: Any
     ) -> AsyncGenerator[str, None]:
         """Generate streaming text response using LiteLLM."""
         pass
@@ -63,12 +64,12 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """Get list of available models for this provider."""
         pass
 
     @abstractmethod
-    def estimate_cost(self, prompt: str, model: Optional[str] = None) -> float:
+    def estimate_cost(self, prompt: str, model: str | None = None) -> float:
         """Estimate the cost for a given prompt and model."""
         pass
 
@@ -81,7 +82,7 @@ class LLMProvider(ABC):
         """Format a prompt, handling both string and Mirascope Prompt objects."""
         return prompt
 
-    def _resolve_model(self, model: Optional[str]) -> str:
+    def _resolve_model(self, model: str | None) -> str:
         """Resolve the model name, using first available if not specified."""
         if model:
             return model

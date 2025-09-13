@@ -24,7 +24,12 @@ from gemini_sre_agent.source_control.providers.sub_operation_config import (
 class MockSubOperation(BaseSubOperation):
     """Test implementation of BaseSubOperation for testing."""
 
-    def __init__(self, logger: str, error_handling_components: Optional[str] = None, config: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        logger: str,
+        error_handling_components: Optional[str] = None,
+        config: Optional[str] = None,
+    ) -> None:
         super().__init__(
             logger=logger,
             error_handling_components=error_handling_components,
@@ -82,7 +87,9 @@ class TestBaseSubOperation:
         return {"resilient_manager": resilient_manager}
 
     @pytest.fixture
-    def sub_operation(self, mock_logger: str, mock_error_handling_components: str, test_config: str) -> None:
+    def sub_operation(
+        self, mock_logger: str, mock_error_handling_components: str, test_config: str
+    ) -> None:
         """Create a test sub-operation instance."""
         return MockSubOperation(
             logger=mock_logger,

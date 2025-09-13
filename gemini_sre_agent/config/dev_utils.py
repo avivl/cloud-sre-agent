@@ -5,7 +5,7 @@ Development utilities for configuration management.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Type, TypeVar
+from typing import Any, TypeVar
 
 from .base import BaseConfig
 
@@ -17,7 +17,7 @@ class ConfigDevUtils:
 
     @staticmethod
     def generate_config_template(
-        config_class: Type, environment: str = "production"
+        config_class: type, environment: str = "production"
     ) -> str:
         """Generate configuration template from Pydantic model."""
         template = f"""# Gemini SRE Agent Configuration Template
@@ -151,7 +151,7 @@ monitoring:
         return template
 
     @staticmethod
-    def validate_config_file(file_path: str, config_class: Type[T]) -> bool:
+    def validate_config_file(file_path: str, config_class: type[T]) -> bool:
         """Validate configuration file against schema."""
         try:
             from .manager import ConfigManager
@@ -163,7 +163,7 @@ monitoring:
             return False
 
     @staticmethod
-    def migrate_old_config(old_config: Dict[str, Any]) -> Dict[str, Any]:
+    def migrate_old_config(old_config: dict[str, Any]) -> dict[str, Any]:
         """Migrate old configuration format to new format."""
         new_config = {}
 
@@ -259,11 +259,11 @@ monitoring:
         return new_config
 
     @staticmethod
-    def export_config_to_env(config: BaseConfig) -> Dict[str, str]:
+    def export_config_to_env(config: BaseConfig) -> dict[str, str]:
         """Export configuration as environment variables."""
         env_vars = {}
 
-        def flatten_dict(d: Dict[str, Any], prefix: str = "") -> Dict[str, str]:
+        def flatten_dict(d: dict[str, Any], prefix: str = "") -> dict[str, str]:
             """Flatten nested dictionary for environment variables."""
             result = {}
             for key, value in d.items():
@@ -289,13 +289,13 @@ monitoring:
 
     @staticmethod
     def diff_configs(
-        config1: Dict[str, Any], config2: Dict[str, Any], output_format: str = "yaml"
+        config1: dict[str, Any], config2: dict[str, Any], output_format: str = "yaml"
     ) -> str:
         """Compare two configurations and return differences."""
 
         def find_differences(
-            d1: Dict[str, Any], d2: Dict[str, Any], path: str = ""
-        ) -> List[str]:
+            d1: dict[str, Any], d2: dict[str, Any], path: str = ""
+        ) -> list[str]:
             """Find differences between two dictionaries."""
             differences = []
 

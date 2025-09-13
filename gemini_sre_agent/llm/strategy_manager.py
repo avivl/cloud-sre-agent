@@ -95,9 +95,8 @@ __all__ = [
 ]
 
 # For backward compatibility, create a default strategy manager instance
-from typing import Optional
 
-_default_manager: Optional[StrategyManager] = None
+_default_manager: StrategyManager | None = None
 
 
 def get_default_strategy_manager() -> StrategyManager:

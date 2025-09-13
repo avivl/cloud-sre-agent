@@ -5,7 +5,7 @@ Tests temporal analysis, service pattern detection, error classification,
 and historical context extraction for Gemini ML pattern detection.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -26,7 +26,7 @@ class TestPatternContextExtractor:
     @pytest.fixture
     def sample_window(self) -> TimeWindow:
         """Create sample time window with logs."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=10)
 
         # Add diverse logs for testing
@@ -155,7 +155,7 @@ class TestTemporalAnalysis:
     @pytest.mark.asyncio
     async def test_rapid_burst_pattern(self, extractor):
         """Test rapid burst pattern detection."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         # Create rapid burst: 10 errors in 30 seconds
@@ -179,7 +179,7 @@ class TestTemporalAnalysis:
     @pytest.mark.asyncio
     async def test_periodic_pattern(self, extractor):
         """Test periodic pattern detection."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=10)
 
         # Create periodic pattern: errors every 60 seconds
@@ -203,7 +203,7 @@ class TestTemporalAnalysis:
     @pytest.mark.asyncio
     async def test_accelerating_pattern(self, extractor):
         """Test accelerating error pattern detection."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=10)
 
         # Create accelerating pattern: decreasing intervals
@@ -244,7 +244,7 @@ class TestTemporalAnalysis:
     @pytest.mark.asyncio
     async def test_time_distribution_analysis(self, extractor):
         """Test time distribution analysis."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=8)
 
         # Concentrate errors in first quarter
@@ -283,7 +283,7 @@ class TestServicePatternAnalysis:
     @pytest.mark.asyncio
     async def test_single_service_impact(self, extractor):
         """Test single service impact analysis."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         window.logs = [
@@ -306,7 +306,7 @@ class TestServicePatternAnalysis:
     @pytest.mark.asyncio
     async def test_cascade_failure_detection(self, extractor):
         """Test cascade failure pattern detection."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         # Primary service has most errors
@@ -344,7 +344,7 @@ class TestServicePatternAnalysis:
     @pytest.mark.asyncio
     async def test_cross_service_timing_analysis(self, extractor):
         """Test cross-service timing correlation analysis."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         # Simultaneous failures (within 30 seconds)
@@ -442,7 +442,7 @@ class TestErrorPatternAnalysis:
     @pytest.mark.asyncio
     async def test_error_pattern_analysis_comprehensive(self, extractor):
         """Test comprehensive error pattern analysis."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         window.logs = [
@@ -490,7 +490,7 @@ class TestHistoricalContextAnalysis:
     @pytest.mark.asyncio
     async def test_historical_context_extraction(self, extractor):
         """Test historical context data extraction."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         historical_data = {
@@ -515,7 +515,7 @@ class TestHistoricalContextAnalysis:
     @pytest.mark.asyncio
     async def test_empty_historical_data(self, extractor):
         """Test handling of empty historical data."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         context = await extractor._analyze_historical_context(window, {})

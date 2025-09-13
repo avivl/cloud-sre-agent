@@ -8,11 +8,11 @@ classification performance including confusion matrices, accuracy metrics,
 and classification reports.
 """
 
-import logging
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+import logging
+import time
+from typing import Any
 
 import numpy as np
 
@@ -30,8 +30,8 @@ class ConfusionMatrix:
     false_positive: int = 0
     true_negative: int = 0
     false_negative: int = 0
-    matrix: Dict[Tuple[ErrorType, ErrorType], int] = field(default_factory=dict)
-    classes: List[ErrorType] = field(default_factory=list)
+    matrix: dict[tuple[ErrorType, ErrorType], int] = field(default_factory=dict)
+    classes: list[ErrorType] = field(default_factory=list)
 
     def add_prediction(self, true_label: ErrorType, predicted_label: ErrorType) -> None:
         """Add a prediction to the confusion matrix."""
@@ -63,7 +63,7 @@ class ConfusionMatrix:
 
         return matrix_array
 
-    def get_class_metrics(self, error_type: ErrorType) -> Dict[str, float]:
+    def get_class_metrics(self, error_type: ErrorType) -> dict[str, float]:
         """Get metrics for a specific error type."""
         if error_type not in self.classes:
             return {"precision": 0.0, "recall": 0.0, "f1_score": 0.0}
@@ -117,8 +117,8 @@ class ClassificationMetrics:
     weighted_recall: float = 0.0
     weighted_f1_score: float = 0.0
     support: int = 0
-    per_class_metrics: Dict[ErrorType, Dict[str, float]] = field(default_factory=dict)
-    confusion_matrix: Optional[ConfusionMatrix] = None
+    per_class_metrics: dict[ErrorType, dict[str, float]] = field(default_factory=dict)
+    confusion_matrix: ConfusionMatrix | None = None
 
 
 @dataclass
@@ -130,10 +130,10 @@ class PerformanceMetrics:
     average_confidence: float = 0.0
     average_prediction_time_ms: float = 0.0
     total_prediction_time_ms: float = 0.0
-    classification_counts: Dict[ErrorType, int] = field(
+    classification_counts: dict[ErrorType, int] = field(
         default_factory=lambda: defaultdict(int)
     )
-    confidence_by_type: Dict[ErrorType, List[float]] = field(
+    confidence_by_type: dict[ErrorType, list[float]] = field(
         default_factory=lambda: defaultdict(list)
     )
 
@@ -146,7 +146,7 @@ class MetricsSummary:
     classification_metrics: ClassificationMetrics
     performance_metrics: PerformanceMetrics
     algorithm_name: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ClassificationMetricsCollector:
@@ -160,7 +160,7 @@ class ClassificationMetricsCollector:
         # Metrics storage
         self.confusion_matrix = ConfusionMatrix()
         self.performance_metrics = PerformanceMetrics()
-        self.prediction_history: List[Tuple[ErrorType, ErrorType, float, float]] = []
+        self.prediction_history: list[tuple[ErrorType, ErrorType, float, float]] = []
 
         # Time tracking
         self.start_time = time.time()
@@ -307,7 +307,7 @@ class ClassificationMetricsCollector:
             confusion_matrix=self.confusion_matrix,
         )
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get a comprehensive performance summary."""
         classification_metrics = self.calculate_classification_metrics()
 
@@ -504,7 +504,7 @@ class ClassificationMetricsCollector:
         self.start_time = time.time()
         self.logger.info(f"Reset metrics for collector: {self.name}")
 
-    def get_top_errors(self, n: int = 5) -> List[Tuple[ErrorType, ErrorType, int]]:
+    def get_top_errors(self, n: int = 5) -> list[tuple[ErrorType, ErrorType, int]]:
         """Get the top N most common classification errors."""
         error_counts = defaultdict(int)
 
@@ -520,7 +520,7 @@ class ClassificationMetricsCollector:
             for (true_label, pred_label), count in sorted_errors[:n]
         ]
 
-    def get_confidence_statistics(self) -> Dict[str, float]:
+    def get_confidence_statistics(self) -> dict[str, float]:
         """Get overall confidence statistics."""
         if not self.prediction_history:
             return {}
@@ -537,7 +537,7 @@ class ClassificationMetricsCollector:
             "q75": float(np.percentile(confidences, 75)),
         }
 
-    def get_timing_statistics(self) -> Dict[str, float]:
+    def get_timing_statistics(self) -> dict[str, float]:
         """Get timing statistics."""
         if not self.prediction_history:
             return {}
@@ -562,14 +562,14 @@ class MetricsComparator:
     def __init__(self) -> None:
         """Initialize the metrics comparator."""
         self.logger = logging.getLogger("MetricsComparator")
-        self.metrics_summaries: Dict[str, MetricsSummary] = {}
+        self.metrics_summaries: dict[str, MetricsSummary] = {}
 
     def add_metrics(self, algorithm_name: str, metrics_summary: MetricsSummary) -> None:
         """Add metrics for an algorithm."""
         self.metrics_summaries[algorithm_name] = metrics_summary
         self.logger.info(f"Added metrics for algorithm: {algorithm_name}")
 
-    def compare_algorithms(self, metric: str = "f1_score") -> List[Tuple[str, float]]:
+    def compare_algorithms(self, metric: str = "f1_score") -> list[tuple[str, float]]:
         """Compare algorithms by a specific metric."""
         results = []
 
@@ -584,7 +584,7 @@ class MetricsComparator:
         results.sort(key=lambda x: x[1], reverse=True)
         return results
 
-    def get_best_algorithm(self, metric: str = "f1_score") -> Optional[str]:
+    def get_best_algorithm(self, metric: str = "f1_score") -> str | None:
         """Get the best performing algorithm for a specific metric."""
         comparison = self.compare_algorithms(metric)
         return comparison[0][0] if comparison else None
@@ -649,8 +649,8 @@ class MetricsComparator:
 
 
 def calculate_metrics_from_predictions(
-    true_labels: List[ErrorType],
-    predicted_results: List[ClassificationResult],
+    true_labels: list[ErrorType],
+    predicted_results: list[ClassificationResult],
     algorithm_name: str = "unknown",
 ) -> MetricsSummary:
     """Calculate metrics from lists of predictions."""
@@ -666,8 +666,8 @@ def calculate_metrics_from_predictions(
 
 
 def compare_classifier_performance(
-    true_labels: List[ErrorType],
-    predictions_by_algorithm: Dict[str, List[ClassificationResult]],
+    true_labels: list[ErrorType],
+    predictions_by_algorithm: dict[str, list[ClassificationResult]],
 ) -> MetricsComparator:
     """Compare performance of multiple classifiers."""
     comparator = MetricsComparator()

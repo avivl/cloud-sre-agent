@@ -3,9 +3,10 @@
 """Retry handler with exponential backoff and jitter."""
 
 import asyncio
+from collections.abc import Callable
 import logging
 import random
-from typing import Any, Callable, Optional
+from typing import Any
 
 from tenacity import (
     RetryError,
@@ -32,7 +33,7 @@ class RetryHandler:
         max_delay: float = 60.0,
         jitter: bool = True,
         jitter_range: float = 0.1,
-        error_classifier: Optional[ErrorClassifier] = None,
+        error_classifier: ErrorClassifier | None = None,
     ):
         """Initialize the retry handler.
 
@@ -61,7 +62,7 @@ class RetryHandler:
         self,
         func: Callable,
         *args,
-        retryable_exceptions: Optional[tuple] = None,
+        retryable_exceptions: tuple | None = None,
         **kwargs,
     ) -> Any:
         """Execute a function with retry logic.
@@ -221,7 +222,7 @@ class TenacityRetryHandler:
         base_delay: float = 1.0,
         max_delay: float = 60.0,
         jitter: bool = True,
-        retryable_exceptions: Optional[tuple] = None,
+        retryable_exceptions: tuple | None = None,
     ):
         """Initialize the tenacity retry handler.
 

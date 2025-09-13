@@ -10,10 +10,10 @@ model selection based on task requirements, performance metrics, and fallback ch
 This is now a coordination module that uses the modular service components.
 """
 
+from datetime import timedelta
 import logging
 import time
-from datetime import timedelta
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Generic, TypeVar
 
 try:
     from mirascope.llm import Provider
@@ -39,7 +39,7 @@ from .performance_cache import MetricType, PerformanceMonitor
 from .prompt_manager import PromptManager
 
 # Import the new modular service components
-from .service_base import BaseService, ServiceConfig, ServiceHealth, ServiceStatus
+from .service_base import BaseLLMService, ServiceConfig, ServiceHealth, ServiceStatus
 from .service_manager import LoadBalancingStrategy, ServiceManager, ServiceType
 from .service_metrics import ServiceAlert, ServiceMetricsManager
 
@@ -65,9 +65,9 @@ class EnhancedLLMService(Generic[T]):
     def __init__(
         self,
         config: LLMConfig,
-        model_registry: Optional[ModelRegistry] = None,
-        performance_monitor: Optional[PerformanceMonitor] = None,
-        service_manager: Optional[ServiceManager] = None,
+        model_registry: ModelRegistry | None = None,
+        performance_monitor: PerformanceMonitor | None = None,
+        service_manager: ServiceManager | None = None,
     ):
         """Initialize the enhanced LLM service."""
         self.config = config
@@ -100,8 +100,8 @@ class EnhancedLLMService(Generic[T]):
         self._populate_model_registry()
 
         # Track selection statistics
-        self._selection_stats: Dict[str, int] = {}
-        self._last_selection_time: Dict[str, float] = {}
+        self._selection_stats: dict[str, int] = {}
+        self._last_selection_time: dict[str, float] = {}
 
         self.logger.info(
             "EnhancedLLMService initialized with intelligent model selection and modular services"
@@ -165,16 +165,16 @@ class EnhancedLLMService(Generic[T]):
 
     async def generate_structured(
         self,
-        prompt: Union[str, Any],
-        response_model: Type[T],
-        model: Optional[str] = None,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[str] = None,
+        prompt: str | Any,
+        response_model: type[T],
+        model: str | None = None,
+        model_type: ModelType | None = None,
+        provider: str | None = None,
         selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE,
-        custom_weights: Optional[ScoringWeights] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_reliability: Optional[float] = None,
+        custom_weights: ScoringWeights | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_reliability: float | None = None,
         **kwargs: Any,
     ) -> T:
         """Generate a structured response with intelligent model selection."""
@@ -415,20 +415,20 @@ Respond only with the JSON object, no additional text."""
             except Exception as metrics_error:
                 self.logger.warning(f"Failed to record metrics: {metrics_error}")
 
-            self.logger.error(f"Error generating structured response: {str(e)}")
+            self.logger.error(f"Error generating structured response: {e!s}")
             raise
 
     async def generate_text(
         self,
-        prompt: Union[str, Any],
-        model: Optional[str] = None,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[str] = None,
+        prompt: str | Any,
+        model: str | None = None,
+        model_type: ModelType | None = None,
+        provider: str | None = None,
         selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE,
-        custom_weights: Optional[ScoringWeights] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_reliability: Optional[float] = None,
+        custom_weights: ScoringWeights | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_reliability: float | None = None,
         **kwargs: Any,
     ) -> str:
         """Generate a plain text response with intelligent model selection."""
@@ -510,18 +510,18 @@ Respond only with the JSON object, no additional text."""
             except Exception as metrics_error:
                 self.logger.warning(f"Failed to record metrics: {metrics_error}")
 
-            self.logger.error(f"Error generating text response: {str(e)}")
+            self.logger.error(f"Error generating text response: {e!s}")
             raise
 
     async def generate_with_fallback(
         self,
-        prompt: Union[str, Any],
-        response_model: Optional[Type[T]] = None,
-        model_type: Optional[ModelType] = None,
+        prompt: str | Any,
+        response_model: type[T] | None = None,
+        model_type: ModelType | None = None,
         selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE,
         max_attempts: int = 3,
         **kwargs: Any,
-    ) -> Union[str, T]:
+    ) -> str | T:
         """Generate response with automatic fallback chain execution."""
         last_error = None
 
@@ -578,7 +578,7 @@ Respond only with the JSON object, no additional text."""
 
             except Exception as e:
                 last_error = e
-                self.logger.warning(f"Model {model_info.name} failed: {str(e)}")
+                self.logger.warning(f"Model {model_info.name} failed: {e!s}")
 
                 # Record failure
                 self.performance_monitor.record_success(
@@ -596,21 +596,21 @@ Respond only with the JSON object, no additional text."""
 
         # All models failed
         self.logger.error(
-            f"All {max_attempts} models in fallback chain failed. Last error: {str(last_error)}"
+            f"All {max_attempts} models in fallback chain failed. Last error: {last_error!s}"
         )
         raise last_error or Exception("All models in fallback chain failed")
 
     async def _select_model_for_task(
         self,
-        model: Optional[str] = None,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[str] = None,
+        model: str | None = None,
+        model_type: ModelType | None = None,
+        provider: str | None = None,
         selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE,
-        custom_weights: Optional[ScoringWeights] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_reliability: Optional[float] = None,
-        required_capabilities: Optional[List] = None,
+        custom_weights: ScoringWeights | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_reliability: float | None = None,
+        required_capabilities: list | None = None,
     ) -> tuple[ModelInfo, SelectionResult]:
         """Select the best model for a task based on criteria."""
 
@@ -672,7 +672,7 @@ Respond only with the JSON object, no additional text."""
         self._selection_stats[key] = self._selection_stats.get(key, 0) + 1
         self._last_selection_time[model_name] = time.time()
 
-    async def health_check(self, provider: Optional[str] = None) -> bool:
+    async def health_check(self, provider: str | None = None) -> bool:
         """Check if the specified provider is healthy and accessible."""
         try:
             if provider:
@@ -688,12 +688,12 @@ Respond only with the JSON object, no additional text."""
             return all(health_status.values())
 
         except Exception as e:
-            self.logger.error(f"Health check failed: {str(e)}")
+            self.logger.error(f"Health check failed: {e!s}")
             return False
 
     def get_available_models(
-        self, provider: Optional[str] = None
-    ) -> Dict[str, List[str]]:
+        self, provider: str | None = None
+    ) -> dict[str, list[str]]:
         """Get available models for the specified provider or all providers."""
         if provider:
             if provider in self.providers:
@@ -713,17 +713,17 @@ Respond only with the JSON object, no additional text."""
             )
         return result
 
-    def get_model_performance(self, model_name: str) -> Dict[str, Any]:
+    def get_model_performance(self, model_name: str) -> dict[str, Any]:
         """Get performance metrics for a specific model."""
         return self.performance_monitor.get_model_performance(model_name)
 
     def get_best_models(
         self, metric_type: MetricType, limit: int = 5
-    ) -> List[tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Get best performing models for a specific metric."""
         return self.performance_monitor.get_best_models(metric_type, limit)
 
-    def get_selection_stats(self) -> Dict[str, Any]:
+    def get_selection_stats(self) -> dict[str, Any]:
         """Get model selection statistics."""
         return {
             "selection_counts": self._selection_stats.copy(),
@@ -733,9 +733,9 @@ Respond only with the JSON object, no additional text."""
 
     def get_model_rankings(
         self,
-        metric_types: List[MetricType],
-        weights: Optional[Dict[MetricType, float]] = None,
-    ) -> List[tuple[str, float]]:
+        metric_types: list[MetricType],
+        weights: dict[MetricType, float] | None = None,
+    ) -> list[tuple[str, float]]:
         """Get model rankings based on multiple performance metrics."""
         return self.performance_monitor.get_model_rankings(metric_types, weights)
 
@@ -753,7 +753,7 @@ Respond only with the JSON object, no additional text."""
 
     async def get_service_health(
         self, service_type: ServiceType
-    ) -> Optional[ServiceHealth]:
+    ) -> ServiceHealth | None:
         """Get health status for a specific service type."""
         service = await self.service_manager.get_service(service_type)
         if not service:
@@ -763,15 +763,15 @@ Respond only with the JSON object, no additional text."""
     async def execute_service_request(
         self,
         service_type: ServiceType,
-        request_data: Dict[str, Any],
-        service_id: Optional[str] = None,
+        request_data: dict[str, Any],
+        service_id: str | None = None,
     ) -> Any:
         """Execute a request through the appropriate service."""
         return await self.service_manager.execute_service_request(
             service_type, request_data, service_id
         )
 
-    def get_service_metrics(self, service_id: str) -> Optional[Dict[str, Any]]:
+    def get_service_metrics(self, service_id: str) -> dict[str, Any] | None:
         """Get metrics for a specific service."""
         metrics = self.metrics_manager.get_service_metrics(service_id)
         if not metrics:
@@ -789,7 +789,7 @@ Respond only with the JSON object, no additional text."""
             "health_score": metrics.health_score,
         }
 
-    def get_all_service_metrics(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_service_metrics(self) -> dict[str, dict[str, Any]]:
         """Get metrics for all services."""
         all_metrics = self.metrics_manager.get_all_metrics()
         return {
@@ -830,7 +830,7 @@ Respond only with the JSON object, no additional text."""
         self.metrics_manager.add_alert(alert)
         self.logger.info(f"Added alert for {service_id}: {metric_name}")
 
-    def get_active_alerts(self) -> List[Dict[str, Any]]:
+    def get_active_alerts(self) -> list[dict[str, Any]]:
         """Get all currently active alerts."""
         alerts = self.metrics_manager.get_active_alerts()
         return [
@@ -848,20 +848,20 @@ Respond only with the JSON object, no additional text."""
             for alert in alerts
         ]
 
-    def generate_service_report(self, service_id: str) -> Dict[str, Any]:
+    def generate_service_report(self, service_id: str) -> dict[str, Any]:
         """Generate a comprehensive report for a service."""
         return self.metrics_manager.generate_service_report(service_id)
 
-    def generate_summary_report(self) -> Dict[str, Any]:
+    def generate_summary_report(self) -> dict[str, Any]:
         """Generate a summary report for all services."""
         return self.metrics_manager.generate_summary_report()
 
 
 def create_enhanced_llm_service(
     config: LLMConfig,
-    model_registry: Optional[ModelRegistry] = None,
-    performance_monitor: Optional[PerformanceMonitor] = None,
-    service_manager: Optional[ServiceManager] = None,
+    model_registry: ModelRegistry | None = None,
+    performance_monitor: PerformanceMonitor | None = None,
+    service_manager: ServiceManager | None = None,
 ) -> EnhancedLLMService:
     """Factory function to create and configure an EnhancedLLMService instance."""
     return EnhancedLLMService(
@@ -879,7 +879,7 @@ __all__ = [
     "LoadBalancingStrategy",
     "ServiceMetricsManager",
     "ServiceAlert",
-    "BaseService",
+    "BaseLLMService",
     "ServiceConfig",
     "ServiceStatus",
     "ServiceHealth",

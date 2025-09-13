@@ -4,10 +4,10 @@
 LogProcessor handles log validation, sanitization, and flow tracking.
 """
 
+from datetime import datetime
 import logging
 import re
-from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from ..interfaces import LogEntry, LogSeverity
 
@@ -148,7 +148,7 @@ class LogProcessor:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"flow_{timestamp}_{self.flow_counter:06d}"
 
-    async def batch_process_logs(self, log_entries: List[LogEntry]) -> List[LogEntry]:
+    async def batch_process_logs(self, log_entries: list[LogEntry]) -> list[LogEntry]:
         """Process multiple log entries in batch."""
         processed_entries = []
 
@@ -164,7 +164,7 @@ class LogProcessor:
 
         return processed_entries
 
-    def get_processing_stats(self) -> Dict[str, Any]:
+    def get_processing_stats(self) -> dict[str, Any]:
         """Get processing statistics."""
         return {
             "flow_counter": self.flow_counter,

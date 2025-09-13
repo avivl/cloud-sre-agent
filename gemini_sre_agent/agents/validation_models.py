@@ -8,19 +8,18 @@ utilities for agent-specific data validation patterns including confidence score
 severity levels, and comprehensive error reporting.
 """
 
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 from uuid import uuid4
 
 from pydantic import (
     BaseModel,
     Field,
-)
-from pydantic import ValidationError as PydanticValidationError
-from pydantic import (
     field_validator,
 )
+from pydantic import ValidationError as PydanticValidationError
 
 # ============================================================================
 # Validation Error Models
@@ -32,16 +31,16 @@ class ValidationError(BaseModel):
 
     field: str = Field(..., description="Field that failed validation")
     message: str = Field(..., description="Error message")
-    value: Optional[Any] = Field(None, description="Value that caused the error")
-    code: Optional[str] = Field(
+    value: Any | None = Field(None, description="Value that caused the error")
+    code: str | None = Field(
         None, description="Error code for programmatic handling"
     )
     severity: str = Field("error", description="Severity of the validation error")
-    context: Dict[str, Any] = Field(
+    context: dict[str, Any] = Field(
         default_factory=dict, description="Additional context for the error"
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Error timestamp",
     )
 
@@ -55,11 +54,11 @@ class ValidationWarning(BaseModel):
 
     field: str = Field(..., description="Field with validation warning")
     message: str = Field(..., description="Warning message")
-    value: Optional[Any] = Field(None, description="Value that caused the warning")
-    code: Optional[str] = Field(None, description="Warning code")
-    suggestion: Optional[str] = Field(None, description="Suggested fix")
+    value: Any | None = Field(None, description="Value that caused the warning")
+    code: str | None = Field(None, description="Warning code")
+    suggestion: str | None = Field(None, description="Suggested fix")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Warning timestamp",
     )
 
@@ -72,20 +71,20 @@ class ValidationResult(BaseModel):
     """Comprehensive validation result with errors and warnings."""
 
     is_valid: bool = Field(..., description="Whether validation passed")
-    errors: List[ValidationError] = Field(
+    errors: list[ValidationError] = Field(
         default_factory=list, description="Validation errors"
     )
-    warnings: List[ValidationWarning] = Field(
+    warnings: list[ValidationWarning] = Field(
         default_factory=list, description="Validation warnings"
     )
-    validated_data: Optional[Dict[str, Any]] = Field(
+    validated_data: dict[str, Any] | None = Field(
         None, description="Validated and cleaned data"
     )
     validation_time_ms: float = Field(
         ..., description="Time taken for validation in milliseconds"
     )
-    validator_used: Optional[str] = Field(None, description="Validator that was used")
-    metadata: Dict[str, Any] = Field(
+    validator_used: str | None = Field(None, description="Validator that was used")
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Validation metadata"
     )
 
@@ -140,7 +139,7 @@ def validate_severity_level(value: str) -> str:
     return value.lower()
 
 
-def validate_positive_number(value: Union[int, float]) -> Union[int, float]:
+def validate_positive_number(value: int | float) -> int | float:
     """Validate that a number is positive."""
     if value < 0:
         raise ValueError("Number must be positive")
@@ -163,7 +162,7 @@ def validate_uuid_format(value: str) -> str:
         raise ValueError("Invalid UUID format")
 
 
-def validate_timestamp(value: Union[str, datetime]) -> datetime:
+def validate_timestamp(value: str | datetime) -> datetime:
     """Validate and convert timestamp to datetime."""
     if isinstance(value, datetime):
         return value
@@ -197,13 +196,13 @@ class MetricValidationSchema(BaseModel):
     """Validation schema for metrics data."""
 
     name: str = Field(..., description="Metric name")
-    value: Union[int, float] = Field(..., description="Metric value")
-    unit: Optional[str] = Field(None, description="Metric unit")
+    value: int | float = Field(..., description="Metric value")
+    unit: str | None = Field(None, description="Metric unit")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Metric timestamp",
     )
-    tags: Dict[str, str] = Field(default_factory=dict, description="Metric tags")
+    tags: dict[str, str] = Field(default_factory=dict, description="Metric tags")
 
     @field_validator("name")
     @classmethod
@@ -251,10 +250,10 @@ class LogValidationSchema(BaseModel):
     level: str = Field(..., description="Log level")
     message: str = Field(..., description="Log message")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), description="Log timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Log timestamp"
     )
-    source: Optional[str] = Field(None, description="Log source")
-    context: Dict[str, Any] = Field(default_factory=dict, description="Log context")
+    source: str | None = Field(None, description="Log source")
+    context: dict[str, Any] = Field(default_factory=dict, description="Log context")
 
     @field_validator("level")
     @classmethod
@@ -308,7 +307,7 @@ class CodeAnalysisValidationSchema(BaseModel):
     severity: str = Field(..., description="Issue severity")
     message: str = Field(..., description="Issue message")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
-    rule_id: Optional[str] = Field(None, description="Rule identifier")
+    rule_id: str | None = Field(None, description="Rule identifier")
 
     @field_validator("file_path")
     @classmethod
@@ -382,6 +381,7 @@ def validate_with_schema(schema_class: type) -> Callable:
             Callable: Description of return value.
 
         """
+
         def wrapper(*args: str, **kwargs: str) -> None:
             """
             Wrapper.
@@ -438,11 +438,11 @@ class ValidationUtils:
     """Utility class for common validation operations."""
 
     @staticmethod
-    def validate_agent_response_data(data: Dict[str, Any]) -> ValidationResult:
+    def validate_agent_response_data(data: dict[str, Any]) -> ValidationResult:
         """Validate agent response data structure."""
         errors = []
         warnings = []
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Required fields validation
         required_fields = ["agent_id", "agent_type", "status"]
@@ -499,7 +499,7 @@ class ValidationUtils:
                 )
 
         # Calculate validation time
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         validation_time_ms = (end_time - start_time).total_seconds() * 1000
 
         return ValidationResult(
@@ -512,11 +512,11 @@ class ValidationUtils:
         )
 
     @staticmethod
-    def validate_workflow_data(data: Dict[str, Any]) -> ValidationResult:
+    def validate_workflow_data(data: dict[str, Any]) -> ValidationResult:
         """Validate workflow data structure."""
         errors = []
         warnings = []
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Required fields validation
         required_fields = ["workflow_id", "workflow_name", "workflow_type"]
@@ -562,7 +562,7 @@ class ValidationUtils:
                         )
 
         # Calculate validation time
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         validation_time_ms = (end_time - start_time).total_seconds() * 1000
 
         return ValidationResult(
@@ -576,7 +576,7 @@ class ValidationUtils:
 
     @staticmethod
     def aggregate_validation_results(
-        results: List[ValidationResult],
+        results: list[ValidationResult],
     ) -> ValidationResult:
         """Aggregate multiple validation results into one."""
         all_errors = []
@@ -635,8 +635,8 @@ class ValidationUtils:
 class ValidationRegistry:
     """Registry for validation functions and schemas."""
 
-    _validators: Dict[str, Callable] = {}
-    _schemas: Dict[str, type] = {}
+    _validators: dict[str, Callable] = {}
+    _schemas: dict[str, type] = {}
 
     @classmethod
     def register_validator(cls, name: str, validator: Callable) -> None:
@@ -649,22 +649,22 @@ class ValidationRegistry:
         cls._schemas[name] = schema
 
     @classmethod
-    def get_validator(cls, name: str) -> Optional[Callable]:
+    def get_validator(cls, name: str) -> Callable | None:
         """Get a registered validator."""
         return cls._validators.get(name)
 
     @classmethod
-    def get_schema(cls, name: str) -> Optional[type]:
+    def get_schema(cls, name: str) -> type | None:
         """Get a registered schema."""
         return cls._schemas.get(name)
 
     @classmethod
-    def list_validators(cls) -> List[str]:
+    def list_validators(cls) -> list[str]:
         """List all registered validators."""
         return list(cls._validators.keys())
 
     @classmethod
-    def list_schemas(cls) -> List[str]:
+    def list_schemas(cls) -> list[str]:
         """List all registered schemas."""
         return list(cls._schemas.keys())
 

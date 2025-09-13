@@ -6,7 +6,7 @@ from gemini_sre_agent.llm.config_manager import get_config_manager
 
 from .metrics_manager import MetricsManager
 
-_metrics_manager: Optional[MetricsManager] = None
+_metrics_manager: MetricsManager | None = None
 
 
 def get_metrics_manager() -> MetricsManager:

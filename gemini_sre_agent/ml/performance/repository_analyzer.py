@@ -10,9 +10,9 @@ async processing, and incremental updates to minimize analysis time.
 import asyncio
 import logging
 import os
-import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any
 
 from ..caching import RepositoryContextCache
 from ..prompt_context_models import RepositoryContext
@@ -188,7 +188,7 @@ class PerformanceRepositoryAnalyzer:
                 code_quality_metrics={},
             )
 
-    async def _analyze_file_structure(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_file_structure(self, config: dict[str, Any]) -> dict[str, Any]:
         """Analyze repository file structure asynchronously."""
         try:
             structure = {
@@ -225,7 +225,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.error(f"File structure analysis failed: {e}")
             return {}
 
-    async def _analyze_technology_stack(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_technology_stack(self, config: dict[str, Any]) -> dict[str, Any]:
         """Analyze technology stack from configuration files."""
         try:
             tech_stack = {}
@@ -259,7 +259,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.error(f"Technology stack analysis failed: {e}")
             return {}
 
-    async def _analyze_coding_standards(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_coding_standards(self, config: dict[str, Any]) -> dict[str, Any]:
         """Analyze coding standards from configuration files."""
         try:
             standards = {}
@@ -286,7 +286,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.error(f"Coding standards analysis failed: {e}")
             return {}
 
-    async def _analyze_error_patterns(self, config: Dict[str, Any]) -> List[str]:
+    async def _analyze_error_patterns(self, config: dict[str, Any]) -> list[str]:
         """Analyze error handling patterns in the codebase."""
         try:
             patterns = []
@@ -323,7 +323,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.error(f"Error pattern analysis failed: {e}")
             return []
 
-    async def _analyze_testing_patterns(self, config: Dict[str, Any]) -> List[str]:
+    async def _analyze_testing_patterns(self, config: dict[str, Any]) -> list[str]:
         """Analyze testing patterns in the codebase."""
         try:
             patterns = []
@@ -362,8 +362,8 @@ class PerformanceRepositoryAnalyzer:
             return []
 
     async def _analyze_dependency_structure(
-        self, config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze dependency structure of the project."""
         try:
             dependencies = {}
@@ -390,7 +390,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.error(f"Dependency analysis failed: {e}")
             return {}
 
-    async def _scan_files_async(self, config: Dict[str, Any]):
+    async def _scan_files_async(self, config: dict[str, Any]):
         """Async file scanner with configurable depth and limits."""
         try:
             for root, dirs, files in os.walk(self.repo_path, topdown=True):
@@ -425,7 +425,7 @@ class PerformanceRepositoryAnalyzer:
         except Exception as e:
             self.logger.error(f"File scanning failed: {e}")
 
-    async def _find_source_files(self, config: Dict[str, Any]) -> List[Path]:
+    async def _find_source_files(self, config: dict[str, Any]) -> list[Path]:
         """Find source code files in the repository."""
         source_extensions = {
             ".py",
@@ -446,7 +446,7 @@ class PerformanceRepositoryAnalyzer:
 
         return source_files
 
-    async def _find_test_files(self, config: Dict[str, Any]) -> List[Path]:
+    async def _find_test_files(self, config: dict[str, Any]) -> list[Path]:
         """Find test files in the repository."""
         test_patterns = ["test", "spec", "Test", "Spec"]
         test_files = []
@@ -468,7 +468,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.debug(f"Failed to read {file_path}: {e}")
             return ""
 
-    def _determine_architecture_type(self, file_structure: Dict[str, Any]) -> str:
+    def _determine_architecture_type(self, file_structure: dict[str, Any]) -> str:
         """Determine architecture type from file structure."""
         if not file_structure:
             return "unknown"
@@ -485,7 +485,7 @@ class PerformanceRepositoryAnalyzer:
         else:
             return "monolith"
 
-    async def _detect_framework(self) -> Optional[str]:
+    async def _detect_framework(self) -> str | None:
         """Detect framework from configuration files."""
         framework_indicators = {
             "django": ["manage.py", "settings.py"],
@@ -504,7 +504,7 @@ class PerformanceRepositoryAnalyzer:
 
         return None
 
-    async def _parse_config_file(self, file_path: Path) -> Dict[str, Any]:
+    async def _parse_config_file(self, file_path: Path) -> dict[str, Any]:
         """Parse configuration file to extract technology information."""
         try:
             content = await self._read_file_async(file_path)
@@ -530,7 +530,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.debug(f"Failed to parse config file {file_path}: {e}")
             return {}
 
-    async def _parse_standards_file(self, file_path: Path) -> Dict[str, Any]:
+    async def _parse_standards_file(self, file_path: Path) -> dict[str, Any]:
         """Parse standards configuration file."""
         try:
             await self._read_file_async(file_path)
@@ -548,7 +548,7 @@ class PerformanceRepositoryAnalyzer:
             self.logger.debug(f"Failed to parse standards file {file_path}: {e}")
             return {}
 
-    async def _parse_dependencies_file(self, file_path: Path) -> Dict[str, Any]:
+    async def _parse_dependencies_file(self, file_path: Path) -> dict[str, Any]:
         """Parse dependencies file."""
         try:
             content = await self._read_file_async(file_path)
@@ -570,19 +570,19 @@ class PerformanceRepositoryAnalyzer:
             self.logger.debug(f"Failed to parse dependencies file {file_path}: {e}")
             return {}
 
-    async def _get_recent_changes(self) -> List[Dict[str, Any]]:
+    async def _get_recent_changes(self) -> list[dict[str, Any]]:
         """Get recent changes (placeholder for git integration)."""
         # This would integrate with git to get recent commits
         return []
 
-    async def _get_historical_fixes(self) -> List[Dict[str, Any]]:
+    async def _get_historical_fixes(self) -> list[dict[str, Any]]:
         """Get historical fixes (placeholder for git integration)."""
         # This would analyze git history for fix patterns
         return []
 
     async def _calculate_quality_metrics(
-        self, file_structure: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, file_structure: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate code quality metrics."""
         if not file_structure:
             return {}

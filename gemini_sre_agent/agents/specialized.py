@@ -8,7 +8,6 @@ and are tailored for specific types of tasks like text generation, analysis,
 and code generation.
 """
 
-from typing import List, Optional
 
 from ..llm.service import LLMService
 from .base import BaseAgent
@@ -22,7 +21,7 @@ class TextAgent(BaseAgent[TextResponse]):
         self,
         llm_service: LLMService,
         primary_model: str = "smart",
-        fallback_model: Optional[str] = "fast",
+        fallback_model: str | None = "fast",
     ):
         super().__init__(
             llm_service=llm_service,
@@ -45,7 +44,7 @@ class AnalysisAgent(BaseAgent[AnalysisResponse]):
         self,
         llm_service: LLMService,
         primary_model: str = "smart",
-        fallback_model: Optional[str] = None,  # No fallback by default for analysis
+        fallback_model: str | None = None,  # No fallback by default for analysis
     ):
         super().__init__(
             llm_service=llm_service,
@@ -55,7 +54,7 @@ class AnalysisAgent(BaseAgent[AnalysisResponse]):
         )
 
     async def analyze(
-        self, content: str, criteria: List[str], **kwargs
+        self, content: str, criteria: list[str], **kwargs
     ) -> AnalysisResponse:
         """Analyze content based on provided criteria."""
         return await self.execute(
@@ -71,7 +70,7 @@ class CodeAgent(BaseAgent[CodeResponse]):
         self,
         llm_service: LLMService,
         primary_model: str = "code",
-        fallback_model: Optional[str] = "smart",
+        fallback_model: str | None = "smart",
     ):
         super().__init__(
             llm_service=llm_service,

@@ -8,7 +8,7 @@ and management of LLM providers based on configuration.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from .base import ErrorSeverity, LLMProvider, LLMProviderError
 from .providers import (
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class LLMProviderFactory:
     """Factory for creating and managing LLM providers."""
 
-    _providers: Dict[str, Type[LLMProvider]] = {
+    _providers: dict[str, type[LLMProvider]] = {
         "gemini": GeminiProvider,
         "openai": OpenAIProvider,
         "anthropic": AnthropicProvider,
@@ -34,7 +34,7 @@ class LLMProviderFactory:
         "grok": GrokProvider,
         "bedrock": BedrockProvider,
     }
-    _instances: Dict[str, LLMProvider] = {}
+    _instances: dict[str, LLMProvider] = {}
 
     @classmethod
     def create_provider(cls, provider_name: str, config: Any) -> LLMProvider:
@@ -86,7 +86,7 @@ class LLMProviderFactory:
             ) from e
 
     @classmethod
-    def get_provider(cls, provider_name: str) -> Optional[LLMProvider]:
+    def get_provider(cls, provider_name: str) -> LLMProvider | None:
         """
         Get an existing provider instance by name.
 
@@ -99,7 +99,7 @@ class LLMProviderFactory:
         return cls._instances.get(provider_name)
 
     @classmethod
-    def list_providers(cls) -> List[str]:
+    def list_providers(cls) -> list[str]:
         """
         List all registered provider types.
 
@@ -109,7 +109,7 @@ class LLMProviderFactory:
         return list(cls._providers.keys())
 
     @classmethod
-    def list_instances(cls) -> List[str]:
+    def list_instances(cls) -> list[str]:
         """
         List all provider instances.
 
@@ -119,7 +119,9 @@ class LLMProviderFactory:
         return list(cls._instances.keys())
 
     @classmethod
-    def register_provider(cls: str, name: str, provider_class: Type[LLMProvider]) -> None:
+    def register_provider(
+        cls: str, name: str, provider_class: type[LLMProvider]
+    ) -> None:
         """
         Register a new provider type.
 
@@ -152,7 +154,7 @@ class LLMProviderFactory:
         logger.info("Cleared all provider instances")
 
     @classmethod
-    def health_check_all(cls) -> Dict[str, bool]:
+    def health_check_all(cls) -> dict[str, bool]:
         """
         Perform health check on all provider instances.
 
@@ -173,7 +175,7 @@ class LLMProviderFactory:
         return health_status
 
     @classmethod
-    async def get_all_providers(cls) -> Dict[str, LLMProvider]:
+    async def get_all_providers(cls) -> dict[str, LLMProvider]:
         """
         Get all provider instances.
 
@@ -183,7 +185,7 @@ class LLMProviderFactory:
         return cls._instances.copy()
 
     @classmethod
-    def create_providers_from_config(cls, config: Any) -> Dict[str, LLMProvider]:
+    def create_providers_from_config(cls, config: Any) -> dict[str, LLMProvider]:
         """
         Create providers from a configuration object.
 
@@ -207,6 +209,6 @@ class LLMProviderFactory:
         return providers
 
 
-def get_provider_factory() -> Type[LLMProviderFactory]:
+def get_provider_factory() -> type[LLMProviderFactory]:
     """Get the provider factory class."""
     return LLMProviderFactory

@@ -7,7 +7,7 @@ This module defines the core exception classes that form the foundation
 of the error handling system across all components.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class GeminiSREAgentError(Exception):
@@ -28,9 +28,9 @@ class GeminiSREAgentError(Exception):
     def __init__(
         self,
         message: str,
-        error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        error_code: str | None = None,
+        details: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         """
         Initialize the base exception.
@@ -54,7 +54,7 @@ class GeminiSREAgentError(Exception):
             base_msg += f" (Code: {self.error_code})"
         return base_msg
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert exception to dictionary for serialization.
 

@@ -8,7 +8,7 @@ history management for the unified workflow orchestrator.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from .caching import ContextCache
 from .performance import get_performance_monitor
@@ -47,7 +47,7 @@ class WorkflowMetricsCollector:
         self.logger = logging.getLogger(__name__)
 
         # Workflow history
-        self.workflow_history: List[Any] = []
+        self.workflow_history: list[Any] = []
 
     async def calculate_cache_hit_rate(self) -> float:
         """Calculate the current cache hit rate."""
@@ -57,7 +57,7 @@ class WorkflowMetricsCollector:
         except Exception:
             return 0.0
 
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """Get comprehensive performance metrics."""
         try:
             cache_stats = await self.cache.get_stats()
@@ -99,7 +99,7 @@ class WorkflowMetricsCollector:
             self.logger.error(f"Failed to get performance metrics: {e}")
             return {"error": str(e)}
 
-    async def get_performance_insights(self) -> Dict[str, Any]:
+    async def get_performance_insights(self) -> dict[str, Any]:
         """Get comprehensive performance insights from the monitoring system."""
         try:
             # Get performance summaries for all operations
@@ -142,7 +142,7 @@ class WorkflowMetricsCollector:
         """Add a workflow result to the history."""
         self.workflow_history.append(result)
 
-    async def get_workflow_history(self) -> List[Any]:
+    async def get_workflow_history(self) -> list[Any]:
         """Get workflow execution history."""
         return self.workflow_history.copy()
 
@@ -180,14 +180,14 @@ class WorkflowMetricsCollector:
         total_duration = sum(w.metrics.total_duration for w in self.workflow_history)
         return total_duration / len(self.workflow_history)
 
-    def get_recent_workflows(self, count: int = 10) -> List[Any]:
+    def get_recent_workflows(self, count: int = 10) -> list[Any]:
         """Get the most recent workflows."""
         return self.workflow_history[-count:] if self.workflow_history else []
 
-    def get_failed_workflows(self) -> List[Any]:
+    def get_failed_workflows(self) -> list[Any]:
         """Get all failed workflows."""
         return [w for w in self.workflow_history if not w.success]
 
-    def get_successful_workflows(self) -> List[Any]:
+    def get_successful_workflows(self) -> list[Any]:
         """Get all successful workflows."""
         return [w for w in self.workflow_history if w.success]

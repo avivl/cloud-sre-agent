@@ -7,10 +7,11 @@ This module provides smart caching capabilities for model mixing operations,
 including content hashing, LRU eviction, and performance optimization.
 """
 
+from collections.abc import Callable
 import hashlib
 import logging
 import time
-from typing import Any, Callable, Dict
+from typing import Any
 
 from .model_mixer import MixingStrategy, TaskType
 
@@ -27,9 +28,9 @@ class IntelligentCache:
             max_size: Maximum number of cached items
             ttl_seconds: Time-to-live for cached items in seconds
         """
-        self.cache: Dict[str, Dict[str, Any]] = {}
-        self.access_times: Dict[str, float] = {}
-        self.creation_times: Dict[str, float] = {}
+        self.cache: dict[str, dict[str, Any]] = {}
+        self.access_times: dict[str, float] = {}
+        self.creation_times: dict[str, float] = {}
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
         self.hit_count = 0
@@ -146,7 +147,7 @@ class IntelligentCache:
         except Exception:
             return 1024  # Default estimate
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         total_requests = self.hit_count + self.miss_count
         hit_rate = self.hit_count / total_requests if total_requests > 0 else 0
@@ -186,7 +187,7 @@ class IntelligentCache:
         logger.info(f"Invalidated {invalidated} items matching pattern: {pattern}")
         return invalidated
 
-    def get_memory_usage(self) -> Dict[str, Any]:
+    def get_memory_usage(self) -> dict[str, Any]:
         """Get estimated memory usage of the cache."""
         total_size = sum(item.get("size", 0) for item in self.cache.values())
 

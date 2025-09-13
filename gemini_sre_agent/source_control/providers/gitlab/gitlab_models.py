@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -14,14 +14,14 @@ class GitLabMergeRequestInfo(BaseModel):
 
     iid: int
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     state: str = "opened"
-    author: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    labels: List[str] = Field(default_factory=list)
-    assignees: List[str] = Field(default_factory=list)
-    web_url: Optional[str] = None
+    author: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    labels: list[str] = Field(default_factory=list)
+    assignees: list[str] = Field(default_factory=list)
+    web_url: str | None = None
     source_branch: str
     target_branch: str
     merge_status: str = "unchecked"
@@ -35,28 +35,28 @@ class GitLabProjectInfo(BaseModel):
     name: str
     path: str
     full_path: str
-    description: Optional[str] = None
+    description: str | None = None
     web_url: str
     ssh_url_to_repo: str
     http_url_to_repo: str
     default_branch: str
     visibility: str = "private"
-    created_at: Optional[datetime] = None
-    last_activity_at: Optional[datetime] = None
-    permissions: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime | None = None
+    last_activity_at: datetime | None = None
+    permissions: dict[str, Any] = Field(default_factory=dict)
 
 
 class GitLabBranchInfo(BaseModel):
     """Information about a GitLab branch."""
 
     name: str
-    commit: Dict[str, Any]
+    commit: dict[str, Any]
     protected: bool = False
     developers_can_push: bool = False
     developers_can_merge: bool = False
     can_push: bool = False
     default: bool = False
-    web_url: Optional[str] = None
+    web_url: str | None = None
 
 
 class GitLabCommitInfo(BaseModel):
@@ -73,7 +73,7 @@ class GitLabCommitInfo(BaseModel):
     committer_email: str
     committed_date: datetime
     created_at: datetime
-    parent_ids: List[str] = Field(default_factory=list)
+    parent_ids: list[str] = Field(default_factory=list)
     web_url: str
 
 
@@ -89,7 +89,7 @@ class GitLabFileInfo(BaseModel):
     blob_id: str
     commit_id: str
     last_commit_id: str
-    content: Optional[str] = None
+    content: str | None = None
 
 
 class GitLabPipelineInfo(BaseModel):
@@ -102,10 +102,10 @@ class GitLabPipelineInfo(BaseModel):
     web_url: str
     created_at: datetime
     updated_at: datetime
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
-    duration: Optional[int] = None
-    coverage: Optional[float] = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration: int | None = None
+    coverage: float | None = None
 
 
 @dataclass

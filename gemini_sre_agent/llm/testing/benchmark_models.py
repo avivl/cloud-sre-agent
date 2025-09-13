@@ -8,7 +8,6 @@ benchmarking system including results, configuration, and metadata.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -34,8 +33,8 @@ class BenchmarkResult:
     cpu_usage_percent: float
     cost_per_request: float = 0.0
     total_cost: float = 0.0
-    errors: List[str] = field(default_factory=list)
-    metadata: Dict[str, str] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -46,10 +45,10 @@ class BenchmarkConfig:
     concurrency: int = 1
     timeout_seconds: int = 30
     warmup_requests: int = 2
-    test_prompt: Optional[str] = None
+    test_prompt: str | None = None
     max_tokens: int = 100
     temperature: float = 0.7
-    metadata: Dict[str, str] = field(default_factory=dict)
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -58,17 +57,17 @@ class BenchmarkMetadata:
 
     test_id: str
     start_time: float
-    end_time: Optional[float] = None
-    environment: Dict[str, str] = field(default_factory=dict)
-    system_info: Dict[str, str] = field(default_factory=dict)
-    test_config: Optional[BenchmarkConfig] = None
+    end_time: float | None = None
+    environment: dict[str, str] = field(default_factory=dict)
+    system_info: dict[str, str] = field(default_factory=dict)
+    test_config: BenchmarkConfig | None = None
 
 
 @dataclass
 class LatencyMetrics:
     """Latency-specific metrics."""
 
-    latencies: List[float]
+    latencies: list[float]
     avg_latency: float
     min_latency: float
     max_latency: float

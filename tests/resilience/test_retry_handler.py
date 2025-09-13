@@ -428,7 +428,9 @@ class TestRetryHandler:
     async def test_sync_function_with_arguments(self, retry_handler):
         """Test retry with synchronous function that takes arguments."""
 
-        def sync_func_with_args(arg1: str, arg2: str, kwarg1: Optional[str] = None) -> None:
+        def sync_func_with_args(
+            arg1: str, arg2: str, kwarg1: Optional[str] = None
+        ) -> None:
             """
             Sync Func With Args.
 

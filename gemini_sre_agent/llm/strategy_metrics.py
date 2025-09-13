@@ -16,11 +16,11 @@ Author: Gemini SRE Agent
 Created: 2024
 """
 
-import logging
-import statistics
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+import logging
+import statistics
+from typing import Any
 
 from .strategy_base import StrategyResult
 
@@ -42,8 +42,8 @@ class StrategyMetrics:
     success_rate: float = 0.0
     cost_efficiency: float = 0.0
     performance_trend: str = "stable"  # "improving", "declining", "stable"
-    last_used: Optional[datetime] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    last_used: datetime | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -55,7 +55,7 @@ class PerformanceSnapshot:
     success_rate: float
     average_latency_ms: float
     total_selections: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class StrategyMetricsCollector:
@@ -63,9 +63,9 @@ class StrategyMetricsCollector:
 
     def __init__(self) -> None:
         """Initialize the metrics collector."""
-        self._metrics: Dict[str, StrategyMetrics] = {}
-        self._performance_history: List[PerformanceSnapshot] = []
-        self._selection_history: List[Dict[str, Any]] = []
+        self._metrics: dict[str, StrategyMetrics] = {}
+        self._performance_history: list[PerformanceSnapshot] = []
+        self._selection_history: list[dict[str, Any]] = []
         self._max_history_size = 1000
 
     def record_selection(
@@ -74,7 +74,7 @@ class StrategyMetricsCollector:
         result: StrategyResult,
         success: bool,
         execution_time_ms: float,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """Record a strategy selection and its outcome.
 
@@ -137,7 +137,7 @@ class StrategyMetricsCollector:
         result: StrategyResult,
         success: bool,
         execution_time_ms: float,
-        metadata: Optional[Dict[str, Any]],
+        metadata: dict[str, Any] | None,
     ):
         """Record selection in history."""
         history_entry = {
@@ -177,7 +177,7 @@ class StrategyMetricsCollector:
 
         self._performance_history.append(snapshot)
 
-    def get_strategy_metrics(self, strategy_name: str) -> Optional[StrategyMetrics]:
+    def get_strategy_metrics(self, strategy_name: str) -> StrategyMetrics | None:
         """Get metrics for a specific strategy.
 
         Args:
@@ -188,7 +188,7 @@ class StrategyMetricsCollector:
         """
         return self._metrics.get(strategy_name)
 
-    def get_all_metrics(self) -> Dict[str, StrategyMetrics]:
+    def get_all_metrics(self) -> dict[str, StrategyMetrics]:
         """Get metrics for all strategies.
 
         Returns:
@@ -198,7 +198,7 @@ class StrategyMetricsCollector:
 
     def get_performance_trend(
         self, strategy_name: str, hours: int = 24
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get performance trend for a strategy over time.
 
         Args:
@@ -236,7 +236,7 @@ class StrategyMetricsCollector:
             "time_range_hours": hours,
         }
 
-    def _calculate_trend(self, values: List[float]) -> float:
+    def _calculate_trend(self, values: list[float]) -> float:
         """Calculate trend slope for a series of values.
 
         Args:
@@ -264,7 +264,7 @@ class StrategyMetricsCollector:
 
     def get_top_performing_strategies(
         self, metric: str = "success_rate", limit: int = 5
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Get top performing strategies by metric.
 
         Args:
@@ -311,7 +311,7 @@ class StrategyMetricsCollector:
             metrics.average_latency_ms / 1000
         )  # Convert to seconds
 
-    def get_usage_statistics(self) -> Dict[str, Any]:
+    def get_usage_statistics(self) -> dict[str, Any]:
         """Get overall usage statistics.
 
         Returns:
@@ -332,7 +332,7 @@ class StrategyMetricsCollector:
             ),
         }
 
-    def reset_metrics(self, strategy_name: Optional[str] = None) -> None:
+    def reset_metrics(self, strategy_name: str | None = None) -> None:
         """Reset metrics for a strategy or all strategies.
 
         Args:
@@ -357,7 +357,7 @@ class StrategyMetricsCollector:
 
         logger.info(f"Reset metrics for {strategy_name or 'all strategies'}")
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on the metrics collector.
 
         Returns:
@@ -393,7 +393,7 @@ class StrategyPerformanceAnalyzer:
         """
         self.metrics_collector = metrics_collector
 
-    def analyze_performance_patterns(self) -> Dict[str, Any]:
+    def analyze_performance_patterns(self) -> dict[str, Any]:
         """Analyze performance patterns across all strategies.
 
         Returns:
@@ -437,8 +437,8 @@ class StrategyPerformanceAnalyzer:
         }
 
     def _generate_recommendations(
-        self, metrics: Dict[str, StrategyMetrics]
-    ) -> List[str]:
+        self, metrics: dict[str, StrategyMetrics]
+    ) -> list[str]:
         """Generate performance recommendations.
 
         Args:
@@ -485,8 +485,8 @@ class StrategyRecommendationEngine:
         self.metrics_collector = metrics_collector
 
     def recommend_strategy(
-        self, context: Dict[str, Any], available_strategies: List[str]
-    ) -> List[Tuple[str, float]]:
+        self, context: dict[str, Any], available_strategies: list[str]
+    ) -> list[tuple[str, float]]:
         """Recommend strategies based on context and performance.
 
         Args:
@@ -519,7 +519,7 @@ class StrategyRecommendationEngine:
         return recommendations
 
     def _calculate_recommendation_confidence(
-        self, metrics: StrategyMetrics, context: Dict[str, Any]
+        self, metrics: StrategyMetrics, context: dict[str, Any]
     ) -> float:
         """Calculate recommendation confidence for a strategy.
 

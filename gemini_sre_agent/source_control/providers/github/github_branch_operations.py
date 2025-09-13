@@ -8,7 +8,7 @@ This module handles branch-specific operations for the GitHub provider.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from github import Github, GithubException
 from github.Repository import Repository
@@ -28,7 +28,7 @@ class GitHubBranchOperations:
         client: Github,
         repo: Repository,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize branch operations with GitHub client and repository."""
         self.client = client
@@ -50,7 +50,7 @@ class GitHubBranchOperations:
         # Fall back to direct execution
         return await func(*args, **kwargs)
 
-    async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
+    async def create_branch(self, name: str, base_ref: str | None = None) -> bool:
         """Create a new branch."""
 
         async def _create():
@@ -79,7 +79,7 @@ class GitHubBranchOperations:
 
         return await self._execute_with_error_handling("delete_branch", _delete)
 
-    async def list_branches(self) -> List[BranchInfo]:
+    async def list_branches(self) -> list[BranchInfo]:
         """List all branches."""
         try:
 
@@ -104,7 +104,7 @@ class GitHubBranchOperations:
             self.logger.error(f"Failed to list branches: {e}")
             return []
 
-    async def get_branch_info(self, name: str) -> Optional[BranchInfo]:
+    async def get_branch_info(self, name: str) -> BranchInfo | None:
         """Get information about a specific branch."""
         try:
 

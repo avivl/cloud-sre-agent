@@ -5,9 +5,9 @@ This module tests the core ingestion functionality including
 LogManager, adapters, and processing components.
 """
 
-import tempfile
 from datetime import datetime
 from pathlib import Path
+import tempfile
 from unittest.mock import AsyncMock, patch
 
 import pytest

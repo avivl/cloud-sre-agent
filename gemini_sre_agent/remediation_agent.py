@@ -4,9 +4,9 @@ import asyncio
 import functools
 import logging
 import re
-from typing import List, Optional, Union
 
-from github import Github as GitHubClient, GithubException
+from github import Github as GitHubClient
+from github import GithubException
 from github.Branch import Branch
 from github.ContentFile import ContentFile
 from github.PullRequest import PullRequest
@@ -24,11 +24,17 @@ class RemediationAgent:
     based on log analysis and remediation plans.
     """
 
-    def __init__(self, github_token: str, repo_name: str, use_local_patches: bool = False, patch_dir: str = "/tmp/real_patches") -> None:
+    def __init__(
+        self,
+        github_token: str,
+        repo_name: str,
+        use_local_patches: bool = False,
+        patch_dir: str = "/tmp/real_patches",
+    ) -> None:
         # Type annotations for attributes
-        self.github: Optional[GitHubClient] = None
-        self.repo: Optional[Repository] = None
-        self.local_patch_manager: Optional[LocalPatchManager] = None
+        self.github: GitHubClient | None = None
+        self.repo: Repository | None = None
+        self.local_patch_manager: LocalPatchManager | None = None
         """
         Initializes the RemediationAgent with a GitHub token and repository name.
 
@@ -40,7 +46,7 @@ class RemediationAgent:
         """
         self.use_local_patches = use_local_patches
         self.repo_name = repo_name
-        
+
         if use_local_patches or not github_token or github_token == "dummy_token":
             # Already initialized to None above
             self.local_patch_manager = LocalPatchManager(patch_dir)
@@ -55,7 +61,7 @@ class RemediationAgent:
                 f"[REMEDIATION] RemediationAgent initialized for repository: {repo_name}"
             )
 
-    def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
+    def _extract_file_path_from_patch(self, patch_content: str) -> str | None:
         """
         Extracts the target file path from a special comment in the patch content.
         Supports multiple comment formats (e.g., # FILE:, // FILE:, /* FILE: */).
@@ -134,14 +140,20 @@ class RemediationAgent:
         try:
             # Check if GitHub repo is available
             if self.repo is None:
-                logger.error(f"[REMEDIATION] GitHub repository not available: flow_id={flow_id}, issue_id={issue_id}")
-                return await self._create_local_patch(remediation_plan, flow_id, issue_id)
-            
+                logger.error(
+                    f"[REMEDIATION] GitHub repository not available: flow_id={flow_id}, issue_id={issue_id}"
+                )
+                return await self._create_local_patch(
+                    remediation_plan, flow_id, issue_id
+                )
+
             # Get event loop for async operations
             loop = asyncio.get_event_loop()
-            
+
             # 1. Get the base branch (non-blocking)
-            base: Branch = await loop.run_in_executor(None, self.repo.get_branch, base_branch)
+            base: Branch = await loop.run_in_executor(
+                None, self.repo.get_branch, base_branch
+            )
             logger.debug(
                 f"[REMEDIATION] Base branch found: flow_id={flow_id}, issue_id={issue_id}, branch={base_branch}, sha={base.commit.sha}"
             )
@@ -152,7 +164,9 @@ class RemediationAgent:
                 if self.repo is not None:
                     await loop.run_in_executor(
                         None,
-                        functools.partial(self.repo.create_git_ref, ref=ref, sha=base.commit.sha)
+                        functools.partial(
+                            self.repo.create_git_ref, ref=ref, sha=base.commit.sha
+                        ),
                     )
                 logger.info(
                     f"[REMEDIATION] Branch created successfully: flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}"
@@ -182,8 +196,15 @@ class RemediationAgent:
                     )
                     try:
                         if self.repo is not None:
-                            contents: Union[ContentFile, List[ContentFile]] = await loop.run_in_executor(
-                                None, functools.partial(self.repo.get_contents, file_path, ref=branch_name)
+                            contents: ContentFile | list[ContentFile] = (
+                                await loop.run_in_executor(
+                                    None,
+                                    functools.partial(
+                                        self.repo.get_contents,
+                                        file_path,
+                                        ref=branch_name,
+                                    ),
+                                )
                             )
                         else:
                             raise Exception("GitHub repository not available")
@@ -196,7 +217,7 @@ class RemediationAgent:
                             raise RuntimeError(
                                 f"Cannot update directory {file_path}. Expected a service code file."
                             )
-                        
+
                         if self.repo is not None:
                             await loop.run_in_executor(
                                 None,
@@ -206,8 +227,8 @@ class RemediationAgent:
                                     f"Fix service issue in {file_path}",
                                     content_to_write,
                                     contents.sha,
-                                    branch=branch_name
-                                )
+                                    branch=branch_name,
+                                ),
                             )
                         logger.info(
                             f"[REMEDIATION] Updated service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
@@ -222,8 +243,8 @@ class RemediationAgent:
                                         file_path,
                                         f"Add service code fix in {file_path}",
                                         content_to_write,
-                                        branch=branch_name
-                                    )
+                                        branch=branch_name,
+                                    ),
                                 )
                             logger.info(
                                 f"[REMEDIATION] Created service code file: flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
@@ -246,16 +267,20 @@ class RemediationAgent:
                         title=title,
                         body=body,
                         head=branch_name,
-                        base=base_branch
-                    )
+                        base=base_branch,
+                    ),
                 )
                 logger.info(
                     f"[REMEDIATION] Pull request created successfully: flow_id={flow_id}, issue_id={issue_id}, pr_url={pull_request.html_url}"
                 )
                 return pull_request.html_url
             else:
-                logger.error(f"[REMEDIATION] Cannot create pull request - repository not available: flow_id={flow_id}, issue_id={issue_id}")
-                return await self._create_local_patch(remediation_plan, flow_id, issue_id)
+                logger.error(
+                    f"[REMEDIATION] Cannot create pull request - repository not available: flow_id={flow_id}, issue_id={issue_id}"
+                )
+                return await self._create_local_patch(
+                    remediation_plan, flow_id, issue_id
+                )
 
         except GithubException as e:
             logger.error(
@@ -308,7 +333,7 @@ class RemediationAgent:
                 file_path=file_path,
                 patch_content=remediation_plan.code_patch,
                 description=remediation_plan.proposed_fix,
-                severity="medium"  # Default severity since it's not available in this RemediationPlan
+                severity="medium",  # Default severity since it's not available in this RemediationPlan
             )
 
             logger.info(

@@ -6,7 +6,7 @@ Configuration loader with support for multiple sources and complete implementati
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 import yaml
 
@@ -23,13 +23,13 @@ class ConfigLoader:
 
     def __init__(self, config_dir: str = "config") -> None:
         self.config_dir = Path(config_dir)
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
 
     def load_config(
         self,
-        config_class: Type[T],
-        environment: Optional[str] = None,
-        config_file: Optional[str] = None,
+        config_class: type[T],
+        environment: str | None = None,
+        config_file: str | None = None,
     ) -> T:
         """
         Load configuration with environment-specific overrides.
@@ -73,20 +73,21 @@ class ConfigLoader:
                 f"Configuration loading failed: {e}", config_file, e
             ) from e
 
-    def _load_yaml_config(self, filename: str) -> Dict[str, Any]:
+    def _load_yaml_config(self, filename: str) -> dict[str, Any]:
         """Load configuration from YAML file."""
         config_path = self.config_dir / filename
         if not config_path.exists():
             return {}
 
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 data = yaml.safe_load(f)
                 if data is None:
                     return {}
                 if not isinstance(data, dict):
                     raise ConfigFileError(
-                        f"Top-level YAML structure must be a mapping (dict), got {type(data).__name__}",
+                        f"Top-level YAML structure must be a mapping (dict), "
+                        f"got {type(data).__name__}",
                         str(config_path),
                     )
                 return data
@@ -95,7 +96,7 @@ class ConfigLoader:
                 f"Failed to load YAML file {filename}: {e}", str(config_path), e
             ) from e
 
-    def _extract_env_vars(self, config_class: Type[T]) -> Dict[str, Any]:
+    def _extract_env_vars(self, config_class: type[T]) -> dict[str, Any]:
         """Extract configuration from environment variables."""
         env_vars = {}
 
@@ -122,8 +123,8 @@ class ConfigLoader:
         return env_vars
 
     def _extract_nested_env_vars(
-        self, prefix: str, config_class: Type[T]
-    ) -> Dict[str, Any]:
+        self, prefix: str, config_class: type[T]
+    ) -> dict[str, Any]:
         """Extract nested environment variables for complex configurations."""
         nested_vars = {}
         prefix_upper = f"{config_class.__name__.upper()}_{prefix.upper()}"
@@ -168,7 +169,7 @@ class ConfigLoader:
         return self._convert_string_value(value)
 
     def _convert_string_value(
-        self, value: str, target_type: Optional[Type] = None
+        self, value: str, target_type: type | None = None
     ) -> Any:
         """Convert string value to target type."""
         if target_type is None:
@@ -212,8 +213,8 @@ class ConfigLoader:
             return value
 
     def _merge_configs(
-        self, base: Dict[str, Any], override: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, base: dict[str, Any], override: dict[str, Any]
+    ) -> dict[str, Any]:
         """Deep merge configuration dictionaries."""
         if not override:
             return base.copy()
@@ -239,8 +240,8 @@ class ConfigLoader:
 
     def load_error_handling_config(
         self,
-        environment: Optional[str] = None,
-        config_file: Optional[str] = None,
+        environment: str | None = None,
+        config_file: str | None = None,
     ) -> "ErrorHandlingConfig":
         """
         Load error handling configuration.
@@ -281,7 +282,7 @@ class ConfigLoader:
 
         if main_config_path.exists():
             try:
-                with open(main_config_path, "r", encoding="utf-8") as f:
+                with open(main_config_path, encoding="utf-8") as f:
                     config_data = yaml.safe_load(f)
 
                 if "error_handling" in config_data:

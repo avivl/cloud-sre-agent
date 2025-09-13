@@ -5,7 +5,7 @@ Tests ensemble pattern detection modes, fallback mechanisms, pattern merging,
 confidence thresholding, and feedback processing.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -29,7 +29,9 @@ class TestGeminiEnhancedPatternDetectorInit:
         "gemini_sre_agent.ml.gemini_enhanced_pattern_detector.GeminiPatternClassifier"
     )
     @patch("gemini_sre_agent.ml.gemini_enhanced_pattern_detector.PatternClassifier")
-    def test_successful_init(self, mock_pattern_classifier: str, mock_gemini_classifier: str) -> None:
+    def test_successful_init(
+        self, mock_pattern_classifier: str, mock_gemini_classifier: str
+    ) -> None:
         """Test successful detector initialization."""
         detector = GeminiEnhancedPatternDetector(gemini_api_key="test_key")
 
@@ -123,7 +125,7 @@ class TestGeminiEnhancedPatternDetectorClassification:
     @pytest.fixture
     def sample_window(self) -> None:
         """Create sample time window with logs."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         window.logs = [

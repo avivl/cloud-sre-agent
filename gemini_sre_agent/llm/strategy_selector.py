@@ -16,7 +16,7 @@ Created: 2024
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .model_registry import ModelInfo
 from .model_scorer import ModelScorer
@@ -40,16 +40,16 @@ logger = logging.getLogger(__name__)
 class StrategyManager:
     """Manager for model selection strategies using the Strategy pattern."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
+    def __init__(self, model_scorer: ModelScorer | None = None) -> None:
         """Initialize the strategy manager.
 
         Args:
             model_scorer: Optional model scorer instance
         """
         self.model_scorer = model_scorer or ModelScorer()
-        self._strategies: Dict[OptimizationGoal, ModelSelectionStrategy] = {}
-        self._strategy_usage_stats: Dict[str, int] = {}
-        self._strategy_performance: Dict[str, Dict[str, float]] = {}
+        self._strategies: dict[OptimizationGoal, ModelSelectionStrategy] = {}
+        self._strategy_usage_stats: dict[str, int] = {}
+        self._strategy_performance: dict[str, dict[str, float]] = {}
 
         # Initialize default strategies
         self._initialize_default_strategies()
@@ -80,7 +80,7 @@ class StrategyManager:
 
     def select_model(
         self,
-        candidates: List[ModelInfo],
+        candidates: list[ModelInfo],
         goal: OptimizationGoal,
         context: StrategyContext,
     ) -> StrategyResult:
@@ -123,7 +123,9 @@ class StrategyManager:
 
         return result
 
-    def add_strategy(self, goal: OptimizationGoal, strategy: ModelSelectionStrategy) -> None:
+    def add_strategy(
+        self, goal: OptimizationGoal, strategy: ModelSelectionStrategy
+    ) -> None:
         """Add or replace a strategy.
 
         Args:
@@ -152,7 +154,7 @@ class StrategyManager:
             del self._strategies[goal]
             logger.info(f"Removed strategy for goal {goal.value}")
 
-    def get_available_strategies(self) -> List[OptimizationGoal]:
+    def get_available_strategies(self) -> list[OptimizationGoal]:
         """Get list of available strategies.
 
         Returns:
@@ -160,7 +162,7 @@ class StrategyManager:
         """
         return list(self._strategies.keys())
 
-    def get_strategy_performance(self, goal: OptimizationGoal) -> Dict[str, float]:
+    def get_strategy_performance(self, goal: OptimizationGoal) -> dict[str, float]:
         """Get performance metrics for a specific strategy.
 
         Args:
@@ -184,7 +186,7 @@ class StrategyManager:
 
         return combined_metrics
 
-    def get_all_performance_metrics(self) -> Dict[str, Dict[str, float]]:
+    def get_all_performance_metrics(self) -> dict[str, dict[str, float]]:
         """Get performance metrics for all strategies.
 
         Returns:
@@ -195,7 +197,7 @@ class StrategyManager:
             all_metrics[goal.value] = self.get_strategy_performance(goal)
         return all_metrics
 
-    def get_usage_statistics(self) -> Dict[str, int]:
+    def get_usage_statistics(self) -> dict[str, int]:
         """Get usage statistics for all strategies.
 
         Returns:
@@ -254,7 +256,7 @@ class StrategyManager:
 
         logger.info("Reset all strategy statistics")
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on the strategy manager.
 
         Returns:
@@ -289,7 +291,7 @@ class StrategyManager:
 
     def get_strategy_recommendations(
         self, context: StrategyContext
-    ) -> List[OptimizationGoal]:
+    ) -> list[OptimizationGoal]:
         """Get recommended strategies based on context.
 
         Args:

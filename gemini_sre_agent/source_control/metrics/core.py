@@ -11,7 +11,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MetricType(Enum):
@@ -32,9 +32,9 @@ class MetricPoint:
     value: float
     metric_type: MetricType
     timestamp: datetime
-    tags: Dict[str, str] = field(default_factory=dict)
-    unit: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
+    unit: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -44,14 +44,14 @@ class MetricSeries:
     name: str
     metric_type: MetricType
     points: deque = field(default_factory=lambda: deque(maxlen=1000))
-    tags: Dict[str, str] = field(default_factory=dict)
-    unit: Optional[str] = None
+    tags: dict[str, str] = field(default_factory=dict)
+    unit: str | None = None
 
     def add_point(
         self,
         value: float,
         timestamp: datetime,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """Add a point to the series."""
         point = MetricPoint(
@@ -65,17 +65,17 @@ class MetricSeries:
         )
         self.points.append(point)
 
-    def get_latest(self) -> Optional[MetricPoint]:
+    def get_latest(self) -> MetricPoint | None:
         """Get the latest point in the series."""
         return self.points[-1] if self.points else None
 
-    def get_range(self, start_time: datetime, end_time: datetime) -> List[MetricPoint]:
+    def get_range(self, start_time: datetime, end_time: datetime) -> list[MetricPoint]:
         """Get points within a time range."""
         return [
             point for point in self.points if start_time <= point.timestamp <= end_time
         ]
 
-    def get_statistics(self, window_minutes: int = 60) -> Dict[str, float]:
+    def get_statistics(self, window_minutes: int = 60) -> dict[str, float]:
         """Get statistics for the series over a time window."""
         cutoff_time = datetime.now() - timedelta(minutes=window_minutes)
         recent_points = [p for p in self.points if p.timestamp >= cutoff_time]
@@ -96,7 +96,7 @@ class MetricSeries:
             "p99": self._percentile(values, 99),
         }
 
-    def _calculate_std_dev(self, values: List[float]) -> float:
+    def _calculate_std_dev(self, values: list[float]) -> float:
         """Calculate standard deviation."""
         if len(values) < 2:
             return 0.0
@@ -105,7 +105,7 @@ class MetricSeries:
         variance = sum((x - mean) ** 2 for x in values) / len(values)
         return variance**0.5
 
-    def _percentile(self, values: List[float], percentile: int) -> float:
+    def _percentile(self, values: list[float], percentile: int) -> float:
         """Calculate percentile value."""
         if not values:
             return 0.0

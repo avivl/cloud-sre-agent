@@ -7,10 +7,11 @@ This module provides a base class for sub-operation modules with
 configuration support and enhanced error handling capabilities.
 """
 
-import asyncio
-import logging
 from abc import ABC, abstractmethod
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
+import asyncio
+from collections.abc import Awaitable, Callable
+import logging
+from typing import Any, TypeVar
 
 from .sub_operation_config import SubOperationConfig, get_sub_operation_config
 
@@ -23,8 +24,8 @@ class BaseSubOperation(ABC):
     def __init__(
         self,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
-        config: Optional[SubOperationConfig] = None,
+        error_handling_components: dict[str, Any] | None = None,
+        config: SubOperationConfig | None = None,
         provider_type: str = "unknown",
         operation_name: str = "unknown",
     ):
@@ -136,7 +137,7 @@ class BaseSubOperation(ABC):
 
             return result
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             self._error_count += 1
             if self.config.log_errors:
                 self.operation_logger.error(
@@ -149,7 +150,7 @@ class BaseSubOperation(ABC):
                 self.operation_logger.error(f"Operation {operation_name} failed: {e}")
             raise e
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get performance statistics for this sub-operation."""
         avg_duration = self._total_duration / max(self._operation_count, 1)
         error_rate = self._error_count / max(self._operation_count, 1)
@@ -186,7 +187,7 @@ class BaseSubOperation(ABC):
         """Check if the sub-operation is healthy."""
         pass
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get health status information."""
         stats = self.get_performance_stats()
         return {

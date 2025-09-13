@@ -1,11 +1,11 @@
 """Performance monitoring system for the logging framework."""
 
-import threading
-import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+import threading
+import time
+from typing import Any
 
 from .exceptions import PerformanceMonitoringError
 
@@ -17,10 +17,10 @@ class PerformanceMetric:
     name: str
     value: float
     timestamp: float
-    tags: Dict[str, str] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metric to dictionary.
 
         Returns:
@@ -48,9 +48,9 @@ class PerformanceStats:
     p50_value: float
     p95_value: float
     p99_value: float
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert stats to dictionary.
 
         Returns:
@@ -73,14 +73,14 @@ class PerformanceStats:
 class PerformanceMonitor:
     """Monitors and tracks performance metrics."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the performance monitor.
 
         Args:
             config: Optional configuration for performance monitoring
         """
         self._config = config or {}
-        self._metrics: Dict[str, deque] = defaultdict(
+        self._metrics: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=self._config.get("max_metrics_per_name", 1000))
         )
         self._lock = threading.RLock()
@@ -95,8 +95,8 @@ class PerformanceMonitor:
         self,
         name: str,
         value: float,
-        tags: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a performance metric.
 
@@ -132,7 +132,7 @@ class PerformanceMonitor:
 
         except Exception as e:
             raise PerformanceMonitoringError(
-                f"Failed to record metric: {str(e)}",
+                f"Failed to record metric: {e!s}",
                 metric_name=name,
                 metric_value=value,
             ) from e
@@ -141,8 +141,8 @@ class PerformanceMonitor:
         self,
         name: str,
         duration: float,
-        tags: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a timing metric.
 
@@ -158,8 +158,8 @@ class PerformanceMonitor:
         self,
         name: str,
         count: float = 1.0,
-        tags: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a counter metric.
 
@@ -175,8 +175,8 @@ class PerformanceMonitor:
         self,
         name: str,
         value: float,
-        tags: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a gauge metric.
 
@@ -191,9 +191,9 @@ class PerformanceMonitor:
     def get_metric_stats(
         self,
         name: str,
-        tags: Optional[Dict[str, str]] = None,
-        window_seconds: Optional[float] = None,
-    ) -> Optional[PerformanceStats]:
+        tags: dict[str, str] | None = None,
+        window_seconds: float | None = None,
+    ) -> PerformanceStats | None:
         """Get performance statistics for a metric.
 
         Args:
@@ -261,10 +261,10 @@ class PerformanceMonitor:
 
         except Exception as e:
             raise PerformanceMonitoringError(
-                f"Failed to get metric stats: {str(e)}", metric_name=name
+                f"Failed to get metric stats: {e!s}", metric_name=name
             ) from e
 
-    def get_all_metric_names(self) -> List[str]:
+    def get_all_metric_names(self) -> list[str]:
         """Get all metric names.
 
         Returns:
@@ -274,8 +274,8 @@ class PerformanceMonitor:
             return list(self._metrics.keys())
 
     def get_metrics_by_name(
-        self, name: str, limit: Optional[int] = None
-    ) -> List[PerformanceMetric]:
+        self, name: str, limit: int | None = None
+    ) -> list[PerformanceMetric]:
         """Get metrics by name.
 
         Args:
@@ -296,8 +296,8 @@ class PerformanceMonitor:
             return metrics.copy()
 
     def get_metrics_by_tags(
-        self, tags: Dict[str, str], limit: Optional[int] = None
-    ) -> List[PerformanceMetric]:
+        self, tags: dict[str, str], limit: int | None = None
+    ) -> list[PerformanceMetric]:
         """Get metrics by tags.
 
         Args:
@@ -324,8 +324,8 @@ class PerformanceMonitor:
         return matching_metrics
 
     def get_aggregated_stats(
-        self, window_seconds: Optional[float] = None
-    ) -> Dict[str, PerformanceStats]:
+        self, window_seconds: float | None = None
+    ) -> dict[str, PerformanceStats]:
         """Get aggregated statistics for all metrics.
 
         Args:
@@ -343,7 +343,7 @@ class PerformanceMonitor:
 
         return stats
 
-    def clear_metrics(self, name: Optional[str] = None) -> None:
+    def clear_metrics(self, name: str | None = None) -> None:
         """Clear metrics.
 
         Args:
@@ -395,8 +395,8 @@ class PerformanceMonitor:
     def timing(
         self,
         name: str,
-        tags: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """Context manager for timing operations.
 
@@ -416,8 +416,8 @@ class PerformanceMonitor:
             self.record_timing(name, duration, tags, metadata)
 
     def export_metrics(
-        self, format_type: str = "dict", window_seconds: Optional[float] = None
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, format_type: str = "dict", window_seconds: float | None = None
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Export metrics in various formats.
 
         Args:
@@ -453,7 +453,7 @@ class PerformanceMonitor:
 
 
 # Global performance monitor instance
-_performance_monitor: Optional[PerformanceMonitor] = None
+_performance_monitor: PerformanceMonitor | None = None
 
 
 def get_performance_monitor() -> PerformanceMonitor:

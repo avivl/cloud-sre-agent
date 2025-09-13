@@ -13,9 +13,9 @@ with patch.dict(
     {"instructor": MagicMock(), "litellm": MagicMock(), "mirascope": MagicMock()},
 ):
     # Patch the Prompt class in the provider module
-    import gemini_sre_agent.llm.provider as provider_module
     from gemini_sre_agent.llm.base import ModelType
     from gemini_sre_agent.llm.config import LLMProviderConfig, ModelConfig
+    import gemini_sre_agent.llm.provider as provider_module
     from gemini_sre_agent.llm.provider import LLMProvider
 
     provider_module.Prompt = mock_prompt_class
@@ -44,7 +44,9 @@ class MockLLMProvider(LLMProvider):
     async def generate_structured(self, prompt, response_model, model=None, **kwargs):
         return response_model(message="Test", confidence=0.95)
 
-    def generate_stream(self, prompt: str, model: Optional[str] = None, **kwargs: str) -> None:
+    def generate_stream(
+        self, prompt: str, model: Optional[str] = None, **kwargs: str
+    ) -> None:
         """
         Generate Stream.
 
@@ -53,6 +55,7 @@ class MockLLMProvider(LLMProvider):
             model: Description of model.
 
         """
+
         async def _stream():
             yield "Test"
             yield " response"

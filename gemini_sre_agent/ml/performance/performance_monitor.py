@@ -9,11 +9,11 @@ validation, and caching.
 """
 
 import asyncio
-import logging
-import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+import logging
+import time
+from typing import Any
 
 
 @dataclass
@@ -24,8 +24,8 @@ class PerformanceMetric:
     duration_ms: float
     timestamp: float
     success: bool
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    error_message: Optional[str] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
 
 
 @dataclass
@@ -72,17 +72,17 @@ class PerformanceMonitor:
         self.alert_success_rate_threshold = alert_success_rate_threshold
 
         # Metric storage
-        self.metrics: Dict[str, deque] = defaultdict(
+        self.metrics: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=max_metrics_per_operation)
         )
-        self.operation_stats: Dict[str, Dict[str, Any]] = defaultdict(dict)
+        self.operation_stats: dict[str, dict[str, Any]] = defaultdict(dict)
 
         # Performance alerts
-        self.alerts: List[Dict[str, Any]] = []
-        self.alert_callbacks: List[Any] = []
+        self.alerts: list[dict[str, Any]] = []
+        self.alert_callbacks: list[Any] = []
 
         # Start monitoring tasks
-        self._monitoring_task: Optional[asyncio.Task] = None
+        self._monitoring_task: asyncio.Task | None = None
         self._start_monitoring()
 
     def _start_monitoring(self):
@@ -106,8 +106,8 @@ class PerformanceMonitor:
         operation: str,
         duration_ms: float,
         success: bool,
-        metadata: Optional[Dict[str, Any]] = None,
-        error_message: Optional[str] = None,
+        metadata: dict[str, Any] | None = None,
+        error_message: str | None = None,
     ):
         """
         Record a performance metric.
@@ -146,7 +146,7 @@ class PerformanceMonitor:
             )
 
     async def record_operation(
-        self, operation: str, metadata: Optional[Dict[str, Any]] = None
+        self, operation: str, metadata: dict[str, Any] | None = None
     ):
         """
         Context manager for recording operation performance.
@@ -159,7 +159,7 @@ class PerformanceMonitor:
 
     async def get_performance_summary(
         self, operation: str
-    ) -> Optional[PerformanceSummary]:
+    ) -> PerformanceSummary | None:
         """
         Get performance summary for a specific operation.
 
@@ -212,7 +212,7 @@ class PerformanceMonitor:
             ),
         )
 
-    async def get_all_performance_summaries(self) -> Dict[str, PerformanceSummary]:
+    async def get_all_performance_summaries(self) -> dict[str, PerformanceSummary]:
         """Get performance summaries for all operations."""
         summaries = {}
         for operation in self.metrics.keys():
@@ -223,7 +223,7 @@ class PerformanceMonitor:
 
     async def get_performance_trends(
         self, operation: str, hours: int = 24
-    ) -> Dict[str, List[float]]:
+    ) -> dict[str, list[float]]:
         """
         Get performance trends over time.
 
@@ -281,7 +281,7 @@ class PerformanceMonitor:
         """Add a callback function for performance alerts."""
         self.alert_callbacks.append(callback)
 
-    async def _trigger_alert(self, alert_type: str, message: str, data: Dict[str, Any]):
+    async def _trigger_alert(self, alert_type: str, message: str, data: dict[str, Any]):
         """Trigger a performance alert."""
         alert = {
             "type": alert_type,
@@ -361,7 +361,7 @@ class PerformanceMonitor:
         # Metrics are automatically limited by deque maxlen
         pass
 
-    def get_monitor_stats(self) -> Dict[str, Any]:
+    def get_monitor_stats(self) -> dict[str, Any]:
         """Get overall monitoring statistics."""
         total_metrics = sum(len(metrics) for metrics in self.metrics.values())
 
@@ -383,7 +383,7 @@ class OperationRecorder:
         self,
         monitor: PerformanceMonitor,
         operation: str,
-        metadata: Optional[Dict[str, Any]],
+        metadata: dict[str, Any] | None,
     ):
         self.monitor = monitor
         self.operation = operation
@@ -412,7 +412,7 @@ class OperationRecorder:
 
 
 # Global performance monitor instance
-_global_monitor: Optional[PerformanceMonitor] = None
+_global_monitor: PerformanceMonitor | None = None
 
 
 def get_performance_monitor() -> PerformanceMonitor:
@@ -427,8 +427,8 @@ async def record_performance(
     operation: str,
     duration_ms: float,
     success: bool,
-    metadata: Optional[Dict[str, Any]] = None,
-    error_message: Optional[str] = None,
+    metadata: dict[str, Any] | None = None,
+    error_message: str | None = None,
 ):
     """Record performance metric using global monitor."""
     monitor = get_performance_monitor()
@@ -437,7 +437,7 @@ async def record_performance(
     )
 
 
-async def get_performance_summary(operation: str) -> Optional[PerformanceSummary]:
+async def get_performance_summary(operation: str) -> PerformanceSummary | None:
     """Get performance summary using global monitor."""
     monitor = get_performance_monitor()
     return await monitor.get_performance_summary(operation)

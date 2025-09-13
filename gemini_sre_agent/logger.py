@@ -1,10 +1,9 @@
 # gemini_sre_agent/logger.py
 
+from datetime import datetime
 import json
 import logging
 import os
-from datetime import datetime
-from typing import Optional
 
 
 class JsonFormatter(logging.Formatter):
@@ -49,7 +48,7 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_logging(
-    log_level: str = "INFO", json_format: bool = False, log_file: Optional[str] = None
+    log_level: str = "INFO", json_format: bool = False, log_file: str | None = None
 ):
     """
     Sets up the logging configuration for the application.

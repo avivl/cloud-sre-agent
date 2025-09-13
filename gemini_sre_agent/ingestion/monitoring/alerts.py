@@ -11,12 +11,13 @@ Provides comprehensive alerting capabilities including:
 """
 
 import asyncio
-import json
-import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+import json
+import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +42,11 @@ class Alert:
     source: str
     timestamp: datetime = field(default_factory=datetime.now)
     resolved: bool = False
-    resolved_at: Optional[datetime] = None
-    resolved_by: Optional[str] = None
-    resolution_notes: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    tags: List[str] = field(default_factory=list)
+    resolved_at: datetime | None = None
+    resolved_by: str | None = None
+    resolution_notes: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -53,15 +54,15 @@ class AlertRule:
     """Defines when an alert should be triggered."""
 
     name: str
-    condition: Callable[[Dict[str, Any]], bool]
+    condition: Callable[[dict[str, Any]], bool]
     level: AlertLevel
     title: str
     message_template: str
     source: str
     enabled: bool = True
     cooldown_minutes: int = 5
-    suppression_rules: List[str] = field(default_factory=list)
-    notification_channels: List[str] = field(default_factory=list)
+    suppression_rules: list[str] = field(default_factory=list)
+    notification_channels: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -70,7 +71,7 @@ class NotificationChannel:
 
     name: str
     channel_type: str
-    config: Dict[str, Any]
+    config: dict[str, Any]
     enabled: bool = True
 
 
@@ -88,15 +89,15 @@ class AlertManager:
 
     def __init__(self) -> None:
         """Initialize the alert manager."""
-        self._alerts: Dict[str, Alert] = {}
-        self._alert_rules: Dict[str, AlertRule] = {}
-        self._notification_channels: Dict[str, NotificationChannel] = {}
-        self._alert_history: List[Alert] = []
-        self._suppressed_alerts: Dict[str, datetime] = {}
+        self._alerts: dict[str, Alert] = {}
+        self._alert_rules: dict[str, AlertRule] = {}
+        self._notification_channels: dict[str, NotificationChannel] = {}
+        self._alert_history: list[Alert] = []
+        self._suppressed_alerts: dict[str, datetime] = {}
 
         # Background tasks
-        self._evaluation_task: Optional[asyncio.Task] = None
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._evaluation_task: asyncio.Task | None = None
+        self._cleanup_task: asyncio.Task | None = None
         self._running = False
 
         # Default notification channels
@@ -167,8 +168,8 @@ class AlertManager:
         message: str,
         level: AlertLevel,
         source: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
+        metadata: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
     ) -> Alert:
         """
         Create a new alert.
@@ -206,7 +207,7 @@ class AlertManager:
         return alert
 
     async def resolve_alert(
-        self, alert_id: str, resolved_by: str, resolution_notes: Optional[str] = None
+        self, alert_id: str, resolved_by: str, resolution_notes: str | None = None
     ) -> bool:
         """
         Resolve an alert.
@@ -231,21 +232,21 @@ class AlertManager:
         logger.info(f"Resolved alert: {alert_id} by {resolved_by}")
         return True
 
-    def get_active_alerts(self) -> List[Alert]:
+    def get_active_alerts(self) -> list[Alert]:
         """Get all active (unresolved) alerts."""
         return [alert for alert in self._alerts.values() if not alert.resolved]
 
-    def get_alerts_by_level(self, level: AlertLevel) -> List[Alert]:
+    def get_alerts_by_level(self, level: AlertLevel) -> list[Alert]:
         """Get alerts by severity level."""
         return [alert for alert in self._alerts.values() if alert.level == level]
 
-    def get_alerts_by_source(self, source: str) -> List[Alert]:
+    def get_alerts_by_source(self, source: str) -> list[Alert]:
         """Get alerts by source."""
         return [alert for alert in self._alerts.values() if alert.source == source]
 
     def get_alert_history(
-        self, limit: int = 100, since: Optional[datetime] = None
-    ) -> List[Alert]:
+        self, limit: int = 100, since: datetime | None = None
+    ) -> list[Alert]:
         """
         Get alert history.
 
@@ -263,7 +264,7 @@ class AlertManager:
 
         return alerts[-limit:] if limit > 0 else alerts
 
-    def get_alert_summary(self) -> Dict[str, Any]:
+    def get_alert_summary(self) -> dict[str, Any]:
         """
         Get alert summary statistics.
 
@@ -297,7 +298,7 @@ class AlertManager:
 
         return summary
 
-    async def evaluate_alert_rules(self, data: Dict[str, Any]) -> None:
+    async def evaluate_alert_rules(self, data: dict[str, Any]) -> None:
         """
         Evaluate all alert rules against provided data.
 
@@ -474,7 +475,7 @@ class AlertManager:
             except Exception as e:
                 logger.error(f"Error cleaning up alerts: {e}")
 
-    async def _get_system_data(self) -> Dict[str, Any]:
+    async def _get_system_data(self) -> dict[str, Any]:
         """Get current system data for alert evaluation."""
         # This would typically gather data from:
         # - Metrics collector
@@ -533,7 +534,10 @@ class AlertManager:
             condition=lambda data: data.get("active_alerts_count", 0) > 10,
             level=AlertLevel.WARNING,
             title="Too Many Active Alerts",
-            message_template="There are {active_alerts_count} active alerts, indicating potential system issues",
+            message_template=(
+                "There are {active_alerts_count} active alerts, "
+                "indicating potential system issues"
+            ),
             source="alert_manager",
             cooldown_minutes=15,
         )
@@ -541,7 +545,7 @@ class AlertManager:
 
 
 # Global alert manager instance
-_global_alert_manager: Optional[AlertManager] = None
+_global_alert_manager: AlertManager | None = None
 
 
 def get_global_alert_manager() -> AlertManager:
@@ -591,7 +595,7 @@ async def create_error_alert(
     """Create an error-related alert."""
     return await get_global_alert_manager().create_alert(
         title=f"Error in {component}",
-        message=f"Error: {str(error)}",
+        message=f"Error: {error!s}",
         level=level,
         source=component,
         metadata={"error_type": type(error).__name__, "error_details": str(error)},

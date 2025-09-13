@@ -1,9 +1,11 @@
 # Test Structure Migration Guide
 
 ## Overview
+
 The test structure has been reorganized to follow the new modular architecture.
 
 ## New Structure
+
 - `tests/core/` - Core module tests (exceptions, types, interfaces, protocols)
 - `tests/agents/` - Agent module tests (models, specialized agents)
 - `tests/llm/` - LLM module tests (providers, factory, config, services)
@@ -19,6 +21,7 @@ The test structure has been reorganized to follow the new modular architecture.
 - `tests/config/` - Configuration tests
 
 ## Migration Steps
+
 1. Move existing test files to appropriate new directories
 2. Update import statements to match new module structure
 3. Update test class names and docstrings
@@ -26,4 +29,5 @@ The test structure has been reorganized to follow the new modular architecture.
 5. Run tests to verify functionality
 
 ## Templates
+
 Use the provided templates in `tests/templates/` as starting points for new tests.

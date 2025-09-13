@@ -107,7 +107,7 @@ class Stateful(Protocol):
         """Set new state value."""
         ...
 
-    def get_state(self, key: str, default: Any : Optional[str] = None) -> Any:
+    def get_state(self, key: str, default: Optional[Any] = None) -> Any:
         """Get state value by key."""
         ...
 

@@ -7,7 +7,7 @@ This module handles batch operations for the GitHub provider.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from github import Github, GithubException
 from github.Repository import Repository
@@ -26,7 +26,7 @@ class GitHubBatchOperations:
         client: Github,
         repo: Repository,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize batch operations with GitHub client and repository."""
         self.client = client
@@ -49,8 +49,8 @@ class GitHubBatchOperations:
         return await func(*args, **kwargs)
 
     async def batch_operations(
-        self, operations: List[BatchOperation]
-    ) -> List[OperationResult]:
+        self, operations: list[BatchOperation]
+    ) -> list[OperationResult]:
         """Execute multiple operations in batch."""
 
         async def _batch():

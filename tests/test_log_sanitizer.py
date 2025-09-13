@@ -5,7 +5,7 @@ Tests sensitive data detection and removal across various patterns
 including PII, credentials, and security-sensitive information.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -194,7 +194,7 @@ class TestLogSanitizerLogSanitization:
         """Create sample log entry with sensitive data."""
         return LogEntry(
             insert_id="test_log_1",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             service_name="api-service",
             severity="ERROR",
             error_message="Authentication failed for user admin@test.com from IP 192.168.1.100",
@@ -225,7 +225,7 @@ class TestLogSanitizerLogSanitization:
         logs = [
             LogEntry(
                 insert_id="log1",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 service_name="api-service",
                 severity="ERROR",
                 error_message="Failed auth for user@test.com",
@@ -233,7 +233,7 @@ class TestLogSanitizerLogSanitization:
             ),
             LogEntry(
                 insert_id="log2",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 service_name="db-service",
                 severity="WARNING",
                 error_message="Connection timeout to 10.0.0.1",
@@ -251,7 +251,7 @@ class TestLogSanitizerLogSanitization:
         """Test sanitization of log with None error message."""
         log = LogEntry(
             insert_id="log1",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             service_name="api-service",
             severity="INFO",
             error_message=None,

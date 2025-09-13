@@ -8,11 +8,11 @@ caching, load balancing, resource management, and performance monitoring.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+import time
+from typing import Any
 
 from ..base import LLMResponse
 from ..constants import MAX_CONCURRENT_REQUESTS
@@ -114,12 +114,12 @@ class PerformanceCache:
         """
         self.max_size = max_size
         self.default_ttl = default_ttl
-        self.cache: Dict[str, CacheEntry] = {}
-        self.access_order: List[str] = []
+        self.cache: dict[str, CacheEntry] = {}
+        self.access_order: list[str] = []
 
         logger.info(f"PerformanceCache initialized with max_size={max_size}")
 
-    def get(self, key: str) -> Optional[LLMResponse]:
+    def get(self, key: str) -> LLMResponse | None:
         """
         Get cached response by key.
 
@@ -142,7 +142,7 @@ class PerformanceCache:
         entry.touch()
         return entry.response
 
-    def put(self, key: str, response: LLMResponse, ttl: Optional[float] = None) -> None:
+    def put(self, key: str, response: LLMResponse, ttl: float | None = None) -> None:
         """
         Store response in cache.
 
@@ -198,7 +198,7 @@ class PerformanceCache:
         self.access_order.clear()
         logger.info("Cleared all cache entries")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get cache statistics.
 
@@ -222,9 +222,9 @@ class LoadBalancer:
 
     def __init__(self) -> None:
         """Initialize the load balancer."""
-        self.model_weights: Dict[str, float] = {}
-        self.model_performance: Dict[str, PerformanceMetrics] = {}
-        self.round_robin_index: Dict[str, int] = {}
+        self.model_weights: dict[str, float] = {}
+        self.model_performance: dict[str, PerformanceMetrics] = {}
+        self.round_robin_index: dict[str, int] = {}
 
         logger.info("LoadBalancer initialized")
 
@@ -255,7 +255,7 @@ class LoadBalancer:
 
         logger.info(f"Removed model {model_key}")
 
-    def select_model(self, strategy: str = "weighted") -> Optional[str]:
+    def select_model(self, strategy: str = "weighted") -> str | None:
         """
         Select a model using the specified strategy.
 
@@ -279,7 +279,7 @@ class LoadBalancer:
         else:
             return self._weighted_selection()
 
-    def _weighted_selection(self) -> Optional[str]:
+    def _weighted_selection(self) -> str | None:
         """Select model using weighted random selection."""
         import random
 
@@ -297,7 +297,7 @@ class LoadBalancer:
 
         return None
 
-    def _round_robin_selection(self) -> Optional[str]:
+    def _round_robin_selection(self) -> str | None:
         """Select model using round-robin selection."""
         if not self.model_weights:
             return None
@@ -312,7 +312,7 @@ class LoadBalancer:
 
         return selected_model
 
-    def _least_connections_selection(self) -> Optional[str]:
+    def _least_connections_selection(self) -> str | None:
         """Select model with least active connections."""
         if not self.model_performance:
             return None
@@ -323,7 +323,7 @@ class LoadBalancer:
             key=lambda k: self.model_performance[k].request_count,
         )
 
-    def _performance_based_selection(self) -> Optional[str]:
+    def _performance_based_selection(self) -> str | None:
         """Select model based on performance metrics."""
         if not self.model_performance:
             return None
@@ -367,7 +367,7 @@ class LoadBalancer:
         if model_key in self.model_performance:
             self.model_performance[model_key].update(response_time, success, cache_hit)
 
-    def get_model_performance(self, model_key: str) -> Optional[PerformanceMetrics]:
+    def get_model_performance(self, model_key: str) -> PerformanceMetrics | None:
         """
         Get performance metrics for a model.
 
@@ -379,7 +379,7 @@ class LoadBalancer:
         """
         return self.model_performance.get(model_key)
 
-    def get_all_performance(self) -> Dict[str, PerformanceMetrics]:
+    def get_all_performance(self) -> dict[str, PerformanceMetrics]:
         """
         Get performance metrics for all models.
 
@@ -452,8 +452,8 @@ class PerformanceOptimizer:
     def generate_cache_key(
         self,
         prompt: str,
-        model_config: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
+        model_config: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> str:
         """
         Generate a cache key for a request.
@@ -481,9 +481,9 @@ class PerformanceOptimizer:
     async def get_cached_response(
         self,
         prompt: str,
-        model_config: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Optional[LLMResponse]:
+        model_config: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> LLMResponse | None:
         """
         Get cached response if available.
 
@@ -510,10 +510,10 @@ class PerformanceOptimizer:
     def cache_response(
         self,
         prompt: str,
-        model_config: Dict[str, Any],
+        model_config: dict[str, Any],
         response: LLMResponse,
-        context: Optional[Dict[str, Any]] = None,
-        ttl: Optional[float] = None,
+        context: dict[str, Any] | None = None,
+        ttl: float | None = None,
     ) -> None:
         """
         Cache a response.
@@ -534,9 +534,9 @@ class PerformanceOptimizer:
 
     def select_optimal_model(
         self,
-        available_models: List[str],
+        available_models: list[str],
         strategy: str = "performance_based",
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Select the optimal model for a request.
 
@@ -583,7 +583,7 @@ class PerformanceOptimizer:
         )
         self.global_metrics.update(response_time, success, cache_hit)
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """
         Get performance summary.
 

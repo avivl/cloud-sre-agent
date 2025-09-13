@@ -8,7 +8,7 @@ system including circuit breakers, retries, graceful degradation, and health che
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import Field, field_validator
 
@@ -99,7 +99,7 @@ class GracefulDegradationConfig:
     """Configuration for graceful degradation strategies."""
 
     enabled: bool = True
-    fallback_strategies: List[str] = field(
+    fallback_strategies: list[str] = field(
         default_factory=lambda: [
             "cached_response",
             "simplified_operation",
@@ -170,7 +170,7 @@ class ErrorHandlingConfig(BaseConfig):
     )
 
     # Provider-specific overrides
-    provider_overrides: Dict[str, Dict[str, Any]] = Field(
+    provider_overrides: dict[str, dict[str, Any]] = Field(
         default_factory=dict, description="Provider-specific error handling overrides"
     )
 
@@ -194,7 +194,7 @@ class ErrorHandlingConfig(BaseConfig):
 
         return v
 
-    def get_provider_config(self, provider_name: str) -> Dict[str, Any]:
+    def get_provider_config(self, provider_name: str) -> dict[str, Any]:
         """Get error handling configuration for a specific provider."""
         base_config = {
             "enabled": self.enabled,

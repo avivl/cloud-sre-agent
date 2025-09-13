@@ -7,10 +7,10 @@ This module provides comprehensive budget tracking, enforcement, and alerting
 capabilities for managing costs across different providers and time periods.
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -24,7 +24,7 @@ class BudgetConfig(BaseModel):
 
     budget_limit: float = Field(100.0, gt=0, description="Budget limit in USD")
     budget_period: BudgetPeriod = BudgetPeriod.MONTHLY
-    alert_thresholds: List[float] = Field(
+    alert_thresholds: list[float] = Field(
         default=[0.5, 0.8, 0.9, 1.0],
         description="Alert thresholds as percentages (0.0 to 1.0)",
     )
@@ -60,10 +60,10 @@ class BudgetManager:
 
     def __init__(self, config: BudgetConfig) -> None:
         self.config = config
-        self.usage_records: List[UsageRecord] = []
-        self.budget_alerts: List[BudgetAlert] = []
-        self.period_start: Optional[datetime] = None
-        self.period_end: Optional[datetime] = None
+        self.usage_records: list[UsageRecord] = []
+        self.budget_alerts: list[BudgetAlert] = []
+        self.period_start: datetime | None = None
+        self.period_end: datetime | None = None
         self.rollover_amount: float = 0.0
 
         # Initialize current period
@@ -185,12 +185,14 @@ class BudgetManager:
         if current_spend > effective_budget:
             if self.config.enforcement_policy == EnforcementPolicy.HARD_LIMIT:
                 logger.error(
-                    f"Budget exceeded! Current spend: ${current_spend:.2f}, Limit: ${effective_budget:.2f}"
+                    f"Budget exceeded! Current spend: ${current_spend:.2f}, "
+                    f"Limit: ${effective_budget:.2f}"
                 )
                 # In a real implementation, this might trigger request blocking
             elif self.config.enforcement_policy == EnforcementPolicy.SOFT_LIMIT:
                 logger.warning(
-                    f"Budget exceeded (soft limit). Current spend: ${current_spend:.2f}, Limit: ${effective_budget:.2f}"
+                    f"Budget exceeded (soft limit). Current spend: ${current_spend:.2f}, "
+                    f"Limit: ${effective_budget:.2f}"
                 )
 
     def get_current_spend(self) -> float:
@@ -269,17 +271,19 @@ class BudgetManager:
             if self.config.enforcement_policy == EnforcementPolicy.HARD_LIMIT:
                 return (
                     False,
-                    f"Request would exceed budget limit (${total_after_request:.2f} > ${effective_budget:.2f})",
+                    f"Request would exceed budget limit "
+                    f"(${total_after_request:.2f} > ${effective_budget:.2f})",
                 )
             elif self.config.enforcement_policy == EnforcementPolicy.SOFT_LIMIT:
                 return (
                     True,
-                    f"Warning: Request would exceed budget limit (${total_after_request:.2f} > ${effective_budget:.2f})",
+                    f"Warning: Request would exceed budget limit "
+                    f"(${total_after_request:.2f} > ${effective_budget:.2f})",
                 )
 
         return True, "Request within budget"
 
-    def get_spending_breakdown(self) -> Dict[str, Any]:
+    def get_spending_breakdown(self) -> dict[str, Any]:
         """Get detailed spending breakdown."""
         if not self.usage_records:
             return {"total_spend": 0.0, "by_provider": {}, "by_model": {}, "by_day": {}}
@@ -330,7 +334,7 @@ class BudgetManager:
             "period_end": self.period_end.isoformat() if self.period_end else None,
         }
 
-    def get_recent_alerts(self, hours: int = 24) -> List[BudgetAlert]:
+    def get_recent_alerts(self, hours: int = 24) -> list[BudgetAlert]:
         """Get recent budget alerts."""
         cutoff_time = datetime.now() - timedelta(hours=hours)
         return [alert for alert in self.budget_alerts if alert.timestamp >= cutoff_time]
@@ -345,7 +349,7 @@ class BudgetManager:
         self._reset_period()
         logger.info("Budget period force reset")
 
-    def get_budget_forecast(self, days_ahead: int = 30) -> Dict[str, Any]:
+    def get_budget_forecast(self, days_ahead: int = 30) -> dict[str, Any]:
         """Get budget forecast for the next N days."""
         current_spend = self.get_current_spend()
 

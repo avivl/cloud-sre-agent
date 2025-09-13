@@ -9,12 +9,12 @@ including prompt versioning, A/B testing, analytics, optimization, and team coll
 This is now a coordination module that uses the modular Mirascope components.
 """
 
+from datetime import datetime, timedelta
 import json
 import logging
-import uuid
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, TypeVar
+import uuid
 
 from pydantic import BaseModel
 
@@ -86,20 +86,20 @@ class PromptVersion(BaseModel):
     template: str
     created_at: str
     created_by: str
-    description: Optional[str] = None
+    description: str | None = None
 
     # Enhanced features
-    tags: List[str] = []
-    metadata: Dict[str, Any] = {}
+    tags: list[str] = []
+    metadata: dict[str, Any] = {}
 
     # Metrics and testing
     metrics: PromptMetrics = PromptMetrics()
-    test_results: List[Dict[str, Any]] = []
-    ab_test_results: Dict[str, Any] = {}
+    test_results: list[dict[str, Any]] = []
+    ab_test_results: dict[str, Any] = {}
 
     # Performance tracking
-    performance_history: List[Dict[str, Any]] = []
-    optimization_suggestions: List[str] = []
+    performance_history: list[dict[str, Any]] = []
+    optimization_suggestions: list[str] = []
 
     # Status and lifecycle
     status: str = "draft"  # draft, testing, active, deprecated
@@ -113,29 +113,29 @@ class PromptData(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     prompt_type: str = "chat"
     category: str = "general"
 
     # Version management
-    versions: Dict[str, PromptVersion] = {}
+    versions: dict[str, PromptVersion] = {}
     current_version: str = "1.0.0"
-    active_versions: Dict[str, str] = {}  # environment -> version mapping
+    active_versions: dict[str, str] = {}  # environment -> version mapping
 
     # Collaboration
     owner: str = "system"
-    collaborators: List[str] = []
-    permissions: Dict[str, List[str]] = {}  # user -> permissions
+    collaborators: list[str] = []
+    permissions: dict[str, list[str]] = {}  # user -> permissions
 
     # Lifecycle
     created_at: str
     updated_at: str
-    last_used: Optional[str] = None
+    last_used: str | None = None
 
     # Advanced features
-    dependencies: List[str] = []  # Other prompt IDs this depends on
-    tags: List[str] = []
-    documentation: Optional[str] = None
+    dependencies: list[str] = []  # Other prompt IDs this depends on
+    tags: list[str] = []
+    documentation: str | None = None
 
 
 class EnhancedPromptManager:
@@ -148,14 +148,14 @@ class EnhancedPromptManager:
         self,
         storage_path: str = "./prompts",
         enable_analytics: bool = True,
-        integration_facade: Optional[MirascopeIntegrationFacade] = None,
+        integration_facade: MirascopeIntegrationFacade | None = None,
     ):
         """Initialize the enhanced prompt manager."""
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
-        self.prompts: Dict[str, PromptData] = {}
+        self.prompts: dict[str, PromptData] = {}
         self.analytics_enabled = enable_analytics
-        self.analytics_data: Dict[str, List[Dict[str, Any]]] = {}
+        self.analytics_data: dict[str, list[dict[str, Any]]] = {}
 
         # Initialize modular components
         self.integration_facade = integration_facade or get_integration_facade()
@@ -173,12 +173,12 @@ class EnhancedPromptManager:
         self,
         name: str,
         template: str,
-        description: Optional[str] = None,
+        description: str | None = None,
         prompt_type: str = "chat",
         category: str = "general",
         owner: str = "system",
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Create a new prompt with enhanced tracking."""
         prompt_id = str(uuid.uuid4())
@@ -218,9 +218,9 @@ class EnhancedPromptManager:
     def get_prompt(
         self,
         prompt_id: str,
-        version: Optional[str] = None,
+        version: str | None = None,
         environment: str = "production",
-    ) -> Union[Any, str]:
+    ) -> Any | str:
         """Get a Mirascope prompt object with environment-specific versioning."""
         if not prompt_id or prompt_id not in self.prompts:
             logger.warning(f"Prompt with ID '{prompt_id}' not found")
@@ -263,11 +263,11 @@ class EnhancedPromptManager:
         self,
         prompt_id: str,
         template: str,
-        version: Optional[str] = None,
+        version: str | None = None,
         created_by: str = "system",
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        description: str | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Create a new version with enhanced tracking."""
         if prompt_id not in self.prompts:
@@ -344,7 +344,7 @@ class EnhancedPromptManager:
         prompt_id: str,
         version_a: str,
         version_b: str,
-        test_config: Dict[str, Any],
+        test_config: dict[str, Any],
         duration_hours: int = 24,
     ) -> str:
         """Run an A/B test between two prompt versions."""
@@ -396,9 +396,9 @@ class EnhancedPromptManager:
         prompt_id: str,
         version: str,
         user_id: str,
-        request_data: Dict[str, Any],
-        response_data: Dict[str, Any],
-        metrics: Dict[str, Any],
+        request_data: dict[str, Any],
+        response_data: dict[str, Any],
+        metrics: dict[str, Any],
     ) -> None:
         """Record usage analytics for a prompt version."""
         if not self.analytics_enabled:
@@ -467,8 +467,8 @@ class EnhancedPromptManager:
         self._save_prompts()
 
     def get_analytics(
-        self, prompt_id: str, version: Optional[str] = None, time_range_hours: int = 24
-    ) -> Dict[str, Any]:
+        self, prompt_id: str, version: str | None = None, time_range_hours: int = 24
+    ) -> dict[str, Any]:
         """Get comprehensive analytics for a prompt or version."""
         if prompt_id not in self.prompts:
             raise ValueError(f"Prompt with ID {prompt_id} not found")
@@ -525,8 +525,8 @@ class EnhancedPromptManager:
     def optimize_prompt(
         self,
         prompt_id: str,
-        optimization_goals: List[str],
-        test_cases: List[Dict[str, Any]],
+        optimization_goals: list[str],
+        test_cases: list[dict[str, Any]],
         llm_service=None,
     ) -> str:
         """Use LLM to optimize a prompt based on goals and test cases."""
@@ -597,9 +597,9 @@ class EnhancedPromptManager:
     def test_prompt(
         self,
         prompt_id: str,
-        test_cases: List[Dict[str, Any]],
-        version: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        test_cases: list[dict[str, Any]],
+        version: str | None = None,
+    ) -> dict[str, Any]:
         """Run comprehensive tests on a prompt version."""
         if prompt_id not in self.prompts:
             raise ValueError(f"Prompt with ID {prompt_id} not found")
@@ -682,7 +682,7 @@ class EnhancedPromptManager:
         prompts_file = self.storage_path / "enhanced_prompts.json"
         if prompts_file.exists():
             try:
-                with open(prompts_file, "r") as f:
+                with open(prompts_file) as f:
                     data = json.load(f)
                     for prompt_id, prompt_data in data.items():
                         self.prompts[prompt_id] = PromptData(**prompt_data)
@@ -693,7 +693,7 @@ class EnhancedPromptManager:
         analytics_file = self.storage_path / "analytics.json"
         if analytics_file.exists():
             try:
-                with open(analytics_file, "r") as f:
+                with open(analytics_file) as f:
                     self.analytics_data = json.load(f)
             except Exception as e:
                 logger.error(f"Error loading analytics: {e}")
@@ -725,10 +725,10 @@ class EnhancedPromptManager:
     async def generate_with_prompt(
         self,
         prompt_id: str,
-        variables: Optional[Dict[str, Any]] = None,
-        version: Optional[str] = None,
+        variables: dict[str, Any] | None = None,
+        version: str | None = None,
         environment: str = "production",
-        provider: Optional[str] = None,
+        provider: str | None = None,
         **kwargs: Any,
     ) -> ProcessedResponse:
         """Generate a response using a stored prompt."""
@@ -753,13 +753,13 @@ class EnhancedPromptManager:
     async def generate_structured_with_prompt(
         self,
         prompt_id: str,
-        response_model: Type[T],
-        variables: Optional[Dict[str, Any]] = None,
-        version: Optional[str] = None,
+        response_model: type[T],
+        variables: dict[str, Any] | None = None,
+        version: str | None = None,
         environment: str = "production",
-        provider: Optional[str] = None,
+        provider: str | None = None,
         **kwargs: Any,
-    ) -> tuple[ProcessedResponse, Optional[T]]:
+    ) -> tuple[ProcessedResponse, T | None]:
         """Generate a structured response using a stored prompt."""
         # Get the prompt
         prompt_template = self.get_prompt(prompt_id, version, environment)
@@ -781,11 +781,11 @@ class EnhancedPromptManager:
             **kwargs,
         )
 
-    def get_integration_health(self) -> Dict[str, Any]:
+    def get_integration_health(self) -> dict[str, Any]:
         """Get health status of the integration components."""
         return self.integration_facade.get_health_status()
 
-    def get_integration_metrics(self) -> Dict[str, Any]:
+    def get_integration_metrics(self) -> dict[str, Any]:
         """Get metrics from the integration components."""
         return self.integration_facade.get_metrics()
 
@@ -817,12 +817,12 @@ class EnhancedPromptManager:
         """Export analytics data."""
         return self.integration_facade.export_analytics(file_path)
 
-    def get_available_providers(self) -> List[str]:
+    def get_available_providers(self) -> list[str]:
         """Get list of available providers."""
         clients = self.client_manager.get_available_clients()
         return [client.config.provider_type.value for client in clients]
 
-    def get_provider_health(self) -> Dict[str, Dict[str, Any]]:
+    def get_provider_health(self) -> dict[str, dict[str, Any]]:
         """Get health status of all providers."""
         return self.client_manager.get_client_health()
 
@@ -839,7 +839,7 @@ def get_enhanced_prompt_manager() -> EnhancedPromptManager:
 def create_enhanced_prompt_manager(
     storage_path: str = "./prompts",
     enable_analytics: bool = True,
-    integration_facade: Optional[MirascopeIntegrationFacade] = None,
+    integration_facade: MirascopeIntegrationFacade | None = None,
 ) -> EnhancedPromptManager:
     """Create a new enhanced prompt manager instance."""
     return EnhancedPromptManager(storage_path, enable_analytics, integration_facade)

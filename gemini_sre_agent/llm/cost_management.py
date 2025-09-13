@@ -8,11 +8,11 @@ optimization strategies, budget enforcement, and usage analytics.
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+import logging
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .factory import LLMProviderFactory
@@ -92,7 +92,7 @@ class CostManagementConfig(BaseModel):
 
     budget_limit: float = Field(100.0, gt=0, description="Budget limit in USD")
     budget_period: BudgetPeriod = BudgetPeriod.MONTHLY
-    alert_thresholds: List[float] = Field(
+    alert_thresholds: list[float] = Field(
         default=[0.5, 0.8, 0.9, 1.0], description="Alert thresholds as percentages"
     )
     enforcement_policy: EnforcementPolicy = EnforcementPolicy.WARN
@@ -115,16 +115,16 @@ class DynamicCostManager:
     def __init__(self, config: CostManagementConfig) -> None:
         self.config = config
         # These will be set by the integration layer
-        self.provider_factory: Optional["LLMProviderFactory"] = None
-        self.model_registry: Optional["ModelRegistry"] = None
+        self.provider_factory: LLMProviderFactory | None = None
+        self.model_registry: ModelRegistry | None = None
 
         # Pricing cache: provider -> model -> PricingInfo
-        self.pricing_cache: Dict[ProviderType, Dict[str, PricingInfo]] = {}
-        self.usage_records: List[UsageRecord] = []
-        self.budget_alerts: List[BudgetAlert] = []
+        self.pricing_cache: dict[ProviderType, dict[str, PricingInfo]] = {}
+        self.usage_records: list[UsageRecord] = []
+        self.budget_alerts: list[BudgetAlert] = []
 
         # Background task for pricing updates
-        self._refresh_task: Optional[asyncio.Task] = None
+        self._refresh_task: asyncio.Task | None = None
         self._running = False
 
         # Initialize with default pricing
@@ -248,7 +248,7 @@ class DynamicCostManager:
             for _, pricing_info in self.pricing_cache[provider_type].items():
                 pricing_info.last_updated = datetime.now()
 
-    def get_pricing(self, provider: ProviderType, model: str) -> Optional[PricingInfo]:
+    def get_pricing(self, provider: ProviderType, model: str) -> PricingInfo | None:
         """Get current pricing for a model."""
         if provider not in self.pricing_cache:
             return None
@@ -340,7 +340,7 @@ class DynamicCostManager:
 
         return sum(record.cost_usd for record in recent_usage)
 
-    def get_usage_analytics(self) -> Dict[str, Any]:
+    def get_usage_analytics(self) -> dict[str, Any]:
         """Get usage analytics and trends."""
         if not self.usage_records:
             return {"total_requests": 0, "total_cost": 0.0, "cost_by_provider": {}}
@@ -365,7 +365,7 @@ class DynamicCostManager:
             "current_budget_usage": self.get_current_spend() / self.config.budget_limit,
         }
 
-    def can_make_request(self, estimated_cost: float) -> Tuple[bool, str]:
+    def can_make_request(self, estimated_cost: float) -> tuple[bool, str]:
         """Check if a request can be made within budget constraints."""
         current_spend = self.get_current_spend()
         total_after_request = current_spend + estimated_cost

@@ -2,7 +2,6 @@
 
 import importlib
 import logging
-from typing import Dict, Type
 
 from ..config.source_control_repositories import RepositoryConfig
 from .base import SourceControlProvider
@@ -14,11 +13,11 @@ class ProviderFactory:
 
     def __init__(self, credential_manager: CredentialManager) -> None:
         self.credential_manager = credential_manager
-        self.provider_registry: Dict[str, Type[SourceControlProvider]] = {}
+        self.provider_registry: dict[str, type[SourceControlProvider]] = {}
         self.logger = logging.getLogger(__name__)
 
     def register_provider(
-        self, provider_type: str, provider_class: Type[SourceControlProvider]
+        self, provider_type: str, provider_class: type[SourceControlProvider]
     ) -> None:
         """Register a provider class for a specific provider type."""
         self.provider_registry[provider_type] = provider_class
@@ -34,7 +33,7 @@ class ProviderFactory:
                     self.logger.info(f"Registered providers from module: {module_name}")
             except ImportError as e:
                 self.logger.error(
-                    f"Failed to import provider module {module_name}: {str(e)}"
+                    f"Failed to import provider module {module_name}: {e!s}"
                 )
 
     async def create_provider(

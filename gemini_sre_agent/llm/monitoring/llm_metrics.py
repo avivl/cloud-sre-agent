@@ -8,12 +8,12 @@ including provider performance, cost tracking, reliability metrics, and
 custom business metrics.
 """
 
-import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+import logging
+from typing import Any
 
 from ..base import LLMRequest, LLMResponse
 
@@ -62,14 +62,14 @@ class LLMMetricValue:
     """Represents an LLM metric value with metadata."""
 
     name: str
-    value: Union[int, float]
+    value: int | float
     metric_type: LLMMetricType
     provider: str
     model: str
     model_type: str
     timestamp: datetime = field(default_factory=datetime.now)
-    labels: Dict[str, str] = field(default_factory=dict)
-    unit: Optional[str] = None
+    labels: dict[str, str] = field(default_factory=dict)
+    unit: str | None = None
 
 
 @dataclass
@@ -121,17 +121,17 @@ class LLMMetricsCollector:
 
         # Storage for metrics
         self._metrics: deque = deque()
-        self._provider_metrics: Dict[str, ProviderMetrics] = {}
-        self._model_metrics: Dict[str, ModelMetrics] = {}
+        self._provider_metrics: dict[str, ProviderMetrics] = {}
+        self._model_metrics: dict[str, ModelMetrics] = {}
 
         # Performance tracking
-        self._latency_samples: Dict[str, deque] = defaultdict(
+        self._latency_samples: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=1000)
         )
-        self._cost_samples: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self._cost_samples: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
 
         # Rate limiting tracking
-        self._request_counts: Dict[str, deque] = defaultdict(
+        self._request_counts: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=3600)
         )  # 1 hour of seconds
 
@@ -181,8 +181,8 @@ class LLMMetricsCollector:
         model: str,
         model_type: str,
         request: LLMRequest,
-        response: Optional[LLMResponse] = None,
-        error: Optional[Exception] = None,
+        response: LLMResponse | None = None,
+        error: Exception | None = None,
         duration_ms: float = 0.0,
         cost: float = 0.0,
     ):
@@ -299,7 +299,7 @@ class LLMMetricsCollector:
                 model_metric = self._model_metrics[model_key]
                 model_metric.avg_latency_ms = sum(model_samples) / len(model_samples)
 
-    def _percentile(self, data: List[float], percentile: int) -> float:
+    def _percentile(self, data: list[float], percentile: int) -> float:
         """Calculate percentile of data."""
         if not data:
             return 0.0
@@ -318,24 +318,24 @@ class LLMMetricsCollector:
             self._provider_metrics[provider].rate_limit_hits += 1
             self._provider_metrics[provider].last_updated = datetime.now()
 
-    def get_provider_metrics(self, provider: str) -> Optional[ProviderMetrics]:
+    def get_provider_metrics(self, provider: str) -> ProviderMetrics | None:
         """Get metrics for a specific provider."""
         return self._provider_metrics.get(provider)
 
-    def get_model_metrics(self, provider: str, model: str) -> Optional[ModelMetrics]:
+    def get_model_metrics(self, provider: str, model: str) -> ModelMetrics | None:
         """Get metrics for a specific model."""
         model_key = self._get_metric_key(provider, model)
         return self._model_metrics.get(model_key)
 
-    def get_all_provider_metrics(self) -> Dict[str, ProviderMetrics]:
+    def get_all_provider_metrics(self) -> dict[str, ProviderMetrics]:
         """Get metrics for all providers."""
         return self._provider_metrics.copy()
 
-    def get_all_model_metrics(self) -> Dict[str, ModelMetrics]:
+    def get_all_model_metrics(self) -> dict[str, ModelMetrics]:
         """Get metrics for all models."""
         return self._model_metrics.copy()
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get a summary of all metrics."""
         total_requests = sum(
             pm.total_requests for pm in self._provider_metrics.values()
@@ -371,7 +371,7 @@ class LLMMetricsCollector:
 
     def get_throughput_metrics(
         self, provider: str, window_minutes: int = 5
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Get throughput metrics for a provider."""
         if provider not in self._request_counts:
             return {"requests_per_minute": 0.0, "requests_per_second": 0.0}
@@ -390,7 +390,7 @@ class LLMMetricsCollector:
             "window_minutes": window_minutes,
         }
 
-    def export_metrics(self, format: str = "json") -> Dict[str, Any]:
+    def export_metrics(self, format: str = "json") -> dict[str, Any]:
         """Export metrics in specified format."""
         if format == "json":
             return {

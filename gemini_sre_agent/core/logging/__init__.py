@@ -51,10 +51,18 @@ from .flow_tracker import FlowContext, FlowTracker
 from .formatters import FlowFormatter, JSONFormatter, StructuredFormatter, TextFormatter
 from .handlers import (
     ConsoleHandler,
-    FileHandler,
-    RemoteHandler,
-    RotatingFileHandler,
-    SyslogHandler,
+)
+from .handlers import (
+    DatabaseHandler as SyslogHandler,
+)
+from .handlers import (
+    HTTPHandler as RemoteHandler,
+)
+from .handlers import (
+    RotatingStructuredFileHandler as RotatingFileHandler,
+)
+from .handlers import (
+    StructuredFileHandler as FileHandler,
 )
 
 # New comprehensive logging components

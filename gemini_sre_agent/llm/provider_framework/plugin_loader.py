@@ -11,9 +11,9 @@ import importlib
 import importlib.util
 import logging
 import os
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+import sys
+from typing import Any
 
 from ..base import LLMProvider
 from ..factory import LLMProviderFactory
@@ -33,9 +33,9 @@ class ProviderPluginLoader:
     """
 
     def __init__(self) -> None:
-        self.loaded_plugins: Dict[str, Dict[str, Any]] = {}
-        self.plugin_paths: List[str] = []
-        self._plugin_cache: Dict[str, Any] = {}
+        self.loaded_plugins: dict[str, dict[str, Any]] = {}
+        self.plugin_paths: list[str] = []
+        self._plugin_cache: dict[str, Any] = {}
 
     def add_plugin_path(self, path: str) -> None:
         """
@@ -49,8 +49,8 @@ class ProviderPluginLoader:
             logger.info(f"Added plugin path: {path}")
 
     def load_plugin_from_file(
-        self, file_path: str, plugin_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, file_path: str, plugin_name: str | None = None
+    ) -> dict[str, Any]:
         """
         Load a provider plugin from a Python file.
 
@@ -119,8 +119,8 @@ class ProviderPluginLoader:
             raise
 
     def load_plugin_from_package(
-        self, package_path: str, plugin_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, package_path: str, plugin_name: str | None = None
+    ) -> dict[str, Any]:
         """
         Load a provider plugin from a Python package.
 
@@ -196,8 +196,8 @@ class ProviderPluginLoader:
             raise
 
     def load_plugin_from_zip(
-        self, zip_path: str, plugin_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, zip_path: str, plugin_name: str | None = None
+    ) -> dict[str, Any]:
         """
         Load a provider plugin from a ZIP file.
 
@@ -263,8 +263,8 @@ class ProviderPluginLoader:
             raise
 
     def load_plugin_from_url(
-        self, url: str, plugin_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, url: str, plugin_name: str | None = None
+    ) -> dict[str, Any]:
         """
         Load a provider plugin from a remote URL.
 
@@ -318,7 +318,7 @@ class ProviderPluginLoader:
 
     def _extract_providers_from_module(
         self, module: Any, plugin_name: str
-    ) -> Dict[str, Type[LLMProvider]]:
+    ) -> dict[str, type[LLMProvider]]:
         """Extract provider classes from a module."""
         import inspect
 
@@ -340,7 +340,7 @@ class ProviderPluginLoader:
 
     def _extract_providers_from_package(
         self, package: Any, plugin_name: str
-    ) -> Dict[str, Type[LLMProvider]]:
+    ) -> dict[str, type[LLMProvider]]:
         """Extract provider classes from a package."""
         import inspect
 
@@ -356,7 +356,7 @@ class ProviderPluginLoader:
 
         return providers
 
-    def _extract_provider_name(self, class_name: str) -> Optional[str]:
+    def _extract_provider_name(self, class_name: str) -> str | None:
         """Extract provider name from class name."""
         # Remove "Provider" suffix and convert to lowercase
         if class_name.endswith("Provider"):
@@ -446,15 +446,15 @@ class ProviderPluginLoader:
             logger.error(f"Failed to reload plugin {plugin_name}: {e}")
             return False
 
-    def list_loaded_plugins(self) -> List[str]:
+    def list_loaded_plugins(self) -> list[str]:
         """List all loaded plugin names."""
         return list(self.loaded_plugins.keys())
 
-    def get_plugin_info(self, plugin_name: str) -> Optional[Dict[str, Any]]:
+    def get_plugin_info(self, plugin_name: str) -> dict[str, Any] | None:
         """Get information about a loaded plugin."""
         return self.loaded_plugins.get(plugin_name)
 
-    def discover_plugins(self, search_paths: Optional[List[str]] = None) -> List[str]:
+    def discover_plugins(self, search_paths: list[str] | None = None) -> list[str]:
         """
         Discover available plugins in the search paths.
 
@@ -491,8 +491,8 @@ class ProviderPluginLoader:
         return discovered_plugins
 
     def auto_load_plugins(
-        self, search_paths: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        self, search_paths: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Automatically discover and load all available plugins.
 
@@ -541,8 +541,8 @@ def get_plugin_loader() -> ProviderPluginLoader:
 
 
 def load_provider_plugin(
-    plugin_path: str, plugin_name: Optional[str] = None
-) -> Dict[str, Any]:
+    plugin_path: str, plugin_name: str | None = None
+) -> dict[str, Any]:
     """
     Convenience function to load a provider plugin.
 

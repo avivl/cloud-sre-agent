@@ -8,10 +8,10 @@ coordinating the enhanced analysis agent, specialized generators, and performanc
 optimizations to provide a seamless, high-performance experience.
 """
 
+from dataclasses import dataclass
 import logging
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .caching import ContextCache, IssuePatternCache, RepositoryContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
@@ -51,11 +51,11 @@ class WorkflowResult:
     """Result of the unified workflow execution."""
 
     success: bool
-    analysis_result: Dict[str, Any]
+    analysis_result: dict[str, Any]
     generated_code: str
-    validation_result: Dict[str, Any]
+    validation_result: dict[str, Any]
     metrics: WorkflowMetrics
-    error_message: Optional[str] = None
+    error_message: str | None = None
     fallback_used: bool = False
 
 
@@ -111,14 +111,14 @@ class UnifiedWorkflowOrchestrator:
         self.logger = logging.getLogger(__name__)
 
         # Workflow state
-        self.current_workflow_id: Optional[str] = None
-        self.workflow_history: List[WorkflowResult] = []
+        self.current_workflow_id: str | None = None
+        self.workflow_history: list[WorkflowResult] = []
 
     async def execute_workflow(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         analysis_depth: str = "standard",
         enable_validation: bool = True,
@@ -328,9 +328,9 @@ class UnifiedWorkflowOrchestrator:
 
     async def _build_enhanced_context(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         analysis_depth: str,
     ) -> PromptContext:
@@ -474,12 +474,12 @@ class UnifiedWorkflowOrchestrator:
 
     async def _execute_enhanced_analysis(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         prompt_context: PromptContext,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute enhanced analysis with the enhanced analysis agent.
 
@@ -518,11 +518,11 @@ class UnifiedWorkflowOrchestrator:
 
     async def _execute_fallback_analysis(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute fallback analysis when enhanced analysis fails.
 
@@ -570,7 +570,7 @@ class UnifiedWorkflowOrchestrator:
 
     async def _generate_enhanced_code(
         self,
-        analysis_result: Dict[str, Any],
+        analysis_result: dict[str, Any],
         prompt_context: PromptContext,
         enable_specialized_generators: bool,
     ) -> str:
@@ -668,8 +668,8 @@ class UnifiedWorkflowOrchestrator:
             return base_code
 
     async def _validate_generated_code(
-        self, analysis_result: Dict[str, Any], prompt_context: PromptContext
-    ) -> Dict[str, Any]:
+        self, analysis_result: dict[str, Any], prompt_context: PromptContext
+    ) -> dict[str, Any]:
         """
         Validate generated code for quality and correctness using the validation pipeline.
 
@@ -745,7 +745,7 @@ class UnifiedWorkflowOrchestrator:
                 "validation_summary": {"error": str(e)},
             }
 
-    async def _validate_python_code(self, code: str) -> Dict[str, Any]:
+    async def _validate_python_code(self, code: str) -> dict[str, Any]:
         """Validate Python code for syntax and common issues."""
         validation_result = {
             "is_valid": True,
@@ -781,7 +781,7 @@ class UnifiedWorkflowOrchestrator:
             return 0.0
 
     def _analyze_root_cause_basic(
-        self, triage_packet: Dict[str, Any], historical_logs: List[str]
+        self, triage_packet: dict[str, Any], historical_logs: list[str]
     ) -> str:
         """Basic root cause analysis for fallback scenarios."""
         error_patterns = triage_packet.get("error_patterns", [])
@@ -832,11 +832,11 @@ except Exception as e:
         else:
             return f"# Basic error handling for {file_ext} files\n# TODO: Implement based on: {proposed_fix}"
 
-    async def get_workflow_history(self) -> List[WorkflowResult]:
+    async def get_workflow_history(self) -> list[WorkflowResult]:
         """Get workflow execution history."""
         return self.workflow_history.copy()
 
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """Get comprehensive performance metrics."""
         try:
             cache_stats = await self.cache.get_stats()
@@ -891,7 +891,7 @@ except Exception as e:
         self.workflow_history.clear()
         self.logger.info("Workflow history reset")
 
-    async def get_performance_insights(self) -> Dict[str, Any]:
+    async def get_performance_insights(self) -> dict[str, Any]:
         """Get comprehensive performance insights from the monitoring system."""
         try:
             # Get performance summaries for all operations
@@ -960,7 +960,7 @@ except Exception as e:
             raise
 
     async def _extract_issue_context_async(
-        self, triage_packet: Dict[str, Any]
+        self, triage_packet: dict[str, Any]
     ) -> IssueContext:
         """Helper method for async issue context extraction."""
         try:

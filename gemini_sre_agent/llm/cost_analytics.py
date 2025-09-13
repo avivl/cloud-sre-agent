@@ -7,10 +7,10 @@ This module provides comprehensive analytics, reporting, and insights
 for cost management across different providers and time periods.
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -24,7 +24,7 @@ class AnalyticsConfig(BaseModel):
     """Configuration for cost analytics."""
 
     retention_days: int = Field(90, gt=0, description="Days to retain usage data")
-    aggregation_intervals: List[str] = Field(
+    aggregation_intervals: list[str] = Field(
         default=["hourly", "daily", "weekly", "monthly"],
         description="Available aggregation intervals",
     )
@@ -81,7 +81,7 @@ class OptimizationRecommendation:
     confidence: float
     description: str
     implementation_effort: str  # "low", "medium", "high"
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 class CostAnalytics:
@@ -89,7 +89,7 @@ class CostAnalytics:
 
     def __init__(self, config: AnalyticsConfig) -> None:
         self.config = config
-        self.usage_records: List[UsageRecord] = []
+        self.usage_records: list[UsageRecord] = []
 
     def add_usage_record(self, record: UsageRecord) -> None:
         """Add a usage record for analytics."""
@@ -105,7 +105,7 @@ class CostAnalytics:
 
     def get_cost_trends(
         self, start_date: datetime, end_date: datetime, interval: str = "daily"
-    ) -> List[CostTrend]:
+    ) -> list[CostTrend]:
         """Get cost trends for a specific period and interval."""
         # Filter records by date range
         filtered_records = [
@@ -139,8 +139,11 @@ class CostAnalytics:
                 cost_change_percent = (
                     (total_cost - previous_period_cost) / previous_period_cost
                 ) * 100
-                
-            if previous_period_request_count is not None and previous_period_request_count > 0:
+
+            if (
+                previous_period_request_count is not None
+                and previous_period_request_count > 0
+            ):
                 request_change_percent = (
                     (request_count - previous_period_request_count)
                     / previous_period_request_count
@@ -166,8 +169,8 @@ class CostAnalytics:
         return trends
 
     def _group_records_by_interval(
-        self, records: List[UsageRecord], interval: str
-    ) -> Dict[str, List[UsageRecord]]:
+        self, records: list[UsageRecord], interval: str
+    ) -> dict[str, list[UsageRecord]]:
         """Group records by time interval."""
         grouped = {}
 
@@ -192,8 +195,8 @@ class CostAnalytics:
         return dict(sorted(grouped.items()))
 
     def get_provider_comparison(
-        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List[ProviderComparison]:
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> list[ProviderComparison]:
         """Get comprehensive provider comparison."""
         # Filter records by date range if provided
         if start_date and end_date:
@@ -249,7 +252,7 @@ class CostAnalytics:
 
     def get_optimization_recommendations(
         self, lookback_days: int = 30
-    ) -> List[OptimizationRecommendation]:
+    ) -> list[OptimizationRecommendation]:
         """Get cost optimization recommendations."""
         cutoff_date = datetime.now() - timedelta(days=lookback_days)
         recent_records = [
@@ -277,8 +280,8 @@ class CostAnalytics:
         return sorted(recommendations, key=lambda x: x.potential_savings, reverse=True)
 
     def _analyze_provider_switches(
-        self, records: List[UsageRecord]
-    ) -> List[OptimizationRecommendation]:
+        self, records: list[UsageRecord]
+    ) -> list[OptimizationRecommendation]:
         """Analyze potential provider switches for cost optimization."""
         recommendations = []
 
@@ -358,8 +361,8 @@ class CostAnalytics:
         return recommendations
 
     def _analyze_model_optimization(
-        self, records: List[UsageRecord]
-    ) -> List[OptimizationRecommendation]:
+        self, records: list[UsageRecord]
+    ) -> list[OptimizationRecommendation]:
         """Analyze model usage for optimization opportunities."""
         recommendations = []
 
@@ -441,8 +444,8 @@ class CostAnalytics:
         return recommendations
 
     def _analyze_usage_patterns(
-        self, records: List[UsageRecord]
-    ) -> List[OptimizationRecommendation]:
+        self, records: list[UsageRecord]
+    ) -> list[OptimizationRecommendation]:
         """Analyze usage patterns for optimization opportunities."""
         recommendations = []
 
@@ -489,8 +492,8 @@ class CostAnalytics:
         return recommendations
 
     def get_cost_summary(
-        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> dict[str, Any]:
         """Get comprehensive cost summary."""
         if start_date and end_date:
             filtered_records = [

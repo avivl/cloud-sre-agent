@@ -431,7 +431,9 @@ class TestFallbackManager:
         assert stats["usage"] == 10
         assert stats["failures"] == 0
 
-    def test_provider_stats_success_rate_calculation(self, fallback_manager: str) -> None:
+    def test_provider_stats_success_rate_calculation(
+        self, fallback_manager: str
+    ) -> None:
         """Test success rate calculation."""
         # Test with no requests
         stats = fallback_manager.get_provider_stats("gemini")

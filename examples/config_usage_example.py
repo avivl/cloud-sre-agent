@@ -4,8 +4,8 @@ Example script demonstrating how to use the enhanced configuration management sy
 """
 
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Add the parent directory to the path so we can import the config module
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -182,7 +182,8 @@ def main() -> None:
     # Example 6: Configuration hot reloading
     print("\n6. Configuration hot reloading...")
     print(
-        "   This feature allows the configuration to be reloaded without restarting the application."
+        "   This feature allows the configuration to be reloaded without "
+        "restarting the application."
     )
     print(
         "   The ConfigManager monitors file changes and can automatically reload when needed."

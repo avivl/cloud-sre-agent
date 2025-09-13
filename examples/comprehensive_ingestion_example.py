@@ -10,10 +10,10 @@ Comprehensive example demonstrating the enhanced log ingestion system with:
 """
 
 import asyncio
+from datetime import UTC, datetime
 import logging
 import os
 import tempfile
-from datetime import datetime, timezone
 
 from gemini_sre_agent.config.ingestion_config import (
     AWSCloudWatchConfig,
@@ -72,7 +72,7 @@ async def create_test_log_file() -> str:
     with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
         # Write sample log entries
         for i in range(50):
-            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             severity = ["INFO", "WARN", "ERROR", "DEBUG"][i % 4]
             message = f"Test log message {i} with severity {severity}"
             f.write(f"{timestamp} {severity} {message}\n")
@@ -99,7 +99,7 @@ async def demo_memory_queue():
         for i in range(25):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Sample log message {i}",
                 source="memory-queue-demo",
                 severity=LogSeverity.INFO,
@@ -152,7 +152,7 @@ async def demo_queued_file_system():
 
         # Process logs for a short time
         processed_count = 0
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         async for log_entry in adapter.get_logs():
             logger.info(f"File System Log: {log_entry.message}")
@@ -161,7 +161,7 @@ async def demo_queued_file_system():
             # Stop after processing 10 entries or 5 seconds
             if (
                 processed_count >= 10
-                or (datetime.now(timezone.utc) - start_time).seconds >= 5
+                or (datetime.now(UTC) - start_time).seconds >= 5
             ):
                 break
 

@@ -4,8 +4,8 @@
 Tests for source control remediation strategy configuration models.
 """
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from gemini_sre_agent.config.source_control_remediation import (
     ConflictResolutionStrategy,

@@ -7,7 +7,7 @@ This module handles merge request operations for the GitLab provider.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import gitlab
 from gitlab.exceptions import GitlabGetError
@@ -26,7 +26,7 @@ class GitLabMergeRequestOperations:
         gl: gitlab.Gitlab,
         project: Any,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize merge request operations with GitLab client and project."""
         self.gl = gl
@@ -113,7 +113,7 @@ class GitLabMergeRequestOperations:
 
         return await self._execute_with_error_handling("create_merge_request", _create)
 
-    async def get_merge_request(self, mr_id: int) -> Optional[Dict[str, Any]]:
+    async def get_merge_request(self, mr_id: int) -> dict[str, Any] | None:
         """Get a merge request by ID."""
 
         async def _get():
@@ -144,10 +144,10 @@ class GitLabMergeRequestOperations:
     async def list_merge_requests(
         self,
         state: str = "opened",
-        source_branch: Optional[str] = None,
-        target_branch: Optional[str] = None,
+        source_branch: str | None = None,
+        target_branch: str | None = None,
         limit: int = 30,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List merge requests."""
 
         async def _list():
@@ -187,8 +187,8 @@ class GitLabMergeRequestOperations:
         self,
         mr_id: int,
         merge_method: str = "merge",
-        commit_title: Optional[str] = None,
-        commit_message: Optional[str] = None,
+        commit_title: str | None = None,
+        commit_message: str | None = None,
     ) -> bool:
         """Merge a merge request."""
 
@@ -249,7 +249,7 @@ class GitLabMergeRequestOperations:
 
         return await self._execute_with_error_handling("add_comment", _add_comment)
 
-    async def get_merge_request_files(self, mr_id: int) -> List[Dict[str, Any]]:
+    async def get_merge_request_files(self, mr_id: int) -> list[dict[str, Any]]:
         """Get files changed in a merge request."""
 
         async def _get_files():
@@ -278,7 +278,7 @@ class GitLabMergeRequestOperations:
             "get_merge_request_files", _get_files
         )
 
-    async def get_merge_request_commits(self, mr_id: int) -> List[Dict[str, Any]]:
+    async def get_merge_request_commits(self, mr_id: int) -> list[dict[str, Any]]:
         """Get commits in a merge request."""
 
         async def _get_commits():

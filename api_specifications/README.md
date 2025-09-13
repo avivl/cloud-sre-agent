@@ -5,7 +5,9 @@ This directory contains OpenAPI 3.0 specifications for all APIs in the Gemini SR
 ## Available Specifications
 
 ### 1. Main System API (`openapi.yaml`)
+
 Comprehensive API specification for the Gemini SRE Agent system including:
+
 - Health monitoring and status endpoints
 - Dashboard and overview endpoints
 - Metrics and performance data endpoints
@@ -17,7 +19,9 @@ Comprehensive API specification for the Gemini SRE Agent system including:
 **Base URL:** `https://api.gemini-sre-agent.com/v1`
 
 ### 2. Dogfooding Service API (`dogfooding-service-openapi.yaml`)
+
 Flask-based error-producing service for testing SRE Agent capabilities:
+
 - Health check endpoints
 - Service status endpoints
 - Error testing endpoints (intentionally trigger various error types)
@@ -114,6 +118,7 @@ The dogfooding service does not require authentication.
 ## Error Handling
 
 All APIs return structured error responses with:
+
 - HTTP status codes
 - Error messages
 - Timestamps
@@ -122,6 +127,7 @@ All APIs return structured error responses with:
 ## Monitoring
 
 All APIs include comprehensive monitoring capabilities:
+
 - Health checks
 - Performance metrics
 - Cost analytics

@@ -8,7 +8,6 @@ including memory usage, CPU utilization, and other performance metrics.
 """
 
 import statistics
-from typing import List, Optional
 
 try:
     import psutil
@@ -80,7 +79,7 @@ class CPUMonitor(BaseMonitor):
             raise ImportError("psutil is required for CPU monitoring")
 
         self.process = psutil.Process()  # type: ignore
-        self.cpu_samples: List[float] = []
+        self.cpu_samples: list[float] = []
 
     def start(self) -> None:
         """Start CPU monitoring."""
@@ -104,8 +103,8 @@ class SystemMonitor:
 
     def __init__(self, enable_memory: bool = True, enable_cpu: bool = True) -> None:
         """Initialize system monitor."""
-        self.memory_monitor: Optional[MemoryMonitor] = None
-        self.cpu_monitor: Optional[CPUMonitor] = None
+        self.memory_monitor: MemoryMonitor | None = None
+        self.cpu_monitor: CPUMonitor | None = None
 
         if enable_memory and PSUTIL_AVAILABLE:
             try:

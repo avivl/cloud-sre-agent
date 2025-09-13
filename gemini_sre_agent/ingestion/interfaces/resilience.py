@@ -5,9 +5,10 @@ Resilience patterns for log ingestion system using working libraries.
 """
 
 import asyncio
-import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Dict, TypeVar
+import time
+from typing import Any, TypeVar
 
 # Try to import resilience libraries
 HYX_AVAILABLE = False  # Not using Hyx anymore
@@ -180,11 +181,11 @@ T = TypeVar("T")
 class ResilienceConfig:
     """Configuration for resilience patterns."""
 
-    retry: Dict[str, Any]
-    circuit_breaker: Dict[str, Any]
+    retry: dict[str, Any]
+    circuit_breaker: dict[str, Any]
     timeout: int
-    bulkhead: Dict[str, Any]
-    rate_limit: Dict[str, Any]
+    bulkhead: dict[str, Any]
+    rate_limit: dict[str, Any]
 
 
 class HyxResilientClient:
@@ -242,7 +243,7 @@ class HyxResilientClient:
             "retries": 0,
         }
 
-    def _create_backoff_strategy(self, retry_config: Dict[str, Any]):
+    def _create_backoff_strategy(self, retry_config: dict[str, Any]):
         """Create exponential backoff with jitter"""
         if TENACITY_AVAILABLE and tenacity:
             return tenacity.wait_exponential(
@@ -290,7 +291,7 @@ class HyxResilientClient:
         elif "Retry" in error_type:
             self._stats["retries"] += 1
 
-    def get_health_stats(self) -> Dict[str, Any]:
+    def get_health_stats(self) -> dict[str, Any]:
         """Get comprehensive health statistics"""
         return {
             "circuit_breaker": {
@@ -392,7 +393,7 @@ class BackpressureManager:
         if self.current_queue_size > 0:
             self.current_queue_size -= 1
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get backpressure statistics."""
         return {
             "current_queue_size": self.current_queue_size,

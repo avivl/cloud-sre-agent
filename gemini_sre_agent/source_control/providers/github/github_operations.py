@@ -7,7 +7,7 @@ This module orchestrates the core file and repository operations for the GitHub 
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from github import Github
 from github.Repository import Repository
@@ -35,7 +35,7 @@ class GitHubOperations:
         client: Github,
         repo: Repository,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize operations with GitHub client and repository."""
         self.client = client
@@ -55,7 +55,7 @@ class GitHubOperations:
         )
 
     # File operations - delegate to file_ops
-    async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
+    async def get_file_content(self, path: str, ref: str | None = None) -> str:
         """Get file content from GitHub repository."""
         return await self.file_ops.get_file_content(path, ref)
 
@@ -64,24 +64,24 @@ class GitHubOperations:
         file_path: str,
         remediation: str,
         commit_message: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> RemediationResult:
         """Apply remediation to a file."""
         return await self.file_ops.apply_remediation(
             file_path, remediation, commit_message, branch
         )
 
-    async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
+    async def file_exists(self, path: str, ref: str | None = None) -> bool:
         """Check if a file exists in the repository."""
         return await self.file_ops.file_exists(path, ref)
 
-    async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
+    async def get_file_info(self, path: str, ref: str | None = None) -> FileInfo:
         """Get file information."""
         return await self.file_ops.get_file_info(path, ref)
 
     async def list_files(
-        self, path: str = "", ref: Optional[str] = None
-    ) -> List[FileInfo]:
+        self, path: str = "", ref: str | None = None
+    ) -> list[FileInfo]:
         """List files in a directory."""
         return await self.file_ops.list_files(path, ref)
 
@@ -98,12 +98,12 @@ class GitHubOperations:
         file_path: str,
         content: str,
         message: str,
-        branch: Optional[str] = None,
-    ) -> Optional[str]:
+        branch: str | None = None,
+    ) -> str | None:
         """Commit changes to a file."""
         return await self.file_ops.commit_changes(file_path, content, message, branch)
 
-    async def get_file_history(self, path: str, limit: int = 10) -> List[CommitInfo]:
+    async def get_file_history(self, path: str, limit: int = 10) -> list[CommitInfo]:
         """Get file commit history."""
         return await self.file_ops.get_file_history(path, limit)
 
@@ -112,7 +112,7 @@ class GitHubOperations:
         return await self.file_ops.diff_between_commits(base_sha, head_sha)
 
     # Branch operations - delegate to branch_ops
-    async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
+    async def create_branch(self, name: str, base_ref: str | None = None) -> bool:
         """Create a new branch."""
         return await self.branch_ops.create_branch(name, base_ref)
 
@@ -120,11 +120,11 @@ class GitHubOperations:
         """Delete a branch."""
         return await self.branch_ops.delete_branch(name)
 
-    async def list_branches(self) -> List[BranchInfo]:
+    async def list_branches(self) -> list[BranchInfo]:
         """List all branches."""
         return await self.branch_ops.list_branches()
 
-    async def get_branch_info(self, name: str) -> Optional[BranchInfo]:
+    async def get_branch_info(self, name: str) -> BranchInfo | None:
         """Get information about a specific branch."""
         return await self.branch_ops.get_branch_info(name)
 
@@ -160,7 +160,7 @@ class GitHubOperations:
 
     # Batch operations - delegate to batch_ops
     async def batch_operations(
-        self, operations: List[BatchOperation]
-    ) -> List[OperationResult]:
+        self, operations: list[BatchOperation]
+    ) -> list[OperationResult]:
         """Execute multiple operations in batch."""
         return await self.batch_ops.batch_operations(operations)

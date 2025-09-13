@@ -7,12 +7,12 @@ This module handles asynchronous metric processing, batching, and cleanup operat
 """
 
 import asyncio
-import logging
 from collections import deque
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any
 
-from .core import MetricSeries, MetricType, MetricPoint
+from .core import MetricPoint, MetricSeries, MetricType
 
 if TYPE_CHECKING:
     from .collectors import MetricsCollector
@@ -24,9 +24,9 @@ class BackgroundProcessor:
     def __init__(self, collector: "MetricsCollector") -> None:
         self.collector = collector
         self.logger = logging.getLogger("BackgroundProcessor")
-        self._cleanup_task: Optional[asyncio.Task] = None
-        self._metric_queue: Optional[asyncio.Queue] = None
-        self._background_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
+        self._metric_queue: asyncio.Queue | None = None
+        self._background_task: asyncio.Task | None = None
 
     async def start_background_processing(self):
         """Start background metric processing and cleanup."""
@@ -51,14 +51,16 @@ class BackgroundProcessor:
         name: str,
         value: float,
         metric_type: MetricType,
-        tags: Optional[Dict[str, str]] = None,
-        unit: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        unit: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Queue metric for background processing."""
         if self._metric_queue is None:
             # Fallback to synchronous processing
-            await self.collector.record_metric(name, value, metric_type, tags, unit, metadata)
+            await self.collector.record_metric(
+                name, value, metric_type, tags, unit, metadata
+            )
             return
 
         metric_data = {
@@ -83,7 +85,7 @@ class BackgroundProcessor:
             except asyncio.QueueEmpty:
                 pass
 
-    async def record_metrics_batch_async(self, metrics: List[Dict[str, Any]]) -> None:
+    async def record_metrics_batch_async(self, metrics: list[dict[str, Any]]) -> None:
         """Queue multiple metrics for batch background processing."""
         if self._metric_queue is None:
             # Fallback to synchronous processing
@@ -157,7 +159,7 @@ class BackgroundProcessor:
                         else:
                             break
                         batch.append(metric_data)
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         break
 
                 # Process the batch
@@ -180,7 +182,7 @@ class BackgroundProcessor:
                     except Exception:
                         pass
 
-    async def _process_metric_batch(self, batch: List[Dict[str, Any]]):
+    async def _process_metric_batch(self, batch: list[dict[str, Any]]):
         """Process a batch of metrics efficiently."""
         # Group metrics by name for more efficient processing
         metrics_by_name = {}
@@ -195,7 +197,9 @@ class BackgroundProcessor:
             try:
                 # Use the first metric as template for series info
                 template = metric_list[0]
-                series_key = self.collector._create_series_key(name, template.get("tags") or {})
+                series_key = self.collector._create_series_key(
+                    name, template.get("tags") or {}
+                )
 
                 async with self.collector._lock:
                     if series_key not in self.collector.series:

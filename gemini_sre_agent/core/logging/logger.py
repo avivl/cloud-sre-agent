@@ -1,9 +1,9 @@
 """Main logger implementation for the logging framework."""
 
+from contextlib import contextmanager
 import logging
 import time
-from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .alerting import AlertRule, AlertSeverity, get_alert_manager
 from .config import LoggingConfig
@@ -12,19 +12,29 @@ from .filters import (
     ContextFilter,
     LevelFilter,
     RateLimitFilter,
-    RegexFilter,
     SamplingFilter,
-    TagFilter,
+)
+from .filters import (
+    ContextFilter as TagFilter,
+)
+from .filters import (
+    MessageFilter as RegexFilter,
 )
 from .flow_tracker import get_flow_tracker
 from .handlers import (
     ConsoleHandler,
     DatabaseHandler,
-    FileHandler,
     HTTPHandler,
     QueueHandler,
-    RotatingFileHandler,
-    SyslogHandler,
+)
+from .handlers import (
+    DatabaseHandler as SyslogHandler,
+)
+from .handlers import (
+    RotatingStructuredFileHandler as RotatingFileHandler,
+)
+from .handlers import (
+    StructuredFileHandler as FileHandler,
 )
 from .performance_monitor import get_performance_monitor
 
@@ -32,7 +42,7 @@ from .performance_monitor import get_performance_monitor
 class Logger:
     """Main logger class that integrates all logging components."""
 
-    def __init__(self, config: Optional[LoggingConfig] = None):
+    def __init__(self, config: LoggingConfig | None = None):
         """Initialize the logger.
 
         Args:
@@ -67,7 +77,7 @@ class Logger:
             if handler:
                 self._logger.addHandler(handler)
 
-    def _create_handler(self, config: Dict[str, Any]) -> Optional[logging.Handler]:
+    def _create_handler(self, config: dict[str, Any]) -> logging.Handler | None:
         """Create a handler from configuration.
 
         Args:
@@ -108,7 +118,7 @@ class Logger:
             if filter_obj:
                 self._logger.addFilter(filter_obj)
 
-    def _create_filter(self, config: Dict[str, Any]) -> Optional[logging.Filter]:
+    def _create_filter(self, config: dict[str, Any]) -> logging.Filter | None:
         """Create a filter from configuration.
 
         Args:
@@ -161,9 +171,9 @@ class Logger:
         self,
         level: int,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        flow_id: Optional[str] = None,
+        extra: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        flow_id: str | None = None,
     ) -> None:
         """Log a message at the specified level.
 
@@ -209,9 +219,9 @@ class Logger:
     def debug(
         self,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        flow_id: Optional[str] = None,
+        extra: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        flow_id: str | None = None,
     ) -> None:
         """Log a debug message.
 
@@ -226,9 +236,9 @@ class Logger:
     def info(
         self,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        flow_id: Optional[str] = None,
+        extra: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        flow_id: str | None = None,
     ) -> None:
         """Log an info message.
 
@@ -243,9 +253,9 @@ class Logger:
     def warning(
         self,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        flow_id: Optional[str] = None,
+        extra: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        flow_id: str | None = None,
     ) -> None:
         """Log a warning message.
 
@@ -260,9 +270,9 @@ class Logger:
     def error(
         self,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        flow_id: Optional[str] = None,
+        extra: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        flow_id: str | None = None,
     ) -> None:
         """Log an error message.
 
@@ -277,9 +287,9 @@ class Logger:
     def critical(
         self,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        flow_id: Optional[str] = None,
+        extra: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        flow_id: str | None = None,
     ) -> None:
         """Log a critical message.
 
@@ -295,9 +305,9 @@ class Logger:
         self,
         message: str,
         exc_info: bool = True,
-        extra: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        flow_id: Optional[str] = None,
+        extra: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        flow_id: str | None = None,
     ) -> None:
         """Log an exception.
 
@@ -314,7 +324,7 @@ class Logger:
 
         self.log(logging.ERROR, message, log_extra, tags, flow_id)
 
-    def _check_alerts(self, level: int, message: str, extra: Dict[str, Any]) -> None:
+    def _check_alerts(self, level: int, message: str, extra: dict[str, Any]) -> None:
         """Check for alert conditions.
 
         Args:
@@ -355,7 +365,7 @@ class Logger:
         """Clear all context data."""
         self._context.clear_context()
 
-    def get_context(self) -> Dict[str, Any]:
+    def get_context(self) -> dict[str, Any]:
         """Get current context data.
 
         Returns:
@@ -366,10 +376,10 @@ class Logger:
     def start_flow(
         self,
         operation: str,
-        flow_id: Optional[str] = None,
-        parent_flow_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
+        flow_id: str | None = None,
+        parent_flow_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
     ) -> str:
         """Start a new flow.
 
@@ -396,8 +406,8 @@ class Logger:
         self,
         flow_id: str,
         status: str = "completed",
-        error: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        error: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """End a flow.
 
@@ -413,10 +423,10 @@ class Logger:
     def flow(
         self,
         operation: str,
-        flow_id: Optional[str] = None,
-        parent_flow_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
+        flow_id: str | None = None,
+        parent_flow_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
     ):
         """Context manager for flow tracking.
 
@@ -443,8 +453,8 @@ class Logger:
         self,
         name: str,
         value: float,
-        tags: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a performance metric.
 
@@ -460,8 +470,8 @@ class Logger:
     def timing(
         self,
         name: str,
-        tags: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """Context manager for timing operations.
 
@@ -479,9 +489,9 @@ class Logger:
     def get_performance_stats(
         self,
         name: str,
-        tags: Optional[Dict[str, str]] = None,
-        window_seconds: Optional[float] = None,
-    ) -> Optional[Dict[str, Any]]:
+        tags: dict[str, str] | None = None,
+        window_seconds: float | None = None,
+    ) -> dict[str, Any] | None:
         """Get performance statistics for a metric.
 
         Args:
@@ -497,11 +507,11 @@ class Logger:
 
     def get_alerts(
         self,
-        status: Optional[str] = None,
-        severity: Optional[str] = None,
-        rule_name: Optional[str] = None,
-        limit: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        status: str | None = None,
+        severity: str | None = None,
+        rule_name: str | None = None,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
         """Get alerts with optional filtering.
 
         Args:
@@ -524,7 +534,7 @@ class Logger:
 
         return [alert.to_dict() for alert in alerts]
 
-    def get_alert_stats(self) -> Dict[str, Any]:
+    def get_alert_stats(self) -> dict[str, Any]:
         """Get alert statistics.
 
         Returns:
@@ -532,7 +542,7 @@ class Logger:
         """
         return self._alert_manager.get_alert_stats()
 
-    def get_flow_context(self, flow_id: str) -> Optional[Dict[str, Any]]:
+    def get_flow_context(self, flow_id: str) -> dict[str, Any] | None:
         """Get flow context by ID.
 
         Args:
@@ -544,7 +554,7 @@ class Logger:
         flow_context = self._flow_tracker.get_flow_context(flow_id)
         return flow_context.to_dict() if flow_context else None
 
-    def get_active_flows(self) -> List[Dict[str, Any]]:
+    def get_active_flows(self) -> list[dict[str, Any]]:
         """Get all active flows.
 
         Returns:
@@ -553,7 +563,7 @@ class Logger:
         flows = self._flow_tracker.get_active_flows()
         return [flow.to_dict() for flow in flows]
 
-    def get_flow_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_flow_history(self, limit: int | None = None) -> list[dict[str, Any]]:
         """Get flow history.
 
         Args:
@@ -565,7 +575,7 @@ class Logger:
         flows = self._flow_tracker.get_flow_history(limit)
         return [flow.to_dict() for flow in flows]
 
-    def get_flow_tree(self, root_flow_id: str) -> Dict[str, Any]:
+    def get_flow_tree(self, root_flow_id: str) -> dict[str, Any]:
         """Get flow tree starting from a root flow.
 
         Args:
@@ -577,8 +587,8 @@ class Logger:
         return self._flow_tracker.get_flow_tree(root_flow_id)
 
     def export_metrics(
-        self, format_type: str = "dict", window_seconds: Optional[float] = None
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, format_type: str = "dict", window_seconds: float | None = None
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Export performance metrics.
 
         Args:
@@ -631,10 +641,10 @@ class Logger:
 
 
 # Global logger instance
-_logger: Optional[Logger] = None
+_logger: Logger | None = None
 
 
-def get_logger(config: Optional[LoggingConfig] = None) -> Logger:
+def get_logger(config: LoggingConfig | None = None) -> Logger:
     """Get the global logger instance.
 
     Args:

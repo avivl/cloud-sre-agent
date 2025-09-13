@@ -9,7 +9,7 @@ for Ollama local models.
 
 import asyncio
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import ollama
 
@@ -134,7 +134,7 @@ class OllamaProvider(LLMProvider):
         """Check if Ollama supports tool calling."""
         return False  # Depends on the model
 
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available Ollama models mapped to semantic types."""
         # Default mappings for common Ollama models
         default_mappings = {
@@ -151,7 +151,7 @@ class OllamaProvider(LLMProvider):
 
         return default_mappings
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings using Ollama API."""
         try:
             logger.info(f"Generating embeddings for text of length: {len(text)}")
@@ -198,8 +198,8 @@ class OllamaProvider(LLMProvider):
         return 0.0
 
     def _convert_messages_to_ollama_format(
-        self, messages: List[Dict[str, str]]
-    ) -> List[Dict[str, str]]:
+        self, messages: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
         """Convert messages to Ollama format."""
         ollama_messages = []
         for message in messages:
@@ -216,7 +216,7 @@ class OllamaProvider(LLMProvider):
 
         return ollama_messages
 
-    def _extract_usage(self, response: Any) -> Dict[str, int]:
+    def _extract_usage(self, response: Any) -> dict[str, int]:
         """Extract usage information from Ollama response."""
         usage = {"input_tokens": 0, "output_tokens": 0}
 

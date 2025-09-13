@@ -8,7 +8,7 @@ with multi-provider support and intelligent model selection.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...llm.base import ModelType
 from ...llm.common.enums import ProviderType
@@ -33,9 +33,9 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
         llm_config: LLMConfig,
         agent_name: str = "text_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.7,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.7,
         **kwargs: Any,
     ):
         """
@@ -65,7 +65,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
         self.temperature = kwargs.get("temperature", 0.7)
         self.creativity_level = kwargs.get("creativity_level", "balanced")
 
-    def _get_optimal_model_type(self, task_context: Dict[str, Any]) -> ModelType:
+    def _get_optimal_model_type(self, task_context: dict[str, Any]) -> ModelType:
         """
         Determine the optimal model type for text generation tasks.
 
@@ -88,7 +88,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
             return ModelType.FAST
 
     def _prepare_text_prompt(
-        self, prompt: str, context: Optional[Dict[str, Any]] = None
+        self, prompt: str, context: dict[str, Any] | None = None
     ) -> str:
         """
         Prepare and enhance the text generation prompt.
@@ -100,7 +100,8 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
         Returns:
             Enhanced prompt ready for LLM processing
         """
-        enhanced_prompt = f"""You are an expert text generation assistant. Generate high-quality, coherent text based on the following request:
+        enhanced_prompt = f"""You are an expert text generation assistant. Generate 
+high-quality, coherent text based on the following request:
 
 {prompt}
 
@@ -125,7 +126,7 @@ Guidelines:
     async def generate_text(
         self,
         prompt: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> TextResponse:
         """
@@ -178,7 +179,7 @@ Guidelines:
     async def generate_summary(
         self,
         text: str,
-        max_length: Optional[int] = None,
+        max_length: int | None = None,
         style: str = "concise",
         **kwargs: Any,
     ) -> TextResponse:
@@ -196,7 +197,8 @@ Guidelines:
         """
         summary_length = max_length or min(len(text) // 4, 500)
 
-        prompt = f"""Summarize the following text in a {style} style (max {summary_length} characters):
+        prompt = f"""Summarize the following text in a {style} style 
+(max {summary_length} characters):
 
 {text}
 
@@ -229,7 +231,8 @@ Summary:"""
         Returns:
             TextResponse containing the explanation
         """
-        prompt = f"""Explain the following topic in a clear, {level}-level way for a {audience} audience:
+        prompt = f"""Explain the following topic in a clear, {level}-level way 
+for a {audience} audience:
 
 {topic}
 
@@ -243,7 +246,7 @@ Explanation:"""
 
         return await self.generate_text(prompt, context, **kwargs)
 
-    def get_agent_capabilities(self) -> Dict[str, Any]:
+    def get_agent_capabilities(self) -> dict[str, Any]:
         """
         Get the capabilities and configuration of this text agent.
 

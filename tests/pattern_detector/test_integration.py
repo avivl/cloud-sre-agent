@@ -3,7 +3,7 @@ Integration tests for the pattern detection system.
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -45,7 +45,7 @@ class TestPatternDetectorIntegration:
         manager.start()
 
         try:
-            base_time = datetime.now(timezone.utc)
+            base_time = datetime.now(UTC)
             logs = [
                 {
                     "insertId": f"test-{i}",
@@ -153,7 +153,7 @@ class TestSmartThresholdsIntegration:
             fast_window_minutes=5, pattern_callback=pattern_callback
         )
 
-        base_time = datetime.now(timezone.utc)
+        base_time = datetime.now(UTC)
         for i in range(8):
             severity = "ERROR" if i < 4 else "INFO"
             service = "service-a" if i < 6 else "service-b"
@@ -250,7 +250,7 @@ class TestPatternClassificationIntegration:
         threshold_evaluator = ThresholdEvaluator(threshold_configs)
         pattern_classifier = PatternClassifier()
 
-        base_time = datetime(2024, 1, 27, 10, 0, 0, tzinfo=timezone.utc)
+        base_time = datetime(2024, 1, 27, 10, 0, 0, tzinfo=UTC)
         services = ["auth-service", "billing-service", "notification-service"]
 
         for i in range(15):

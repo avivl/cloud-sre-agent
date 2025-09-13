@@ -41,7 +41,7 @@ def validate_environment() -> None:
         logger.error(
             f"[STARTUP] Missing required environment variables: {missing_required}"
         )
-        raise EnvironmentError(
+        raise OSError(
             f"Missing required environment variables: {missing_required}"
         )
 
@@ -96,7 +96,7 @@ async def main():
 
     # Create providers from config first
     all_providers = LLMProviderFactory.create_providers_from_config(llm_config)
-    
+
     # Initialize and run capability discovery
     capability_discovery = CapabilityDiscovery(all_providers)
     await capability_discovery.discover_capabilities()

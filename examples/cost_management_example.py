@@ -7,8 +7,8 @@ for tracking, optimizing, and managing costs across multiple LLM providers.
 """
 
 import asyncio
-import logging
 from datetime import datetime, timedelta
+import logging
 
 from gemini_sre_agent.llm.config import CostConfig
 from gemini_sre_agent.llm.cost_management_integration import (
@@ -60,7 +60,8 @@ async def basic_cost_management_example():
     # Get budget status
     budget_status = cost_manager.get_budget_status()
     logger.info(
-        f"Budget status: {budget_status['status']} - ${budget_status['current_spend']:.2f}/${budget_status['budget_limit']:.2f}"
+        f"Budget status: {budget_status['status']} - "
+        f"${budget_status['current_spend']:.2f}/{budget_status['budget_limit']:.2f}"
     )
 
     # Get cost analytics
@@ -158,7 +159,8 @@ async def advanced_cost_management_example():
     recommendations = cost_manager.get_optimization_recommendations(lookback_days=7)
     for rec in recommendations[:3]:  # Show top 3
         logger.info(
-            f"{rec['type']}: {rec['description']} (Potential savings: ${rec['potential_savings']:.2f})"
+            f"{rec['type']}: {rec['description']} "
+            f"(Potential savings: ${rec['potential_savings']:.2f})"
         )
 
     # Get budget forecast

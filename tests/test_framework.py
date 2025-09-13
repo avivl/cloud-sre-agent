@@ -39,7 +39,9 @@ class TestTestingFramework:
         return registry
 
     @pytest.fixture
-    def testing_framework(self, mock_provider_factory: str, mock_model_registry: str) -> None:
+    def testing_framework(
+        self, mock_provider_factory: str, mock_model_registry: str
+    ) -> None:
         """Create a testing framework instance."""
         return TestingFramework(
             provider_factory=mock_provider_factory,

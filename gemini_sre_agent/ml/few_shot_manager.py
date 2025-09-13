@@ -8,7 +8,7 @@ code generation quality through example-based learning.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .schemas import BaseSchema
 
@@ -18,9 +18,9 @@ class PatternContext(BaseSchema):
     """Context for pattern-based few-shot learning."""
 
     pattern_type: str
-    context_data: Dict[str, Any]
-    examples: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
+    context_data: dict[str, Any]
+    examples: list[dict[str, Any]]
+    metadata: dict[str, Any]
 
 
 class FewShotManager:
@@ -39,10 +39,10 @@ class FewShotManager:
             max_examples: Maximum number of examples to store
         """
         self.max_examples = max_examples
-        self.examples: List[Dict[str, Any]] = []
-        self.pattern_contexts: Dict[str, PatternContext] = {}
+        self.examples: list[dict[str, Any]] = []
+        self.pattern_contexts: dict[str, PatternContext] = {}
 
-    def add_example(self, example: Dict[str, Any]) -> bool:
+    def add_example(self, example: dict[str, Any]) -> bool:
         """
         Add a new few-shot example.
 
@@ -60,8 +60,8 @@ class FewShotManager:
         return True
 
     def get_examples(
-        self, pattern_type: Optional[str] = None, limit: int = 5
-    ) -> List[Dict[str, Any]]:
+        self, pattern_type: str | None = None, limit: int = 5
+    ) -> list[dict[str, Any]]:
         """
         Get few-shot examples.
 
@@ -90,7 +90,7 @@ class FewShotManager:
         """
         self.pattern_contexts[pattern_type] = context
 
-    def get_pattern_context(self, pattern_type: str) -> Optional[PatternContext]:
+    def get_pattern_context(self, pattern_type: str) -> PatternContext | None:
         """
         Get pattern context for a specific pattern type.
 
@@ -106,7 +106,7 @@ class FewShotManager:
         """Clear all stored examples."""
         self.examples.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get manager statistics."""
         return {
             "total_examples": len(self.examples),

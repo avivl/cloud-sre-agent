@@ -7,10 +7,10 @@ This module provides specialized pattern matching classes for error detection
 using regex, keyword, and semantic pattern matching algorithms.
 """
 
+from dataclasses import dataclass
 import logging
 import re
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Protocol, Tuple
+from typing import Any, Protocol
 
 from .core import ErrorType
 
@@ -27,8 +27,8 @@ class PatternMatch:
     matched_text: str
     start_pos: int
     end_pos: int
-    groups: Dict[str, str]
-    metadata: Dict[str, Any]
+    groups: dict[str, str]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -47,8 +47,8 @@ class PatternMatcher(Protocol):
     """Protocol for pattern matching implementations."""
 
     def match(
-        self, text: str, context: Optional[Dict[str, Any]] = None
-    ) -> List[PatternMatch]:
+        self, text: str, context: dict[str, Any] | None = None
+    ) -> list[PatternMatch]:
         """Match patterns against text."""
         ...
 
@@ -66,7 +66,7 @@ class PatternMatcher(Protocol):
         """Remove a pattern from the matcher."""
         ...
 
-    def get_patterns(self) -> List[Tuple[str, ErrorType, float]]:
+    def get_patterns(self) -> list[tuple[str, ErrorType, float]]:
         """Get all patterns in the matcher."""
         ...
 
@@ -75,13 +75,13 @@ class RegexPatternMatcher:
     """Regex-based pattern matcher for error detection."""
 
     def __init__(
-        self, name: str = "regex_matcher", config: Optional[PatternConfig] = None
+        self, name: str = "regex_matcher", config: PatternConfig | None = None
     ):
         """Initialize the regex pattern matcher."""
         self.name = name
         self.config = config or PatternConfig()
         self.logger = logging.getLogger(f"RegexPatternMatcher.{name}")
-        self.patterns: List[Tuple[str, ErrorType, float, re.Pattern]] = []
+        self.patterns: list[tuple[str, ErrorType, float, re.Pattern]] = []
         self.is_compiled = False
 
     def add_pattern(
@@ -112,7 +112,7 @@ class RegexPatternMatcher:
         ]
         self.logger.debug(f"Removed pattern: {pattern}")
 
-    def get_patterns(self) -> List[Tuple[str, ErrorType, float]]:
+    def get_patterns(self) -> list[tuple[str, ErrorType, float]]:
         """Get all patterns in the matcher."""
         return [
             (pattern, error_type, confidence)
@@ -125,8 +125,8 @@ class RegexPatternMatcher:
         self.logger.info(f"Compiled {len(self.patterns)} patterns")
 
     def match(
-        self, text: str, context: Optional[Dict[str, Any]] = None
-    ) -> List[PatternMatch]:
+        self, text: str, context: dict[str, Any] | None = None
+    ) -> list[PatternMatch]:
         """Match patterns against text."""
         if not self.is_compiled:
             self.compile_patterns()
@@ -179,7 +179,7 @@ class RegexPatternMatcher:
         pattern: str,
         matched_text: str,
         base_confidence: float,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ) -> float:
         """Calculate confidence score for a match."""
         confidence = base_confidence
@@ -204,13 +204,13 @@ class KeywordPatternMatcher:
     """Keyword-based pattern matcher for error detection."""
 
     def __init__(
-        self, name: str = "keyword_matcher", config: Optional[PatternConfig] = None
+        self, name: str = "keyword_matcher", config: PatternConfig | None = None
     ):
         """Initialize the keyword pattern matcher."""
         self.name = name
         self.config = config or PatternConfig()
         self.logger = logging.getLogger(f"KeywordPatternMatcher.{name}")
-        self.keyword_patterns: List[Tuple[List[str], ErrorType, float]] = []
+        self.keyword_patterns: list[tuple[list[str], ErrorType, float]] = []
         self.is_compiled = False
 
     def add_pattern(
@@ -235,7 +235,7 @@ class KeywordPatternMatcher:
         ]
         self.logger.debug(f"Removed keyword pattern: {keywords}")
 
-    def get_patterns(self) -> List[Tuple[str, ErrorType, float]]:
+    def get_patterns(self) -> list[tuple[str, ErrorType, float]]:
         """Get all patterns in the matcher."""
         return [
             (" ".join(keywords), error_type, confidence)
@@ -248,8 +248,8 @@ class KeywordPatternMatcher:
         self.logger.info(f"Compiled {len(self.keyword_patterns)} keyword patterns")
 
     def match(
-        self, text: str, context: Optional[Dict[str, Any]] = None
-    ) -> List[PatternMatch]:
+        self, text: str, context: dict[str, Any] | None = None
+    ) -> list[PatternMatch]:
         """Match keyword patterns against text."""
         if not self.is_compiled:
             self.compile_patterns()
@@ -313,10 +313,10 @@ class KeywordPatternMatcher:
 
     def _calculate_keyword_confidence(
         self,
-        keywords: List[str],
-        matches: List[Tuple[str, int, int]],
+        keywords: list[str],
+        matches: list[tuple[str, int, int]],
         base_confidence: float,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ) -> float:
         """Calculate confidence score for keyword matches."""
         confidence = base_confidence
@@ -345,13 +345,13 @@ class SemanticPatternMatcher:
     """Semantic pattern matcher using fuzzy matching and similarity."""
 
     def __init__(
-        self, name: str = "semantic_matcher", config: Optional[PatternConfig] = None
+        self, name: str = "semantic_matcher", config: PatternConfig | None = None
     ):
         """Initialize the semantic pattern matcher."""
         self.name = name
         self.config = config or PatternConfig()
         self.logger = logging.getLogger(f"SemanticPatternMatcher.{name}")
-        self.semantic_patterns: List[Tuple[str, ErrorType, float, List[str]]] = []
+        self.semantic_patterns: list[tuple[str, ErrorType, float, list[str]]] = []
         self.is_compiled = False
 
     def add_pattern(
@@ -359,7 +359,7 @@ class SemanticPatternMatcher:
         pattern: str,
         error_type: ErrorType,
         confidence: float = 1.0,
-        synonyms: Optional[List[str]] = None,
+        synonyms: list[str] | None = None,
     ) -> None:
         """Add a new semantic pattern to the matcher."""
         synonyms = synonyms or []
@@ -375,7 +375,7 @@ class SemanticPatternMatcher:
         ]
         self.logger.debug(f"Removed semantic pattern: {pattern}")
 
-    def get_patterns(self) -> List[Tuple[str, ErrorType, float]]:
+    def get_patterns(self) -> list[tuple[str, ErrorType, float]]:
         """Get all patterns in the matcher."""
         return [
             (pattern, error_type, confidence)
@@ -388,8 +388,8 @@ class SemanticPatternMatcher:
         self.logger.info(f"Compiled {len(self.semantic_patterns)} semantic patterns")
 
     def match(
-        self, text: str, context: Optional[Dict[str, Any]] = None
-    ) -> List[PatternMatch]:
+        self, text: str, context: dict[str, Any] | None = None
+    ) -> list[PatternMatch]:
         """Match semantic patterns against text."""
         if not self.is_compiled:
             self.compile_patterns()
@@ -443,7 +443,7 @@ class SemanticPatternMatcher:
         return matches
 
     def _calculate_semantic_similarity(
-        self, pattern: str, text: str, synonyms: List[str]
+        self, pattern: str, text: str, synonyms: list[str]
     ) -> float:
         """Calculate semantic similarity between pattern and text."""
         # Simple word-based similarity
@@ -467,8 +467,8 @@ class SemanticPatternMatcher:
         return min(base_similarity, 1.0)
 
     def _find_best_substring_match(
-        self, pattern: str, text: str, synonyms: List[str]
-    ) -> Optional[Dict[str, Any]]:
+        self, pattern: str, text: str, synonyms: list[str]
+    ) -> dict[str, Any] | None:
         """Find the best matching substring in the text."""
         pattern_words = pattern.lower().split()
         text_lower = text.lower()
@@ -496,7 +496,7 @@ class SemanticPatternMatcher:
         return best_match
 
     def _calculate_substring_score(
-        self, pattern_words: List[str], substring: str, synonyms: List[str]
+        self, pattern_words: list[str], substring: str, synonyms: list[str]
     ) -> float:
         """Calculate score for a substring match."""
         substring_words = substring.split()
@@ -521,8 +521,8 @@ class PatternMatcherFactory:
     @staticmethod
     def create_matcher(
         matcher_type: str,
-        name: Optional[str] = None,
-        config: Optional[PatternConfig] = None,
+        name: str | None = None,
+        config: PatternConfig | None = None,
     ) -> PatternMatcher:
         """Create a pattern matcher instance."""
         if matcher_type == "regex":
@@ -535,7 +535,7 @@ class PatternMatcherFactory:
             raise ValueError(f"Unknown matcher type: {matcher_type}")
 
     @staticmethod
-    def get_available_matchers() -> List[str]:
+    def get_available_matchers() -> list[str]:
         """Get list of available matcher types."""
         return ["regex", "keyword", "semantic"]
 
@@ -545,8 +545,8 @@ class PatternRegistry:
 
     def __init__(self) -> None:
         """Initialize the pattern registry."""
-        self.matchers: Dict[str, PatternMatcher] = {}
-        self.pattern_cache: Dict[str, List[PatternMatch]] = {}
+        self.matchers: dict[str, PatternMatcher] = {}
+        self.pattern_cache: dict[str, list[PatternMatch]] = {}
         self.logger = logging.getLogger("PatternRegistry")
 
     def add_matcher(self, name: str, matcher: PatternMatcher) -> None:
@@ -561,8 +561,8 @@ class PatternRegistry:
             self.logger.info(f"Removed matcher: {name}")
 
     def match_all(
-        self, text: str, context: Optional[Dict[str, Any]] = None
-    ) -> List[PatternMatch]:
+        self, text: str, context: dict[str, Any] | None = None
+    ) -> list[PatternMatch]:
         """Match text against all registered matchers."""
         all_matches = []
         context = context or {}
@@ -579,15 +579,15 @@ class PatternRegistry:
         return all_matches
 
     def get_best_match(
-        self, text: str, context: Optional[Dict[str, Any]] = None
-    ) -> Optional[PatternMatch]:
+        self, text: str, context: dict[str, Any] | None = None
+    ) -> PatternMatch | None:
         """Get the best pattern match for text."""
         matches = self.match_all(text, context)
         return matches[0] if matches else None
 
     def get_matches_by_type(
-        self, text: str, error_type: ErrorType, context: Optional[Dict[str, Any]] = None
-    ) -> List[PatternMatch]:
+        self, text: str, error_type: ErrorType, context: dict[str, Any] | None = None
+    ) -> list[PatternMatch]:
         """Get all matches for a specific error type."""
         all_matches = self.match_all(text, context)
         return [match for match in all_matches if match.error_type == error_type]
@@ -597,11 +597,11 @@ class PatternRegistry:
         self.pattern_cache.clear()
         self.logger.info("Cleared pattern match cache")
 
-    def get_matcher_names(self) -> List[str]:
+    def get_matcher_names(self) -> list[str]:
         """Get names of all registered matchers."""
         return list(self.matchers.keys())
 
-    def get_matcher(self, name: str) -> Optional[PatternMatcher]:
+    def get_matcher(self, name: str) -> PatternMatcher | None:
         """Get a specific matcher by name."""
         return self.matchers.get(name)
 
@@ -783,21 +783,21 @@ def initialize_default_patterns() -> None:
 
 
 def match_error_patterns(
-    text: str, context: Optional[Dict[str, Any]] = None
-) -> List[PatternMatch]:
+    text: str, context: dict[str, Any] | None = None
+) -> list[PatternMatch]:
     """Match error patterns against text using the global registry."""
     return pattern_registry.match_all(text, context)
 
 
 def get_best_error_match(
-    text: str, context: Optional[Dict[str, Any]] = None
-) -> Optional[PatternMatch]:
+    text: str, context: dict[str, Any] | None = None
+) -> PatternMatch | None:
     """Get the best error pattern match for text."""
     return pattern_registry.get_best_match(text, context)
 
 
 def get_error_matches_by_type(
-    text: str, error_type: ErrorType, context: Optional[Dict[str, Any]] = None
-) -> List[PatternMatch]:
+    text: str, error_type: ErrorType, context: dict[str, Any] | None = None
+) -> list[PatternMatch]:
     """Get all error pattern matches for a specific error type."""
     return pattern_registry.get_matches_by_type(text, error_type, context)

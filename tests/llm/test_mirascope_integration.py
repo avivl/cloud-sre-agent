@@ -7,8 +7,8 @@ Tests for Mirascope Prompt Management Integration.
 import tempfile
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from pydantic import BaseModel
+import pytest
 
 from gemini_sre_agent.llm.mirascope_integration import (
     PromptCollaborationManager,
@@ -389,7 +389,9 @@ class TestLLMPromptService:
 class TestMirascopeIntegratedLLMService:
     """Test the MirascopeIntegratedLLMService class."""
 
-    def test_integrated_service_creation(self, prompt_manager: str, mock_llm_service: str) -> None:
+    def test_integrated_service_creation(
+        self, prompt_manager: str, mock_llm_service: str
+    ) -> None:
         """Test creating an integrated LLM service."""
         integrated_service = MirascopeIntegratedLLMService(
             mock_llm_service, prompt_manager
@@ -399,7 +401,9 @@ class TestMirascopeIntegratedLLMService:
         assert integrated_service.prompt_manager == prompt_manager
         assert isinstance(integrated_service.prompt_service, LLMPromptService)
 
-    def test_create_environment(self, prompt_manager: str, mock_llm_service: str) -> None:
+    def test_create_environment(
+        self, prompt_manager: str, mock_llm_service: str
+    ) -> None:
         """Test creating a new environment."""
         integrated_service = MirascopeIntegratedLLMService(
             mock_llm_service, prompt_manager

@@ -9,7 +9,7 @@ LLM system while maintaining backward compatibility with the original interface.
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..llm.base import ModelType
 from ..llm.common.enums import ProviderType
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class EnhancedAnalysisAgent(EnhancedBaseAgent[RemediationResponse]):
     """
     Enhanced Analysis Agent with multi-provider support.
-    
+
     Provides intelligent model selection for deep analysis tasks while maintaining
     backward compatibility with the original AnalysisAgent interface.
     """
@@ -34,9 +34,9 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[RemediationResponse]):
         llm_config: LLMConfig,
         agent_name: str = "analysis_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -63,17 +63,20 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[RemediationResponse]):
             **kwargs,
         )
 
-        logger.info("EnhancedAnalysisAgent initialized with quality-focused optimization")
+        logger.info(
+            "EnhancedAnalysisAgent initialized with quality-focused optimization"
+        )
 
     async def analyze_issue(
         self,
-        triage_data: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, str],
+        triage_data: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, str],
         flow_id: str,
     ) -> RemediationResponse:
         """
-        Analyze an issue using intelligent model selection and return structured remediation response.
+        Analyze an issue using intelligent model selection and return structured 
+        remediation response.
 
         Args:
             triage_data: Triage information for the issue
@@ -91,7 +94,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[RemediationResponse]):
 
         # Build the analysis prompt
         prompt = self._build_analysis_prompt(triage_data, historical_logs, configs)
-        
+
         # Use the enhanced base agent's intelligent model selection
         response = await self.execute(
             prompt_name="analysis_planning",
@@ -112,20 +115,20 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[RemediationResponse]):
             f"[ENHANCED_ANALYSIS] Analysis complete: flow_id={flow_id}, "
             f"priority={response.priority}, effort={response.estimated_effort}"
         )
-        
+
         return response
 
     def _build_analysis_prompt(
         self,
-        triage_data: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, str],
+        triage_data: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, str],
     ) -> str:
         """Build the analysis prompt."""
         triage_json = json.dumps(triage_data, indent=2)
         logs_str = json.dumps(historical_logs, indent=2)
         configs_str = json.dumps(configs, indent=2)
-        
+
         return f"""
 You are an expert SRE Analysis Agent. Your task is to perform a deep root cause analysis 
 of the provided issue, considering the triage information, log context, and relevant 
@@ -149,4 +152,3 @@ Provide a structured remediation plan with:
 
 Focus on service code fixes that address the root cause of the issue.
 """
-

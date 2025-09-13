@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 # Re-export the main classes for backward compatibility
 __all__ = [
-    "PerformanceBenchmark",
-    "BenchmarkResult",
     "BenchmarkConfig",
-    "MemoryMonitor",
+    "BenchmarkResult",
     "CPUMonitor",
+    "MemoryMonitor",
+    "PerformanceBenchmark",
 ]

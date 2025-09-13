@@ -31,7 +31,9 @@ class TestSecurityComplianceIntegrationTests:
         provider.repo = MagicMock()
         return provider
 
-    def test_security_scanning_tools_comprehensive(self, mock_github_provider: str) -> None:
+    def test_security_scanning_tools_comprehensive(
+        self, mock_github_provider: str
+    ) -> None:
         """Test comprehensive security scanning tools integration."""
         # Test static analysis tools
         static_analysis_tools = {
@@ -124,7 +126,9 @@ class TestSecurityComplianceIntegrationTests:
             assert "severity_threshold" in config
             assert config["severity_threshold"] in ["low", "medium", "high", "critical"]
 
-    def test_compliance_frameworks_comprehensive(self, mock_github_provider: str) -> None:
+    def test_compliance_frameworks_comprehensive(
+        self, mock_github_provider: str
+    ) -> None:
         """Test comprehensive compliance frameworks validation."""
         # Test GDPR compliance
         gdpr_compliance = {
@@ -262,7 +266,9 @@ class TestSecurityComplianceIntegrationTests:
         for config in pci_compliance.values():
             assert config["enabled"] is True
 
-    def test_security_policy_enforcement_comprehensive(self, mock_github_provider: str) -> None:
+    def test_security_policy_enforcement_comprehensive(
+        self, mock_github_provider: str
+    ) -> None:
         """Test comprehensive security policy enforcement."""
         # Test authentication policies
         authentication_policies = {
@@ -367,7 +373,9 @@ class TestSecurityComplianceIntegrationTests:
         for config in data_protection_policies.values():
             assert config["enabled"] is True
 
-    def test_security_tool_integration_validation(self, mock_github_provider: str) -> None:
+    def test_security_tool_integration_validation(
+        self, mock_github_provider: str
+    ) -> None:
         """Test security tool integration validation."""
         # Test API integration validation
         api_integration_validation = {
@@ -488,7 +496,9 @@ class TestSecurityComplianceIntegrationTests:
         for config in log_analysis_integration.values():
             assert config["enabled"] is True
 
-    def test_security_incident_response_integration(self, mock_github_provider: str) -> None:
+    def test_security_incident_response_integration(
+        self, mock_github_provider: str
+    ) -> None:
         """Test security incident response integration."""
         # Test incident detection
         incident_detection = {
@@ -548,7 +558,9 @@ class TestSecurityComplianceIntegrationTests:
         for config in incident_response.values():
             assert config["enabled"] is True
 
-    def test_security_compliance_reporting_integration(self, mock_github_provider: str) -> None:
+    def test_security_compliance_reporting_integration(
+        self, mock_github_provider: str
+    ) -> None:
         """Test security compliance reporting integration."""
         # Test compliance reporting
         compliance_reporting = {
@@ -609,7 +621,9 @@ class TestSecurityComplianceIntegrationTests:
         for config in report_generation.values():
             assert config["enabled"] is True
 
-    def test_security_tool_performance_monitoring(self, mock_github_provider: str) -> None:
+    def test_security_tool_performance_monitoring(
+        self, mock_github_provider: str
+    ) -> None:
         """Test security tool performance monitoring."""
         # Test performance metrics
         performance_metrics = {
@@ -667,7 +681,9 @@ class TestSecurityComplianceIntegrationTests:
         for config in performance_thresholds.values():
             assert config["enabled"] is True
 
-    def test_security_tool_error_handling_integration(self, mock_github_provider: str) -> None:
+    def test_security_tool_error_handling_integration(
+        self, mock_github_provider: str
+    ) -> None:
         """Test security tool error handling integration."""
         # Test error detection
         error_detection = {

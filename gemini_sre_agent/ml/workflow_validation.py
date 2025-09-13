@@ -8,7 +8,7 @@ Extracted from unified_workflow_orchestrator_original.py.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .performance import PerformanceConfig
 from .prompt_context_models import PromptContext
@@ -22,7 +22,7 @@ class WorkflowValidationEngine:
     quality checks, and validation result processing with proper error handling.
     """
 
-    def __init__(self, performance_config: Optional[PerformanceConfig]) -> None:
+    def __init__(self, performance_config: PerformanceConfig | None) -> None:
         """
         Initialize the workflow validation engine.
 
@@ -33,15 +33,15 @@ class WorkflowValidationEngine:
         self.logger = logging.getLogger(__name__)
 
         # Initialize validation pipeline (will be injected)
-        self.validation_pipeline: Optional[Any] = None
+        self.validation_pipeline: Any | None = None
 
     def set_validation_pipeline(self, validation_pipeline: Any) -> None:
         """Set the validation pipeline."""
         self.validation_pipeline = validation_pipeline
 
     async def validate_generated_code(
-        self, analysis_result: Dict[str, Any], prompt_context: PromptContext
-    ) -> Dict[str, Any]:
+        self, analysis_result: dict[str, Any], prompt_context: PromptContext
+    ) -> dict[str, Any]:
         """
         Validate generated code for quality and correctness using the validation pipeline.
 
@@ -125,7 +125,7 @@ class WorkflowValidationEngine:
                 "validation_summary": {"error": str(e)},
             }
 
-    async def _validate_python_code(self, code: str) -> Dict[str, Any]:
+    async def _validate_python_code(self, code: str) -> dict[str, Any]:
         """
         Basic Python code validation as fallback.
 
@@ -209,7 +209,7 @@ class WorkflowValidationEngine:
                 "validation_summary": {"error": str(e)},
             }
 
-    async def get_validation_statistics(self) -> Dict[str, Any]:
+    async def get_validation_statistics(self) -> dict[str, Any]:
         """
         Get validation statistics for monitoring.
 
@@ -247,10 +247,10 @@ class WorkflowValidationEngine:
                     return "unhealthy - basic validation failed"
 
             except Exception as e:
-                return f"unhealthy - validation test failed: {str(e)}"
+                return f"unhealthy - validation test failed: {e!s}"
 
             return "healthy"
 
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
-            return f"unhealthy - {str(e)}"
+            return f"unhealthy - {e!s}"

@@ -9,7 +9,7 @@ including issue context, repository context, and task context models.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class IssueType(Enum):
@@ -49,16 +49,16 @@ class RepositoryContext:
     """Comprehensive repository context for prompt generation."""
 
     architecture_type: str  # microservices, monolith, serverless
-    technology_stack: Dict[str, str]  # {"language": "python", "framework": "fastapi"}
-    coding_standards: Dict[str, Any]  # linting rules, style guides
-    error_handling_patterns: List[str]  # common error handling approaches
-    testing_patterns: List[str]  # testing conventions
-    dependency_structure: Dict[str, List[str]]  # service dependencies
-    recent_changes: List[Dict[str, Any]]  # recent commits and changes
-    historical_fixes: List[Dict[str, Any]]  # similar past fixes
-    code_quality_metrics: Dict[str, float]  # complexity, coverage, etc.
+    technology_stack: dict[str, str]  # {"language": "python", "framework": "fastapi"}
+    coding_standards: dict[str, Any]  # linting rules, style guides
+    error_handling_patterns: list[str]  # common error handling approaches
+    testing_patterns: list[str]  # testing conventions
+    dependency_structure: dict[str, list[str]]  # service dependencies
+    recent_changes: list[dict[str, Any]]  # recent commits and changes
+    historical_fixes: list[dict[str, Any]]  # similar past fixes
+    code_quality_metrics: dict[str, float]  # complexity, coverage, etc.
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "architecture_type": self.architecture_type,
@@ -78,18 +78,18 @@ class IssueContext:
     """Detailed context for specific issues."""
 
     issue_type: IssueType
-    affected_files: List[str]
-    error_patterns: List[str]
+    affected_files: list[str]
+    error_patterns: list[str]
     severity_level: int
-    impact_analysis: Dict[str, Any]
-    related_services: List[str]
-    temporal_context: Dict[str, Any]
+    impact_analysis: dict[str, Any]
+    related_services: list[str]
+    temporal_context: dict[str, Any]
     user_impact: str
     business_impact: str
     complexity_score: int = 1
     context_richness: float = 0.5
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "issue_type": self.issue_type.value,
@@ -120,7 +120,7 @@ class TaskContext:
     frequency: str  # "low", "medium", "high"
     cost_sensitivity: float  # 0-1
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "task_type": self.task_type,
@@ -142,10 +142,10 @@ class PromptContext:
     issue_context: IssueContext
     repository_context: RepositoryContext
     generator_type: str
-    validation_feedback: Optional[Dict[str, Any]] = None
+    validation_feedback: dict[str, Any] | None = None
     iteration_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "issue_context": self.issue_context.to_dict(),
@@ -160,16 +160,16 @@ class PromptContext:
 class MetaPromptContext:
     """Context for meta-prompt generation."""
 
-    issue_context: Dict[str, Any]
-    repository_context: Dict[str, Any]
-    triage_packet: Dict[str, Any]
-    historical_logs: List[str]
-    configs: Dict[str, str]
+    issue_context: dict[str, Any]
+    repository_context: dict[str, Any]
+    triage_packet: dict[str, Any]
+    historical_logs: list[str]
+    configs: dict[str, str]
     flow_id: str
-    previous_attempts: Optional[List[Dict[str, Any]]] = None
-    validation_feedback: Optional[Dict[str, Any]] = None
+    previous_attempts: list[dict[str, Any]] | None = None
+    validation_feedback: dict[str, Any] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "issue_context": self.issue_context,
@@ -188,11 +188,11 @@ class ValidationResult:
     """Result of prompt validation."""
 
     success: bool
-    issues: List[str]
-    suggestions: List[str]
+    issues: list[str]
+    suggestions: list[str]
     confidence_score: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "success": self.success,

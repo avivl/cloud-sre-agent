@@ -11,7 +11,7 @@ and parallel processing of remediations.
 import asyncio
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .analysis_agent import RemediationPlan
 from .config.source_control_global import SourceControlConfig, SourceControlGlobalConfig
@@ -39,8 +39,8 @@ class EnhancedRemediationAgent:
 
     def __init__(
         self,
-        source_control_config: Optional[SourceControlGlobalConfig] = None,
-        encryption_key: Optional[str] = None,
+        source_control_config: SourceControlGlobalConfig | None = None,
+        encryption_key: str | None = None,
         auto_discovery: bool = True,
         parallel_processing: bool = True,
         max_concurrent_operations: int = 5,
@@ -62,9 +62,9 @@ class EnhancedRemediationAgent:
         self.max_concurrent_operations = max_concurrent_operations
 
         # Initialize components
-        self.repository_manager: Optional[RepositoryManager] = None
-        self.provider_factory: Optional[ProviderFactory] = None
-        self.credential_manager: Optional[CredentialManager] = None
+        self.repository_manager: RepositoryManager | None = None
+        self.provider_factory: ProviderFactory | None = None
+        self.credential_manager: CredentialManager | None = None
 
         logger.info("[ENHANCED_REMEDIATION] Enhanced Remediation Agent initialized")
 
@@ -82,7 +82,7 @@ class EnhancedRemediationAgent:
                 )
             else:
                 global_config = self.source_control_config
-                
+
             self.repository_manager = await setup_repository_system(
                 global_config, self.encryption_key
             )
@@ -110,10 +110,10 @@ class EnhancedRemediationAgent:
         service_name: str,
         flow_id: str,
         issue_id: str,
-        target_repositories: Optional[List[str]] = None,
+        target_repositories: list[str] | None = None,
         base_branch: str = "main",
         create_branch: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create remediations across multiple repositories.
 
@@ -196,7 +196,7 @@ class EnhancedRemediationAgent:
 
     async def _discover_affected_repositories(
         self, service_name: str, remediation_plan: RemediationPlan
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Discover repositories that are affected by the remediation.
 
@@ -212,7 +212,8 @@ class EnhancedRemediationAgent:
 
         if not file_path:
             logger.warning(
-                f"[ENHANCED_REMEDIATION] No file path found in remediation plan for service: {service_name}"
+                f"[ENHANCED_REMEDIATION] No file path found in remediation plan "
+                f"for service: {service_name}"
             )
             return []
 
@@ -231,7 +232,8 @@ class EnhancedRemediationAgent:
         ]  # Default repositories
 
         logger.info(
-            f"[ENHANCED_REMEDIATION] Discovered {len(affected_repos)} affected repositories: {affected_repos}"
+            f"[ENHANCED_REMEDIATION] Discovered {len(affected_repos)} affected "
+            f"repositories: {affected_repos}"
         )
 
         return affected_repos
@@ -239,13 +241,13 @@ class EnhancedRemediationAgent:
     async def _process_remediations_parallel(
         self,
         remediation_plan: RemediationPlan,
-        target_repositories: List[str],
+        target_repositories: list[str],
         branch_name: str,
         base_branch: str,
         flow_id: str,
         issue_id: str,
         create_branch: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process remediations across repositories in parallel."""
         semaphore = asyncio.Semaphore(self.max_concurrent_operations)
 
@@ -292,13 +294,13 @@ class EnhancedRemediationAgent:
     async def _process_remediations_sequential(
         self,
         remediation_plan: RemediationPlan,
-        target_repositories: List[str],
+        target_repositories: list[str],
         branch_name: str,
         base_branch: str,
         flow_id: str,
         issue_id: str,
         create_branch: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process remediations across repositories sequentially."""
         results = {}
 
@@ -331,7 +333,7 @@ class EnhancedRemediationAgent:
         flow_id: str,
         issue_id: str,
         create_branch: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create remediation for a single repository."""
         try:
             # Get the provider for this repository
@@ -386,18 +388,30 @@ class EnhancedRemediationAgent:
             if hasattr(provider, "create_pull_request"):
                 pr_result = await provider.create_pull_request(
                     title=f"Fix: {remediation_plan.proposed_fix[:50]}...",
-                    body=f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}",
+                    body=(
+                        f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\n"
+                        f"Proposed Fix:\n{remediation_plan.proposed_fix}"
+                    ),
                     head_branch=branch_name,
                     base_branch=base_branch,
-                    description=f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}",
+                    description=(
+                        f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\n"
+                        f"Proposed Fix:\n{remediation_plan.proposed_fix}"
+                    ),
                 )
             elif hasattr(provider, "create_merge_request"):
                 pr_result = await provider.create_merge_request(
                     title=f"Fix: {remediation_plan.proposed_fix[:50]}...",
-                    body=f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}",
+                    body=(
+                        f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\n"
+                        f"Proposed Fix:\n{remediation_plan.proposed_fix}"
+                    ),
                     head_branch=branch_name,
                     base_branch=base_branch,
-                    description=f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}",
+                    description=(
+                        f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\n"
+                        f"Proposed Fix:\n{remediation_plan.proposed_fix}"
+                    ),
                 )
             else:
                 pr_result = {"url": "No PR/MR support", "id": "local"}
@@ -434,7 +448,7 @@ class EnhancedRemediationAgent:
                 "issue_id": issue_id,
             }
 
-    def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
+    def _extract_file_path_from_patch(self, patch_content: str) -> str | None:
         """
         Extracts the target file path from a special comment in the patch content.
         Supports multiple comment formats (e.g., # FILE:, // FILE:, /* FILE: */).
@@ -482,7 +496,7 @@ class EnhancedRemediationAgent:
 
     async def get_remediation_status(
         self, flow_id: str, issue_id: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get the status of a remediation across all repositories.
 
@@ -531,8 +545,8 @@ class EnhancedRemediationAgent:
         return status
 
     async def cleanup_remediation(
-        self, flow_id: str, issue_id: str, branch_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, flow_id: str, issue_id: str, branch_name: str | None = None
+    ) -> dict[str, Any]:
         """
         Clean up remediation branches and temporary files.
 
@@ -594,7 +608,8 @@ class EnhancedRemediationAgent:
                             deleted_branches.append(branch_name)
                         except Exception as e:
                             logger.warning(
-                                f"[ENHANCED_REMEDIATION] Failed to delete branch {branch_name} in {repo_name}: {e}"
+                                f"[ENHANCED_REMEDIATION] Failed to delete branch "
+                                f"{branch_name} in {repo_name}: {e}"
                             )
 
                 cleanup_results["repositories"][repo_name] = {

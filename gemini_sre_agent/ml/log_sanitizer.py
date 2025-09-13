@@ -8,7 +8,6 @@ sensitive information and formatting them for safe processing.
 """
 
 import re
-from typing import List
 
 
 class LogSanitizer:
@@ -37,7 +36,7 @@ class LogSanitizer:
         ]
 
         # Track replacements made
-        self.replacements: List[str] = []
+        self.replacements: list[str] = []
 
     def sanitize_log(self, log_entry: str) -> str:
         """
@@ -61,7 +60,7 @@ class LogSanitizer:
 
         return sanitized
 
-    def sanitize_logs(self, logs: List[str]) -> List[str]:
+    def sanitize_logs(self, logs: list[str]) -> list[str]:
         """
         Sanitize multiple log entries.
 
@@ -88,7 +87,7 @@ class LogSanitizer:
                 return True
         return False
 
-    def get_sensitive_fields(self, log_entry: str) -> List[str]:
+    def get_sensitive_fields(self, log_entry: str) -> list[str]:
         """
         Get list of fields that contain sensitive information.
 

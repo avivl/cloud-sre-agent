@@ -7,12 +7,20 @@ This module provides a comprehensive manager that combines circuit breaker patte
 with retry mechanisms for robust source control operations.
 """
 
+from collections.abc import Callable
 import logging
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from ..models import ProviderHealth
 from .circuit_breaker import CircuitBreaker
-from .core import CircuitBreakerConfig, CircuitBreakerOpenError, CircuitBreakerTimeoutError, CircuitState, OperationCircuitBreakerConfig, RetryConfig
+from .core import (
+    CircuitBreakerConfig,
+    CircuitBreakerOpenError,
+    CircuitBreakerTimeoutError,
+    CircuitState,
+    OperationCircuitBreakerConfig,
+    RetryConfig,
+)
 from .metrics_integration import ErrorHandlingMetrics
 from .retry_manager import RetryManager
 
@@ -22,12 +30,10 @@ class ResilientOperationManager:
 
     def __init__(
         self,
-        circuit_breaker_config: Optional[CircuitBreakerConfig] = None,
-        operation_circuit_breaker_config: Optional[
-            OperationCircuitBreakerConfig
-        ] = None,
-        retry_config: Optional[RetryConfig] = None,
-        metrics: Optional[ErrorHandlingMetrics] = None,
+        circuit_breaker_config: CircuitBreakerConfig | None = None,
+        operation_circuit_breaker_config: OperationCircuitBreakerConfig | None = None,
+        retry_config: RetryConfig | None = None,
+        metrics: ErrorHandlingMetrics | None = None,
     ):
         self.circuit_breaker_config = circuit_breaker_config or CircuitBreakerConfig()
         self.operation_circuit_breaker_config = (
@@ -36,7 +42,7 @@ class ResilientOperationManager:
         self.retry_config = retry_config or RetryConfig()
         self.metrics = metrics
 
-        self.circuit_breakers: Dict[str, CircuitBreaker] = {}
+        self.circuit_breakers: dict[str, CircuitBreaker] = {}
         self.retry_manager = RetryManager(self.retry_config, metrics)
         self.logger = logging.getLogger("ResilientOperationManager")
 

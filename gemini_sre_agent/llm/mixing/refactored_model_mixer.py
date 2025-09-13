@@ -7,10 +7,10 @@ This module provides a clean, modular implementation of the model mixer
 that uses the separated concerns from the refactored modules.
 """
 
+from dataclasses import dataclass, field
 import logging
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..base import LLMResponse
 from ..constants import MAX_CONCURRENT_REQUESTS, MAX_PROMPT_LENGTH
@@ -37,15 +37,15 @@ class MixingResult:
     """Result from model mixing operation."""
 
     primary_result: LLMResponse
-    secondary_results: List[LLMResponse] = field(default_factory=list)
-    aggregated_result: Optional[str] = None
+    secondary_results: list[LLMResponse] = field(default_factory=list)
+    aggregated_result: str | None = None
     confidence_score: float = 0.0
     execution_time_ms: float = 0.0
     total_cost: float = 0.0
     strategy_used: MixingStrategy = MixingStrategy.PARALLEL
-    model_configs: List[Any] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    model_configs: list[Any] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -53,9 +53,9 @@ class TaskDecomposition:
     """Decomposition of a complex task into subtasks."""
 
     original_task: str
-    subtasks: List[str]
-    dependencies: Dict[int, List[int]] = field(default_factory=dict)
-    priority_order: List[int] = field(default_factory=list)
+    subtasks: list[str]
+    dependencies: dict[int, list[int]] = field(default_factory=dict)
+    priority_order: list[int] = field(default_factory=list)
     estimated_complexity: float = 1.0
 
 
@@ -67,7 +67,7 @@ class TaskDecomposer:
         self.model_registry = model_registry
 
     async def decompose_task(
-        self, task: str, context: Dict[str, Any]
+        self, task: str, context: dict[str, Any]
     ) -> TaskDecomposition:
         """Decompose a task using simple heuristics."""
         # Simple decomposition based on task length and keywords
@@ -96,8 +96,8 @@ class ResultAggregator:
 
     async def aggregate_results(
         self,
-        results: List[LLMResponse],
-        configs: List[Any],
+        results: list[LLMResponse],
+        configs: list[Any],
         strategy: MixingStrategy,
     ) -> tuple[str, float]:
         """Aggregate results using simple strategies."""
@@ -115,7 +115,7 @@ class ResultAggregator:
             return results[0].content, 0.8
 
     def _voting_aggregation(
-        self, results: List[LLMResponse], configs: List[Any]
+        self, results: list[LLMResponse], configs: list[Any]
     ) -> tuple[str, float]:
         """Aggregate results using majority voting."""
         # Simple voting: count occurrences of each response
@@ -133,7 +133,7 @@ class ResultAggregator:
         return "", 0.0
 
     def _weighted_aggregation(
-        self, results: List[LLMResponse], configs: List[Any]
+        self, results: list[LLMResponse], configs: list[Any]
     ) -> tuple[str, float]:
         """Aggregate results using weighted combination."""
         if len(results) != len(configs):
@@ -153,7 +153,7 @@ class ResultAggregator:
         return best_response[0], best_response[1]
 
     def _cascade_aggregation(
-        self, results: List[LLMResponse], configs: List[Any]
+        self, results: list[LLMResponse], configs: list[Any]
     ) -> tuple[str, float]:
         """Aggregate results from cascade execution."""
         # In cascade mode, the last result is typically the final result
@@ -169,7 +169,7 @@ class RefactoredModelMixer:
         self,
         provider_factory: LLMProviderFactory,
         model_registry: ModelRegistry,
-        cost_manager: Optional[IntegratedCostManager] = None,
+        cost_manager: IntegratedCostManager | None = None,
         max_concurrent_requests: int = MAX_CONCURRENT_REQUESTS,
     ):
         """Initialize the refactored model mixer."""
@@ -252,8 +252,8 @@ class RefactoredModelMixer:
         prompt: str,
         task_type: TaskType,
         strategy: MixingStrategy = MixingStrategy.PARALLEL,
-        custom_configs: Optional[List[Any]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        custom_configs: list[Any] | None = None,
+        context: dict[str, Any] | None = None,
     ) -> MixingResult:
         """Mix multiple models for a complex task."""
         # Input validation
@@ -408,8 +408,8 @@ class RefactoredModelMixer:
         )
 
     async def _apply_cost_aware_filtering(
-        self, model_configs: List[Any], prompt: str
-    ) -> List[Any]:
+        self, model_configs: list[Any], prompt: str
+    ) -> list[Any]:
         """Apply cost-aware filtering to model configurations."""
         if not self.cost_manager:
             return model_configs
@@ -450,8 +450,8 @@ class RefactoredModelMixer:
         complex_task: str,
         task_type: TaskType,
         strategy: MixingStrategy = MixingStrategy.PARALLEL,
-        context: Optional[Dict[str, Any]] = None,
-    ) -> List[MixingResult]:
+        context: dict[str, Any] | None = None,
+    ) -> list[MixingResult]:
         """Decompose a complex task and mix models for each subtask."""
         # Decompose the task
         decomposition = await self.task_decomposer.decompose_task(
@@ -473,7 +473,7 @@ class RefactoredModelMixer:
                 # Create error result
                 error_result = MixingResult(
                     primary_result=LLMResponse(content="", usage=None),
-                    aggregated_result=f"Error processing subtask: {str(e)}",
+                    aggregated_result=f"Error processing subtask: {e!s}",
                     confidence_score=0.0,
                     strategy_used=strategy,
                     errors=[str(e)],
@@ -483,7 +483,7 @@ class RefactoredModelMixer:
 
         return results
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary."""
         return {
             "model_mixer": self.performance_optimizer.get_performance_summary(),

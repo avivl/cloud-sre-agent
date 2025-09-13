@@ -7,11 +7,11 @@ This module provides context management capabilities including context building,
 sharing, validation, and optimization for multi-model interactions.
 """
 
+from dataclasses import dataclass, field
 import logging
 import re
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..constants import MAX_PROMPT_LENGTH
 
@@ -24,11 +24,11 @@ class ContextData:
 
     context_id: str
     context_type: str
-    data: Dict[str, Any]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any]
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
-    expires_at: Optional[float] = None
+    expires_at: float | None = None
     access_count: int = 0
     last_accessed: float = field(default_factory=time.time)
 
@@ -51,9 +51,9 @@ class ContextSharingRule:
 
     source_model: str
     target_model: str
-    context_types: List[str]
+    context_types: list[str]
     sharing_mode: str = "full"  # full, filtered, summary
-    filter_keys: Optional[List[str]] = None
+    filter_keys: list[str] | None = None
     max_context_size: int = 1000
 
 
@@ -70,9 +70,9 @@ class ContextManager:
         """
         self.max_contexts = max_contexts
         self.default_ttl = default_ttl
-        self.contexts: Dict[str, ContextData] = {}
-        self.sharing_rules: List[ContextSharingRule] = []
-        self.context_usage_stats: Dict[str, Dict[str, Any]] = {}
+        self.contexts: dict[str, ContextData] = {}
+        self.sharing_rules: list[ContextSharingRule] = []
+        self.context_usage_stats: dict[str, dict[str, Any]] = {}
 
         logger.info(f"ContextManager initialized with max_contexts={max_contexts}")
 
@@ -80,9 +80,9 @@ class ContextManager:
         self,
         context_id: str,
         context_type: str,
-        data: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None,
-        ttl: Optional[int] = None,
+        data: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
+        ttl: int | None = None,
     ) -> ContextData:
         """
         Create a new context.
@@ -127,7 +127,7 @@ class ContextManager:
         logger.info(f"Created context {context_id} of type {context_type}")
         return context
 
-    def get_context(self, context_id: str) -> Optional[ContextData]:
+    def get_context(self, context_id: str) -> ContextData | None:
         """
         Get context by ID.
 
@@ -151,8 +151,8 @@ class ContextManager:
     def update_context(
         self,
         context_id: str,
-        data: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """
         Update existing context.
@@ -201,9 +201,9 @@ class ContextManager:
 
     def list_contexts(
         self,
-        context_type: Optional[str] = None,
+        context_type: str | None = None,
         include_expired: bool = False,
-    ) -> List[ContextData]:
+    ) -> list[ContextData]:
         """
         List contexts with optional filtering.
 
@@ -240,8 +240,8 @@ class ContextManager:
         self,
         source_model: str,
         target_model: str,
-        context_types: Optional[List[str]] = None,
-    ) -> List[ContextData]:
+        context_types: list[str] | None = None,
+    ) -> list[ContextData]:
         """
         Get contexts that should be shared between models.
 
@@ -275,7 +275,7 @@ class ContextManager:
 
     def _apply_sharing_mode(
         self, context: ContextData, rule: ContextSharingRule
-    ) -> Optional[ContextData]:
+    ) -> ContextData | None:
         """
         Apply sharing mode to context data.
 
@@ -320,7 +320,7 @@ class ContextManager:
 
         return None
 
-    def _create_context_summary(self, context: ContextData) -> Dict[str, Any]:
+    def _create_context_summary(self, context: ContextData) -> dict[str, Any]:
         """
         Create a summary of context data.
 
@@ -346,7 +346,7 @@ class ContextManager:
 
         return summary
 
-    def validate_context(self, context: ContextData) -> List[str]:
+    def validate_context(self, context: ContextData) -> list[str]:
         """
         Validate context data.
 
@@ -460,7 +460,7 @@ class ContextManager:
         if action in stats:
             stats[action] += 1
 
-    def get_usage_stats(self, context_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_usage_stats(self, context_id: str | None = None) -> dict[str, Any]:
         """
         Get usage statistics.
 
@@ -496,7 +496,7 @@ class ContextManager:
         self.context_usage_stats.clear()
         logger.info("Cleared all contexts")
 
-    def get_context_summary(self) -> Dict[str, Any]:
+    def get_context_summary(self) -> dict[str, Any]:
         """
         Get summary of all contexts.
 

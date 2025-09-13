@@ -7,10 +7,10 @@ This module provides sophisticated context sharing capabilities between models,
 including shared memory, context propagation, and result correlation.
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ class ContextEntry:
     source_provider: str
     timestamp: datetime = field(default_factory=datetime.now)
     confidence: float = 1.0
-    tags: Set[str] = field(default_factory=set)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: set[str] = field(default_factory=set)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -36,11 +36,11 @@ class SharedContext:
     session_id: str
     created_at: datetime = field(default_factory=datetime.now)
     last_updated: datetime = field(default_factory=datetime.now)
-    entries: Dict[str, ContextEntry] = field(default_factory=dict)
-    model_interactions: List[Tuple[str, str, str]] = field(
+    entries: dict[str, ContextEntry] = field(default_factory=dict)
+    model_interactions: list[tuple[str, str, str]] = field(
         default_factory=list
     )  # (from_model, to_model, interaction_type)
-    correlation_graph: Dict[str, Set[str]] = field(
+    correlation_graph: dict[str, set[str]] = field(
         default_factory=dict
     )  # model -> related_models
 
@@ -51,8 +51,8 @@ class ContextManager:
     def __init__(self, max_context_age_hours: int = 24) -> None:
         """Initialize the context manager."""
         self.max_context_age = timedelta(hours=max_context_age_hours)
-        self.active_contexts: Dict[str, SharedContext] = {}
-        self.context_history: List[SharedContext] = []
+        self.active_contexts: dict[str, SharedContext] = {}
+        self.context_history: list[SharedContext] = []
 
         logger.info(
             f"ContextManager initialized with {max_context_age_hours}h max context age"
@@ -65,7 +65,7 @@ class ContextManager:
         logger.info(f"Created new context session: {session_id}")
         return context
 
-    def get_context(self, session_id: str) -> Optional[SharedContext]:
+    def get_context(self, session_id: str) -> SharedContext | None:
         """Get an existing context session."""
         return self.active_contexts.get(session_id)
 
@@ -77,8 +77,8 @@ class ContextManager:
         source_model: str,
         source_provider: str,
         confidence: float = 1.0,
-        tags: Optional[Set[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: set[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Add a context entry to a session."""
         context = self.get_context(session_id)
@@ -102,7 +102,7 @@ class ContextManager:
         logger.debug(f"Added context entry {key} from {source_provider}:{source_model}")
         return True
 
-    def get_context_entry(self, session_id: str, key: str) -> Optional[ContextEntry]:
+    def get_context_entry(self, session_id: str, key: str) -> ContextEntry | None:
         """Get a specific context entry."""
         context = self.get_context(session_id)
         if not context:
@@ -110,8 +110,8 @@ class ContextManager:
         return context.entries.get(key)
 
     def get_context_by_tags(
-        self, session_id: str, tags: Set[str]
-    ) -> List[ContextEntry]:
+        self, session_id: str, tags: set[str]
+    ) -> list[ContextEntry]:
         """Get context entries that match any of the given tags."""
         context = self.get_context(session_id)
         if not context:
@@ -126,7 +126,7 @@ class ContextManager:
 
     def get_context_by_model(
         self, session_id: str, model: str, provider: str
-    ) -> List[ContextEntry]:
+    ) -> list[ContextEntry]:
         """Get context entries from a specific model."""
         context = self.get_context(session_id)
         if not context:
@@ -177,7 +177,7 @@ class ContextManager:
 
         context.last_updated = datetime.now()
 
-    def get_related_models(self, session_id: str, model: str) -> Set[str]:
+    def get_related_models(self, session_id: str, model: str) -> set[str]:
         """Get models that are correlated with the given model."""
         context = self.get_context(session_id)
         if not context:
@@ -188,8 +188,8 @@ class ContextManager:
         self,
         session_id: str,
         base_prompt: str,
-        include_tags: Optional[Set[str]] = None,
-        exclude_tags: Optional[Set[str]] = None,
+        include_tags: set[str] | None = None,
+        exclude_tags: set[str] | None = None,
         max_context_length: int = 2000,
     ) -> str:
         """Build an enhanced prompt with relevant context."""
@@ -246,7 +246,7 @@ class ContextManager:
             self.context_history.append(context)
             logger.info(f"Archived expired context session: {session_id}")
 
-    def get_context_summary(self, session_id: str) -> Dict[str, Any]:
+    def get_context_summary(self, session_id: str) -> dict[str, Any]:
         """Get a summary of a context session."""
         context = self.get_context(session_id)
         if not context:
@@ -291,10 +291,10 @@ class ContextPropagator:
         session_id: str,
         from_model: str,
         from_provider: str,
-        to_models: List[Tuple[str, str]],  # (model, provider) pairs
-        context_keys: List[str],
+        to_models: list[tuple[str, str]],  # (model, provider) pairs
+        context_keys: list[str],
         propagation_strategy: str = "direct",
-    ) -> Dict[str, bool]:
+    ) -> dict[str, bool]:
         """Propagate context from one model to others."""
         results = {}
 
@@ -333,7 +333,7 @@ class ContextPropagator:
         from_provider: str,
         to_model: str,
         to_provider: str,
-        context_keys: List[str],
+        context_keys: list[str],
         propagation_strategy: str,
     ) -> bool:
         """Propagate context to a single model."""
@@ -418,7 +418,7 @@ class ContextPropagator:
             return f"[Transformed for {target_provider}:{target_model}] {value}"
         return value
 
-    async def _summarize_context_entries(self, entries: List[ContextEntry]) -> str:
+    async def _summarize_context_entries(self, entries: list[ContextEntry]) -> str:
         """Create a summary of multiple context entries."""
         if not entries:
             return ""
@@ -436,16 +436,16 @@ class FeedbackLoop:
     def __init__(self, context_manager: ContextManager) -> None:
         """Initialize the feedback loop system."""
         self.context_manager = context_manager
-        self.feedback_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.feedback_history: dict[str, list[dict[str, Any]]] = {}
 
     async def create_feedback_loop(
         self,
         session_id: str,
-        model_a: Tuple[str, str],  # (model, provider)
-        model_b: Tuple[str, str],  # (model, provider)
+        model_a: tuple[str, str],  # (model, provider)
+        model_b: tuple[str, str],  # (model, provider)
         max_iterations: int = 3,
         improvement_threshold: float = 0.1,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Create a feedback loop between two models."""
         loop_id = f"{session_id}_{model_a[1]}:{model_a[0]}_{model_b[1]}:{model_b[0]}"
         iterations = []
@@ -485,11 +485,11 @@ class FeedbackLoop:
     async def _execute_feedback_iteration(
         self,
         session_id: str,
-        model_a: Tuple[str, str],
-        model_b: Tuple[str, str],
+        model_a: tuple[str, str],
+        model_b: tuple[str, str],
         iteration: int,
         context: SharedContext,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute a single feedback iteration."""
         # This is a simplified implementation
         # In a real system, this would involve actual model calls
@@ -519,14 +519,14 @@ class FeedbackLoop:
         return iteration_result
 
     def _calculate_improvement(
-        self, prev_result: Dict[str, Any], current_result: Dict[str, Any]
+        self, prev_result: dict[str, Any], current_result: dict[str, Any]
     ) -> float:
         """Calculate improvement between iterations."""
         prev_score = prev_result.get("improvement_score", 0)
         current_score = current_result.get("improvement_score", 0)
         return abs(current_score - prev_score)
 
-    def get_feedback_history(self, loop_id: str) -> List[Dict[str, Any]]:
+    def get_feedback_history(self, loop_id: str) -> list[dict[str, Any]]:
         """Get feedback history for a specific loop."""
         return self.feedback_history.get(loop_id, [])
 

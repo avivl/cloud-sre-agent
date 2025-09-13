@@ -11,13 +11,13 @@ Provides comprehensive performance monitoring including:
 """
 
 import asyncio
-import logging
-import threading
-import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+import logging
+import threading
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class PerformanceMetrics:
     consecutive_failures: int = 0
 
     # Additional details
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 class PerformanceMonitor:
@@ -84,23 +84,23 @@ class PerformanceMonitor:
         self.update_interval = update_interval
 
         # Performance data storage
-        self._operation_times: Dict[str, deque] = defaultdict(
+        self._operation_times: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=window_size)
         )
-        self._operation_counts: Dict[str, int] = defaultdict(int)
-        self._success_counts: Dict[str, int] = defaultdict(int)
-        self._failure_counts: Dict[str, int] = defaultdict(int)
-        self._bytes_processed: Dict[str, int] = defaultdict(int)
-        self._last_update: Dict[str, datetime] = defaultdict(lambda: datetime.now())
+        self._operation_counts: dict[str, int] = defaultdict(int)
+        self._success_counts: dict[str, int] = defaultdict(int)
+        self._failure_counts: dict[str, int] = defaultdict(int)
+        self._bytes_processed: dict[str, int] = defaultdict(int)
+        self._last_update: dict[str, datetime] = defaultdict(lambda: datetime.now())
 
         # Aggregated metrics
-        self._metrics: Dict[str, PerformanceMetrics] = {}
+        self._metrics: dict[str, PerformanceMetrics] = {}
 
         # Thread safety
         self._lock = threading.RLock()
 
         # Background update task
-        self._update_task: Optional[asyncio.Task] = None
+        self._update_task: asyncio.Task | None = None
         self._running = False
 
         logger.info("PerformanceMonitor initialized")
@@ -132,7 +132,7 @@ class PerformanceMonitor:
         duration_ms: float,
         success: bool = True,
         bytes_processed: int = 0,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """
         Record an operation's performance metrics.
@@ -164,7 +164,7 @@ class PerformanceMonitor:
             # Update aggregated metrics immediately for real-time access
             self._update_component_metrics(key)
 
-    def get_component_metrics(self, component: str) -> Dict[str, PerformanceMetrics]:
+    def get_component_metrics(self, component: str) -> dict[str, PerformanceMetrics]:
         """
         Get performance metrics for a specific component.
 
@@ -183,7 +183,7 @@ class PerformanceMonitor:
 
     def get_operation_metrics(
         self, component: str, operation: str
-    ) -> Optional[PerformanceMetrics]:
+    ) -> PerformanceMetrics | None:
         """
         Get performance metrics for a specific operation.
 
@@ -198,12 +198,12 @@ class PerformanceMonitor:
         with self._lock:
             return self._metrics.get(key)
 
-    def get_all_metrics(self) -> Dict[str, PerformanceMetrics]:
+    def get_all_metrics(self) -> dict[str, PerformanceMetrics]:
         """Get all performance metrics."""
         with self._lock:
             return dict(self._metrics)
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """
         Get a comprehensive performance summary.
 
@@ -275,7 +275,7 @@ class PerformanceMonitor:
 
             return summary
 
-    def get_bottlenecks(self, threshold_ms: float = 1000.0) -> List[Dict[str, Any]]:
+    def get_bottlenecks(self, threshold_ms: float = 1000.0) -> list[dict[str, Any]]:
         """
         Identify performance bottlenecks.
 
@@ -383,7 +383,7 @@ class PerformanceMonitor:
 
 
 # Global performance monitor instance
-_global_performance_monitor: Optional[PerformanceMonitor] = None
+_global_performance_monitor: PerformanceMonitor | None = None
 
 
 def get_global_performance_monitor() -> PerformanceMonitor:

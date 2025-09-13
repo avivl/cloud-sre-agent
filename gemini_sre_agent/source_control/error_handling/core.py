@@ -9,7 +9,7 @@ used throughout the error handling system.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class CircuitState(Enum):
@@ -123,7 +123,7 @@ class ErrorClassification:
     retry_delay: float
     max_retries: int
     should_open_circuit: bool
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 @dataclass

@@ -9,9 +9,9 @@ from .config_manager import SecureConfigManager
 from .data_filter import DataFilter
 
 __all__ = [
-    "SecureConfigManager",
-    "AuditLogger",
-    "DataFilter",
-    "ComplianceReporter",
     "AccessController",
+    "AuditLogger",
+    "ComplianceReporter",
+    "DataFilter",
+    "SecureConfigManager",
 ]

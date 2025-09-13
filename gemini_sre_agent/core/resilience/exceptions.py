@@ -1,6 +1,6 @@
 """Exceptions for the resilience framework."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ResilienceError(Exception):
@@ -11,12 +11,12 @@ class ResilienceError(Exception):
         context: Additional context information
         original_error: Original exception that caused this error
     """
-    
+
     def __init__(
         self,
         message: str,
-        context: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None
     ) -> None:
         """Initialize the resilience error.
         
@@ -38,13 +38,13 @@ class CircuitBreakerError(ResilienceError):
 
 class CircuitOpenError(CircuitBreakerError):
     """Exception raised when circuit breaker is open."""
-    
+
     def __init__(
         self,
         circuit_name: str,
         failure_count: int,
         failure_threshold: int,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the circuit open error.
         
@@ -66,11 +66,11 @@ class CircuitOpenError(CircuitBreakerError):
 
 class CircuitHalfOpenError(CircuitBreakerError):
     """Exception raised when circuit breaker is half-open."""
-    
+
     def __init__(
         self,
         circuit_name: str,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the circuit half-open error.
         
@@ -90,12 +90,12 @@ class RetryError(ResilienceError):
 
 class MaxRetriesExceededError(RetryError):
     """Exception raised when maximum retries are exceeded."""
-    
+
     def __init__(
         self,
         max_attempts: int,
-        last_error: Optional[Exception] = None,
-        context: Optional[Dict[str, Any]] = None
+        last_error: Exception | None = None,
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the max retries exceeded error.
         
@@ -117,12 +117,12 @@ class TimeoutError(ResilienceError):
 
 class OperationTimeoutError(TimeoutError):
     """Exception raised when an operation times out."""
-    
+
     def __init__(
         self,
         operation_name: str,
         timeout_seconds: float,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the operation timeout error.
         
@@ -144,13 +144,13 @@ class BulkheadError(ResilienceError):
 
 class ResourceExhaustedError(BulkheadError):
     """Exception raised when bulkhead resources are exhausted."""
-    
+
     def __init__(
         self,
         resource_name: str,
         max_concurrency: int,
         current_usage: int,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the resource exhausted error.
         
@@ -177,14 +177,14 @@ class RateLimitError(ResilienceError):
 
 class RateLimitExceededError(RateLimitError):
     """Exception raised when rate limit is exceeded."""
-    
+
     def __init__(
         self,
         rate_limit_name: str,
         limit: int,
         window_seconds: int,
         current_count: int,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the rate limit exceeded error.
         
@@ -213,12 +213,12 @@ class HealthCheckError(ResilienceError):
 
 class UnhealthyError(HealthCheckError):
     """Exception raised when a health check fails."""
-    
+
     def __init__(
         self,
         check_name: str,
         reason: str,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the unhealthy error.
         
@@ -235,12 +235,12 @@ class UnhealthyError(HealthCheckError):
 
 class OperationFailedError(ResilienceError):
     """Exception raised when an operation fails after all resilience patterns."""
-    
+
     def __init__(
         self,
         operation_name: str,
         failure_reasons: list[str],
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> None:
         """Initialize the operation failed error.
         

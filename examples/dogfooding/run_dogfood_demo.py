@@ -15,11 +15,10 @@ import argparse
 import asyncio
 import logging
 import os
+from pathlib import Path
 import signal
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict
 
 # Configure logging
 logging.basicConfig(
@@ -28,7 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global process tracking
-processes: Dict[str, subprocess.Popen] = {}
+processes: dict[str, subprocess.Popen] = {}
 
 
 class DogfoodOrchestrator:

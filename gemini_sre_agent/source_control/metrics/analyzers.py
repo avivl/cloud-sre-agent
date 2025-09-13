@@ -7,9 +7,9 @@ This module provides analysis capabilities for metrics data including
 performance trends, anomaly detection, and recommendations.
 """
 
-import logging
 from datetime import datetime
-from typing import Any, Dict, List
+import logging
+from typing import Any
 
 from .collectors import MetricsCollector
 
@@ -23,7 +23,7 @@ class MetricsAnalyzer:
 
     async def analyze_performance_trends(
         self, provider_name: str, window_minutes: int = 60
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze performance trends for a provider."""
         analysis = {
             "provider": provider_name,
@@ -63,7 +63,7 @@ class MetricsAnalyzer:
 
     async def detect_anomalies(
         self, provider_name: str, window_minutes: int = 60
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Detect anomalies in provider metrics."""
         anomalies = []
 
@@ -106,7 +106,7 @@ class MetricsAnalyzer:
 
     async def generate_recommendations(
         self, provider_name: str, window_minutes: int = 60
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate recommendations based on metrics analysis."""
         recommendations = []
 

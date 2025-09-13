@@ -20,12 +20,12 @@ from .credential_management import (
 
 # Re-export all classes for backward compatibility
 __all__ = [
+    "AWSSecretsBackend",
+    "AzureKeyVaultBackend",
+    "CredentialBackend",
     "CredentialManager",
     "CredentialRotationManager",
-    "CredentialBackend",
     "EnvironmentBackend",
     "FileBackend",
     "VaultBackend",
-    "AWSSecretsBackend",
-    "AzureKeyVaultBackend",
 ]

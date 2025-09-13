@@ -6,9 +6,9 @@ Credential rotation management module.
 This module handles credential rotation, validation, and testing.
 """
 
-import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .manager import CredentialManager
@@ -20,7 +20,7 @@ class CredentialRotationManager:
     def __init__(self, credential_manager: "CredentialManager") -> None:
         self.credential_manager = credential_manager
         self.logger = logging.getLogger("CredentialRotationManager")
-        self.rotation_schedule: Dict[str, datetime] = {}
+        self.rotation_schedule: dict[str, datetime] = {}
 
     async def schedule_rotation(
         self, credential_id: str, rotation_interval_days: int = 90
@@ -38,7 +38,7 @@ class CredentialRotationManager:
         return datetime.now() >= self.rotation_schedule[credential_id]
 
     async def rotate_credential(
-        self, credential_id: str, new_credential_data: Dict[str, Any]
+        self, credential_id: str, new_credential_data: dict[str, Any]
     ) -> bool:
         """Rotate a credential with new data."""
         # Add validation before rotation
@@ -112,9 +112,7 @@ class CredentialRotationManager:
             )
 
             # Basic validation - check if required fields are present
-            if provider_type == "github":
-                return "token" in credentials
-            elif provider_type == "gitlab":
+            if provider_type == "github" or provider_type == "gitlab":
                 return "token" in credentials
             elif provider_type == "aws":
                 return (
@@ -127,7 +125,7 @@ class CredentialRotationManager:
             self.logger.error(f"Credential validation failed for {credential_id}: {e}")
             return False
 
-    async def _validate_new_credentials(self, credential_data: Dict[str, Any]) -> bool:
+    async def _validate_new_credentials(self, credential_data: dict[str, Any]) -> bool:
         """Validate new credentials before rotation."""
         try:
             # Check if credential data is not empty
@@ -169,7 +167,7 @@ class CredentialRotationManager:
             return False
 
     async def _test_new_credentials(
-        self, credential_id: str, credential_data: Dict[str, Any]
+        self, credential_id: str, credential_data: dict[str, Any]
     ) -> bool:
         """Test new credentials by attempting to use them."""
         try:

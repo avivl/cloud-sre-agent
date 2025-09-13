@@ -7,13 +7,13 @@ This module provides the core metrics collection functionality.
 """
 
 import asyncio
-import logging
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
-from .core import MetricSeries, MetricType
 from .background_processing import BackgroundProcessor
+from .core import MetricSeries, MetricType
 from .operation_metrics import OperationMetrics
 
 
@@ -27,14 +27,14 @@ class MetricsCollector:
         retention_hours: int = 24,
         cleanup_interval_minutes: int = 60,
     ):
-        self.series: Dict[str, MetricSeries] = {}
+        self.series: dict[str, MetricSeries] = {}
         self.max_series = max_series
         self.max_points_per_series = max_points_per_series
         self.retention_hours = retention_hours
         self.cleanup_interval_minutes = cleanup_interval_minutes
         self.logger = logging.getLogger("MetricsCollector")
         self._lock = asyncio.Lock()
-        
+
         # Initialize background processor and operation metrics
         self.background_processor = BackgroundProcessor(self)
         self.operation_metrics = OperationMetrics(self)
@@ -44,9 +44,9 @@ class MetricsCollector:
         name: str,
         value: float,
         metric_type: MetricType,
-        tags: Optional[Dict[str, str]] = None,
-        unit: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        unit: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a metric point."""
         async with self._lock:
@@ -74,7 +74,7 @@ class MetricsCollector:
             # Add point to series
             self.series[series_key].add_point(value, datetime.now(), metadata)
 
-    def _create_series_key(self, name: str, tags: Dict[str, str]) -> str:
+    def _create_series_key(self, name: str, tags: dict[str, str]) -> str:
         """Create a unique key for a metric series."""
         if not tags:
             return name
@@ -84,15 +84,15 @@ class MetricsCollector:
         return f"{name}[{tag_str}]"
 
     async def get_metric_series(
-        self, name: str, tags: Optional[Dict[str, str]] = None
-    ) -> Optional[MetricSeries]:
+        self, name: str, tags: dict[str, str] | None = None
+    ) -> MetricSeries | None:
         """Get a metric series by name and tags."""
         series_key = self._create_series_key(name, tags or {})
         return self.series.get(series_key)
 
     async def get_metric_value(
-        self, name: str, tags: Optional[Dict[str, str]] = None
-    ) -> Optional[float]:
+        self, name: str, tags: dict[str, str] | None = None
+    ) -> float | None:
         """Get the latest value for a metric."""
         series = await self.get_metric_series(name, tags)
         if series and series.points:
@@ -100,19 +100,19 @@ class MetricsCollector:
         return None
 
     async def get_metric_statistics(
-        self, name: str, tags: Optional[Dict[str, str]] = None, window_minutes: int = 60
-    ) -> Dict[str, float]:
+        self, name: str, tags: dict[str, str] | None = None, window_minutes: int = 60
+    ) -> dict[str, float]:
         """Get statistics for a metric over a time window."""
         series = await self.get_metric_series(name, tags)
         if series:
             return series.get_statistics(window_minutes)
         return {"count": 0, "min": 0, "max": 0, "mean": 0, "sum": 0}
 
-    async def list_metrics(self) -> List[str]:
+    async def list_metrics(self) -> list[str]:
         """List all metric names."""
         return list(set(series.name for series in self.series.values()))
 
-    async def get_metrics_summary(self) -> Dict[str, Any]:
+    async def get_metrics_summary(self) -> dict[str, Any]:
         """Get a summary of all metrics."""
         summary = {
             "total_series": len(self.series),
@@ -161,16 +161,16 @@ class MetricsCollector:
         name: str,
         value: float,
         metric_type: MetricType,
-        tags: Optional[Dict[str, str]] = None,
-        unit: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: dict[str, str] | None = None,
+        unit: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Queue metric for background processing."""
         await self.background_processor.record_metric_async(
             name, value, metric_type, tags or {}, unit or "", metadata or {}
         )
 
-    async def record_metrics_batch_async(self, metrics: List[Dict[str, Any]]) -> None:
+    async def record_metrics_batch_async(self, metrics: list[dict[str, Any]]) -> None:
         """Queue multiple metrics for batch background processing."""
         await self.background_processor.record_metrics_batch_async(metrics)
 
@@ -178,7 +178,7 @@ class MetricsCollector:
         """Remove metrics older than retention period."""
         await self.background_processor.cleanup_old_metrics()
 
-    async def get_memory_usage(self) -> Dict[str, Any]:
+    async def get_memory_usage(self) -> dict[str, Any]:
         """Get memory usage statistics for metrics collection."""
         total_points = sum(len(series.points) for series in self.series.values())
         total_series = len(self.series)

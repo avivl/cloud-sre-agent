@@ -9,7 +9,6 @@ enabling more sophisticated error classification and handling strategies.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set
 
 
 class ErrorSeverity(Enum):
@@ -46,8 +45,8 @@ class ErrorTypeMetadata:
     max_retries: int
     should_open_circuit: bool
     description: str
-    keywords: List[str]
-    patterns: List[str]
+    keywords: list[str]
+    patterns: list[str]
 
 
 class NetworkErrors(Enum):
@@ -188,8 +187,8 @@ class ErrorTypeRegistry:
     """Registry for managing error type metadata and classification."""
 
     def __init__(self) -> None:
-        self._metadata: Dict[str, ErrorTypeMetadata] = {}
-        self._category_mappings: Dict[ErrorCategory, Set[str]] = {
+        self._metadata: dict[str, ErrorTypeMetadata] = {}
+        self._category_mappings: dict[ErrorCategory, set[str]] = {
             category: set() for category in ErrorCategory
         }
         self._initialize_metadata()
@@ -1384,8 +1383,8 @@ class ErrorTypeRegistry:
         max_retries: int,
         should_open_circuit: bool,
         description: str,
-        keywords: List[str],
-        patterns: List[str],
+        keywords: list[str],
+        patterns: list[str],
     ) -> None:
         """Register an error type with its metadata."""
         metadata = ErrorTypeMetadata(
@@ -1403,15 +1402,15 @@ class ErrorTypeRegistry:
         self._metadata[error_type] = metadata
         self._category_mappings[category].add(error_type)
 
-    def get_metadata(self, error_type: str) -> Optional[ErrorTypeMetadata]:
+    def get_metadata(self, error_type: str) -> ErrorTypeMetadata | None:
         """Get metadata for a specific error type."""
         return self._metadata.get(error_type)
 
-    def get_errors_by_category(self, category: ErrorCategory) -> Set[str]:
+    def get_errors_by_category(self, category: ErrorCategory) -> set[str]:
         """Get all error types in a specific category."""
         return self._category_mappings.get(category, set())
 
-    def get_retryable_errors(self) -> Set[str]:
+    def get_retryable_errors(self) -> set[str]:
         """Get all retryable error types."""
         return {
             error_type
@@ -1419,7 +1418,7 @@ class ErrorTypeRegistry:
             if metadata.is_retryable
         }
 
-    def get_circuit_breaker_errors(self) -> Set[str]:
+    def get_circuit_breaker_errors(self) -> set[str]:
         """Get all error types that should open circuit breaker."""
         return {
             error_type
@@ -1427,7 +1426,7 @@ class ErrorTypeRegistry:
             if metadata.should_open_circuit
         }
 
-    def get_errors_by_severity(self, severity: ErrorSeverity) -> Set[str]:
+    def get_errors_by_severity(self, severity: ErrorSeverity) -> set[str]:
         """Get all error types with a specific severity level."""
         return {
             error_type
@@ -1435,7 +1434,7 @@ class ErrorTypeRegistry:
             if metadata.severity == severity
         }
 
-    def search_errors_by_keyword(self, keyword: str) -> Set[str]:
+    def search_errors_by_keyword(self, keyword: str) -> set[str]:
         """Search for error types containing a specific keyword."""
         keyword_lower = keyword.lower()
         return {
@@ -1445,11 +1444,11 @@ class ErrorTypeRegistry:
             or any(keyword_lower in kw.lower() for kw in metadata.keywords)
         }
 
-    def get_all_error_types(self) -> Set[str]:
+    def get_all_error_types(self) -> set[str]:
         """Get all registered error types."""
         return set(self._metadata.keys())
 
-    def get_error_categories(self) -> List[ErrorCategory]:
+    def get_error_categories(self) -> list[ErrorCategory]:
         """Get all error categories."""
         return list(ErrorCategory)
 
@@ -1458,21 +1457,21 @@ class ErrorTypeRegistry:
 error_type_registry = ErrorTypeRegistry()
 
 
-def get_error_type_metadata(error_type: str) -> Optional[ErrorTypeMetadata]:
+def get_error_type_metadata(error_type: str) -> ErrorTypeMetadata | None:
     """Convenience function to get error type metadata."""
     return error_type_registry.get_metadata(error_type)
 
 
-def get_errors_by_category(category: ErrorCategory) -> Set[str]:
+def get_errors_by_category(category: ErrorCategory) -> set[str]:
     """Convenience function to get errors by category."""
     return error_type_registry.get_errors_by_category(category)
 
 
-def get_retryable_errors() -> Set[str]:
+def get_retryable_errors() -> set[str]:
     """Convenience function to get retryable errors."""
     return error_type_registry.get_retryable_errors()
 
 
-def get_circuit_breaker_errors() -> Set[str]:
+def get_circuit_breaker_errors() -> set[str]:
     """Convenience function to get circuit breaker errors."""
     return error_type_registry.get_circuit_breaker_errors()

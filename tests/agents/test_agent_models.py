@@ -4,11 +4,11 @@ Comprehensive tests for agent response models.
 Tests all Pydantic models including validation, serialization, and integration.
 """
 
+from datetime import UTC, datetime
 import json
-from datetime import datetime, timezone
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from gemini_sre_agent.agents.agent_models import (
     ActionType,
@@ -28,14 +28,12 @@ from gemini_sre_agent.agents.agent_models import (
     StatusCode,
     TextResponse,
     TriageResult,
-)
-from gemini_sre_agent.agents.agent_models import ValidationError as ModelValidationError
-from gemini_sre_agent.agents.agent_models import (
     create_analysis_result,
     create_health_check_response,
     create_remediation_plan,
     create_triage_result,
 )
+from gemini_sre_agent.agents.agent_models import ValidationError as ModelValidationError
 
 
 class TestBaseAgentResponse:
@@ -554,7 +552,7 @@ class TestHealthCheckResponse:
         component1 = ComponentHealth(
             component_name="database",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(timezone.utc),
+            last_check=datetime.now(UTC),
             response_time_ms=50.0,
             error_message="",
             metrics={"connections": 10, "queries_per_second": 100},
@@ -563,7 +561,7 @@ class TestHealthCheckResponse:
         component2 = ComponentHealth(
             component_name="api_server",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(timezone.utc),
+            last_check=datetime.now(UTC),
             response_time_ms=25.0,
             error_message="",
             metrics={"requests_per_second": 500, "error_rate": 0.01},
@@ -589,13 +587,13 @@ class TestHealthCheckResponse:
             overall_status=StatusCode.SUCCESS,
             overall_severity=SeverityLevel.LOW,
             system_uptime="5 days",
-            last_restart=datetime.now(timezone.utc),
+            last_restart=datetime.now(UTC),
             components=[component1, component2],
             resource_utilization=resource_util,
             critical_alerts=[],
             warnings=["High memory usage"],
             recommendations=["Monitor memory usage closely"],
-            next_check_time=datetime.now(timezone.utc),
+            next_check_time=datetime.now(UTC),
             health_score=100.0,
         )
 
@@ -611,7 +609,7 @@ class TestHealthCheckResponse:
         healthy_component = ComponentHealth(
             component_name="healthy_service",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(timezone.utc),
+            last_check=datetime.now(UTC),
             response_time_ms=10.0,
             error_message="",
         )
@@ -619,7 +617,7 @@ class TestHealthCheckResponse:
         unhealthy_component = ComponentHealth(
             component_name="unhealthy_service",
             status=StatusCode.ERROR,
-            last_check=datetime.now(timezone.utc),
+            last_check=datetime.now(UTC),
             response_time_ms=None,
             error_message="Service unavailable",
         )
@@ -635,7 +633,7 @@ class TestHealthCheckResponse:
             overall_status=StatusCode.SUCCESS,
             overall_severity=SeverityLevel.MEDIUM,
             system_uptime="3 days",
-            last_restart=datetime.now(timezone.utc),
+            last_restart=datetime.now(UTC),
             components=[healthy_component, unhealthy_component],
             resource_utilization=ResourceUtilization(
                 cpu_usage_percent=50.0,
@@ -646,7 +644,7 @@ class TestHealthCheckResponse:
                 queue_depth=0,
             ),
             recommendations=["Fix unhealthy service"],
-            next_check_time=datetime.now(timezone.utc),
+            next_check_time=datetime.now(UTC),
             health_score=50.0,
         )
 
@@ -658,7 +656,7 @@ class TestHealthCheckResponse:
         component = ComponentHealth(
             component_name="test_component",
             status=StatusCode.SUCCESS,
-            last_check=datetime.now(timezone.utc),
+            last_check=datetime.now(UTC),
             response_time_ms=20.0,
             error_message="",
         )
@@ -673,7 +671,7 @@ class TestHealthCheckResponse:
             provider_used="openai",
             cost_usd=0.01,
             system_uptime="1 day",
-            last_restart=datetime.now(timezone.utc),
+            last_restart=datetime.now(UTC),
             resource_utilization=ResourceUtilization(
                 cpu_usage_percent=30.0,
                 memory_usage_percent=40.0,
@@ -682,7 +680,7 @@ class TestHealthCheckResponse:
                 active_connections=50,
                 queue_depth=0,
             ),
-            next_check_time=datetime.now(timezone.utc),
+            next_check_time=datetime.now(UTC),
             health_score=100.0,
         )
 

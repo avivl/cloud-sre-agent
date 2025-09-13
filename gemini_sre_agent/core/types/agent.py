@@ -7,9 +7,7 @@ This module defines type aliases and protocols specific to agent operations,
 including request/response types, state management, and agent coordination.
 """
 
-from typing import Any, Dict, List, Optional, Protocol, TypeVar
-
-from typing_extensions import TypeAlias
+from typing import Any, Protocol, TypeAlias, TypeVar
 
 from .base import (
     AgentId,
@@ -38,27 +36,27 @@ OperationType: TypeAlias = str  # 'process', 'analyze', 'remediate', 'monitor'
 OperationStatus: TypeAlias = str  # 'pending', 'running', 'completed', 'failed'
 
 # Agent context types
-AgentContext: TypeAlias = Dict[str, Any]
-AgentMetadata: TypeAlias = Dict[str, Any]
-AgentCapabilities: TypeAlias = List[str]
+AgentContext: TypeAlias = dict[str, Any]
+AgentMetadata: TypeAlias = dict[str, Any]
+AgentCapabilities: TypeAlias = list[str]
 
 # Prompt types
 PromptTemplate: TypeAlias = str
-PromptVariables: TypeAlias = Dict[str, Any]
-PromptContext: TypeAlias = Dict[str, Any]
+PromptVariables: TypeAlias = dict[str, Any]
+PromptContext: TypeAlias = dict[str, Any]
 
 # Response types
 ResponseContent: TypeAlias = Content
-ResponseMetadata: TypeAlias = Dict[str, Any]
+ResponseMetadata: TypeAlias = dict[str, Any]
 ResponseConfidence: TypeAlias = float  # 0.0-1.0
 
 # State management types
 StateKey: TypeAlias = str
 StateValue: TypeAlias = Any
-StateSnapshot: TypeAlias = Dict[StateKey, StateValue]
+StateSnapshot: TypeAlias = dict[StateKey, StateValue]
 
 # Agent coordination types
-CoordinationMessage: TypeAlias = Dict[str, Any]
+CoordinationMessage: TypeAlias = dict[str, Any]
 CoordinationChannel: TypeAlias = str
 CoordinationEvent: TypeAlias = str
 
@@ -160,7 +158,7 @@ class AgentResponse(Protocol):
 class StatefulAgent(Protocol):
     """Protocol for agents that maintain state."""
 
-    def get_state(self, key: StateKey) -> Optional[StateValue]:
+    def get_state(self, key: StateKey) -> StateValue | None:
         """Get state value by key."""
         ...
 
@@ -196,7 +194,7 @@ class LoggableAgent(Protocol):
         """Log a message."""
         ...
 
-    def get_log_context(self) -> Dict[str, Any]:
+    def get_log_context(self) -> dict[str, Any]:
         """Get logging context."""
         ...
 
@@ -256,17 +254,17 @@ class AnalysisResponse(Protocol):
     """Protocol for analysis responses."""
 
     @property
-    def patterns(self) -> List[Dict[str, Any]]:
+    def patterns(self) -> list[dict[str, Any]]:
         """Get detected patterns."""
         ...
 
     @property
-    def insights(self) -> List[str]:
+    def insights(self) -> list[str]:
         """Get analysis insights."""
         ...
 
     @property
-    def recommendations(self) -> List[str]:
+    def recommendations(self) -> list[str]:
         """Get recommendations."""
         ...
 
@@ -275,7 +273,7 @@ class RemediationResponse(Protocol):
     """Protocol for remediation responses."""
 
     @property
-    def actions(self) -> List[Dict[str, Any]]:
+    def actions(self) -> list[dict[str, Any]]:
         """Get remediation actions."""
         ...
 
@@ -292,9 +290,9 @@ class RemediationResponse(Protocol):
 
 # Utility functions
 def create_agent_context(
-    user_id: Optional[UserId] = None,
-    session_id: Optional[SessionId] = None,
-    tenant_id: Optional[str] = None,
+    user_id: UserId | None = None,
+    session_id: SessionId | None = None,
+    tenant_id: str | None = None,
     **kwargs: Any
 ) -> AgentContext:
     """

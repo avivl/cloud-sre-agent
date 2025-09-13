@@ -8,11 +8,11 @@ including service discovery, health monitoring, and load balancing.
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from ..core.exceptions import ServiceError
 from .service_base import BaseService, ServiceConfig, ServiceHealth, ServiceStatus
@@ -54,7 +54,7 @@ class ServiceMetrics:
     success_count: int = 0
     error_count: int = 0
     avg_response_time: float = 0.0
-    last_request_time: Optional[datetime] = None
+    last_request_time: datetime | None = None
     health_score: float = 1.0
     uptime_percentage: float = 100.0
     error_rate: float = 0.0
@@ -88,10 +88,10 @@ class ServiceMetrics:
 class ServiceRegistry:
     """Registry for managing service instances and their configurations."""
 
-    services: Dict[str, BaseService] = field(default_factory=dict)
-    service_configs: Dict[str, ServiceConfig] = field(default_factory=dict)
-    service_metrics: Dict[str, ServiceMetrics] = field(default_factory=dict)
-    service_types: Dict[str, ServiceType] = field(default_factory=dict)
+    services: dict[str, BaseService] = field(default_factory=dict)
+    service_configs: dict[str, ServiceConfig] = field(default_factory=dict)
+    service_metrics: dict[str, ServiceMetrics] = field(default_factory=dict)
+    service_types: dict[str, ServiceType] = field(default_factory=dict)
 
     def register_service(
         self,
@@ -106,11 +106,11 @@ class ServiceRegistry:
         self.service_metrics[service_id] = ServiceMetrics(service_id=service_id)
         self.service_types[service_id] = service_type
 
-    def get_service(self, service_id: str) -> Optional[BaseService]:
+    def get_service(self, service_id: str) -> BaseService | None:
         """Get a service by ID."""
         return self.services.get(service_id)
 
-    def get_services_by_type(self, service_type: ServiceType) -> List[BaseService]:
+    def get_services_by_type(self, service_type: ServiceType) -> list[BaseService]:
         """Get all services of a specific type."""
         return [
             service
@@ -134,7 +134,7 @@ class ServiceHealthChecker:
 
     def __init__(self, check_interval: int = 30) -> None:
         self.check_interval = check_interval
-        self.health_checks: Dict[str, asyncio.Task] = {}
+        self.health_checks: dict[str, asyncio.Task] = {}
         self.logger = logging.getLogger(__name__)
 
     async def start_health_monitoring(self, registry: ServiceRegistry) -> None:
@@ -187,8 +187,8 @@ class LoadBalancer:
         self.logger = logging.getLogger(__name__)
 
     def select_service(
-        self, services: List[BaseService], registry: ServiceRegistry
-    ) -> Optional[BaseService]:
+        self, services: list[BaseService], registry: ServiceRegistry
+    ) -> BaseService | None:
         """Select a service based on the load balancing strategy."""
         if not services:
             return None
@@ -219,14 +219,14 @@ class LoadBalancer:
         else:
             return healthy_services[0]
 
-    def _round_robin_selection(self, services: List[BaseService]) -> BaseService:
+    def _round_robin_selection(self, services: list[BaseService]) -> BaseService:
         """Select service using round-robin strategy."""
         service = services[self.current_index % len(services)]
         self.current_index += 1
         return service
 
     def _least_connections_selection(
-        self, services: List[BaseService], registry: ServiceRegistry
+        self, services: list[BaseService], registry: ServiceRegistry
     ) -> BaseService:
         """Select service with least active connections."""
         return min(
@@ -237,7 +237,7 @@ class LoadBalancer:
         )
 
     def _weighted_selection(
-        self, services: List[BaseService], registry: ServiceRegistry
+        self, services: list[BaseService], registry: ServiceRegistry
     ) -> BaseService:
         """Select service based on weighted health score."""
         weights = [
@@ -261,14 +261,14 @@ class LoadBalancer:
                 return services[i]
         return services[-1]
 
-    def _random_selection(self, services: List[BaseService]) -> BaseService:
+    def _random_selection(self, services: list[BaseService]) -> BaseService:
         """Select service randomly."""
         import random
 
         return random.choice(services)
 
     def _health_based_selection(
-        self, services: List[BaseService], registry: ServiceRegistry
+        self, services: list[BaseService], registry: ServiceRegistry
     ) -> BaseService:
         """Select service with highest health score."""
         return max(
@@ -398,8 +398,8 @@ class ServiceManager:
         )
 
     async def get_service(
-        self, service_type: ServiceType, service_id: Optional[str] = None
-    ) -> Optional[BaseService]:
+        self, service_type: ServiceType, service_id: str | None = None
+    ) -> BaseService | None:
         """Get a service by type and optionally by ID."""
         if service_id:
             service = self.registry.get_service(service_id)
@@ -436,15 +436,15 @@ class ServiceManager:
             self.logger.info(f"Unregistered service: {service_id}")
         return success
 
-    def get_service_metrics(self, service_id: str) -> Optional[ServiceMetrics]:
+    def get_service_metrics(self, service_id: str) -> ServiceMetrics | None:
         """Get metrics for a specific service."""
         return self.registry.service_metrics.get(service_id)
 
-    def get_all_metrics(self) -> Dict[str, ServiceMetrics]:
+    def get_all_metrics(self) -> dict[str, ServiceMetrics]:
         """Get metrics for all services."""
         return self.registry.service_metrics.copy()
 
-    def get_service_health(self, service_id: str) -> Optional[ServiceHealth]:
+    def get_service_health(self, service_id: str) -> ServiceHealth | None:
         """Get health status for a specific service."""
         service = self.registry.get_service(service_id)
         if not service:
@@ -472,8 +472,8 @@ class ServiceManager:
     async def execute_service_request(
         self,
         service_type: ServiceType,
-        request_data: Dict[str, Any],
-        service_id: Optional[str] = None,
+        request_data: dict[str, Any],
+        service_id: str | None = None,
     ) -> Any:
         """Execute a request through the appropriate service."""
         service = await self.get_service(service_type, service_id)

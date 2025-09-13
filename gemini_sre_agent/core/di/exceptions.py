@@ -1,12 +1,11 @@
 """Exceptions for the dependency injection system."""
 
-from typing import Optional
 
 
 class ServiceNotFoundError(Exception):
     """Raised when a requested service is not found in the container."""
 
-    def __init__(self, service_type: type, message: Optional[str] = None):
+    def __init__(self, service_type: type, message: str | None = None):
         """Initialize the exception.
 
         Args:
@@ -22,7 +21,7 @@ class ServiceNotFoundError(Exception):
 class CircularDependencyError(Exception):
     """Raised when a circular dependency is detected during service resolution."""
 
-    def __init__(self, dependency_chain: list[type], message: Optional[str] = None):
+    def __init__(self, dependency_chain: list[type], message: str | None = None):
         """Initialize the exception.
 
         Args:
@@ -39,7 +38,7 @@ class CircularDependencyError(Exception):
 class ServiceRegistrationError(Exception):
     """Raised when there is an error during service registration."""
 
-    def __init__(self, service_type: type, message: Optional[str] = None):
+    def __init__(self, service_type: type, message: str | None = None):
         """Initialize the exception.
 
         Args:
@@ -55,7 +54,7 @@ class ServiceRegistrationError(Exception):
 class ServiceResolutionError(Exception):
     """Raised when there is an error during service resolution."""
 
-    def __init__(self, service_type: type, message: Optional[str] = None):
+    def __init__(self, service_type: type, message: str | None = None):
         """Initialize the exception.
 
         Args:
@@ -83,7 +82,7 @@ class ServiceScopeError(Exception):
 class ServiceDisposalError(Exception):
     """Raised when there is an error during service disposal."""
 
-    def __init__(self, service_type: type, message: Optional[str] = None):
+    def __init__(self, service_type: type, message: str | None = None):
         """Initialize the exception.
 
         Args:

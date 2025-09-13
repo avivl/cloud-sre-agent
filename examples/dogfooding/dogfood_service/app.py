@@ -10,14 +10,14 @@ This service provides 4 MVP error endpoints to test the SRE Agent's ability to:
 All files must be under 250 LOC for maintainability.
 """
 
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import time
 import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from flask import Flask, jsonify, request
 
@@ -41,7 +41,7 @@ def log_error(
     error_type: str,
     endpoint: str,
     error: Exception,
-    context: Dict[str, Any] | None = None,
+    context: dict[str, Any] | None = None,
 ) -> None:
     """Log errors in structured JSON format for SRE Agent ingestion."""
     try:
@@ -200,7 +200,7 @@ def file_error() -> None:
     """Trigger FileNotFoundError - Filesystem error."""
     try:
         # Try to read a non-existent file
-        with open("/tmp/non_existent_file.txt", "r") as f:
+        with open("/tmp/non_existent_file.txt") as f:
             content = f.read()
         return jsonify({"content": content})
     except FileNotFoundError as e:

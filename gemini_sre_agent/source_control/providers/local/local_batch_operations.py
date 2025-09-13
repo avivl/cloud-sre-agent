@@ -8,7 +8,7 @@ This module handles batch operations for the local provider.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...models import (
     BatchOperation,
@@ -24,9 +24,9 @@ class LocalBatchOperations:
         root_path: Path,
         default_encoding: str,
         backup_files: bool,
-        backup_directory: Optional[str],
+        backup_directory: str | None,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize batch operations."""
         self.root_path = root_path
@@ -53,8 +53,8 @@ class LocalBatchOperations:
         return await func(*args, **kwargs)
 
     async def batch_operations(
-        self, operations: List[BatchOperation]
-    ) -> List[OperationResult]:
+        self, operations: list[BatchOperation]
+    ) -> list[OperationResult]:
         """Execute multiple operations in batch."""
 
         async def _batch():

@@ -18,10 +18,9 @@ Author: Gemini SRE Agent
 Created: 2024
 """
 
-import time
 from datetime import datetime
 from datetime import time as dt_time
-from typing import List, Optional
+import time
 
 from .base import ModelType
 from .common.enums import ProviderType
@@ -43,7 +42,7 @@ from .strategy_base import (
 class CostOptimizedStrategy(ModelSelectionStrategy):
     """Strategy that prioritizes cost efficiency over other factors."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
+    def __init__(self, model_scorer: ModelScorer | None = None) -> None:
         """Initialize the cost-optimized strategy.
 
         Args:
@@ -52,7 +51,7 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
         super().__init__("cost_optimized", model_scorer)
 
     def select_model(
-        self, candidates: List[ModelInfo], context: StrategyContext
+        self, candidates: list[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select the most cost-effective model from candidates.
 
@@ -149,7 +148,7 @@ class CostOptimizedStrategy(ModelSelectionStrategy):
 class PerformanceOptimizedStrategy(ModelSelectionStrategy):
     """Strategy that prioritizes performance over other factors."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
+    def __init__(self, model_scorer: ModelScorer | None = None) -> None:
         """Initialize the performance-optimized strategy.
 
         Args:
@@ -158,7 +157,7 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
         super().__init__("performance_optimized", model_scorer)
 
     def select_model(
-        self, candidates: List[ModelInfo], context: StrategyContext
+        self, candidates: list[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select the highest performing model from candidates.
 
@@ -243,7 +242,7 @@ class PerformanceOptimizedStrategy(ModelSelectionStrategy):
 class QualityOptimizedStrategy(ModelSelectionStrategy):
     """Strategy that prioritizes quality over other factors."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
+    def __init__(self, model_scorer: ModelScorer | None = None) -> None:
         """Initialize the quality-optimized strategy.
 
         Args:
@@ -252,7 +251,7 @@ class QualityOptimizedStrategy(ModelSelectionStrategy):
         super().__init__("quality_optimized", model_scorer)
 
     def select_model(
-        self, candidates: List[ModelInfo], context: StrategyContext
+        self, candidates: list[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select the highest quality model from candidates.
 
@@ -337,7 +336,7 @@ class QualityOptimizedStrategy(ModelSelectionStrategy):
 class TimeBasedStrategy(ModelSelectionStrategy):
     """Strategy that selects different models based on time of day."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
+    def __init__(self, model_scorer: ModelScorer | None = None) -> None:
         """Initialize the time-based strategy.
 
         Args:
@@ -357,7 +356,7 @@ class TimeBasedStrategy(ModelSelectionStrategy):
         return self.business_hours_start <= now <= self.business_hours_end
 
     def select_model(
-        self, candidates: List[ModelInfo], context: StrategyContext
+        self, candidates: list[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select model based on time of day and business requirements.
 
@@ -455,7 +454,7 @@ class TimeBasedStrategy(ModelSelectionStrategy):
 class HybridStrategy(ModelSelectionStrategy):
     """Strategy that balances multiple factors using machine learning insights."""
 
-    def __init__(self, model_scorer: Optional[ModelScorer] = None) -> None:
+    def __init__(self, model_scorer: ModelScorer | None = None) -> None:
         """Initialize the hybrid strategy.
 
         Args:
@@ -490,7 +489,7 @@ class HybridStrategy(ModelSelectionStrategy):
         self._learning_weights = self._learning_weights.normalize()
 
     def select_model(
-        self, candidates: List[ModelInfo], context: StrategyContext
+        self, candidates: list[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select model using hybrid approach with learning.
 

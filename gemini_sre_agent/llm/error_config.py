@@ -9,7 +9,6 @@ for the error handling, circuit breaker, and deduplication components.
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -33,7 +32,7 @@ class RequestContext:
 
     provider_id: str
     request_id: str
-    model: Optional[str] = None
+    model: str | None = None
     retry_count: int = 0
     max_retries: int = 3
 

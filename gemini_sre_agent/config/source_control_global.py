@@ -5,7 +5,6 @@ Global source control configuration models.
 """
 
 from enum import Enum
-from typing import List, Optional, Union
 
 from pydantic import Field, field_validator, model_validator
 
@@ -107,13 +106,13 @@ class SourceControlGlobalConfig(BaseConfig):
     )
 
     # Default credentials (optional)
-    default_credentials: Optional[CredentialConfig] = Field(
+    default_credentials: CredentialConfig | None = Field(
         None,
         description="Default credentials for repositories without specific credentials",
     )
 
     # Default remediation strategy (optional)
-    default_remediation_strategy: Optional[RemediationStrategyConfig] = Field(
+    default_remediation_strategy: RemediationStrategyConfig | None = Field(
         None,
         description="Default remediation strategy for repositories without specific strategy",
     )
@@ -168,13 +167,13 @@ class SourceControlGlobalConfig(BaseConfig):
         return self
 
     def get_effective_credentials(
-        self, repo_credentials: Optional[CredentialConfig]
-    ) -> Optional[CredentialConfig]:
+        self, repo_credentials: CredentialConfig | None
+    ) -> CredentialConfig | None:
         """Get effective credentials for a repository."""
         return repo_credentials or self.default_credentials
 
     def get_effective_remediation_strategy(
-        self, repo_strategy: Optional[RemediationStrategyConfig]
+        self, repo_strategy: RemediationStrategyConfig | None
     ) -> RemediationStrategyConfig:
         """Get effective remediation strategy for a repository."""
         return (
@@ -195,8 +194,8 @@ class SourceControlGlobalConfig(BaseConfig):
 class SourceControlConfig(BaseConfig):
     """Source control configuration for a service."""
 
-    repositories: List[
-        Union[GitHubRepositoryConfig, GitLabRepositoryConfig, LocalRepositoryConfig]
+    repositories: list[
+        GitHubRepositoryConfig | GitLabRepositoryConfig | LocalRepositoryConfig
     ] = Field(default_factory=list, description="List of repositories for this service")
 
     @field_validator("repositories")
@@ -228,9 +227,7 @@ class SourceControlConfig(BaseConfig):
 
     def get_repository_by_name(
         self, name: str
-    ) -> Optional[
-        Union[GitHubRepositoryConfig, GitLabRepositoryConfig, LocalRepositoryConfig]
-    ]:
+    ) -> GitHubRepositoryConfig | GitLabRepositoryConfig | LocalRepositoryConfig | None:
         """Get a repository by name."""
         for repo in self.repositories:
             if repo.name == name:
@@ -239,16 +236,16 @@ class SourceControlConfig(BaseConfig):
 
     def get_repositories_by_type(
         self, repo_type: str
-    ) -> List[
-        Union[GitHubRepositoryConfig, GitLabRepositoryConfig, LocalRepositoryConfig]
+    ) -> list[
+        GitHubRepositoryConfig | GitLabRepositoryConfig | LocalRepositoryConfig
     ]:
         """Get all repositories of a specific type."""
         return [repo for repo in self.repositories if repo.type == repo_type]
 
     def get_repositories_for_path(
         self, file_path: str
-    ) -> List[
-        Union[GitHubRepositoryConfig, GitLabRepositoryConfig, LocalRepositoryConfig]
+    ) -> list[
+        GitHubRepositoryConfig | GitLabRepositoryConfig | LocalRepositoryConfig
     ]:
         """Get repositories that match the given file path."""
         matching_repos = []

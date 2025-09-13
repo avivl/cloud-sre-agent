@@ -70,7 +70,9 @@ class TestThresholdEvaluator:
         assert len(evaluator.threshold_configs) == 1
         assert evaluator.baseline_tracker is not None
 
-    def test_error_frequency_threshold_triggered(self, sample_window_with_errors: str) -> None:
+    def test_error_frequency_threshold_triggered(
+        self, sample_window_with_errors: str
+    ) -> None:
         """Test error frequency threshold when triggered."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.ERROR_FREQUENCY,
@@ -89,7 +91,9 @@ class TestThresholdEvaluator:
         assert "service-a" in result.affected_services
         assert "service-b" in result.affected_services
 
-    def test_error_frequency_threshold_not_triggered(self, sample_window_low_errors: str) -> None:
+    def test_error_frequency_threshold_not_triggered(
+        self, sample_window_low_errors: str
+    ) -> None:
         """Test error frequency threshold when not triggered."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.ERROR_FREQUENCY,
@@ -105,7 +109,9 @@ class TestThresholdEvaluator:
         assert result.score == 1.0
         assert len(result.triggering_logs) == 1
 
-    def test_error_rate_threshold_with_baseline(self, sample_window_with_errors: str) -> None:
+    def test_error_rate_threshold_with_baseline(
+        self, sample_window_with_errors: str
+    ) -> None:
         """Test error rate threshold against baseline."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.ERROR_RATE,
@@ -132,7 +138,9 @@ class TestThresholdEvaluator:
         assert result.details["current_rate"] == 50.0
         assert result.details["baseline_rate"] == 10.0
 
-    def test_service_impact_threshold_triggered(self, sample_window_with_errors: str) -> None:
+    def test_service_impact_threshold_triggered(
+        self, sample_window_with_errors: str
+    ) -> None:
         """Test service impact threshold when triggered."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.SERVICE_IMPACT,
@@ -147,7 +155,9 @@ class TestThresholdEvaluator:
         assert result.score == 2.0
         assert len(result.affected_services) == 2
 
-    def test_service_impact_threshold_not_triggered(self, sample_window_low_errors: str) -> None:
+    def test_service_impact_threshold_not_triggered(
+        self, sample_window_low_errors: str
+    ) -> None:
         """Test service impact threshold when not triggered."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.SERVICE_IMPACT,
@@ -177,7 +187,9 @@ class TestThresholdEvaluator:
         assert result.score == 30.0
         assert len(result.triggering_logs) == 5
 
-    def test_cascade_failure_threshold_triggered(self, sample_window_with_errors: str) -> None:
+    def test_cascade_failure_threshold_triggered(
+        self, sample_window_with_errors: str
+    ) -> None:
         """Test cascade failure threshold when triggered."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.CASCADE_FAILURE,
@@ -192,7 +204,9 @@ class TestThresholdEvaluator:
         assert result.score == 2.0
         assert len(result.affected_services) == 2
 
-    def test_cascade_failure_threshold_not_triggered(self, sample_window_low_errors: str) -> None:
+    def test_cascade_failure_threshold_not_triggered(
+        self, sample_window_low_errors: str
+    ) -> None:
         """Test cascade failure threshold when not triggered."""
         config = ThresholdConfig(
             threshold_type=ThresholdType.CASCADE_FAILURE,
@@ -206,7 +220,9 @@ class TestThresholdEvaluator:
         assert result.triggered is False
         assert result.score == 1.0
 
-    def test_multiple_thresholds_evaluation(self, sample_window_with_errors: str) -> None:
+    def test_multiple_thresholds_evaluation(
+        self, sample_window_with_errors: str
+    ) -> None:
         """Test evaluating multiple thresholds simultaneously."""
         configs = [
             ThresholdConfig(

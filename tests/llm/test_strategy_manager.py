@@ -221,7 +221,9 @@ class TestStrategyManager:
         assert len(result.fallback_models) <= 3
         assert "hybrid" in result.reasoning.lower()
 
-    def test_select_model_with_custom_weights(self, strategy_manager: str, mock_model_info: str) -> None:
+    def test_select_model_with_custom_weights(
+        self, strategy_manager: str, mock_model_info: str
+    ) -> None:
         """Test model selection with custom weights."""
         context = StrategyContext(
             task_type=ModelType.FAST,
@@ -326,7 +328,9 @@ class TestStrategyManager:
                 mock_model_info, "unknown_goal", strategy_context
             )
 
-    def test_no_candidates_meet_constraints(self, strategy_manager: str, strategy_context: str) -> None:
+    def test_no_candidates_meet_constraints(
+        self, strategy_manager: str, strategy_context: str
+    ) -> None:
         """Test handling when no candidates meet constraints."""
         # Create models that don't meet constraints
         expensive_model = MagicMock()
@@ -354,7 +358,9 @@ class TestCostOptimizedStrategy:
         assert strategy.name == "cost_optimized"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
+    def test_select_model(
+        self, mock_model_scorer: str, mock_model_info: str, strategy_context: str
+    ) -> None:
         """Test cost-optimized model selection."""
         strategy = CostOptimizedStrategy(mock_model_scorer)
 
@@ -390,7 +396,9 @@ class TestPerformanceOptimizedStrategy:
         assert strategy.name == "performance_optimized"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
+    def test_select_model(
+        self, mock_model_scorer: str, mock_model_info: str, strategy_context: str
+    ) -> None:
         """Test performance-optimized model selection."""
         strategy = PerformanceOptimizedStrategy(mock_model_scorer)
 
@@ -412,7 +420,9 @@ class TestQualityOptimizedStrategy:
         assert strategy.name == "quality_optimized"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
+    def test_select_model(
+        self, mock_model_scorer: str, mock_model_info: str, strategy_context: str
+    ) -> None:
         """Test quality-optimized model selection."""
         strategy = QualityOptimizedStrategy(mock_model_scorer)
 
@@ -435,7 +445,9 @@ class TestTimeBasedStrategy:
         assert strategy.model_scorer == mock_model_scorer
 
     @patch("gemini_sre_agent.llm.strategy_manager.datetime")
-    def test_is_business_hours(self, mock_datetime: str, mock_model_scorer: str) -> None:
+    def test_is_business_hours(
+        self, mock_datetime: str, mock_model_scorer: str
+    ) -> None:
         """Test business hours detection."""
         strategy = TimeBasedStrategy(mock_model_scorer)
 
@@ -473,7 +485,9 @@ class TestHybridStrategy:
         assert strategy.name == "hybrid"
         assert strategy.model_scorer == mock_model_scorer
 
-    def test_select_model(self, mock_model_scorer: str, mock_model_info: str, strategy_context: str) -> None:
+    def test_select_model(
+        self, mock_model_scorer: str, mock_model_info: str, strategy_context: str
+    ) -> None:
         """Test hybrid model selection."""
         strategy = HybridStrategy(mock_model_scorer)
 
@@ -495,7 +509,9 @@ class TestHybridStrategy:
         assert strategy._learning_weights.performance > 0.0
         assert strategy._learning_weights.speed > 0.0
 
-    def test_select_model_with_custom_weights(self, mock_model_scorer: str, mock_model_info: str) -> None:
+    def test_select_model_with_custom_weights(
+        self, mock_model_scorer: str, mock_model_info: str
+    ) -> None:
         """Test hybrid selection with custom weights."""
         strategy = HybridStrategy(mock_model_scorer)
         context = StrategyContext(

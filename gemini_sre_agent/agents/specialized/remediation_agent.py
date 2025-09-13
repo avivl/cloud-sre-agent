@@ -8,7 +8,7 @@ classes specialized for remediation with multi-provider support and intelligent 
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...llm.base import ModelType
 from ...llm.common.enums import ProviderType
@@ -33,9 +33,9 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         llm_config: LLMConfig,
         agent_name: str = "remediation_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -69,7 +69,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
     async def provide_remediation(
         self,
         problem: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         remediation_type: str = "general",
         **kwargs: Any,
     ) -> AnalysisResponse:
@@ -102,7 +102,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
     async def create_action_plan(
         self,
         problem: str,
-        constraints: List[str],
+        constraints: list[str],
         **kwargs: Any,
     ) -> AnalysisResponse:
         """
@@ -129,7 +129,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
             optimization_goal=OptimizationGoal.QUALITY,
         )
 
-    def get_agent_capabilities(self) -> Dict[str, Any]:
+    def get_agent_capabilities(self) -> dict[str, Any]:
         """
         Get the capabilities and configuration of this remediation agent.
 
@@ -168,9 +168,9 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         llm_config: LLMConfig,
         agent_name: str = "remediation_agent_v2",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = None,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = None,
         **kwargs: Any,
     ):
         """
@@ -221,7 +221,11 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
             RemediationResponse with detailed remediation plan
         """
         prompt_args = {
-            "problem": f"Issue: {issue_description}\nError Context: {error_context}\nTarget File: {target_file}\nAnalysis: {kwargs.get('analysis_summary', '')}\nKey Points: {', '.join(kwargs.get('key_points', []))}",
+            "problem": (
+                f"Issue: {issue_description}\nError Context: {error_context}\n"
+                f"Target File: {target_file}\nAnalysis: {kwargs.get('analysis_summary', '')}\n"
+                f"Key Points: {', '.join(kwargs.get('key_points', []))}"
+            ),
             **kwargs,
         }
 
@@ -267,7 +271,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
     async def assess_priority(
         self,
         issue_description: str,
-        impact_analysis: Dict[str, Any],
+        impact_analysis: dict[str, Any],
         **kwargs: Any,
     ) -> RemediationResponse:
         """
@@ -294,7 +298,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
             optimization_goal=OptimizationGoal.QUALITY,
         )
 
-    def get_agent_capabilities(self) -> Dict[str, Any]:
+    def get_agent_capabilities(self) -> dict[str, Any]:
         """
         Get the capabilities and configuration of this remediation agent v2.
 

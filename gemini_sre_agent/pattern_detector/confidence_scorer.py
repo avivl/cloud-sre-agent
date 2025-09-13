@@ -4,11 +4,11 @@
 Advanced confidence scoring system.
 """
 
-import math
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-
 import logging
+import math
+from typing import Any
+
 from .models import (
     ConfidenceFactors,
     ConfidenceRule,
@@ -23,7 +23,7 @@ class ConfidenceScorer:
     """Advanced confidence scoring engine for pattern detection."""
 
     def __init__(
-        self, confidence_rules: Optional[Dict[str, List[ConfidenceRule]]] = None
+        self, confidence_rules: dict[str, list[ConfidenceRule]] | None = None
     ):
         self.logger = logging.getLogger(__name__)
         self.confidence_rules = confidence_rules or self._get_default_confidence_rules()
@@ -33,8 +33,8 @@ class ConfidenceScorer:
         self,
         pattern_type: str,
         window: TimeWindow,
-        logs: List[LogEntry],
-        additional_context: Optional[Dict[str, Any]] = None,
+        logs: list[LogEntry],
+        additional_context: dict[str, Any] | None = None,
     ) -> ConfidenceScore:
         context = additional_context or {}
         rules = self.confidence_rules.get(pattern_type, [])
@@ -74,9 +74,9 @@ class ConfidenceScorer:
     def _calculate_raw_factors(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
-        context: Dict[str, Any],
-    ) -> Dict[str, float]:
+        logs: list[LogEntry],
+        context: dict[str, Any],
+    ) -> dict[str, float]:
         factors = {}
         factors[ConfidenceFactors.TIME_CONCENTRATION] = (
             self._calculate_time_concentration(logs, window)
@@ -125,7 +125,7 @@ class ConfidenceScorer:
         return factors
 
     def _calculate_time_concentration(
-        self, logs: List[LogEntry], window: TimeWindow
+        self, logs: list[LogEntry], window: TimeWindow
     ) -> float:
         if not logs or len(logs) < 2:
             return 0.0
@@ -134,7 +134,7 @@ class ConfidenceScorer:
         window_span = window.duration_minutes * 60
         return 1.0 - (error_span / window_span) if window_span > 0 else 1.0
 
-    def _calculate_time_correlation(self, logs: List[LogEntry]) -> float:
+    def _calculate_time_correlation(self, logs: list[LogEntry]) -> float:
         if len(logs) < 2:
             return 0.0
         timestamps = sorted([log.timestamp for log in logs])
@@ -143,7 +143,7 @@ class ConfidenceScorer:
             return 1.0
         return max(0.0, 1.0 - (total_span / 120.0))
 
-    def _calculate_service_distribution(self, logs: List[LogEntry]) -> float:
+    def _calculate_service_distribution(self, logs: list[LogEntry]) -> float:
         if not logs:
             return 0.0
         service_counts = {}
@@ -162,7 +162,7 @@ class ConfidenceScorer:
         cv = (variance**0.5) / mean_count
         return max(0.0, 1.0 - cv)
 
-    def _calculate_cross_service_correlation(self, logs: List[LogEntry]) -> float:
+    def _calculate_cross_service_correlation(self, logs: list[LogEntry]) -> float:
         if not logs:
             return 0.0
         service_timestamps = self._group_logs_by_service(logs)
@@ -171,7 +171,7 @@ class ConfidenceScorer:
 
         return self._calculate_service_correlations(service_timestamps)
 
-    def _group_logs_by_service(self, logs: List[LogEntry]) -> Dict[str, List[datetime]]:
+    def _group_logs_by_service(self, logs: list[LogEntry]) -> dict[str, list[datetime]]:
         """Group log timestamps by service name."""
         service_timestamps = {}
         for log in logs:
@@ -182,7 +182,7 @@ class ConfidenceScorer:
         return service_timestamps
 
     def _calculate_service_correlations(
-        self, service_timestamps: Dict[str, List[datetime]]
+        self, service_timestamps: dict[str, list[datetime]]
     ) -> float:
         """Calculate cross-service correlation scores."""
         services = list(service_timestamps.keys())
@@ -200,7 +200,7 @@ class ConfidenceScorer:
         return correlation_sum / total_correlations if total_correlations > 0 else 0.0
 
     def _calculate_pair_correlation(
-        self, times_a: List[datetime], times_b: List[datetime]
+        self, times_a: list[datetime], times_b: list[datetime]
     ) -> float:
         """Calculate correlation between two service timestamp lists."""
         correlation = 0.0
@@ -213,7 +213,7 @@ class ConfidenceScorer:
             return correlation / (len(times_a) * len(times_b))
         return 0.0
 
-    def _calculate_severity_factor(self, logs: List[LogEntry]) -> float:
+    def _calculate_severity_factor(self, logs: list[LogEntry]) -> float:
         if not logs:
             return 0.0
         severity_weights = {
@@ -229,7 +229,7 @@ class ConfidenceScorer:
             total_weight += severity_weights.get(severity, 0.5)
         return min(1.0, total_weight / len(logs))
 
-    def _calculate_error_consistency(self, logs: List[LogEntry]) -> float:
+    def _calculate_error_consistency(self, logs: list[LogEntry]) -> float:
         if not logs:
             return 0.0
         severities = [log.severity for log in logs if log.severity]
@@ -241,7 +241,7 @@ class ConfidenceScorer:
         most_common_count = max(severity_counts.values())
         return most_common_count / len(severities)
 
-    def _calculate_message_similarity(self, logs: List[LogEntry]) -> float:
+    def _calculate_message_similarity(self, logs: list[LogEntry]) -> float:
         if not logs:
             return 0.0
         messages = [log.error_message for log in logs if log.error_message]
@@ -264,14 +264,14 @@ class ConfidenceScorer:
                     similarities.append(intersection / union)
         return sum(similarities) / len(similarities) if similarities else 0.0
 
-    def _check_rapid_onset(self, logs: List[LogEntry], threshold_seconds: int) -> bool:
+    def _check_rapid_onset(self, logs: list[LogEntry], threshold_seconds: int) -> bool:
         if not logs:
             return False
         timestamps = sorted([log.timestamp for log in logs])
         time_span = (timestamps[-1] - timestamps[0]).total_seconds()
         return time_span <= threshold_seconds
 
-    def _check_gradual_onset(self, logs: List[LogEntry]) -> bool:
+    def _check_gradual_onset(self, logs: list[LogEntry]) -> bool:
         if len(logs) < 3:
             return False
         sorted_logs = sorted(logs, key=lambda x: x.timestamp)
@@ -317,9 +317,9 @@ class ConfidenceScorer:
     def _generate_explanation(
         self,
         pattern_type: str,
-        factor_scores: Dict[str, float],
-        raw_factors: Dict[str, float],
-    ) -> List[str]:
+        factor_scores: dict[str, float],
+        raw_factors: dict[str, float],
+    ) -> list[str]:
         explanations = []
         sorted_factors = sorted(factor_scores.items(), key=lambda x: x[1], reverse=True)
         explanations.append(f"Confidence assessment for {pattern_type} pattern:")
@@ -338,7 +338,7 @@ class ConfidenceScorer:
             explanations.append("- High similarity in error messages")
         return explanations
 
-    def _get_default_confidence_rules(self) -> Dict[str, List[ConfidenceRule]]:
+    def _get_default_confidence_rules(self) -> dict[str, list[ConfidenceRule]]:
         return {
             PatternType.CASCADE_FAILURE: [
                 ConfidenceRule(ConfidenceFactors.SERVICE_COUNT, 0.3, threshold=2.0),

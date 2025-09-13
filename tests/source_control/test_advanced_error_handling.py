@@ -9,7 +9,7 @@ circuit breakers, fallback strategies, recovery automation, and monitoring.
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -45,7 +45,7 @@ class TestFallbackStrategy(FallbackStrategyBase):
         self.executed = False
 
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if this strategy can handle the error."""
         return error_type in [
@@ -338,7 +338,9 @@ class TestErrorRecoveryAutomation:
         """Create test self-healing manager."""
         return SelfHealingManager()
 
-    def test_self_healing_manager_initialization(self, self_healing_manager: str) -> None:
+    def test_self_healing_manager_initialization(
+        self, self_healing_manager: str
+    ) -> None:
         """Test self-healing manager initialization."""
         assert len(self_healing_manager.error_patterns) > 0
         assert len(self_healing_manager.recovery_actions) > 0
@@ -451,7 +453,9 @@ class TestMonitoringDashboard:
         assert dashboard.fallback_manager is None
         assert dashboard.self_healing_manager is None
 
-    def test_register_circuit_breaker(self, dashboard: str, mock_circuit_breaker: str) -> None:
+    def test_register_circuit_breaker(
+        self, dashboard: str, mock_circuit_breaker: str
+    ) -> None:
         """Test registering circuit breaker."""
         dashboard.register_circuit_breaker("test_cb", mock_circuit_breaker)
         assert "test_cb" in dashboard.circuit_breakers

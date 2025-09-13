@@ -5,11 +5,10 @@ In-memory queue system for log buffering and backpressure management.
 """
 
 import asyncio
-import logging
 from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
+import logging
 
 from ..interfaces.core import LogEntry
 
@@ -36,8 +35,8 @@ class QueueStats:
     current_size: int = 0
     max_size_reached: int = 0
     dropped_count: int = 0
-    last_enqueue_time: Optional[datetime] = None
-    last_dequeue_time: Optional[datetime] = None
+    last_enqueue_time: datetime | None = None
+    last_dequeue_time: datetime | None = None
     average_processing_time_ms: float = 0.0
     memory_usage_mb: float = 0.0
 
@@ -56,8 +55,8 @@ class MemoryQueue:
         self._shutdown = False
 
         # Start background tasks
-        self._flush_task: Optional[asyncio.Task] = None
-        self._metrics_task: Optional[asyncio.Task] = None
+        self._flush_task: asyncio.Task | None = None
+        self._metrics_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Start the queue and background tasks."""
@@ -113,11 +112,11 @@ class MemoryQueue:
             self._stats.max_size_reached = max(
                 self._stats.max_size_reached, len(self._queue)
             )
-            self._stats.last_enqueue_time = datetime.now(timezone.utc)
+            self._stats.last_enqueue_time = datetime.now(UTC)
 
             return True
 
-    async def dequeue(self, max_items: Optional[int] = None) -> list[LogEntry]:
+    async def dequeue(self, max_items: int | None = None) -> list[LogEntry]:
         """
         Dequeue log entries.
 
@@ -130,7 +129,7 @@ class MemoryQueue:
         if max_items is None:
             max_items = self.config.batch_size
 
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         async with self._lock:
             items = []
@@ -141,11 +140,11 @@ class MemoryQueue:
             if items:
                 self._stats.total_dequeued += len(items)
                 self._stats.current_size = len(self._queue)
-                self._stats.last_dequeue_time = datetime.now(timezone.utc)
+                self._stats.last_dequeue_time = datetime.now(UTC)
 
                 # Track processing time
                 processing_time = (
-                    datetime.now(timezone.utc) - start_time
+                    datetime.now(UTC) - start_time
                 ).total_seconds() * 1000
                 self._processing_times.append(processing_time)
 

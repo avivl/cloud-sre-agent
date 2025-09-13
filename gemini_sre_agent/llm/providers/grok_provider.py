@@ -9,13 +9,13 @@ for xAI's Grok models.
 
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
-from ..config import LLMProviderConfig
 from ..capabilities.models import ModelCapability
+from ..config import LLMProviderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class GrokProvider(LLMProvider):
 
                         try:
                             data = json.loads(data_str)
-                            if "choices" in data and data["choices"]:
+                            if data.get("choices"):
                                 delta = data["choices"][0].get("delta", {})
                                 if "content" in delta:
                                     yield LLMResponse(
@@ -153,7 +153,7 @@ class GrokProvider(LLMProvider):
         """Check if Grok supports tool calling."""
         return False  # Not yet supported
 
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available Grok models mapped to semantic types."""
         # Default mappings
         default_mappings = {
@@ -170,7 +170,7 @@ class GrokProvider(LLMProvider):
 
         return default_mappings
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings using Grok API."""
         logger.info(f"Generating embeddings for text of length: {len(text)}")
 
@@ -206,8 +206,8 @@ class GrokProvider(LLMProvider):
         return input_cost + output_cost
 
     def _convert_messages_to_grok_format(
-        self, messages: List[Dict[str, str]]
-    ) -> List[Dict[str, str]]:
+        self, messages: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
         """Convert generic message format to Grok format."""
         grok_messages = []
         for message in messages:
@@ -227,7 +227,7 @@ class GrokProvider(LLMProvider):
 
         return grok_messages
 
-    def _extract_usage(self, usage: Any) -> Dict[str, int]:
+    def _extract_usage(self, usage: Any) -> dict[str, int]:
         """Extract usage information from Grok response."""
         if not usage:
             return {"input_tokens": 0, "output_tokens": 0}
@@ -243,7 +243,7 @@ class GrokProvider(LLMProvider):
         if not hasattr(config, "api_key") or not config.api_key:
             raise ValueError("Grok API key is required")
 
-    def get_custom_capabilities(self) -> List[ModelCapability]:
+    def get_custom_capabilities(self) -> list[ModelCapability]:
         """
         Get provider-specific custom capabilities for Grok.
         For now, Grok does not have specific custom capabilities beyond standard ones.

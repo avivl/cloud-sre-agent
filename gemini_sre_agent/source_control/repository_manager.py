@@ -1,8 +1,8 @@
 # gemini_sre_agent/source_control/repository_manager.py
 
-import logging
 from contextlib import AsyncExitStack
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from ..config.source_control_global import SourceControlGlobalConfig
 from .base import SourceControlProvider
@@ -19,7 +19,7 @@ class RepositoryManager:
     ):
         self.global_config = global_config
         self.provider_factory = provider_factory
-        self.repositories: Dict[str, SourceControlProvider] = {}
+        self.repositories: dict[str, SourceControlProvider] = {}
         self.logger = logging.getLogger(__name__)
         self._exit_stack = AsyncExitStack()
 
@@ -42,8 +42,8 @@ class RepositoryManager:
         return self.repositories[repo_name]
 
     async def execute_across_repos(
-        self, operation, repos: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        self, operation, repos: list[str] | None = None
+    ) -> dict[str, Any]:
         """Execute an operation across multiple repositories."""
         results = {}
         target_repos = repos or list(self.repositories.keys())
@@ -58,13 +58,13 @@ class RepositoryManager:
                 results[repo_name] = await operation(provider)
             except Exception as e:
                 self.logger.error(
-                    f"Operation failed for repository '{repo_name}': {str(e)}"
+                    f"Operation failed for repository '{repo_name}': {e!s}"
                 )
                 results[repo_name] = {"error": str(e)}
 
         return results
 
-    async def health_check(self) -> Dict[str, bool]:
+    async def health_check(self) -> dict[str, bool]:
         """Check the health of all repositories."""
 
         async def check_health(provider: SourceControlProvider) -> bool:
@@ -75,23 +75,23 @@ class RepositoryManager:
 
         return await self.execute_across_repos(check_health)
 
-    async def get_repository_info(self, repo_name: str) -> Optional[Any]:
+    async def get_repository_info(self, repo_name: str) -> Any | None:
         """Get information about a specific repository."""
         try:
             provider = await self.get_provider(repo_name)
             return await provider.get_repository_info()
         except Exception as e:
             self.logger.error(
-                f"Failed to get repository info for '{repo_name}': {str(e)}"
+                f"Failed to get repository info for '{repo_name}': {e!s}"
             )
             return None
 
     async def list_all_branches(
-        self, repos: Optional[List[str]] = None
-    ) -> Dict[str, List[str]]:
+        self, repos: list[str] | None = None
+    ) -> dict[str, list[str]]:
         """List branches for all or specified repositories."""
 
-        async def get_branches(provider: SourceControlProvider) -> List[str]:
+        async def get_branches(provider: SourceControlProvider) -> list[str]:
             try:
                 branches = await provider.list_branches()
                 return [branch.name for branch in branches]
@@ -101,8 +101,8 @@ class RepositoryManager:
         return await self.execute_across_repos(get_branches, repos)
 
     async def apply_remediation_across_repos(
-        self, path: str, content: str, message: str, repos: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        self, path: str, content: str, message: str, repos: list[str] | None = None
+    ) -> dict[str, Any]:
         """Apply remediation across multiple repositories."""
 
         async def apply_fix(provider: SourceControlProvider) -> Any:

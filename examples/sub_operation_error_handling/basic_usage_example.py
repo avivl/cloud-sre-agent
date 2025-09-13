@@ -362,9 +362,8 @@ async def configuration_management_example():
 
         # Test configuration deserialization
         restored_config = SubOperationConfig.from_dict(config_dict)
-        print(
-            f"5. Restored config matches: {restored_config.operation_name == github_config.operation_name}"
-        )
+        matches = restored_config.operation_name == github_config.operation_name
+        print(f"5. Restored config matches: {matches}")
 
     except Exception as e:
         print(f"Error in configuration management example: {e}")

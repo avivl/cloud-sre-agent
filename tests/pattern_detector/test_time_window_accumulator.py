@@ -2,8 +2,7 @@
 Tests for time window accumulation logic.
 """
 
-import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -186,7 +185,9 @@ class TestWindowManager:
         manager.fast_accumulator.add_log.assert_called_once_with(log_data)
         manager.trend_accumulator.add_log.assert_called_once_with(log_data)
 
-    def test_window_manager_fast_window_callback(self, mock_pattern_callback: str) -> None:
+    def test_window_manager_fast_window_callback(
+        self, mock_pattern_callback: str
+    ) -> None:
         """Test fast window completion callback."""
         manager = WindowManager(pattern_callback=mock_pattern_callback)
 
@@ -199,7 +200,9 @@ class TestWindowManager:
 
         mock_pattern_callback.assert_called_once_with(mock_window)
 
-    def test_window_manager_trend_window_callback(self, mock_pattern_callback: str) -> None:
+    def test_window_manager_trend_window_callback(
+        self, mock_pattern_callback: str
+    ) -> None:
         """Test trend window completion callback."""
         manager = WindowManager(pattern_callback=mock_pattern_callback)
 
@@ -212,7 +215,9 @@ class TestWindowManager:
 
         mock_pattern_callback.assert_called_once_with(mock_window)
 
-    def test_window_manager_callback_error_handling(self, mock_pattern_callback: str) -> None:
+    def test_window_manager_callback_error_handling(
+        self, mock_pattern_callback: str
+    ) -> None:
         """Test error handling in window callbacks."""
         mock_pattern_callback.side_effect = RuntimeError("Test error")
         manager = WindowManager(pattern_callback=mock_pattern_callback)

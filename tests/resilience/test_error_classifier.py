@@ -96,37 +96,46 @@ class TestErrorClassifier:
         assert error_classifier is not None
         assert hasattr(error_classifier, "classify_error")
 
-    def test_classify_timeout_error(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_timeout_error(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of timeout errors."""
         timeout_error = TimeoutError("Request timed out")
 
         category = error_classifier.classify_error(timeout_error)
         assert category == ErrorCategory.TIMEOUT
 
-    def test_classify_asyncio_timeout_error(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_asyncio_timeout_error(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of asyncio timeout errors."""
-        import asyncio
 
-        timeout_error = asyncio.TimeoutError("Async operation timed out")
+        timeout_error = TimeoutError("Async operation timed out")
 
         category = error_classifier.classify_error(timeout_error)
         assert category == ErrorCategory.TIMEOUT
 
-    def test_classify_connection_error(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_connection_error(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of connection errors."""
         connection_error = ConnectionError("Connection failed")
 
         category = error_classifier.classify_error(connection_error)
         assert category == ErrorCategory.NETWORK
 
-    def test_classify_os_error(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_os_error(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of OS errors."""
         os_error = OSError("Network unreachable")
 
         category = error_classifier.classify_error(os_error)
         assert category == ErrorCategory.NETWORK
 
-    def test_classify_http_error_429(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_http_error_429(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of HTTP 429 (rate limit) errors."""
         # Test with error message containing 429
         http_error = Exception("429 Client Error: Too Many Requests")
@@ -134,7 +143,9 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(http_error)
         assert category == ErrorCategory.RATE_LIMITED
 
-    def test_classify_http_error_401(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_http_error_401(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of HTTP 401 (unauthorized) errors."""
         # Test with error message containing 401
         http_error = Exception("401 Client Error: Unauthorized")
@@ -142,7 +153,9 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(http_error)
         assert category == ErrorCategory.AUTHENTICATION
 
-    def test_classify_http_error_403(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_http_error_403(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of HTTP 403 (forbidden) errors."""
         # Test with error message containing 403
         http_error = Exception("403 Client Error: Forbidden")
@@ -150,7 +163,9 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(http_error)
         assert category == ErrorCategory.AUTHENTICATION
 
-    def test_classify_http_error_500(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_http_error_500(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of HTTP 500 (server error) errors."""
         # Test with error message containing 500
         http_error = Exception("500 Server Error: Internal Server Error")
@@ -158,7 +173,9 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(http_error)
         assert category == ErrorCategory.PROVIDER_FAILURE
 
-    def test_classify_http_error_400(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_http_error_400(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of HTTP 400 (bad request) errors."""
         # Test with error message containing 400
         http_error = Exception("400 Client Error: Bad Request")
@@ -166,7 +183,9 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(http_error)
         assert category == ErrorCategory.PERMANENT
 
-    def test_classify_http_error_404(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_http_error_404(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of HTTP 404 (not found) errors."""
         # Test with error message containing 404
         http_error = Exception("404 Client Error: Not Found")
@@ -174,7 +193,9 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(http_error)
         assert category == ErrorCategory.PERMANENT
 
-    def test_classify_http_error_422(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_http_error_422(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of HTTP 422 (unprocessable entity) errors."""
         # Test with error message containing 422
         http_error = Exception("422 Client Error: Unprocessable Entity")
@@ -182,7 +203,9 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(http_error)
         assert category == ErrorCategory.PERMANENT
 
-    def test_classify_unknown_exception(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_unknown_exception(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification of unknown exceptions."""
         unknown_error = Exception("Unknown error")
 
@@ -203,14 +226,18 @@ class TestErrorClassifier:
         category = error_classifier.classify_error(timeout_error)
         assert category == ErrorCategory.TIMEOUT
 
-    def test_classify_error_with_full_context(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_error_with_full_context(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification with full context."""
         timeout_error = TimeoutError("Request timed out")
 
         category = error_classifier.classify_error(timeout_error)
         assert category == ErrorCategory.TIMEOUT
 
-    def test_classify_error_message_patterns(self, error_classifier: str, request_context: str) -> None:
+    def test_classify_error_message_patterns(
+        self, error_classifier: str, request_context: str
+    ) -> None:
         """Test classification based on error message patterns."""
         # Test rate limit patterns
         rate_limit_errors = [

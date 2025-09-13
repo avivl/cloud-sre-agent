@@ -1,6 +1,7 @@
 """Service provider implementations for dependency injection."""
 
-from typing import Callable, Optional, Type, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 from .interfaces import ServiceLifetime, ServiceProvider
 
@@ -10,7 +11,7 @@ T = TypeVar("T")
 class TypeProvider(ServiceProvider[T]):
     """Provider for type-based services."""
 
-    def __init__(self, implementation_type: Type[T], lifetime: ServiceLifetime):
+    def __init__(self, implementation_type: type[T], lifetime: ServiceLifetime):
         """Initialize the provider.
 
         Args:
@@ -107,7 +108,7 @@ class LazyProvider(ServiceProvider[T]):
         """
         self._factory = factory
         self._lifetime = lifetime
-        self._instance: Optional[T] = None
+        self._instance: T | None = None
         self._initialized = False
 
     def get_lifetime(self) -> ServiceLifetime:
@@ -141,7 +142,7 @@ class CachedProvider(ServiceProvider[T]):
             provider: The underlying provider
         """
         self._provider = provider
-        self._cached_instance: Optional[T] = None
+        self._cached_instance: T | None = None
         self._cached = False
 
     def get_lifetime(self) -> ServiceLifetime:

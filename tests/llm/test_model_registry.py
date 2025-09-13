@@ -4,8 +4,8 @@
 Unit tests for the ModelRegistry class.
 """
 
-import tempfile
 from pathlib import Path
+import tempfile
 
 import yaml
 

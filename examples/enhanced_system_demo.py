@@ -8,7 +8,6 @@ LLM system including intelligent model selection, cost optimization, and advance
 import asyncio
 import json
 import logging
-from typing import Dict, List
 
 from gemini_sre_agent.agents.enhanced_specialized import (
     EnhancedAnalysisAgent,
@@ -34,11 +33,11 @@ logger = logging.getLogger(__name__)
 async def demo_legacy_adapters():
     """Demonstrate migration using legacy adapters (zero-code migration)."""
     logger.info("=== Demo: Legacy Adapters (Zero-Code Migration) ===")
-    
+
     # Load enhanced LLM configuration
     config_manager = ConfigManager("examples/llm_configs/multi_provider_config.yaml")
     llm_config = config_manager.get_config()
-    
+
     # Create enhanced agents using legacy adapters
     triage_agent = create_enhanced_triage_agent(
         project_id="demo-project",
@@ -46,21 +45,21 @@ async def demo_legacy_adapters():
         triage_model="gemini-1.5-flash",
         llm_config=llm_config
     )
-    
+
     analysis_agent = create_enhanced_analysis_agent(
         project_id="demo-project",
-        location="us-central1", 
+        location="us-central1",
         analysis_model="gemini-1.5-flash",
         llm_config=llm_config
     )
-    
+
     remediation_agent = create_enhanced_remediation_agent(
         github_token="dummy_token",  # Use local patches
         repo_name="demo/repo",
         llm_config=llm_config,
         use_local_patches=True
     )
-    
+
     # Sample log data
     sample_logs = [
         "2024-01-15 10:30:15 ERROR [ServiceA] Database connection failed: timeout after 30s",
@@ -68,17 +67,17 @@ async def demo_legacy_adapters():
         "2024-01-15 10:30:17 ERROR [ServiceA] Database connection failed again: timeout after 30s",
         "2024-01-15 10:30:18 CRITICAL [ServiceA] Service unavailable - database unreachable",
     ]
-    
+
     # Process using legacy interface (unchanged code)
     logger.info("Processing logs with legacy interface...")
     triage_packet = await triage_agent.analyze_logs(sample_logs, "demo_flow_1")
     logger.info(f"Triage completed: {triage_packet}")
-    
+
     remediation_plan = analysis_agent.analyze_issue(
         triage_packet, sample_logs, {}, "demo_flow_1"
     )
     logger.info(f"Analysis completed: {remediation_plan}")
-    
+
     pr_url = await remediation_agent.create_pull_request(
         remediation_plan, "fix-db-connection", "main", "demo_flow_1", "issue_1"
     )
@@ -88,11 +87,11 @@ async def demo_legacy_adapters():
 async def demo_enhanced_agents():
     """Demonstrate full enhanced agents with advanced features."""
     logger.info("=== Demo: Enhanced Agents (Full Features) ===")
-    
+
     # Load enhanced LLM configuration
     config_manager = ConfigManager("examples/llm_configs/multi_provider_config.yaml")
     llm_config = config_manager.get_config()
-    
+
     # Create enhanced agents with full capabilities
     triage_agent = EnhancedTriageAgent(
         llm_config=llm_config,
@@ -103,7 +102,7 @@ async def demo_enhanced_agents():
         min_quality=0.7,
         collect_stats=True,
     )
-    
+
     analysis_agent = EnhancedAnalysisAgent(
         llm_config=llm_config,
         primary_model="llama3.2:3b",
@@ -113,7 +112,7 @@ async def demo_enhanced_agents():
         min_quality=0.8,
         collect_stats=True,
     )
-    
+
     remediation_agent = EnhancedRemediationAgentV2(
         llm_config=llm_config,
         primary_model="llama3.2:3b",
@@ -123,7 +122,7 @@ async def demo_enhanced_agents():
         min_quality=0.9,
         collect_stats=True,
     )
-    
+
     # Sample log data
     sample_logs = [
         "2024-01-15 11:45:22 ERROR [ServiceB] Memory usage exceeded 95% threshold",
@@ -131,15 +130,18 @@ async def demo_enhanced_agents():
         "2024-01-15 11:45:24 ERROR [ServiceB] OutOfMemoryError: Java heap space",
         "2024-01-15 11:45:25 CRITICAL [ServiceB] Service crashed due to memory exhaustion",
     ]
-    
+
     # Process using enhanced interface
     logger.info("Processing logs with enhanced interface...")
-    
+
     # Step 1: Enhanced Triage
     triage_response = await triage_agent.analyze_logs(sample_logs, "demo_flow_2")
-    logger.info(f"Enhanced triage: severity={triage_response.severity}, category={triage_response.category}")
+    logger.info(
+        f"Enhanced triage: severity={triage_response.severity}, "
+        f"category={triage_response.category}"
+    )
     logger.info(f"Suggested actions: {triage_response.suggested_actions}")
-    
+
     # Step 2: Enhanced Analysis
     triage_data = {
         "issue_id": "memory_issue_1",
@@ -147,13 +149,13 @@ async def demo_enhanced_agents():
         "description": triage_response.description,
         "category": triage_response.category,
     }
-    
+
     analysis_response = await analysis_agent.analyze_issue(
         triage_data, sample_logs, {}, "demo_flow_2"
     )
     logger.info(f"Enhanced analysis: priority={analysis_response.priority}")
     logger.info(f"Root cause: {analysis_response.root_cause_analysis[:100]}...")
-    
+
     # Step 3: Enhanced Remediation
     remediation_response = await remediation_agent.create_remediation_plan(
         issue_description=triage_response.description,
@@ -162,7 +164,7 @@ async def demo_enhanced_agents():
         analysis_summary=analysis_response.root_cause_analysis,
         key_points=[analysis_response.proposed_fix],
     )
-    
+
     logger.info(f"Enhanced remediation: priority={remediation_response.priority}")
     logger.info(f"Estimated effort: {remediation_response.estimated_effort}")
     logger.info(f"Code patch preview: {remediation_response.code_patch[:200]}...")
@@ -171,33 +173,36 @@ async def demo_enhanced_agents():
 async def demo_model_selection():
     """Demonstrate intelligent model selection and optimization."""
     logger.info("=== Demo: Intelligent Model Selection ===")
-    
+
     # Load configuration
     config_manager = ConfigManager("examples/llm_configs/multi_provider_config.yaml")
     llm_config = config_manager.get_config()
-    
+
     # Create providers and run capability discovery
     all_providers = LLMProviderFactory.create_providers_from_config(llm_config)
     capability_discovery = CapabilityDiscovery(all_providers)
     await capability_discovery.discover_capabilities()
-    
+
     logger.info(f"Discovered {len(capability_discovery.model_capabilities)} model capabilities")
-    
+
     # Show available models by provider
     for provider_name, provider in all_providers.items():
         logger.info(f"Provider {provider_name}: {len(provider.models)} models available")
         for model in provider.models[:3]:  # Show first 3 models
-            logger.info(f"  - {model.name}: {model.model_type.value} (${model.cost_per_1k_tokens:.4f}/1k tokens)")
+            logger.info(
+                f"  - {model.name}: {model.model_type.value} "
+                f"(${model.cost_per_1k_tokens:.4f}/1k tokens)"
+            )
 
 
 async def demo_cost_optimization():
     """Demonstrate cost optimization features."""
     logger.info("=== Demo: Cost Optimization ===")
-    
+
     # Load configuration
     config_manager = ConfigManager("examples/llm_configs/multi_provider_config.yaml")
     llm_config = config_manager.get_config()
-    
+
     # Create agents with different optimization goals
     cost_optimized_agent = EnhancedTriageAgent(
         llm_config=llm_config,
@@ -205,14 +210,14 @@ async def demo_cost_optimization():
         max_cost=0.005,  # Very low cost limit
         collect_stats=True,
     )
-    
+
     quality_optimized_agent = EnhancedTriageAgent(
         llm_config=llm_config,
         optimization_goal=OptimizationGoal.QUALITY,
         min_quality=0.9,  # High quality requirement
         collect_stats=True,
     )
-    
+
     hybrid_agent = EnhancedTriageAgent(
         llm_config=llm_config,
         optimization_goal=OptimizationGoal.HYBRID,
@@ -220,9 +225,9 @@ async def demo_cost_optimization():
         min_quality=0.8,
         collect_stats=True,
     )
-    
+
     sample_logs = ["ERROR: Service timeout after 30 seconds"]
-    
+
     # Test different optimization strategies
     for agent_name, agent in [
         ("Cost Optimized", cost_optimized_agent),
@@ -230,17 +235,18 @@ async def demo_cost_optimization():
         ("Hybrid", hybrid_agent),
     ]:
         logger.info(f"Testing {agent_name} agent...")
-        response = await agent.analyze_logs(sample_logs, f"demo_{agent_name.lower().replace(' ', '_')}")
+        flow_id = f"demo_{agent_name.lower().replace(' ', '_')}"
+        response = await agent.analyze_logs(sample_logs, flow_id)
         logger.info(f"{agent_name} result: {response.severity} - {response.description[:50]}...")
 
 
 async def demo_monitoring():
     """Demonstrate monitoring and metrics collection."""
     logger.info("=== Demo: Monitoring and Metrics ===")
-    
+
     # Get metrics collector
     metrics_collector = get_llm_metrics_collector()
-    
+
     # Simulate some requests
     for i in range(5):
         metrics_collector.record_request(
@@ -252,11 +258,11 @@ async def demo_monitoring():
             duration_ms=100.0 + i * 10,
             cost=0.001 + i * 0.0001,
         )
-    
+
     # Get metrics summary
     summary = metrics_collector.get_metrics_summary()
     logger.info(f"Metrics summary: {summary}")
-    
+
     # Get provider metrics
     provider_metrics = metrics_collector.get_all_provider_metrics()
     for provider, metrics in provider_metrics.items():
@@ -268,25 +274,25 @@ async def demo_monitoring():
 async def main():
     """Run all demos."""
     logger.info("Starting Enhanced Multi-Provider LLM System Demo")
-    
+
     try:
         # Demo 1: Legacy adapters (zero-code migration)
         await demo_legacy_adapters()
-        
+
         # Demo 2: Enhanced agents (full features)
         await demo_enhanced_agents()
-        
+
         # Demo 3: Model selection
         await demo_model_selection()
-        
+
         # Demo 4: Cost optimization
         await demo_cost_optimization()
-        
+
         # Demo 5: Monitoring
         await demo_monitoring()
-        
+
         logger.info("All demos completed successfully!")
-        
+
     except Exception as e:
         logger.error(f"Demo failed: {e}")
         raise

@@ -7,11 +7,11 @@ This module provides scikit-learn compatible interfaces for error classification
 enabling the use of various classification strategies and algorithms.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol
+import logging
+from typing import Any, Protocol
 
 from .core import ErrorClassification, ErrorType
 from .error_types import ErrorCategory, ErrorSeverity, ErrorTypeMetadata
@@ -56,25 +56,25 @@ class ClassificationResult:
     confidence: float
     metadata: ErrorTypeMetadata
     classification_strategy: ClassificationStrategy
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 class BaseErrorClassifier(Protocol):
     """Protocol for error classification algorithms following sklearn patterns."""
 
-    def fit(self, X: List[Exception], y: List[ErrorType]) -> "BaseErrorClassifier":
+    def fit(self, X: list[Exception], y: list[ErrorType]) -> "BaseErrorClassifier":
         """Fit the classifier to training data."""
         ...
 
-    def predict(self, X: List[Exception]) -> List[ErrorType]:
+    def predict(self, X: list[Exception]) -> list[ErrorType]:
         """Predict error types for given exceptions."""
         ...
 
-    def predict_proba(self, X: List[Exception]) -> List[Dict[ErrorType, float]]:
+    def predict_proba(self, X: list[Exception]) -> list[dict[ErrorType, float]]:
         """Predict class probabilities for given exceptions."""
         ...
 
-    def score(self, X: List[Exception], y: List[ErrorType]) -> float:
+    def score(self, X: list[Exception], y: list[ErrorType]) -> float:
         """Return the mean accuracy on the given test data and labels."""
         ...
 
@@ -92,7 +92,7 @@ class BaseErrorClassifierImpl(ABC):
         """Classify a single error."""
         pass
 
-    def fit(self, X: List[Exception], y: List[ErrorType]) -> "BaseErrorClassifierImpl":
+    def fit(self, X: list[Exception], y: list[ErrorType]) -> "BaseErrorClassifierImpl":
         """Fit the classifier to training data."""
         self.logger.info(
             f"Fitting {self.strategy.value} classifier with {len(X)} samples"
@@ -101,7 +101,7 @@ class BaseErrorClassifierImpl(ABC):
         self.is_fitted = True
         return self
 
-    def predict(self, X: List[Exception]) -> List[ErrorType]:
+    def predict(self, X: list[Exception]) -> list[ErrorType]:
         """Predict error types for given exceptions."""
         if not self.is_fitted:
             self.logger.warning("Classifier not fitted, using default behavior")
@@ -113,7 +113,7 @@ class BaseErrorClassifierImpl(ABC):
 
         return results
 
-    def predict_proba(self, X: List[Exception]) -> List[Dict[ErrorType, float]]:
+    def predict_proba(self, X: list[Exception]) -> list[dict[ErrorType, float]]:
         """Predict class probabilities for given exceptions."""
         if not self.is_fitted:
             self.logger.warning("Classifier not fitted, using default behavior")
@@ -133,7 +133,7 @@ class BaseErrorClassifierImpl(ABC):
 
         return results
 
-    def score(self, X: List[Exception], y: List[ErrorType]) -> float:
+    def score(self, X: list[Exception], y: list[ErrorType]) -> float:
         """Return the mean accuracy on the given test data and labels."""
         predictions = self.predict(X)
         correct = sum(
@@ -149,7 +149,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
         super().__init__(ClassificationStrategy.RULE_BASED)
         self.classification_rules = self._initialize_rules()
 
-    def _initialize_rules(self) -> List[Any]:
+    def _initialize_rules(self) -> list[Any]:
         """Initialize classification rules in order of specificity."""
         return [
             self._classify_provider_errors,
@@ -183,7 +183,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_network_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify network-related errors."""
         if isinstance(error, (ConnectionError, OSError)):
             metadata = _get_metadata_or_fallback(ErrorType.NETWORK_ERROR)
@@ -198,7 +198,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_timeout_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify timeout errors."""
         if isinstance(error, (TimeoutError,)):
             metadata = _get_metadata_or_fallback(ErrorType.TIMEOUT_ERROR)
@@ -213,7 +213,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_rate_limit_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify rate limit errors."""
         error_str = str(error).lower()
         if any(
@@ -229,7 +229,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
             )
         return None
 
-    def _classify_http_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_http_errors(self, error: Exception) -> ClassificationResult | None:
         """Classify HTTP status code errors."""
         if hasattr(error, "status"):
             status = getattr(error, "status", None)
@@ -270,7 +270,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_authentication_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify authentication errors."""
         error_str = str(error).lower()
         if any(
@@ -289,7 +289,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_validation_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify validation errors."""
         if isinstance(error, (ValueError, TypeError)):
             metadata = _get_metadata_or_fallback(ErrorType.VALIDATION_ERROR)
@@ -304,7 +304,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_provider_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify provider-specific errors."""
         error_str = str(error).lower()
         error_type_name = type(error).__name__.lower()
@@ -325,7 +325,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_github_errors(
         self, error: Exception, error_str: str
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify GitHub-specific errors."""
         # Rate limiting
         if any(
@@ -375,7 +375,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_gitlab_errors(
         self, error: Exception, error_str: str
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify GitLab-specific errors."""
         # Rate limiting
         if any(
@@ -403,7 +403,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_local_git_errors(
         self, error: Exception, error_str: str
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify local Git errors."""
         # Repository not found
         if any(
@@ -432,7 +432,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_file_system_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify file system errors."""
         error_str = str(error).lower()
 
@@ -467,7 +467,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
     def _classify_security_errors(
         self, error: Exception
-    ) -> Optional[ClassificationResult]:
+    ) -> ClassificationResult | None:
         """Classify security-related errors."""
         error_str = str(error).lower()
 
@@ -486,7 +486,7 @@ class RuleBasedClassifier(BaseErrorClassifierImpl):
 
         return None
 
-    def _classify_api_errors(self, error: Exception) -> Optional[ClassificationResult]:
+    def _classify_api_errors(self, error: Exception) -> ClassificationResult | None:
         """Classify API and service errors."""
         error_str = str(error).lower()
 
@@ -515,7 +515,7 @@ class PatternBasedClassifier(BaseErrorClassifierImpl):
         super().__init__(ClassificationStrategy.PATTERN_BASED)
         self.pattern_matchers = self._initialize_pattern_matchers()
 
-    def _initialize_pattern_matchers(self) -> Dict[ErrorType, List[str]]:
+    def _initialize_pattern_matchers(self) -> dict[ErrorType, list[str]]:
         """Initialize pattern matchers for each error type."""
         matchers = {}
         for error_type in ErrorType:
@@ -559,7 +559,7 @@ class PatternBasedClassifier(BaseErrorClassifierImpl):
         )
 
     def _calculate_pattern_confidence(
-        self, error_str: str, patterns: List[str]
+        self, error_str: str, patterns: list[str]
     ) -> float:
         """Calculate confidence based on pattern matching."""
         if not patterns:
@@ -640,7 +640,7 @@ class ClassificationAlgorithmFactory:
 
     @staticmethod
     def create_all_classifiers() -> (
-        Dict[ClassificationStrategy, BaseErrorClassifierImpl]
+        dict[ClassificationStrategy, BaseErrorClassifierImpl]
     ):
         """Create all available classifiers."""
         return {

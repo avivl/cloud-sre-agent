@@ -5,7 +5,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class PatchFormat(str, Enum):
@@ -22,9 +22,9 @@ class FileOperation:
 
     operation_type: str  # "write", "delete", "rename"
     file_path: str
-    content: Optional[str] = None
-    encoding: Optional[str] = None
-    new_path: Optional[str] = None  # For rename operations
+    content: str | None = None
+    encoding: str | None = None
+    new_path: str | None = None  # For rename operations
 
 
 @dataclass
@@ -33,9 +33,9 @@ class CommitOptions:
 
     commit: bool = True
     commit_message: str = ""
-    author: Optional[str] = None
-    committer: Optional[str] = None
-    files_to_add: Optional[List[str]] = None
+    author: str | None = None
+    committer: str | None = None
+    files_to_add: list[str] | None = None
 
 
 @dataclass
@@ -43,12 +43,12 @@ class RepositoryInfo:
     """Information about a repository."""
 
     name: str
-    url: Optional[str] = None
-    owner: Optional[str] = None
+    url: str | None = None
+    owner: str | None = None
     is_private: bool = False
     default_branch: str = "main"
-    description: Optional[str] = None
-    additional_info: Optional[Dict[str, Any]] = None
+    description: str | None = None
+    additional_info: dict[str, Any] | None = None
 
 
 @dataclass
@@ -58,7 +58,7 @@ class BranchInfo:
     name: str
     sha: str
     is_protected: bool = False
-    last_commit: Optional[datetime] = None
+    last_commit: datetime | None = None
 
     def __post_init__(self) -> None:
         if self.last_commit is None:
@@ -71,10 +71,10 @@ class FileInfo:
 
     path: str
     size: int
-    last_modified: Optional[datetime] = None
-    sha: Optional[str] = None
+    last_modified: datetime | None = None
+    sha: str | None = None
     is_binary: bool = False
-    encoding: Optional[str] = None
+    encoding: str | None = None
 
     def __post_init__(self) -> None:
         if self.last_modified is None:
@@ -92,7 +92,7 @@ class CommitInfo:
     committer: str
     committer_email: str
     date: datetime
-    parents: Optional[List[str]] = None
+    parents: list[str] | None = None
 
     def __post_init__(self) -> None:
         if self.parents is None:
@@ -105,13 +105,13 @@ class IssueInfo:
 
     number: int
     title: str
-    body: Optional[str] = None
+    body: str | None = None
     state: str = "open"
-    author: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    labels: Optional[List[str]] = None
-    assignees: Optional[List[str]] = None
+    author: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    labels: list[str] | None = None
+    assignees: list[str] | None = None
 
     def __post_init__(self) -> None:
         if self.labels is None:
@@ -128,10 +128,10 @@ class RemediationResult:
     message: str
     file_path: str
     operation_type: str
-    commit_sha: Optional[str] = None
-    pull_request_url: Optional[str] = None
-    error_details: Optional[str] = None
-    additional_info: Optional[Dict[str, Any]] = None
+    commit_sha: str | None = None
+    pull_request_url: str | None = None
+    error_details: str | None = None
+    additional_info: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.additional_info is None:
@@ -145,9 +145,9 @@ class OperationResult:
     operation_id: str
     success: bool
     message: str
-    file_path: Optional[str] = None
-    error_details: Optional[str] = None
-    additional_info: Optional[Dict[str, Any]] = None
+    file_path: str | None = None
+    error_details: str | None = None
+    additional_info: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.additional_info is None:
@@ -161,8 +161,8 @@ class BatchOperation:
     operation_id: str
     operation_type: str
     file_path: str
-    content: Optional[str] = None
-    additional_params: Optional[Dict[str, Any]] = None
+    content: str | None = None
+    additional_params: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.additional_params is None:
@@ -176,9 +176,9 @@ class ConflictInfo:
     path: str
     conflict_type: str
     has_conflicts: bool = False
-    conflict_files: Optional[List[str]] = None
-    conflict_details: Optional[Dict[str, Any]] = None
-    details: Optional[Dict[str, Any]] = None
+    conflict_files: list[str] | None = None
+    conflict_details: dict[str, Any] | None = None
+    details: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.conflict_files is None:
@@ -196,11 +196,11 @@ class ProviderHealth:
     status: str
     message: str
     is_healthy: bool = True
-    last_check: Optional[datetime] = None
-    response_time_ms: Optional[float] = None
-    error_message: Optional[str] = None
-    warnings: Optional[List[str]] = None
-    additional_info: Optional[Dict[str, Any]] = None
+    last_check: datetime | None = None
+    response_time_ms: float | None = None
+    error_message: str | None = None
+    warnings: list[str] | None = None
+    additional_info: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.last_check is None:
@@ -222,9 +222,9 @@ class ProviderCapabilities:
     supports_branch_operations: bool = True
     supports_file_history: bool = True
     supports_batch_operations: bool = True
-    max_file_size: Optional[int] = None
-    supported_patch_formats: Optional[List[PatchFormat]] = None
-    supported_encodings: Optional[List[str]] = None
+    max_file_size: int | None = None
+    supported_patch_formats: list[PatchFormat] | None = None
+    supported_encodings: list[str] | None = None
 
     def __post_init__(self) -> None:
         if self.supported_patch_formats is None:

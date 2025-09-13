@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
 from github import GithubException  # Import GithubException for testing
+import pytest
 
 from gemini_sre_agent.analysis_agent import RemediationPlan
 from gemini_sre_agent.remediation_agent import RemediationAgent

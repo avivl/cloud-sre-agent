@@ -8,8 +8,8 @@ and maintains compatibility with the enhanced LLM service.
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from pydantic import BaseModel
+import pytest
 
 from gemini_sre_agent.llm.base import ModelType, ProviderType
 from gemini_sre_agent.llm.config import LLMConfig, LLMProviderConfig

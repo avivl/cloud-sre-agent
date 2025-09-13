@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from google.cloud import aiplatform
 from pydantic import BaseModel, ValidationError
@@ -51,7 +51,8 @@ class AnalysisAgent:
         aiplatform.init(project=project_id, location=location)
         self.model: GenerativeModel = GenerativeModel(analysis_model)
         logger.info(
-            f"[ANALYSIS] AnalysisAgent initialized with model: {analysis_model} in {location} for project: {project_id}"
+            f"[ANALYSIS] AnalysisAgent initialized with model: {analysis_model} "
+            f"in {location} for project: {project_id}"
         )
 
     @retry(
@@ -62,8 +63,8 @@ class AnalysisAgent:
     def analyze_issue(
         self,
         triage_packet: TriagePacket,
-        historical_logs: List[str],
-        configs: Dict[str, str],
+        historical_logs: list[str],
+        configs: dict[str, str],
         flow_id: str,
     ) -> RemediationPlan:
         """
@@ -72,7 +73,8 @@ class AnalysisAgent:
 
         Args:
             triage_packet (TriagePacket): The triage information for the issue.
-            historical_logs (List[str]): A list of relevant historical log entries (includes current log for context).
+            historical_logs (List[str]): A list of relevant historical log entries 
+                (includes current log for context).
             configs (Dict[str, str]): A dictionary of configuration files (e.g., service configs).
             flow_id (str): The flow ID for tracking this processing pipeline.
 
@@ -80,20 +82,27 @@ class AnalysisAgent:
             RemediationPlan: A structured plan for remediating the issue.
         """
         logger.info(
-            f"[ANALYSIS] Analyzing issue: flow_id={flow_id}, issue_id={triage_packet.issue_id}, historical_logs={len(historical_logs)}, configs={len(configs)}"
+            f"[ANALYSIS] Analyzing issue: flow_id={flow_id}, "
+            f"issue_id={triage_packet.issue_id}, historical_logs={len(historical_logs)}, "
+            f"configs={len(configs)}"
         )
 
         # Construct the prompt for the Gemini model
         prompt_template: str = """
-        You are an expert SRE Analysis Agent. Your task is to perform a deep root cause analysis of the provided issue,
-        considering the triage information, log context, and relevant configurations.
-        Then, generate a comprehensive remediation plan focused on SERVICE CODE fixes in structured JSON format.
+        You are an expert SRE Analysis Agent. Your task is to perform a deep root 
+        cause analysis of the provided issue, considering the triage information, 
+        log context, and relevant configurations.
+        Then, generate a comprehensive remediation plan focused on SERVICE CODE fixes 
+        in structured JSON format.
 
         The JSON object must conform to the following schema:
         {{
             "root_cause_analysis": "A detailed analysis of the root cause of the issue.",
             "proposed_fix": "A clear description of the proposed service code fix.",
-            "code_patch": "A service code patch (e.g., Python, Java, Go, JavaScript) to fix the issue. Always include a comment at the top specifying the target file path using '# FILE: path/to/file.py' format. Provide the complete corrected code."
+            "code_patch": "A service code patch (e.g., Python, Java, Go, JavaScript) to "
+            "fix the issue. Always include a comment at the top specifying the target "
+            "file path using '# FILE: path/to/file.py' format. Provide the complete "
+            "corrected code."
         }}
 
         Triage Packet:
@@ -114,7 +123,8 @@ class AnalysisAgent:
             configs_str=json.dumps(configs, indent=2),
         )
         logger.debug(
-            f"[ANALYSIS] Prompt for analysis model: flow_id={flow_id}, issue_id={triage_packet.issue_id}, prompt={prompt[:500]}..."
+            f"[ANALYSIS] Prompt for analysis model: flow_id={flow_id}, "
+            f"issue_id={triage_packet.issue_id}, prompt={prompt[:500]}..."
         )
 
         json_response_str: str = ""  # Initialize json_response_str
@@ -126,29 +136,35 @@ class AnalysisAgent:
             # Extract and parse the JSON response
             json_response_str = response.text.strip()
             logger.debug(
-                f"[ANALYSIS] Raw model response: flow_id={flow_id}, issue_id={triage_packet.issue_id}, response={json_response_str[:500]}..."
+                f"[ANALYSIS] Raw model response: flow_id={flow_id}, "
+                f"issue_id={triage_packet.issue_id}, response={json_response_str[:500]}..."
             )
 
-            remediation_data: Dict[str, Any] = json.loads(json_response_str)
+            remediation_data: dict[str, Any] = json.loads(json_response_str)
             remediation_plan: RemediationPlan = RemediationPlan(**remediation_data)
 
             logger.info(
-                f"[ANALYSIS] Analysis complete: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
+                f"[ANALYSIS] Analysis complete: flow_id={flow_id}, "
+                f"issue_id={triage_packet.issue_id}"
             )
             return remediation_plan
 
         except ValidationError as e:
             logger.error(
-                f"[ERROR_HANDLING] Failed to validate RemediationPlan schema from model response: flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}"
+                f"[ERROR_HANDLING] Failed to validate RemediationPlan schema from model "
+                f"response: flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}"
             )
             raise ValueError(f"Invalid model response schema: {e}") from e
         except json.JSONDecodeError as e:
             logger.error(
-                f"[ERROR_HANDLING] Failed to decode JSON from model response: flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}, response={json_response_str}"
+                f"[ERROR_HANDLING] Failed to decode JSON from model response: "
+                f"flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}, "
+                f"response={json_response_str}"
             )
             raise ValueError(f"Malformed JSON response from model: {e}") from e
         except Exception as e:
             logger.error(
-                f"[ERROR_HANDLING] Error calling Gemini Analysis model: flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}"
+                f"[ERROR_HANDLING] Error calling Gemini Analysis model: "
+                f"flow_id={flow_id}, issue_id={triage_packet.issue_id}, error={e}"
             )
             raise RuntimeError(f"Gemini Analysis model call failed: {e}") from e

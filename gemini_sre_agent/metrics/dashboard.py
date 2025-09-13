@@ -1,6 +1,6 @@
 # gemini_sre_agent/metrics/dashboard.py
 
-from typing import Any, Dict
+from typing import Any
 
 from .metrics_manager import MetricsManager
 
@@ -19,7 +19,7 @@ class DashboardDataGenerator:
         """
         self.metrics_manager = metrics_manager
 
-    def generate_overview_data(self) -> Dict[str, Any]:
+    def generate_overview_data(self) -> dict[str, Any]:
         """
         Generate high-level system overview data.
 
@@ -67,7 +67,7 @@ class DashboardDataGenerator:
             for cost in m.costs
         )
 
-    def generate_provider_comparison(self) -> Dict[str, Any]:
+    def generate_provider_comparison(self) -> dict[str, Any]:
         """
         Generate provider comparison data.
 
@@ -77,7 +77,7 @@ class DashboardDataGenerator:
         # Placeholder for provider comparison logic
         return {}
 
-    def generate_time_series(self, metric: str, time_range: str) -> Dict[str, Any]:
+    def generate_time_series(self, metric: str, time_range: str) -> dict[str, Any]:
         """
         Generate time series data for a specified metric.
 

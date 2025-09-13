@@ -4,7 +4,7 @@
 Enhanced error handling and reporting for configuration management.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ConfigError(Exception):
@@ -13,8 +13,8 @@ class ConfigError(Exception):
     def __init__(
         self,
         message: str,
-        config_file: Optional[str] = None,
-        original_error: Optional[Exception] = None,
+        config_file: str | None = None,
+        original_error: Exception | None = None,
     ):
         self.message = message
         self.config_file = config_file
@@ -36,8 +36,8 @@ class ConfigValidationError(ConfigError):
     def __init__(
         self,
         message: str,
-        errors: List[Dict[str, Any]],
-        config_file: Optional[str] = None,
+        errors: list[dict[str, Any]],
+        config_file: str | None = None,
     ):
         self.message = message
         self.errors = errors

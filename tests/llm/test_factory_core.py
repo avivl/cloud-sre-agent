@@ -33,7 +33,9 @@ class MockProvider(LLMProvider):
     async def generate_structured(self, prompt, response_model, model=None, **kwargs):
         return response_model()
 
-    def generate_stream(self, prompt: str, model: Optional[str] = None, **kwargs: str) -> None:
+    def generate_stream(
+        self, prompt: str, model: Optional[str] = None, **kwargs: str
+    ) -> None:
         """
         Generate Stream.
 
@@ -42,6 +44,7 @@ class MockProvider(LLMProvider):
             model: Description of model.
 
         """
+
         async def _stream():
             yield "Mock"
 
@@ -128,7 +131,9 @@ class TestLLMProviderFactory:
             mock_provider_class.assert_called_once_with(mock_config)
             mock_provider.validate_config.assert_called_once()
 
-    def test_create_provider_force_recreate(self, factory: str, mock_config: str) -> None:
+    def test_create_provider_force_recreate(
+        self, factory: str, mock_config: str
+    ) -> None:
         """Test provider creation with force_recreate=True."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -158,7 +163,9 @@ class TestLLMProviderFactory:
         with pytest.raises(ValueError, match="Unsupported provider type: unsupported"):
             factory.create_provider(config)
 
-    def test_create_provider_invalid_config(self, factory: str, mock_config: str) -> None:
+    def test_create_provider_invalid_config(
+        self, factory: str, mock_config: str
+    ) -> None:
         """Test creating provider with invalid configuration."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"
@@ -172,7 +179,9 @@ class TestLLMProviderFactory:
             ):
                 factory.create_provider(mock_config)
 
-    def test_create_provider_creation_failure(self, factory: str, mock_config: str) -> None:
+    def test_create_provider_creation_failure(
+        self, factory: str, mock_config: str
+    ) -> None:
         """Test provider creation failure."""
         with patch(
             "gemini_sre_agent.llm.factory.LiteLLMProvider"

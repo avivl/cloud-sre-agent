@@ -5,7 +5,7 @@ Tests for the LogManager.
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import pytest
@@ -32,7 +32,7 @@ class MockAdapter:
         self.logs = []
         self.health = SourceHealth(
             is_healthy=True,
-            last_success=datetime.now(timezone.utc).isoformat(),
+            last_success=datetime.now(UTC).isoformat(),
             error_count=0,
             last_error=None,
             metrics={},
@@ -165,7 +165,7 @@ class TestLogManager:
         adapter1.logs = [
             LogEntry(
                 id="log1",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message="Log from adapter1",
                 source="adapter1",
                 severity=LogSeverity.INFO,
@@ -177,7 +177,7 @@ class TestLogManager:
         adapter2.logs = [
             LogEntry(
                 id="log2",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message="Log from adapter2",
                 source="adapter2",
                 severity=LogSeverity.ERROR,

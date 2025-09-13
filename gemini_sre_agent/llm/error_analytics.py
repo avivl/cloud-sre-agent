@@ -8,9 +8,9 @@ capabilities for understanding system health and error patterns.
 """
 
 import asyncio
-import time
 from collections import Counter, defaultdict, deque
-from typing import Any, Dict
+import time
+from typing import Any
 
 from .error_config import ErrorCategory, RequestContext
 
@@ -46,7 +46,7 @@ class ErrorAnalytics:
                 }
             )
 
-    async def get_error_summary(self) -> Dict[str, Any]:
+    async def get_error_summary(self) -> dict[str, Any]:
         """Get error summary statistics."""
         async with self._lock:
             return {
@@ -62,7 +62,7 @@ class ErrorAnalytics:
                 },
             }
 
-    async def get_provider_health(self, provider_id: str) -> Dict[str, Any]:
+    async def get_provider_health(self, provider_id: str) -> dict[str, Any]:
         """Get health metrics for a specific provider."""
         async with self._lock:
             provider_errors = self.provider_error_counts.get(provider_id, Counter())
@@ -85,7 +85,7 @@ class ErrorAnalytics:
                 ],  # Last 10 errors
             }
 
-    async def get_top_error_providers(self, limit: int = 5) -> list[Dict[str, Any]]:
+    async def get_top_error_providers(self, limit: int = 5) -> list[dict[str, Any]]:
         """Get providers with most errors."""
         async with self._lock:
             provider_totals = [

@@ -8,11 +8,12 @@ dimensions including cost, performance, quality, and reliability to enable
 optimal model selection based on different criteria.
 """
 
-import logging
-import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+import logging
+import time
+from typing import Any
 
 from .base import ModelType
 from .common.enums import ProviderType
@@ -81,14 +82,14 @@ class ScoringWeights:
 class ScoringContext:
     """Context for model scoring."""
 
-    task_type: Optional[ModelType] = None
-    required_capabilities: List[ModelCapability] = field(default_factory=list)
-    max_cost: Optional[float] = None
-    min_performance: Optional[float] = None
-    min_reliability: Optional[float] = None
-    max_latency_ms: Optional[float] = None
-    provider_preference: Optional[ProviderType] = None
-    custom_requirements: Dict[str, Any] = field(default_factory=dict)
+    task_type: ModelType | None = None
+    required_capabilities: list[ModelCapability] = field(default_factory=list)
+    max_cost: float | None = None
+    min_performance: float | None = None
+    min_reliability: float | None = None
+    max_latency_ms: float | None = None
+    provider_preference: ProviderType | None = None
+    custom_requirements: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -97,11 +98,11 @@ class ModelScore:
 
     model_name: str
     overall_score: float
-    dimension_scores: Dict[ScoringDimension, float]
+    dimension_scores: dict[ScoringDimension, float]
     weights: ScoringWeights
     context: ScoringContext
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ModelScorer:
@@ -112,11 +113,11 @@ class ModelScorer:
     for different use cases and requirements.
     """
 
-    def __init__(self, default_weights: Optional[ScoringWeights] = None) -> None:
+    def __init__(self, default_weights: ScoringWeights | None = None) -> None:
         """Initialize the ModelScorer with default weights."""
         self.default_weights = default_weights or ScoringWeights()
-        self._custom_scorers: Dict[ScoringDimension, Callable] = {}
-        self._score_cache: Dict[str, ModelScore] = {}
+        self._custom_scorers: dict[ScoringDimension, Callable] = {}
+        self._score_cache: dict[str, ModelScore] = {}
         self._cache_ttl = 300  # 5 minutes
 
         # Register default scorers
@@ -144,7 +145,7 @@ class ModelScorer:
         self,
         model_info: ModelInfo,
         context: ScoringContext,
-        weights: Optional[ScoringWeights] = None,
+        weights: ScoringWeights | None = None,
     ) -> ModelScore:
         """Calculate comprehensive score for a model."""
         weights = weights or self.default_weights
@@ -205,10 +206,10 @@ class ModelScorer:
 
     def score_models(
         self,
-        models: List[ModelInfo],
+        models: list[ModelInfo],
         context: ScoringContext,
-        weights: Optional[ScoringWeights] = None,
-    ) -> List[ModelScore]:
+        weights: ScoringWeights | None = None,
+    ) -> list[ModelScore]:
         """Score multiple models and return sorted list."""
         scores = []
         for model in models:
@@ -225,11 +226,11 @@ class ModelScorer:
 
     def rank_models(
         self,
-        models: List[ModelInfo],
+        models: list[ModelInfo],
         context: ScoringContext,
-        weights: Optional[ScoringWeights] = None,
-        top_k: Optional[int] = None,
-    ) -> List[Tuple[ModelInfo, ModelScore]]:
+        weights: ScoringWeights | None = None,
+        top_k: int | None = None,
+    ) -> list[tuple[ModelInfo, ModelScore]]:
         """Rank models by score and return top-k results."""
         scores = self.score_models(models, context, weights)
 
@@ -251,8 +252,8 @@ class ModelScorer:
         model1: ModelInfo,
         model2: ModelInfo,
         context: ScoringContext,
-        weights: Optional[ScoringWeights] = None,
-    ) -> Dict[str, Any]:
+        weights: ScoringWeights | None = None,
+    ) -> dict[str, Any]:
         """Compare two models and return detailed comparison."""
         score1 = self.score_model(model1, context, weights)
         score2 = self.score_model(model2, context, weights)
@@ -365,7 +366,7 @@ class ModelScorer:
         ]
         return "|".join(key_parts)
 
-    def _get_cached_score(self, cache_key: str) -> Optional[ModelScore]:
+    def _get_cached_score(self, cache_key: str) -> ModelScore | None:
         """Get cached score if still valid."""
         if cache_key in self._score_cache:
             cached_score = self._score_cache[cache_key]
@@ -394,7 +395,7 @@ class ModelScorer:
         self._score_cache.clear()
         logger.info("Model score cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         current_time = time.time()
         valid_entries = sum(

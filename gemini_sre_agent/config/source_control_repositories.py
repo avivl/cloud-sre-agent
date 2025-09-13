@@ -4,9 +4,9 @@
 Repository configuration models for different source control providers.
 """
 
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import re
+from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import Field, field_validator
@@ -23,10 +23,10 @@ class RepositoryConfig(BaseConfig):
     type: str = Field(..., description="Repository type (github, gitlab, local, etc.)")
     name: str = Field(..., description="Unique name for this repository configuration")
     branch: str = Field(default="main", description="Default branch for operations")
-    paths: List[str] = Field(
+    paths: list[str] = Field(
         default=["/"], description="Paths to consider within the repository"
     )
-    credentials: Optional[CredentialConfig] = Field(
+    credentials: CredentialConfig | None = Field(
         None, description="Repository credentials"
     )
     remediation: RemediationStrategyConfig = Field(
@@ -176,7 +176,7 @@ class GitHubRepositoryConfig(RepositoryConfig):
         """Get the repository name."""
         return self.url.split("/")[1]
 
-    def get_github_error_handling_config(self) -> Dict[str, Any]:
+    def get_github_error_handling_config(self) -> dict[str, Any]:
         """Get GitHub-specific error handling configuration."""
         base_config = self.error_handling.get_provider_config("github")
 
@@ -226,7 +226,7 @@ class GitLabRepositoryConfig(RepositoryConfig):
     api_base_url: str = Field(
         default="https://gitlab.com/api/v4", description="GitLab API base URL"
     )
-    project_id: Optional[str] = Field(
+    project_id: str | None = Field(
         None, description="GitLab project ID (if different from URL)"
     )
 
@@ -273,11 +273,11 @@ class GitLabRepositoryConfig(RepositoryConfig):
 
         return v
 
-    def get_project_id(self) -> Optional[str]:
+    def get_project_id(self) -> str | None:
         """Get the GitLab project ID."""
         return self.project_id
 
-    def get_gitlab_error_handling_config(self) -> Dict[str, Any]:
+    def get_gitlab_error_handling_config(self) -> dict[str, Any]:
         """Get GitLab-specific error handling configuration."""
         base_config = self.error_handling.get_provider_config("gitlab")
 
@@ -338,7 +338,7 @@ class LocalRepositoryConfig(RepositoryConfig):
     backup_files: bool = Field(
         default=True, description="Whether to create backups before modifications"
     )
-    backup_directory: Optional[str] = Field(
+    backup_directory: str | None = Field(
         default=None, description="Directory for file backups"
     )
 
@@ -375,7 +375,7 @@ class LocalRepositoryConfig(RepositoryConfig):
         git_dir = self.get_path() / ".git"
         return git_dir.exists() and git_dir.is_dir()
 
-    def get_local_error_handling_config(self) -> Dict[str, Any]:
+    def get_local_error_handling_config(self) -> dict[str, Any]:
         """Get Local-specific error handling configuration."""
         base_config = self.error_handling.get_provider_config("local")
 

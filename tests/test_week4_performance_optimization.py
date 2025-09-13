@@ -291,7 +291,9 @@ class TestModelSelectionOptimization:
             cost_sensitivity=0.8,
         )
 
-    def test_high_complexity_model_selection(self, strategy: str, high_complexity_context: str) -> None:
+    def test_high_complexity_model_selection(
+        self, strategy: str, high_complexity_context: str
+    ) -> None:
         """Test model selection for high complexity tasks."""
         # Meta-prompt strategy
         model = strategy.select_model(high_complexity_context, "meta_prompt")
@@ -301,7 +303,9 @@ class TestModelSelectionOptimization:
         model = strategy.select_model(high_complexity_context, "context_aware")
         assert model == "gemini-1.5-pro-001"
 
-    def test_low_complexity_model_selection(self, strategy: str, low_complexity_context: str) -> None:
+    def test_low_complexity_model_selection(
+        self, strategy: str, low_complexity_context: str
+    ) -> None:
         """Test model selection for low complexity tasks."""
         # Meta-prompt strategy
         model = strategy.select_model(low_complexity_context, "meta_prompt")

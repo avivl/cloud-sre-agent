@@ -5,10 +5,10 @@ This demonstrates the core functionality without the complex test setup.
 """
 
 import asyncio
+from datetime import datetime
 import logging
 import os
 import tempfile
-from datetime import datetime
 
 from gemini_sre_agent.config.ingestion_config import FileSystemConfig, SourceType
 from gemini_sre_agent.ingestion.adapters.file_system import FileSystemAdapter

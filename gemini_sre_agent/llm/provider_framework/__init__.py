@@ -20,13 +20,13 @@ from .templates import (
 from .validator import ProviderValidator
 
 __all__ = [
-    "ProviderAutoRegistry",
     "BaseProviderTemplate",
-    "ProviderCapabilityDiscovery",
-    "ProviderPluginLoader",
     "HTTPAPITemplate",
     "OpenAICompatibleTemplate",
+    "ProviderAutoRegistry",
+    "ProviderCapabilityDiscovery",
+    "ProviderPluginLoader",
+    "ProviderValidator",
     "RESTAPITemplate",
     "StreamingTemplate",
-    "ProviderValidator",
 ]

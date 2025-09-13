@@ -18,10 +18,10 @@ from .text_agent import EnhancedTextAgent
 from .triage_agent import EnhancedTriageAgent
 
 __all__ = [
-    "EnhancedTextAgent",
     "EnhancedAnalysisAgent",
     "EnhancedCodeAgent",
-    "EnhancedTriageAgent",
     "EnhancedRemediationAgent",
     "EnhancedRemediationAgentV2",
+    "EnhancedTextAgent",
+    "EnhancedTriageAgent",
 ]

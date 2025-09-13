@@ -9,7 +9,7 @@ This module handles file-specific operations for the GitLab provider.
 import asyncio
 import base64
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import gitlab
 from gitlab.exceptions import GitlabGetError
@@ -28,7 +28,7 @@ class GitLabFileOperations:
         gl: gitlab.Gitlab,
         project: Any,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize file operations with GitLab client and project."""
         self.gl = gl
@@ -50,7 +50,7 @@ class GitLabFileOperations:
         # Fall back to direct execution
         return await func(*args, **kwargs)
 
-    async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
+    async def get_file_content(self, path: str, ref: str | None = None) -> str:
         """Get file content from GitLab repository."""
 
         async def _get_file():
@@ -69,7 +69,7 @@ class GitLabFileOperations:
         file_path: str,
         remediation: str,
         commit_message: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> RemediationResult:
         """Apply remediation to a file."""
 
@@ -127,7 +127,7 @@ class GitLabFileOperations:
 
         return await self._execute_with_error_handling("apply_remediation", _apply)
 
-    async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
+    async def file_exists(self, path: str, ref: str | None = None) -> bool:
         """Check if a file exists in the repository."""
 
         async def _exists():
@@ -141,7 +141,7 @@ class GitLabFileOperations:
 
         return await self._execute_with_error_handling("file_exists", _exists)
 
-    async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
+    async def get_file_info(self, path: str, ref: str | None = None) -> FileInfo:
         """Get file information."""
         try:
 
@@ -180,8 +180,8 @@ class GitLabFileOperations:
             )
 
     async def list_files(
-        self, path: str = "", ref: Optional[str] = None
-    ) -> List[FileInfo]:
+        self, path: str = "", ref: str | None = None
+    ) -> list[FileInfo]:
         """List files in a directory."""
         try:
 
@@ -257,8 +257,8 @@ class GitLabFileOperations:
         file_path: str,
         content: str,
         message: str,
-        branch: Optional[str] = None,
-    ) -> Optional[str]:
+        branch: str | None = None,
+    ) -> str | None:
         """Commit changes to a file."""
         try:
 
@@ -300,7 +300,7 @@ class GitLabFileOperations:
             self.logger.error(f"Failed to commit changes to {file_path}: {e}")
             return None
 
-    async def get_file_history(self, path: str, limit: int = 10) -> List[dict]:
+    async def get_file_history(self, path: str, limit: int = 10) -> list[dict]:
         """Get file commit history."""
         try:
 

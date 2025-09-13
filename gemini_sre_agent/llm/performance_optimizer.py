@@ -12,7 +12,7 @@ import asyncio
 import functools
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
@@ -34,11 +34,11 @@ class PerformanceCache:
     def __init__(self, max_size: int = 1000, ttl_seconds: float = 300.0) -> None:
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
-        self._cache: Dict[str, Tuple[Any, float]] = {}
-        self._access_times: Dict[str, float] = {}
+        self._cache: dict[str, tuple[Any, float]] = {}
+        self._access_times: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Get cached value if not expired."""
         async with self._lock:
             if key not in self._cache:
@@ -84,16 +84,16 @@ class ModelSelectionCache:
 
     def __init__(self) -> None:
         self._cache = PerformanceCache(max_size=500, ttl_seconds=60.0)
-        self._selection_stats: Dict[str, int] = {}
+        self._selection_stats: dict[str, int] = {}
 
     def _generate_cache_key(
         self,
-        model_type: Optional[ModelType],
-        provider: Optional[str],
+        model_type: ModelType | None,
+        provider: str | None,
         selection_strategy: SelectionStrategy,
-        max_cost: Optional[float],
-        min_performance: Optional[float],
-        min_reliability: Optional[float],
+        max_cost: float | None,
+        min_performance: float | None,
+        min_reliability: float | None,
     ) -> str:
         """Generate cache key for model selection."""
         key_parts = [
@@ -108,13 +108,13 @@ class ModelSelectionCache:
 
     async def get_cached_selection(
         self,
-        model_type: Optional[ModelType],
-        provider: Optional[str],
+        model_type: ModelType | None,
+        provider: str | None,
         selection_strategy: SelectionStrategy,
-        max_cost: Optional[float],
-        min_performance: Optional[float],
-        min_reliability: Optional[float],
-    ) -> Optional[Tuple[ModelInfo, SelectionResult]]:
+        max_cost: float | None,
+        min_performance: float | None,
+        min_reliability: float | None,
+    ) -> tuple[ModelInfo, SelectionResult] | None:
         """Get cached model selection result."""
         cache_key = self._generate_cache_key(
             model_type,
@@ -140,13 +140,13 @@ class ModelSelectionCache:
 
     async def cache_selection(
         self,
-        model_type: Optional[ModelType],
-        provider: Optional[str],
+        model_type: ModelType | None,
+        provider: str | None,
         selection_strategy: SelectionStrategy,
-        max_cost: Optional[float],
-        min_performance: Optional[float],
-        min_reliability: Optional[float],
-        result: Tuple[ModelInfo, SelectionResult],
+        max_cost: float | None,
+        min_performance: float | None,
+        min_reliability: float | None,
+        result: tuple[ModelInfo, SelectionResult],
     ) -> None:
         """Cache model selection result."""
         cache_key = self._generate_cache_key(
@@ -161,7 +161,7 @@ class ModelSelectionCache:
         await self._cache.set(cache_key, result)
         logger.debug(f"Cached model selection for key: {cache_key}")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache performance statistics."""
         total_requests = self._selection_stats.get(
             "cache_hits", 0
@@ -185,9 +185,9 @@ class OptimizedModelRegistry:
 
     def __init__(self, base_registry: ModelRegistry) -> None:
         self.base_registry = base_registry
-        self._model_cache: Dict[str, ModelInfo] = {}
-        self._type_index: Dict[ModelType, List[ModelInfo]] = {}
-        self._provider_index: Dict[ProviderType, List[ModelInfo]] = {}
+        self._model_cache: dict[str, ModelInfo] = {}
+        self._type_index: dict[ModelType, list[ModelInfo]] = {}
+        self._provider_index: dict[ProviderType, list[ModelInfo]] = {}
         self._initialized = False
         self._lock = asyncio.Lock()
 
@@ -222,22 +222,22 @@ class OptimizedModelRegistry:
                 f"OptimizedModelRegistry initialized with {len(all_models)} models"
             )
 
-    async def get_model(self, name: str) -> Optional[ModelInfo]:
+    async def get_model(self, name: str) -> ModelInfo | None:
         """Get model by name with caching."""
         await self._ensure_initialized()
         return self._model_cache.get(name)
 
-    async def get_models_by_type(self, model_type: ModelType) -> List[ModelInfo]:
+    async def get_models_by_type(self, model_type: ModelType) -> list[ModelInfo]:
         """Get models by semantic type with indexing."""
         await self._ensure_initialized()
         return self._type_index.get(model_type, []).copy()
 
-    async def get_models_by_provider(self, provider: ProviderType) -> List[ModelInfo]:
+    async def get_models_by_provider(self, provider: ProviderType) -> list[ModelInfo]:
         """Get models by provider with indexing."""
         await self._ensure_initialized()
         return self._provider_index.get(provider, []).copy()
 
-    async def get_all_models(self) -> List[ModelInfo]:
+    async def get_all_models(self) -> list[ModelInfo]:
         """Get all models with caching."""
         await self._ensure_initialized()
         return list(self._model_cache.values())
@@ -249,7 +249,7 @@ class OptimizedModelScorer:
     def __init__(self, base_scorer: ModelScorer) -> None:
         self.base_scorer = base_scorer
         self._score_cache = PerformanceCache(max_size=1000, ttl_seconds=300.0)
-        self._precomputed_scores: Dict[str, Dict[str, float]] = {}
+        self._precomputed_scores: dict[str, dict[str, float]] = {}
 
     def _generate_score_key(
         self,
@@ -272,7 +272,7 @@ class OptimizedModelScorer:
         self,
         model: ModelInfo,
         context: ScoringContext,
-        weights: Optional[ScoringWeights] = None,
+        weights: ScoringWeights | None = None,
     ) -> Any:
         """Score model with caching."""
         weights = weights or ScoringWeights()
@@ -297,7 +297,7 @@ class ConnectionPool:
 
     def __init__(self, max_connections: int = 10) -> None:
         self.max_connections = max_connections
-        self._pools: Dict[str, asyncio.Queue] = {}
+        self._pools: dict[str, asyncio.Queue] = {}
         self._lock = asyncio.Lock()
 
     async def get_connection(self, provider_name: str) -> Any:
@@ -360,14 +360,14 @@ class PerformanceOptimizer:
 
     async def get_optimized_model_selection(
         self,
-        model_type: Optional[ModelType],
-        provider: Optional[str],
+        model_type: ModelType | None,
+        provider: str | None,
         selection_strategy: SelectionStrategy,
-        max_cost: Optional[float],
-        min_performance: Optional[float],
-        min_reliability: Optional[float],
+        max_cost: float | None,
+        min_performance: float | None,
+        min_reliability: float | None,
         model_selector: Any,  # ModelSelector instance
-    ) -> Tuple[ModelInfo, SelectionResult]:
+    ) -> tuple[ModelInfo, SelectionResult]:
         """Get optimized model selection with caching."""
         if not self._initialized:
             raise RuntimeError("PerformanceOptimizer not initialized")
@@ -428,7 +428,7 @@ class PerformanceOptimizer:
 
         return result
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get comprehensive performance statistics."""
         return {
             "model_selection_cache": self.model_selection_cache.get_cache_stats(),
@@ -518,7 +518,7 @@ class BatchProcessor:
     def __init__(self, batch_size: int = 10, max_wait_ms: float = 5.0) -> None:
         self.batch_size = batch_size
         self.max_wait_ms = max_wait_ms
-        self._pending_operations: List[Tuple[Any, asyncio.Future, tuple, dict]] = []
+        self._pending_operations: list[tuple[Any, asyncio.Future, tuple, dict]] = []
         self._lock = asyncio.Lock()
         self._processing = False
 

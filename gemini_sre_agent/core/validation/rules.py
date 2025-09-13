@@ -1,49 +1,46 @@
 """Validation rules for the configuration validation system."""
 
-import time
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from collections.abc import Callable
+from typing import Any
 
-from pydantic import BaseModel, ValidationError as PydanticValidationError
+from pydantic import BaseModel
+from pydantic import ValidationError as PydanticValidationError
 
-from .exceptions import (
-    ValidationRuleError,
-    SchemaValidationError,
-    CrossFieldValidationError,
-    EnvironmentValidationError
-)
-from .result import ValidationResult, ValidationError
+from .result import ValidationResult
 
 
 class ValidationRule(ABC):
     """Base class for validation rules."""
-    
-    def __init__(self, name: str, description: Optional[str] = None):
+
+    def __init__(self, name: str, description: str | None = None):
         """Initialize the validation rule.
-        
+
         Args:
             name: Name of the rule
             description: Optional description of the rule
         """
         self.name = name
         self.description = description or f"Validation rule: {name}"
-    
+
     @abstractmethod
-    def validate(self, data: Any, context: Optional[Dict[str, Any]] = None) -> ValidationResult:
+    def validate(
+        self, data: Any, context: dict[str, Any] | None = None
+    ) -> ValidationResult:
         """Validate the data.
-        
+
         Args:
             data: Data to validate
             context: Optional validation context
-            
+
         Returns:
             Validation result
         """
         pass
-    
+
     def __str__(self) -> str:
         """String representation of the rule.
-        
+
         Returns:
             String representation
         """
@@ -52,15 +49,15 @@ class ValidationRule(ABC):
 
 class SchemaValidator(ValidationRule):
     """Validator for Pydantic schema validation."""
-    
+
     def __init__(
         self,
-        schema_class: Type[BaseModel],
-        name: Optional[str] = None,
-        strict: bool = True
+        schema_class: type[BaseModel],
+        name: str | None = None,
+        strict: bool = True,
     ):
         """Initialize the schema validator.
-        
+
         Args:
             schema_class: Pydantic model class to validate against
             name: Optional name for the validator
@@ -70,21 +67,23 @@ class SchemaValidator(ValidationRule):
         self.strict = strict
         super().__init__(
             name or f"SchemaValidator({schema_class.__name__})",
-            f"Validates data against {schema_class.__name__} schema"
+            f"Validates data against {schema_class.__name__} schema",
         )
-    
-    def validate(self, data: Any, context: Optional[Dict[str, Any]] = None) -> ValidationResult:
+
+    def validate(
+        self, data: Any, context: dict[str, Any] | None = None
+    ) -> ValidationResult:
         """Validate data against the schema.
-        
+
         Args:
             data: Data to validate
             context: Optional validation context
-            
+
         Returns:
             Validation result
         """
         result = ValidationResult(is_valid=True)
-        
+
         try:
             if self.strict:
                 self.schema_class.model_validate(data)
@@ -96,36 +95,39 @@ class SchemaValidator(ValidationRule):
                 field = ".".join(str(loc) for loc in error["loc"])
                 message = error["msg"]
                 error_type = error["type"]
-                
+
                 result.add_error(
                     message=f"{message} (type: {error_type})",
                     field=field,
                     value=error.get("input"),
                     rule_name=self.name,
-                    context={"error_type": error_type, "schema": self.schema_class.__name__}
+                    context={
+                        "error_type": error_type,
+                        "schema": self.schema_class.__name__,
+                    },
                 )
         except Exception as e:
             result.is_valid = False
             result.add_error(
-                message=f"Schema validation failed: {str(e)}",
+                message=f"Schema validation failed: {e!s}",
                 rule_name=self.name,
-                context={"exception": str(e), "schema": self.schema_class.__name__}
+                context={"exception": str(e), "schema": self.schema_class.__name__},
             )
-        
+
         return result
 
 
 class CrossFieldValidator(ValidationRule):
     """Validator for cross-field validation logic."""
-    
+
     def __init__(
         self,
-        validation_func: Callable[[Any, Optional[Dict[str, Any]]], ValidationResult],
-        name: Optional[str] = None,
-        fields: Optional[List[str]] = None
+        validation_func: Callable[[Any, dict[str, Any] | None], ValidationResult],
+        name: str | None = None,
+        fields: list[str] | None = None,
     ):
         """Initialize the cross-field validator.
-        
+
         Args:
             validation_func: Function that performs cross-field validation
             name: Optional name for the validator
@@ -135,16 +137,18 @@ class CrossFieldValidator(ValidationRule):
         self.fields = fields or []
         super().__init__(
             name or "CrossFieldValidator",
-            f"Validates relationships between fields: {', '.join(self.fields)}"
+            f"Validates relationships between fields: {', '.join(self.fields)}",
         )
-    
-    def validate(self, data: Any, context: Optional[Dict[str, Any]] = None) -> ValidationResult:
+
+    def validate(
+        self, data: Any, context: dict[str, Any] | None = None
+    ) -> ValidationResult:
         """Validate cross-field relationships.
-        
+
         Args:
             data: Data to validate
             context: Optional validation context
-            
+
         Returns:
             Validation result
         """
@@ -153,26 +157,26 @@ class CrossFieldValidator(ValidationRule):
         except Exception as e:
             result = ValidationResult(is_valid=False)
             result.add_error(
-                message=f"Cross-field validation failed: {str(e)}",
+                message=f"Cross-field validation failed: {e!s}",
                 rule_name=self.name,
-                context={"exception": str(e), "fields": self.fields}
+                context={"exception": str(e), "fields": self.fields},
             )
             return result
 
 
 class EnvironmentValidator(ValidationRule):
     """Validator for environment-specific validation."""
-    
+
     def __init__(
         self,
         environment: str,
-        required_fields: Optional[List[str]] = None,
-        forbidden_fields: Optional[List[str]] = None,
-        field_constraints: Optional[Dict[str, Dict[str, Any]]] = None,
-        name: Optional[str] = None
+        required_fields: list[str] | None = None,
+        forbidden_fields: list[str] | None = None,
+        field_constraints: dict[str, dict[str, Any]] | None = None,
+        name: str | None = None,
     ):
         """Initialize the environment validator.
-        
+
         Args:
             environment: Target environment
             required_fields: Fields required for this environment
@@ -186,29 +190,31 @@ class EnvironmentValidator(ValidationRule):
         self.field_constraints = field_constraints or {}
         super().__init__(
             name or f"EnvironmentValidator({environment})",
-            f"Validates configuration for {environment} environment"
+            f"Validates configuration for {environment} environment",
         )
-    
-    def validate(self, data: Any, context: Optional[Dict[str, Any]] = None) -> ValidationResult:
+
+    def validate(
+        self, data: Any, context: dict[str, Any] | None = None
+    ) -> ValidationResult:
         """Validate environment-specific requirements.
-        
+
         Args:
             data: Data to validate
             context: Optional validation context
-            
+
         Returns:
             Validation result
         """
         result = ValidationResult(is_valid=True)
-        
+
         # Check if data is a dictionary
         if not isinstance(data, dict):
             result.add_error(
                 message="Environment validation requires dictionary data",
-                rule_name=self.name
+                rule_name=self.name,
             )
             return result
-        
+
         # Check required fields
         for field in self.required_fields:
             if field not in data or data[field] is None:
@@ -216,9 +222,9 @@ class EnvironmentValidator(ValidationRule):
                     message=f"Field '{field}' is required for {self.environment} environment",
                     field=field,
                     rule_name=self.name,
-                    suggestions=[f"Add '{field}' to your configuration"]
+                    suggestions=[f"Add '{field}' to your configuration"],
                 )
-        
+
         # Check forbidden fields
         for field in self.forbidden_fields:
             if field in data and data[field] is not None:
@@ -227,39 +233,40 @@ class EnvironmentValidator(ValidationRule):
                     field=field,
                     value=data[field],
                     rule_name=self.name,
-                    suggestions=[f"Remove '{field}' from your configuration"]
+                    suggestions=[f"Remove '{field}' from your configuration"],
                 )
-        
+
         # Check field constraints
         for field, constraints in self.field_constraints.items():
             if field in data:
                 value = data[field]
                 for constraint_name, constraint_value in constraints.items():
-                    if not self._check_constraint(field, value, constraint_name, constraint_value):
+                    if not self._check_constraint(
+                        field, value, constraint_name, constraint_value
+                    ):
                         result.add_error(
-                            message=f"Field '{field}' violates {constraint_name} constraint: {constraint_value}",
+                            message=(
+                                f"Field '{field}' violates {constraint_name} "
+                                f"constraint: {constraint_value}"
+                            ),
                             field=field,
                             value=value,
-                            rule_name=self.name
+                            rule_name=self.name,
                         )
-        
+
         return result
-    
+
     def _check_constraint(
-        self,
-        field: str,
-        value: Any,
-        constraint_name: str,
-        constraint_value: Any
+        self, field: str, value: Any, constraint_name: str, constraint_value: Any
     ) -> bool:
         """Check a field constraint.
-        
+
         Args:
             field: Field name
             value: Field value
             constraint_name: Name of the constraint
             constraint_value: Constraint value
-            
+
         Returns:
             True if constraint is satisfied, False otherwise
         """
@@ -273,27 +280,28 @@ class EnvironmentValidator(ValidationRule):
             return value <= constraint_value
         elif constraint_name == "pattern" and isinstance(value, str):
             import re
+
             return bool(re.match(constraint_value, value))
         elif constraint_name == "choices" and isinstance(constraint_value, list):
             return value in constraint_value
         elif constraint_name == "type" and isinstance(value, constraint_value):
             return True
-        
+
         return True  # Unknown constraint, assume valid
 
 
 class CustomValidator(ValidationRule):
     """Validator for custom validation logic."""
-    
+
     def __init__(
         self,
-        validation_func: Callable[[Any, Optional[Dict[str, Any]]], bool],
+        validation_func: Callable[[Any, dict[str, Any] | None], bool],
         error_message: str,
-        name: Optional[str] = None,
-        field: Optional[str] = None
+        name: str | None = None,
+        field: str | None = None,
     ):
         """Initialize the custom validator.
-        
+
         Args:
             validation_func: Function that returns True if validation passes
             error_message: Error message if validation fails
@@ -304,51 +312,50 @@ class CustomValidator(ValidationRule):
         self.error_message = error_message
         self.field = field
         super().__init__(
-            name or "CustomValidator",
-            f"Custom validation: {error_message}"
+            name or "CustomValidator", f"Custom validation: {error_message}"
         )
-    
-    def validate(self, data: Any, context: Optional[Dict[str, Any]] = None) -> ValidationResult:
+
+    def validate(
+        self, data: Any, context: dict[str, Any] | None = None
+    ) -> ValidationResult:
         """Validate using custom logic.
-        
+
         Args:
             data: Data to validate
             context: Optional validation context
-            
+
         Returns:
             Validation result
         """
         result = ValidationResult(is_valid=True)
-        
+
         try:
             if not self.validation_func(data, context):
                 result.add_error(
-                    message=self.error_message,
-                    field=self.field,
-                    rule_name=self.name
+                    message=self.error_message, field=self.field, rule_name=self.name
                 )
         except Exception as e:
             result.add_error(
-                message=f"Custom validation failed: {str(e)}",
+                message=f"Custom validation failed: {e!s}",
                 field=self.field,
                 rule_name=self.name,
-                context={"exception": str(e)}
+                context={"exception": str(e)},
             )
-        
+
         return result
 
 
 class CompositeValidator(ValidationRule):
     """Validator that combines multiple validation rules."""
-    
+
     def __init__(
         self,
-        validators: List[ValidationRule],
-        name: Optional[str] = None,
-        stop_on_first_error: bool = False
+        validators: list[ValidationRule],
+        name: str | None = None,
+        stop_on_first_error: bool = False,
     ):
         """Initialize the composite validator.
-        
+
         Args:
             validators: List of validators to combine
             name: Optional name for the validator
@@ -357,36 +364,37 @@ class CompositeValidator(ValidationRule):
         self.validators = validators
         self.stop_on_first_error = stop_on_first_error
         super().__init__(
-            name or "CompositeValidator",
-            f"Combines {len(validators)} validation rules"
+            name or "CompositeValidator", f"Combines {len(validators)} validation rules"
         )
-    
-    def validate(self, data: Any, context: Optional[Dict[str, Any]] = None) -> ValidationResult:
+
+    def validate(
+        self, data: Any, context: dict[str, Any] | None = None
+    ) -> ValidationResult:
         """Validate using all validators.
-        
+
         Args:
             data: Data to validate
             context: Optional validation context
-            
+
         Returns:
             Combined validation result
         """
         result = ValidationResult(is_valid=True)
-        
+
         for validator in self.validators:
             try:
                 validator_result = validator.validate(data, context)
                 result = result.merge(validator_result)
-                
+
                 if self.stop_on_first_error and not result.is_valid:
                     break
             except Exception as e:
                 result.add_error(
-                    message=f"Validator '{validator.name}' failed: {str(e)}",
+                    message=f"Validator '{validator.name}' failed: {e!s}",
                     rule_name=self.name,
-                    context={"validator": validator.name, "exception": str(e)}
+                    context={"validator": validator.name, "exception": str(e)},
                 )
                 if self.stop_on_first_error:
                     break
-        
+
         return result

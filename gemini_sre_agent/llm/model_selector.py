@@ -8,11 +8,11 @@ models based on task requirements and constraints, with support for fallback cha
 and Python 3.10+ pattern matching for elegant selection logic.
 """
 
-import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+import logging
+import time
+from typing import Any
 
 from .capabilities.discovery import CapabilityDiscovery
 from .capabilities.models import ModelCapability
@@ -38,15 +38,15 @@ class SelectionStrategy(str, Enum):
 class SelectionCriteria:
     """Criteria for model selection."""
 
-    semantic_type: Optional[ModelType] = None
-    required_capabilities: List[ModelCapability] = field(default_factory=list)
-    max_cost: Optional[float] = None
-    min_performance: Optional[float] = None
-    min_reliability: Optional[float] = None
-    max_latency_ms: Optional[float] = None
-    provider_preference: Optional[ProviderType] = None
+    semantic_type: ModelType | None = None
+    required_capabilities: list[ModelCapability] = field(default_factory=list)
+    max_cost: float | None = None
+    min_performance: float | None = None
+    min_reliability: float | None = None
+    max_latency_ms: float | None = None
+    provider_preference: ProviderType | None = None
     strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE
-    custom_weights: Optional[ScoringWeights] = None
+    custom_weights: ScoringWeights | None = None
     max_models_to_consider: int = 10
     allow_fallback: bool = True
 
@@ -57,11 +57,11 @@ class SelectionResult:
 
     selected_model: ModelInfo
     score: ModelScore
-    fallback_chain: List[ModelInfo]
+    fallback_chain: list[ModelInfo]
     selection_reason: str
     criteria: SelectionCriteria
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ModelSelector:
@@ -76,15 +76,15 @@ class ModelSelector:
         self,
         model_registry: ModelRegistry,
         capability_discovery: CapabilityDiscovery,
-        model_scorer: Optional[ModelScorer] = None,
+        model_scorer: ModelScorer | None = None,
     ):
         """Initialize the ModelSelector with registry, capability discovery, and scorer."""
         self.model_registry = model_registry
         self.capability_discovery = capability_discovery  # Add this line
         self.model_scorer = model_scorer or ModelScorer()
-        self._selection_cache: Dict[str, SelectionResult] = {}
+        self._selection_cache: dict[str, SelectionResult] = {}
         self._cache_ttl = 300  # 5 minutes
-        self._selection_stats: Dict[str, int] = {}
+        self._selection_stats: dict[str, int] = {}
 
         logger.info(
             "ModelSelector initialized with registry, capability discovery, and scorer"
@@ -143,7 +143,7 @@ class ModelSelector:
 
     def select_model_with_fallback(
         self, criteria: SelectionCriteria, max_attempts: int = 3
-    ) -> Tuple[ModelInfo, SelectionResult]:
+    ) -> tuple[ModelInfo, SelectionResult]:
         """Select model and return the first available one from fallback chain."""
         result = self.select_model(criteria)
 
@@ -168,7 +168,7 @@ class ModelSelector:
         )
         return result.selected_model, result
 
-    def _get_candidate_models(self, criteria: SelectionCriteria) -> List[ModelInfo]:
+    def _get_candidate_models(self, criteria: SelectionCriteria) -> list[ModelInfo]:
         """Get candidate models based on criteria."""
         # Start with all models from the registry
         all_models = self.model_registry.get_all_models()
@@ -257,8 +257,8 @@ class ModelSelector:
         return True
 
     def _select_primary_model(
-        self, candidates: List[ModelInfo], criteria: SelectionCriteria
-    ) -> Tuple[ModelInfo, ModelScore]:
+        self, candidates: list[ModelInfo], criteria: SelectionCriteria
+    ) -> tuple[ModelInfo, ModelScore]:
         """Select primary model using specified strategy."""
         # Create scoring context
         context = ScoringContext(
@@ -296,10 +296,10 @@ class ModelSelector:
 
     def _select_by_best_score(
         self,
-        candidates: List[ModelInfo],
+        candidates: list[ModelInfo],
         context: ScoringContext,
-        custom_weights: Optional[ScoringWeights] = None,
-    ) -> Tuple[ModelInfo, ModelScore]:
+        custom_weights: ScoringWeights | None = None,
+    ) -> tuple[ModelInfo, ModelScore]:
         """Select model with best overall score."""
         ranked_models = self.model_scorer.rank_models(
             candidates, context, custom_weights, top_k=1
@@ -311,8 +311,8 @@ class ModelSelector:
         return model, score
 
     def _select_by_fastest(
-        self, candidates: List[ModelInfo], context: ScoringContext
-    ) -> Tuple[ModelInfo, ModelScore]:
+        self, candidates: list[ModelInfo], context: ScoringContext
+    ) -> tuple[ModelInfo, ModelScore]:
         """Select fastest model based on max_tokens heuristic."""
         # Sort by max_tokens (lower = faster)
         fastest_model = min(candidates, key=lambda m: m.max_tokens)
@@ -320,24 +320,24 @@ class ModelSelector:
         return fastest_model, score
 
     def _select_by_cheapest(
-        self, candidates: List[ModelInfo], context: ScoringContext
-    ) -> Tuple[ModelInfo, ModelScore]:
+        self, candidates: list[ModelInfo], context: ScoringContext
+    ) -> tuple[ModelInfo, ModelScore]:
         """Select cheapest model."""
         cheapest_model = min(candidates, key=lambda m: m.cost_per_1k_tokens)
         score = self.model_scorer.score_model(cheapest_model, context)
         return cheapest_model, score
 
     def _select_by_most_reliable(
-        self, candidates: List[ModelInfo], context: ScoringContext
-    ) -> Tuple[ModelInfo, ModelScore]:
+        self, candidates: list[ModelInfo], context: ScoringContext
+    ) -> tuple[ModelInfo, ModelScore]:
         """Select most reliable model."""
         most_reliable_model = max(candidates, key=lambda m: m.reliability_score)
         score = self.model_scorer.score_model(most_reliable_model, context)
         return most_reliable_model, score
 
     def _select_by_balanced(
-        self, candidates: List[ModelInfo], context: ScoringContext
-    ) -> Tuple[ModelInfo, ModelScore]:
+        self, candidates: list[ModelInfo], context: ScoringContext
+    ) -> tuple[ModelInfo, ModelScore]:
         """Select model with balanced scoring."""
         balanced_weights = ScoringWeights(
             cost=0.25, performance=0.35, reliability=0.35, speed=0.05
@@ -346,10 +346,10 @@ class ModelSelector:
 
     def _select_by_custom(
         self,
-        candidates: List[ModelInfo],
+        candidates: list[ModelInfo],
         context: ScoringContext,
-        custom_weights: Optional[ScoringWeights] = None,
-    ) -> Tuple[ModelInfo, ModelScore]:
+        custom_weights: ScoringWeights | None = None,
+    ) -> tuple[ModelInfo, ModelScore]:
         """Select model using custom weights."""
         if not custom_weights:
             raise ValueError("Custom weights required for custom selection strategy")
@@ -358,7 +358,7 @@ class ModelSelector:
 
     def _build_fallback_chain(
         self, primary_model: ModelInfo, criteria: SelectionCriteria
-    ) -> List[ModelInfo]:
+    ) -> list[ModelInfo]:
         """Build fallback chain for the primary model."""
         if not criteria.allow_fallback:
             return [primary_model]
@@ -384,7 +384,7 @@ class ModelSelector:
 
     def _get_additional_fallbacks(
         self, primary_model: ModelInfo, criteria: SelectionCriteria
-    ) -> List[ModelInfo]:
+    ) -> list[ModelInfo]:
         """Get additional fallback models based on strategy."""
         # Get other models of the same semantic type
         same_type_models = self.model_registry.get_models_by_semantic_type(
@@ -448,7 +448,7 @@ class ModelSelector:
         ]
         return "|".join(key_parts)
 
-    def _get_cached_selection(self, cache_key: str) -> Optional[SelectionResult]:
+    def _get_cached_selection(self, cache_key: str) -> SelectionResult | None:
         """Get cached selection if still valid."""
         if cache_key in self._selection_cache:
             cached_result = self._selection_cache[cache_key]
@@ -484,7 +484,7 @@ class ModelSelector:
         self._selection_cache.clear()
         logger.info("Model selection cache cleared")
 
-    def get_selection_stats(self) -> Dict[str, Any]:
+    def get_selection_stats(self) -> dict[str, Any]:
         """Get selection statistics."""
         current_time = time.time()
         valid_entries = sum(

@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
@@ -48,7 +48,7 @@ def mock_llm_provider() -> None:
     mock_provider.supports_tools = AsyncMock(return_value=False)
 
     async def mock_generate_text(
-        prompt: str, model: Optional[str] = None, **kwargs: Any
+        prompt: str, model: str | None = None, **kwargs: Any
     ) -> str:
         if model == "gemini-pro":
             if "cat" in prompt:  # For success test
@@ -91,7 +91,7 @@ async def test_text_generation_test_failure(mock_llm_provider):
 
     # Override the mock to return a response that doesn't contain "cat"
     async def mock_generate_text_failure(
-        prompt: str, model: Optional[str] = None, **kwargs: Any
+        prompt: str, model: str | None = None, **kwargs: Any
     ) -> str:
         return "This is a test about a dog."  # No "cat" in response
 
@@ -118,7 +118,7 @@ async def test_code_generation_test_failure(mock_llm_provider):
 
     # Override the mock to return a response that doesn't contain the expected Python function
     async def mock_generate_text_failure(
-        prompt: str, model: Optional[str] = None, **kwargs: Any
+        prompt: str, model: str | None = None, **kwargs: Any
     ) -> str:
         return "function add(a, b) { return a + b; }"  # JavaScript, not Python
 

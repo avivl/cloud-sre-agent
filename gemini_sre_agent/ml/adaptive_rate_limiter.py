@@ -9,7 +9,7 @@ based on success rates, error patterns, and cost constraints.
 
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .rate_limiter_config import CircuitState, RateLimiterConfig, UrgencyLevel
 
@@ -23,7 +23,7 @@ class AdaptiveRateLimiter:
     cost tracking systems.
     """
 
-    def __init__(self, config: Optional[RateLimiterConfig] = None) -> None:
+    def __init__(self, config: RateLimiterConfig | None = None) -> None:
         """
         Initialize the adaptive rate limiter.
 
@@ -37,12 +37,12 @@ class AdaptiveRateLimiter:
         self.consecutive_errors = 0
         self.current_backoff_seconds = self.config.base_backoff_seconds
         self.circuit_state = CircuitState.CLOSED
-        self._circuit_opened_at: Optional[float] = None
-        self.last_recovery_test: Optional[float] = None
+        self._circuit_opened_at: float | None = None
+        self.last_recovery_test: float | None = None
 
         # Rate limiting state
         self.rate_limit_hit = False
-        self._last_rate_limit_time: Optional[float] = None
+        self._last_rate_limit_time: float | None = None
         self.request_count = 0
         self.window_start_time = time.time()
 
@@ -63,7 +63,7 @@ class AdaptiveRateLimiter:
     async def should_allow_request(
         self,
         urgency: UrgencyLevel = UrgencyLevel.MEDIUM,
-        cost_tracker: Optional[Any] = None,
+        cost_tracker: Any | None = None,
     ) -> bool:
         """
         Check if a request should be allowed (alias for can_make_request).
@@ -80,8 +80,8 @@ class AdaptiveRateLimiter:
     async def can_make_request(
         self,
         urgency: UrgencyLevel = UrgencyLevel.MEDIUM,
-        estimated_cost: Optional[float] = None,
-        cost_tracker: Optional[Any] = None,
+        estimated_cost: float | None = None,
+        cost_tracker: Any | None = None,
     ) -> bool:
         """
         Check if a request can be made based on current conditions.
@@ -112,11 +112,11 @@ class AdaptiveRateLimiter:
 
         return True
 
-    async def record_success(self, actual_cost: Optional[float] = None):
+    async def record_success(self, actual_cost: float | None = None):
         """Alias for record_request_success."""
         await self.record_request_success(actual_cost)
 
-    async def record_request_success(self, actual_cost: Optional[float] = None):
+    async def record_request_success(self, actual_cost: float | None = None):
         """
         Record a successful request.
 
@@ -143,16 +143,16 @@ class AdaptiveRateLimiter:
         # Adapt delay based on success rate
         self._adapt_delay()
 
-    async def record_rate_limit_error(self, actual_cost: Optional[float] = None):
+    async def record_rate_limit_error(self, actual_cost: float | None = None):
         """Record a rate limit error."""
         await self.record_request_error("rate_limit", actual_cost)
 
-    async def record_api_error(self, actual_cost: Optional[float] = None):
+    async def record_api_error(self, actual_cost: float | None = None):
         """Record an API error."""
         await self.record_request_error("api_error", actual_cost)
 
     async def record_request_error(
-        self, error_type: str = "unknown", actual_cost: Optional[float] = None
+        self, error_type: str = "unknown", actual_cost: float | None = None
     ):
         """
         Record a failed request.
@@ -223,11 +223,11 @@ class AdaptiveRateLimiter:
 
         return max(0.0, delay)
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current rate limiter status (alias for get_stats)."""
         return self.get_stats()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get current rate limiter statistics."""
         return {
             "circuit_state": self.circuit_state.value,
@@ -306,7 +306,7 @@ class AdaptiveRateLimiter:
         return self.request_count < max_requests
 
     def _check_cost_constraints(
-        self, estimated_cost: float, cost_tracker: Optional[Any]
+        self, estimated_cost: float, cost_tracker: Any | None
     ) -> bool:
         """Check if cost constraints allow the request."""
         # Check per-request cost limit
@@ -395,17 +395,17 @@ class AdaptiveRateLimiter:
         return self._get_rate_limit_delay()
 
     @property
-    def last_recovery_attempt(self) -> Optional[float]:
+    def last_recovery_attempt(self) -> float | None:
         """Get last recovery attempt time."""
         return getattr(self, "_last_recovery_attempt", None)
 
     @last_recovery_attempt.setter
-    def last_recovery_attempt(self, value: Optional[float]) -> None:
+    def last_recovery_attempt(self, value: float | None) -> None:
         """Set last recovery attempt time."""
         self._last_recovery_attempt = value
 
     @property
-    def last_rate_limit_time(self) -> Optional[float]:
+    def last_rate_limit_time(self) -> float | None:
         """Get last rate limit time as float."""
         return self._last_rate_limit_time
 
@@ -420,7 +420,7 @@ class AdaptiveRateLimiter:
             self._last_rate_limit_time = float(value)
 
     @property
-    def circuit_opened_at(self) -> Optional[float]:
+    def circuit_opened_at(self) -> float | None:
         """Get circuit opened time as float."""
         return self._circuit_opened_at
 

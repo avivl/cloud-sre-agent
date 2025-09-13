@@ -7,10 +7,10 @@ This module provides the foundation for creating specialized prompt templates
 that can adapt to different contexts and issue types.
 """
 
+from abc import ABC, abstractmethod
 import json
 import logging
-from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 from .prompt_context_models import PromptContext
 
@@ -41,7 +41,7 @@ class BasePromptTemplate(ABC):
         pass
 
     @abstractmethod
-    def _get_context_variables(self, context: PromptContext) -> Dict[str, Any]:
+    def _get_context_variables(self, context: PromptContext) -> dict[str, Any]:
         """Extract context variables for template formatting."""
         pass
 
@@ -100,7 +100,7 @@ class BasePromptTemplate(ABC):
         # For now, return empty string
         return ""
 
-    def _add_validation_feedback(self, feedback: Dict[str, Any]) -> str:
+    def _add_validation_feedback(self, feedback: dict[str, Any]) -> str:
         """
         Add validation feedback to prompt for iterative refinement.
 
@@ -155,7 +155,7 @@ Please address the above feedback and provide an improved solution."""
         # Default implementation - can be overridden by subclasses
         return True
 
-    def get_template_info(self) -> Dict[str, Any]:
+    def get_template_info(self) -> dict[str, Any]:
         """
         Get information about this template.
 
@@ -225,7 +225,7 @@ Historical Context:
 
 Please provide a comprehensive analysis and code fix following the repository's established patterns."""
 
-    def _get_context_variables(self, context: PromptContext) -> Dict[str, Any]:
+    def _get_context_variables(self, context: PromptContext) -> dict[str, Any]:
         """Extract context variables for generic template."""
         repo_ctx = context.repository_context
         issue_ctx = context.issue_context

@@ -8,7 +8,7 @@ using the base template and customizing only what's needed.
 """
 
 import asyncio
-from typing import Any, Dict, List
+from typing import Any
 
 from ...base import LLMRequest, LLMResponse, ModelType
 from ...config import LLMProviderConfig
@@ -38,7 +38,7 @@ class CustomProvider(BaseProviderTemplate):
         # Initialize custom client or components here
         self._custom_client = None
 
-    async def _make_api_request(self, request: LLMRequest) -> Dict[str, Any]:
+    async def _make_api_request(self, request: LLMRequest) -> dict[str, Any]:
         """Make custom API request with provider-specific logic."""
         # Simulate API call (replace with actual implementation)
         await asyncio.sleep(0.1)  # Simulate network delay
@@ -63,7 +63,7 @@ class CustomProvider(BaseProviderTemplate):
             },
         }
 
-    def _parse_response(self, response_data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, response_data: dict[str, Any]) -> LLMResponse:
         """Parse custom API response format."""
         choice = response_data["choices"][0]
 
@@ -74,14 +74,14 @@ class CustomProvider(BaseProviderTemplate):
             finish_reason=choice["finish_reason"],
         )
 
-    def _get_model_mapping(self) -> Dict[ModelType, str]:
+    def _get_model_mapping(self) -> dict[ModelType, str]:
         """Define the model mapping for this provider."""
         return {
             ModelType.FAST: "custom-fast-v1",
             ModelType.SMART: "custom-smart-v2",
         }
 
-    def _format_messages(self, messages: List[Dict[str, str]]) -> str:
+    def _format_messages(self, messages: list[dict[str, str]]) -> str:
         """Convert messages to custom format."""
         formatted = []
         for msg in messages:
@@ -98,7 +98,7 @@ class CustomProvider(BaseProviderTemplate):
         """This provider supports tools."""
         return True
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings using custom method."""
         # Custom embedding logic
         return [0.1, 0.2, 0.3] * 100  # Mock embedding

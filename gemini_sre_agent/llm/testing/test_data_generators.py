@@ -7,10 +7,10 @@ This module provides generators for creating various types of test data
 including prompts, responses, and test scenarios for comprehensive testing.
 """
 
-import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import random
+from typing import Any
 
 from ..base import LLMRequest, ModelType
 
@@ -55,7 +55,7 @@ class TestDataConfig:
 class TestDataGenerator:
     """Generator for creating test data for LLM testing."""
 
-    def __init__(self, config: Optional[TestDataConfig] = None) -> None:
+    def __init__(self, config: TestDataConfig | None = None) -> None:
         """Initialize the test data generator."""
         self.config = config or TestDataConfig()
 
@@ -183,7 +183,7 @@ class TestDataGenerator:
         self,
         prompt_type: PromptType = PromptType.SIMPLE,
         scenario: TestScenario = TestScenario.NORMAL,
-        custom_length: Optional[int] = None,
+        custom_length: int | None = None,
     ) -> str:
         """Generate a test prompt."""
         templates = self.prompt_templates.get(
@@ -232,7 +232,7 @@ class TestDataGenerator:
         prompt_type: PromptType = PromptType.SIMPLE,
         model_type: ModelType = ModelType.SMART,
         **kwargs,
-    ) -> List[LLMRequest]:
+    ) -> list[LLMRequest]:
         """Generate a batch of LLM requests."""
         return [
             self.generate_llm_request(prompt_type, model_type, **kwargs)
@@ -243,7 +243,7 @@ class TestDataGenerator:
         self,
         scenario_type: TestScenario,
         count: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Generate test scenarios for a specific scenario type."""
         scenarios = []
 
@@ -269,7 +269,7 @@ class TestDataGenerator:
         self,
         test_type: str,
         size: str = "medium",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate data for performance testing."""
         size_configs = {
             "small": {"prompt_length": 100, "batch_size": 10, "concurrent_requests": 5},
@@ -551,7 +551,7 @@ class TestDataGenerator:
 
         return prompt
 
-    def _generate_normal_scenario(self) -> Dict[str, Any]:
+    def _generate_normal_scenario(self) -> dict[str, Any]:
         """Generate a normal test scenario."""
         return {
             "type": "normal",
@@ -560,7 +560,7 @@ class TestDataGenerator:
             "timeout_seconds": 30,
         }
 
-    def _generate_edge_case_scenario(self) -> Dict[str, Any]:
+    def _generate_edge_case_scenario(self) -> dict[str, Any]:
         """Generate an edge case test scenario."""
         return {
             "type": "edge_case",
@@ -569,7 +569,7 @@ class TestDataGenerator:
             "timeout_seconds": 30,
         }
 
-    def _generate_stress_test_scenario(self) -> Dict[str, Any]:
+    def _generate_stress_test_scenario(self) -> dict[str, Any]:
         """Generate a stress test scenario."""
         return {
             "type": "stress_test",
@@ -578,7 +578,7 @@ class TestDataGenerator:
             "timeout_seconds": 60,
         }
 
-    def _generate_error_condition_scenario(self) -> Dict[str, Any]:
+    def _generate_error_condition_scenario(self) -> dict[str, Any]:
         """Generate an error condition test scenario."""
         return {
             "type": "error_condition",
@@ -589,7 +589,7 @@ class TestDataGenerator:
             "timeout_seconds": 30,
         }
 
-    def _generate_performance_test_scenario(self) -> Dict[str, Any]:
+    def _generate_performance_test_scenario(self) -> dict[str, Any]:
         """Generate a performance test scenario."""
         return {
             "type": "performance_test",
@@ -599,7 +599,7 @@ class TestDataGenerator:
             "expected_max_latency_ms": 1000,
         }
 
-    def generate_edge_case_prompts(self) -> List[str]:
+    def generate_edge_case_prompts(self) -> list[str]:
         """Generate edge case prompts for robust testing."""
         from ..constants import MAX_PROMPT_LENGTH
 
@@ -618,7 +618,7 @@ class TestDataGenerator:
             "🎉" * 5000,  # Emoji stress test
         ]
 
-    def generate_performance_stress_data(self, size: str = "medium") -> Dict[str, Any]:
+    def generate_performance_stress_data(self, size: str = "medium") -> dict[str, Any]:
         """Generate data for performance stress testing."""
         sizes = {
             "small": {"requests": 10, "concurrent": 2},
@@ -627,7 +627,7 @@ class TestDataGenerator:
         }
         return sizes.get(size, sizes["medium"])
 
-    def generate_realistic_failure_scenarios(self) -> List[Dict[str, Any]]:
+    def generate_realistic_failure_scenarios(self) -> list[dict[str, Any]]:
         """Generate realistic failure scenarios for testing."""
         return [
             {

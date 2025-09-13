@@ -6,12 +6,12 @@ This script tests the configuration loading, validation, and management
 functionality without requiring the full ingestion system to be implemented.
 """
 
-import json
-import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
+import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import tempfile
+from typing import Any
 
 
 class SourceType(str, Enum):
@@ -45,15 +45,15 @@ class SourceConfig:
     retry_delay: float = 1.0
     timeout: float = 30.0
     circuit_breaker_enabled: bool = True
-    rate_limit_per_second: Optional[int] = None
-    config: Dict[str, Any] = field(default_factory=dict)
+    rate_limit_per_second: int | None = None
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class GCPPubSubConfig(SourceConfig):
     """Configuration for GCP Pub/Sub source."""
 
-    credentials_path: Optional[str] = None
+    credentials_path: str | None = None
     max_messages: int = 100
     ack_deadline_seconds: int = 60
     flow_control_max_messages: int = 1000
@@ -120,11 +120,11 @@ class GlobalConfig:
 class IngestionConfig:
     """Complete configuration for the log ingestion system."""
 
-    sources: List[SourceConfig] = field(default_factory=list)
+    sources: list[SourceConfig] = field(default_factory=list)
     global_config: GlobalConfig = field(default_factory=GlobalConfig)
     schema_version: str = "1.0.0"
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validate the configuration and return any errors."""
         errors = []
 
@@ -180,14 +180,14 @@ class IngestionConfig:
 
         return errors
 
-    def get_source_by_name(self, name: str) -> Optional[SourceConfig]:
+    def get_source_by_name(self, name: str) -> SourceConfig | None:
         """Get a source configuration by name."""
         for source in self.sources:
             if source.name == name:
                 return source
         return None
 
-    def get_enabled_sources(self) -> List[SourceConfig]:
+    def get_enabled_sources(self) -> list[SourceConfig]:
         """Get all enabled sources sorted by priority."""
         enabled = [source for source in self.sources if source.enabled]
         return sorted(enabled, key=lambda x: x.priority)
@@ -381,7 +381,7 @@ def test_config_file_loading() -> None:
 
     try:
         # Load and parse the config
-        with open(temp_file, "r") as f:
+        with open(temp_file) as f:
             loaded_data = json.load(f)
 
         # Create config from loaded data

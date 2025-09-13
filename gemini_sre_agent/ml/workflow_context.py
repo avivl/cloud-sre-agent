@@ -8,7 +8,7 @@ logic for the workflow orchestrator. Extracted from unified_workflow_orchestrato
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .caching import ContextCache, IssuePatternCache, RepositoryContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
@@ -36,9 +36,9 @@ class WorkflowContextManager:
 
     def __init__(
         self,
-        cache: Optional[ContextCache],
+        cache: ContextCache | None,
         repo_path: str,
-        performance_config: Optional[PerformanceConfig],
+        performance_config: PerformanceConfig | None,
     ):
         """
         Initialize the workflow context manager.
@@ -66,7 +66,7 @@ class WorkflowContextManager:
         self.async_optimizer = get_async_optimizer()
 
         # Initialize enhanced agent (will be injected)
-        self.enhanced_agent: Optional[EnhancedAnalysisAgent] = None
+        self.enhanced_agent: EnhancedAnalysisAgent | None = None
 
     def set_enhanced_agent(self, enhanced_agent: EnhancedAnalysisAgent) -> None:
         """Set the enhanced analysis agent."""
@@ -74,9 +74,9 @@ class WorkflowContextManager:
 
     async def build_enhanced_context(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         analysis_depth: str,
     ) -> PromptContext:
@@ -250,7 +250,7 @@ class WorkflowContextManager:
             raise
 
     async def _extract_issue_context_async(
-        self, triage_packet: Dict[str, Any]
+        self, triage_packet: dict[str, Any]
     ) -> IssueContext:
         """Helper method for async issue context extraction."""
         try:
@@ -261,7 +261,7 @@ class WorkflowContextManager:
             self.logger.error(f"Failed to extract issue context: {e}")
             raise
 
-    async def get_cached_context(self, flow_id: str) -> Optional[PromptContext]:
+    async def get_cached_context(self, flow_id: str) -> PromptContext | None:
         """
         Get cached context for a specific flow.
 
@@ -306,7 +306,7 @@ class WorkflowContextManager:
             self.logger.warning(f"Failed to get cached context: {e}")
             return None
 
-    async def clear_context_cache(self, flow_id: Optional[str] = None) -> None:
+    async def clear_context_cache(self, flow_id: str | None = None) -> None:
         """
         Clear context cache for a specific flow or all flows.
 
@@ -327,7 +327,7 @@ class WorkflowContextManager:
         except Exception as e:
             self.logger.error(f"Failed to clear context cache: {e}")
 
-    async def get_cache_statistics(self) -> Dict[str, Any]:
+    async def get_cache_statistics(self) -> dict[str, Any]:
         """
         Get cache statistics for monitoring.
 
@@ -388,4 +388,4 @@ class WorkflowContextManager:
 
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
-            return f"unhealthy - {str(e)}"
+            return f"unhealthy - {e!s}"

@@ -4,8 +4,8 @@
 Security tests for audit trail and security monitoring.
 """
 
-import json
 from datetime import datetime
+import json
 from unittest.mock import MagicMock
 
 import pytest

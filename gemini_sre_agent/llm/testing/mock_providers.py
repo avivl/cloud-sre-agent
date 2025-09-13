@@ -8,10 +8,10 @@ for testing without incurring API costs or requiring actual provider connections
 """
 
 import asyncio
+from dataclasses import dataclass
 import random
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..base import LLMRequest, LLMResponse
 from ..common.enums import ModelType, ProviderType
@@ -27,7 +27,7 @@ class MockResponseConfig:
     success_rate: float = 1.0
     error_rate: float = 0.0
     timeout_rate: float = 0.0
-    custom_responses: Optional[Dict[str, str]] = None
+    custom_responses: dict[str, str] | None = None
 
 
 class MockLLMProvider(LLMProvider):
@@ -36,7 +36,7 @@ class MockLLMProvider(LLMProvider):
     def __init__(
         self,
         provider_type: ProviderType,
-        config: Optional[MockResponseConfig] = None,
+        config: MockResponseConfig | None = None,
     ):
         """Initialize the mock provider."""
         # Create a mock config object
@@ -74,7 +74,7 @@ class MockLLMProvider(LLMProvider):
         if response_type == "error":
             raise Exception("Mock provider error for testing")
         elif response_type == "timeout":
-            raise asyncio.TimeoutError("Mock provider timeout for testing")
+            raise TimeoutError("Mock provider timeout for testing")
 
         # Generate response content
         content = self._generate_response_content(request.prompt or "")
@@ -140,7 +140,7 @@ class MockLLMProvider(LLMProvider):
                 f"Mock response to: {prompt[:100]}{'...' if len(prompt) > 100 else ''}"
             )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get provider statistics."""
         return {
             "provider_type": self.provider_type.value,
@@ -166,7 +166,7 @@ class MockLLMProvider(LLMProvider):
         response = await self.generate(request)
         yield response
 
-    def get_provider_info(self) -> Dict[str, Any]:
+    def get_provider_info(self) -> dict[str, Any]:
         """Get provider information."""
         return {
             "provider_type": self.provider_type.value,
@@ -179,15 +179,15 @@ class MockLLMProvider(LLMProvider):
         """Check if provider is healthy."""
         return True
 
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         """Get provider capabilities."""
         return ["text_generation", "streaming"]
 
-    def get_supported_models(self) -> List[str]:
+    def get_supported_models(self) -> list[str]:
         """Get supported models."""
         return ["mock-model-1", "mock-model-2"]
 
-    def get_model_info(self, model: str) -> Optional[Dict[str, Any]]:
+    def get_model_info(self, model: str) -> dict[str, Any] | None:
         """Get model information."""
         return {
             "name": model,
@@ -214,7 +214,7 @@ class MockLLMProvider(LLMProvider):
         """Check if provider supports tool calling."""
         return False
 
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available models mapped to semantic types."""
         from ..common.enums import ModelType
 
@@ -224,7 +224,7 @@ class MockLLMProvider(LLMProvider):
             ModelType.DEEP_THINKING: "mock-deep-model",
         }
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings for the given text."""
         # Return mock embeddings
         return [0.1, 0.2, 0.3, 0.4, 0.5] * 100  # 500-dimensional mock embedding
@@ -244,7 +244,7 @@ class MockLLMProvider(LLMProvider):
         """Validate provider-specific configuration."""
         pass
 
-    def get_custom_capabilities(self) -> List[Any]:
+    def get_custom_capabilities(self) -> list[Any]:
         """Get provider-specific custom capabilities."""
         return []
 
@@ -254,7 +254,7 @@ class MockProviderFactory(LLMProviderFactory):
 
     def __init__(self) -> None:
         """Initialize the mock provider factory."""
-        self.providers: Dict[str, MockLLMProvider] = {}
+        self.providers: dict[str, MockLLMProvider] = {}
         self._initialize_mock_providers()
 
     def _initialize_mock_providers(self) -> None:
@@ -310,13 +310,13 @@ class MockProviderFactory(LLMProviderFactory):
         )
 
     @classmethod
-    def get_provider(cls, provider_name: str) -> Optional[MockLLMProvider]:
+    def get_provider(cls, provider_name: str) -> MockLLMProvider | None:
         """Get a mock provider by name."""
         instance = cls()
         return instance.providers.get(provider_name)
 
     @classmethod
-    def list_providers(cls) -> List[str]:
+    def list_providers(cls) -> list[str]:
         """List all available mock providers."""
         instance = cls()
         return list(instance.providers.keys())
@@ -332,7 +332,7 @@ class MockProviderFactory(LLMProviderFactory):
         self.providers[name] = provider
         return provider
 
-    def get_all_stats(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_stats(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all mock providers."""
         return {name: provider.get_stats() for name, provider in self.providers.items()}
 
@@ -386,7 +386,7 @@ class MockModelRegistry(ModelRegistry):
             },
         }
 
-    def get_model(self, model_name: str) -> Optional[ModelInfo]:
+    def get_model(self, model_name: str) -> ModelInfo | None:
         """Get model information."""
         model_data = self.models.get(model_name)
         if not model_data:
@@ -400,7 +400,7 @@ class MockModelRegistry(ModelRegistry):
             max_tokens=model_data["max_tokens"],
         )
 
-    def get_all_models(self) -> List[ModelInfo]:
+    def get_all_models(self) -> list[ModelInfo]:
         """Get all models."""
         return [
             ModelInfo(
@@ -413,7 +413,7 @@ class MockModelRegistry(ModelRegistry):
             for model_data in self.models.values()
         ]
 
-    def get_models_by_provider(self, provider: str) -> List[ModelInfo]:
+    def get_models_by_provider(self, provider: str) -> list[ModelInfo]:
         """Get models by provider."""
         return [
             ModelInfo(
@@ -427,7 +427,7 @@ class MockModelRegistry(ModelRegistry):
             if model_data["provider"] == provider
         ]
 
-    def get_models_by_type(self, semantic_type: str) -> List[Dict[str, Any]]:
+    def get_models_by_type(self, semantic_type: str) -> list[dict[str, Any]]:
         """Get models by semantic type."""
         return [
             model
@@ -480,7 +480,7 @@ class MockCostManager:
         """Get average cost per request."""
         return self.total_cost / self.request_count if self.request_count > 0 else 0.0
 
-    def get_cost_history(self) -> List[Dict[str, Any]]:
+    def get_cost_history(self) -> list[dict[str, Any]]:
         """Get cost history."""
         return self.cost_history.copy()
 
@@ -540,7 +540,7 @@ class RealisticMockProvider(MockLLMProvider):
 
         return await super().generate(request)
 
-    def get_failure_stats(self) -> Dict[str, Any]:
+    def get_failure_stats(self) -> dict[str, Any]:
         """Get failure statistics."""
         return {
             "consecutive_failures": self.consecutive_failures,

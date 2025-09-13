@@ -8,7 +8,7 @@ with multi-provider support and intelligent model selection.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...llm.base import ModelType
 from ...llm.common.enums import ProviderType
@@ -33,9 +33,9 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         llm_config: LLMConfig,
         agent_name: str = "triage_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.PERFORMANCE,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -69,7 +69,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
     async def triage_issue(
         self,
         issue: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         urgency_level: str = "medium",
         **kwargs: Any,
     ) -> TriageResponse:
@@ -102,7 +102,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
     async def categorize_issue(
         self,
         issue: str,
-        categories: List[str],
+        categories: list[str],
         **kwargs: Any,
     ) -> TriageResponse:
         """
@@ -131,8 +131,8 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
 
     async def prioritize_issues(
         self,
-        issues: List[Dict[str, Any]],
-        priority_criteria: List[str],
+        issues: list[dict[str, Any]],
+        priority_criteria: list[str],
         **kwargs: Any,
     ) -> TriageResponse:
         """
@@ -162,7 +162,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
     async def assess_impact(
         self,
         issue: str,
-        affected_systems: List[str],
+        affected_systems: list[str],
         **kwargs: Any,
     ) -> TriageResponse:
         """
@@ -189,7 +189,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             optimization_goal=OptimizationGoal.PERFORMANCE,
         )
 
-    def get_agent_capabilities(self) -> Dict[str, Any]:
+    def get_agent_capabilities(self) -> dict[str, Any]:
         """
         Get the capabilities and configuration of this triage agent.
 

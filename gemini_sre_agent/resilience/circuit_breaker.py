@@ -3,10 +3,11 @@
 """Circuit breaker pattern implementation for resilience."""
 
 import asyncio
+from collections.abc import Callable
+from enum import Enum
 import logging
 import time
-from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         recovery_timeout: float = 60.0,
         expected_exception: type = Exception,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         """Initialize the circuit breaker.
 
@@ -44,7 +45,7 @@ class CircuitBreaker:
 
         self._state = CircuitState.CLOSED
         self._failure_count = 0
-        self._last_failure_time: Optional[float] = None
+        self._last_failure_time: float | None = None
         self._success_count = 0
 
         # Statistics
@@ -192,7 +193,7 @@ class CircuitBreaker:
 
         logger.info(f"Circuit breaker '{self.name}' manually reset")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get circuit breaker statistics."""
         success_rate = (
             self._total_successes / self._total_requests * 100
@@ -228,7 +229,7 @@ class CircuitBreakerManager:
 
     def __init__(self) -> None:
         """Initialize the circuit breaker manager."""
-        self._breakers: Dict[str, CircuitBreaker] = {}
+        self._breakers: dict[str, CircuitBreaker] = {}
 
     def get_breaker(
         self,
@@ -258,7 +259,7 @@ class CircuitBreakerManager:
 
         return self._breakers[name]
 
-    def get_all_stats(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_stats(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all circuit breakers."""
         return {name: breaker.get_stats() for name, breaker in self._breakers.items()}
 

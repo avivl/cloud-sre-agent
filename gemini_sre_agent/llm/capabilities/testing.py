@@ -4,8 +4,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from gemini_sre_agent.llm.capabilities.models import ModelCapability
 from gemini_sre_agent.llm.base import LLMProvider
+from gemini_sre_agent.llm.capabilities.models import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class CapabilityTester:
     Runs a suite of capability tests against LLM models.
     """
 
-    def __init__(self, providers: Dict[str, LLMProvider]: str, tests: List[CapabilityTest]) -> None:
+    def __init__(self, providers: Dict[str, LLMProvider], tests: List[CapabilityTest]) -> None:
         self.providers = providers
         self.tests = tests
 
@@ -146,6 +146,7 @@ class CapabilityTester:
                     passed = await test.run_test(provider_instance, model_name)
                     results[model_id][test.capability.name] = passed
                     logger.info(
-                        f"Test '{test.capability.name}' for {model_id}: {'PASSED' if passed else 'FAILED'}"
+                        f"Test '{test.capability.name}' for {model_id}: "
+                        f"{'PASSED' if passed else 'FAILED'}"
                     )
         return results

@@ -12,9 +12,9 @@ import importlib.util
 import inspect
 import logging
 import os
-import pkgutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+import pkgutil
+from typing import Any
 
 from ..base import LLMProvider
 from ..factory import LLMProviderFactory
@@ -31,8 +31,8 @@ class ProviderAutoRegistry:
     """
 
     def __init__(self) -> None:
-        self.discovered_providers: Dict[str, Type[LLMProvider]] = {}
-        self.external_providers: Dict[str, str] = {}  # name -> module_path
+        self.discovered_providers: dict[str, type[LLMProvider]] = {}
+        self.external_providers: dict[str, str] = {}  # name -> module_path
         self._initialized = False
 
     def discover_builtin_providers(
@@ -85,7 +85,7 @@ class ProviderAutoRegistry:
             logger.error(f"Failed to discover built-in providers: {e}")
 
     def discover_external_providers(
-        self, search_paths: Optional[List[str]] = None
+        self, search_paths: list[str] | None = None
     ) -> None:
         """
         Discover external provider implementations.
@@ -145,7 +145,7 @@ class ProviderAutoRegistry:
         except Exception as e:
             logger.warning(f"Failed to load provider from {file_path}: {e}")
 
-    def _extract_provider_name(self, class_name: str) -> Optional[str]:
+    def _extract_provider_name(self, class_name: str) -> str | None:
         """Extract provider name from class name."""
         # Remove "Provider" suffix and convert to lowercase
         if class_name.endswith("Provider"):
@@ -175,7 +175,7 @@ class ProviderAutoRegistry:
         self,
         include_builtin: bool = True,
         include_external: bool = True,
-        external_paths: Optional[List[str]] = None,
+        external_paths: list[str] | None = None,
     ) -> None:
         """
         Automatically discover and register all providers.
@@ -203,11 +203,11 @@ class ProviderAutoRegistry:
             f"Provider discovery complete. Found {len(self.discovered_providers)} providers"
         )
 
-    def get_discovered_providers(self) -> Dict[str, Type[LLMProvider]]:
+    def get_discovered_providers(self) -> dict[str, type[LLMProvider]]:
         """Get all discovered providers."""
         return self.discovered_providers.copy()
 
-    def get_external_providers(self) -> Dict[str, str]:
+    def get_external_providers(self) -> dict[str, str]:
         """Get all external providers with their file paths."""
         return self.external_providers.copy()
 
@@ -245,7 +245,7 @@ class ProviderAutoRegistry:
             logger.error(f"Failed to reload provider {provider_name}: {e}")
             return False
 
-    def validate_discovered_providers(self) -> Dict[str, List[str]]:
+    def validate_discovered_providers(self) -> dict[str, list[str]]:
         """
         Validate all discovered providers.
 
@@ -267,7 +267,7 @@ class ProviderAutoRegistry:
 
         return validation_results
 
-    def get_provider_info(self, provider_name: str) -> Optional[Dict[str, Any]]:
+    def get_provider_info(self, provider_name: str) -> dict[str, Any] | None:
         """
         Get information about a discovered provider.
 
@@ -296,7 +296,7 @@ class ProviderAutoRegistry:
 
         return info
 
-    def list_providers_by_capability(self) -> Dict[str, List[str]]:
+    def list_providers_by_capability(self) -> dict[str, list[str]]:
         """
         List providers grouped by their capabilities.
 
@@ -346,7 +346,7 @@ def get_auto_registry() -> ProviderAutoRegistry:
 def auto_discover_providers(
     include_builtin: bool = True,
     include_external: bool = True,
-    external_paths: Optional[List[str]] = None,
+    external_paths: list[str] | None = None,
 ) -> None:
     """
     Convenience function to automatically discover and register providers.

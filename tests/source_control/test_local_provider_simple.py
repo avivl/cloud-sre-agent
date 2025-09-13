@@ -1,8 +1,8 @@
 """Simple tests for the Local Provider implementation."""
 
+from pathlib import Path
 import shutil
 import tempfile
-from pathlib import Path
 
 import git
 import pytest

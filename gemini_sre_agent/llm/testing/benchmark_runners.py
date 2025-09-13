@@ -11,7 +11,6 @@ memory, and concurrency benchmarks.
 import asyncio
 import logging
 import time
-from typing import Optional
 
 from ..base import LLMRequest
 from ..cost_management_integration import IntegratedCostManager
@@ -32,7 +31,7 @@ class BenchmarkRunner:
         self,
         provider_factory: LLMProviderFactory,
         model_registry: ModelRegistry,
-        cost_manager: Optional[IntegratedCostManager] = None,
+        cost_manager: IntegratedCostManager | None = None,
     ):
         """Initialize the benchmark runner."""
         self.provider_factory = provider_factory

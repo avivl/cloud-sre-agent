@@ -2,7 +2,7 @@
 
 import random
 import time
-from typing import Any, Dict
+from typing import Any
 
 from .alerting import AlertRule, AlertSeverity, get_alert_manager
 from .flow_tracker import get_flow_tracker
@@ -100,7 +100,7 @@ def alerting_example():
     alert_manager = get_alert_manager()
 
     # Define an alert rule
-    def high_error_rate_condition(data: Dict[str, Any]) -> bool:
+    def high_error_rate_condition(data: dict[str, Any]) -> bool:
         """Check if error rate is high."""
         level = data.get("level", 0)
         return level >= 40  # ERROR level or higher

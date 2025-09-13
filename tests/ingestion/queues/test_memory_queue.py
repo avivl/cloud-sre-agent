@@ -5,7 +5,7 @@ Tests for the memory queue system.
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -40,7 +40,7 @@ class TestMemoryQueue:
         """Create a sample log entry."""
         return LogEntry(
             id="test-123",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             message="Test log message",
             source="test_source",
             severity=LogSeverity.INFO,
@@ -85,7 +85,7 @@ class TestMemoryQueue:
         for i in range(5):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,
@@ -123,7 +123,7 @@ class TestMemoryQueue:
         for i in range(15):  # More than batch size
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,
@@ -159,7 +159,7 @@ class TestMemoryQueue:
         for i in range(3):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,
@@ -170,7 +170,7 @@ class TestMemoryQueue:
         # Try to enqueue one more (should fail or drop)
         log_entry = LogEntry(
             id="test-overflow",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             message="Overflow message",
             source="test_source",
             severity=LogSeverity.INFO,
@@ -234,7 +234,7 @@ class TestMemoryQueue:
             for i in range(count):
                 log_entry = LogEntry(
                     id=f"worker-{worker_id}-{i}",
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                     message=f"Worker {worker_id} message {i}",
                     source=f"worker_{worker_id}",
                     severity=LogSeverity.INFO,
@@ -275,7 +275,7 @@ class TestMemoryQueue:
         for i in range(3):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,

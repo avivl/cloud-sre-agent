@@ -1,8 +1,9 @@
 """Decorators for dependency injection."""
 
+from collections.abc import Callable
 import functools
 import inspect
-from typing import Any, Callable, Optional, Type, TypeVar, get_type_hints
+from typing import Any, TypeVar, get_type_hints
 
 from .container import get_container
 
@@ -10,8 +11,8 @@ T = TypeVar("T")
 
 
 def injectable(
-    service_type: Optional[Type[T]] = None, lifetime: Optional[str] = None
-) -> Callable[[Type[T]], Type[T]]:
+    service_type: type[T] | None = None, lifetime: str | None = None
+) -> Callable[[type[T]], type[T]]:
     """Decorator to mark a class as injectable.
 
     Args:
@@ -22,7 +23,7 @@ def injectable(
         The decorated class
     """
 
-    def decorator(cls: Type[T]) -> Type[T]:
+    def decorator(cls: type[T]) -> type[T]:
         # Register the service
         container = get_container()
         if service_type is None:
@@ -43,7 +44,7 @@ def injectable(
 
 
 def inject(
-    service_type: Optional[Type[T]] = None, name: Optional[str] = None
+    service_type: type[T] | None = None, name: str | None = None
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to inject dependencies into a function or method.
 
@@ -122,7 +123,7 @@ def auto_inject(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-def singleton(cls: Type[T]) -> Type[T]:
+def singleton(cls: type[T]) -> type[T]:
     """Decorator to register a class as a singleton.
 
     Args:
@@ -136,7 +137,7 @@ def singleton(cls: Type[T]) -> Type[T]:
     return cls
 
 
-def transient(cls: Type[T]) -> Type[T]:
+def transient(cls: type[T]) -> type[T]:
     """Decorator to register a class as transient.
 
     Args:
@@ -150,7 +151,7 @@ def transient(cls: Type[T]) -> Type[T]:
     return cls
 
 
-def scoped(cls: Type[T]) -> Type[T]:
+def scoped(cls: type[T]) -> type[T]:
     """Decorator to register a class as scoped.
 
     Args:
@@ -210,7 +211,7 @@ class ServiceLocator:
         """
         self._container = container or get_container()
 
-    def get_service(self, service_type: Type[T]) -> T:
+    def get_service(self, service_type: type[T]) -> T:
         """Get a service.
 
         Args:
@@ -221,7 +222,7 @@ class ServiceLocator:
         """
         return self._container.get_service(service_type)
 
-    def get_services(self, service_type: Type[T]) -> list[T]:
+    def get_services(self, service_type: type[T]) -> list[T]:
         """Get all services of a type.
 
         Args:
@@ -236,7 +237,7 @@ class ServiceLocator:
 
 
 # Global service locator
-_service_locator: Optional[ServiceLocator] = None
+_service_locator: ServiceLocator | None = None
 
 
 def get_service_locator() -> ServiceLocator:

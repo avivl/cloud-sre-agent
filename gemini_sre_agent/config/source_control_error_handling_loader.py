@@ -10,7 +10,7 @@ from various sources (YAML, JSON, environment variables).
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -21,12 +21,12 @@ from .source_control_error_handling_validation import ErrorHandlingConfigValidat
 class ErrorHandlingConfigLoader:
     """Loader for error handling configuration."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize the configuration loader."""
         self.logger = logger or logging.getLogger(__name__)
         self.validator = ErrorHandlingConfigValidator(logger)
 
-    def load_from_file(self, file_path: Union[str, Path]) -> ErrorHandlingConfig:
+    def load_from_file(self, file_path: str | Path) -> ErrorHandlingConfig:
         """Load error handling configuration from a file."""
         file_path = Path(file_path)
 
@@ -39,7 +39,7 @@ class ErrorHandlingConfigLoader:
             )
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 if file_path.suffix.lower() in [".yaml", ".yml"]:
                     config_data = yaml.safe_load(f)
                 else:  # JSON
@@ -53,7 +53,7 @@ class ErrorHandlingConfigLoader:
             self.logger.error(f"Failed to load configuration from {file_path}: {e}")
             raise
 
-    def load_from_dict(self, config_data: Dict[str, Any]) -> ErrorHandlingConfig:
+    def load_from_dict(self, config_data: dict[str, Any]) -> ErrorHandlingConfig:
         """Load error handling configuration from a dictionary."""
         return self._load_from_dict(config_data)
 
@@ -87,7 +87,7 @@ class ErrorHandlingConfigLoader:
         """Load default error handling configuration."""
         return ErrorHandlingConfig()
 
-    def load_with_validation(self, config_data: Dict[str, Any]) -> ErrorHandlingConfig:
+    def load_with_validation(self, config_data: dict[str, Any]) -> ErrorHandlingConfig:
         """Load configuration with validation and return any issues found."""
         config = self._load_from_dict(config_data)
         issues = self.validator.validate_config(config)
@@ -99,7 +99,7 @@ class ErrorHandlingConfigLoader:
 
         return config
 
-    def _load_from_dict(self, config_data: Dict[str, Any]) -> ErrorHandlingConfig:
+    def _load_from_dict(self, config_data: dict[str, Any]) -> ErrorHandlingConfig:
         """Internal method to load configuration from dictionary."""
         # Extract error handling configuration
         error_handling_data = config_data.get("error_handling", {})
@@ -110,7 +110,7 @@ class ErrorHandlingConfigLoader:
 
         return ErrorHandlingConfig(**error_handling_data)
 
-    def _load_circuit_breaker_from_env(self, prefix: str) -> Dict[str, Any]:
+    def _load_circuit_breaker_from_env(self, prefix: str) -> dict[str, Any]:
         """Load circuit breaker configuration from environment variables."""
         cb_config = {}
 
@@ -200,7 +200,7 @@ class ErrorHandlingConfigLoader:
 
         return cb_config
 
-    def _load_retry_from_env(self, prefix: str) -> Dict[str, Any]:
+    def _load_retry_from_env(self, prefix: str) -> dict[str, Any]:
         """Load retry configuration from environment variables."""
         return {
             "max_retries": int(os.getenv(f"{prefix}RETRY_MAX_RETRIES", "3")),
@@ -210,7 +210,7 @@ class ErrorHandlingConfigLoader:
             "jitter": os.getenv(f"{prefix}RETRY_JITTER", "true").lower() == "true",
         }
 
-    def _load_graceful_degradation_from_env(self, prefix: str) -> Dict[str, Any]:
+    def _load_graceful_degradation_from_env(self, prefix: str) -> dict[str, Any]:
         """Load graceful degradation configuration from environment variables."""
         strategies_str = os.getenv(
             f"{prefix}GD_FALLBACK_STRATEGIES",
@@ -231,7 +231,7 @@ class ErrorHandlingConfigLoader:
             == "true",
         }
 
-    def _load_health_checks_from_env(self, prefix: str) -> Dict[str, Any]:
+    def _load_health_checks_from_env(self, prefix: str) -> dict[str, Any]:
         """Load health check configuration from environment variables."""
         return {
             "enabled": os.getenv(f"{prefix}HC_ENABLED", "true").lower() == "true",
@@ -244,7 +244,7 @@ class ErrorHandlingConfigLoader:
             ),
         }
 
-    def _load_metrics_from_env(self, prefix: str) -> Dict[str, Any]:
+    def _load_metrics_from_env(self, prefix: str) -> dict[str, Any]:
         """Load metrics configuration from environment variables."""
         return {
             "enabled": os.getenv(f"{prefix}METRICS_ENABLED", "true").lower() == "true",
@@ -265,7 +265,7 @@ class ErrorHandlingConfigLoader:
         }
 
     def save_to_file(
-        self, config: ErrorHandlingConfig, file_path: Union[str, Path]
+        self, config: ErrorHandlingConfig, file_path: str | Path
     ) -> None:
         """Save error handling configuration to a file."""
         file_path = Path(file_path)
@@ -291,7 +291,7 @@ class ErrorHandlingConfigLoader:
             self.logger.error(f"Failed to save configuration to {file_path}: {e}")
             raise
 
-    def get_configuration_summary(self, config: ErrorHandlingConfig) -> Dict[str, Any]:
+    def get_configuration_summary(self, config: ErrorHandlingConfig) -> dict[str, Any]:
         """Get a summary of the configuration for logging/debugging."""
         return {
             "enabled": config.enabled,

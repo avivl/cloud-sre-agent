@@ -11,9 +11,10 @@ import asyncio
 import functools
 import logging
 import re
-from typing import Any, List, Optional, Union
+from typing import Any
 
-from github import Github as GitHubClient, GithubException
+from github import Github as GitHubClient
+from github import GithubException
 from github.Branch import Branch
 from github.ContentFile import ContentFile
 from github.PullRequest import PullRequest
@@ -23,9 +24,9 @@ from ..llm.base import ModelType
 from ..llm.common.enums import ProviderType
 from ..llm.config import LLMConfig
 from ..llm.strategy_manager import OptimizationGoal
+from ..local_patch_manager import LocalPatchManager
 from .enhanced_base import EnhancedBaseAgent
 from .response_models import RemediationResponse
-from ..local_patch_manager import LocalPatchManager
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
     """
     Enhanced Remediation Agent with multi-provider support.
-    
+
     Provides intelligent model selection for remediation tasks while maintaining
     backward compatibility with the original RemediationAgent interface.
     """
@@ -41,15 +42,15 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        github_token: Optional[str] = None,
-        repo_name: Optional[str] = None,
+        github_token: str | None = None,
+        repo_name: str | None = None,
         use_local_patches: bool = False,
         patch_dir: str = "/tmp/real_patches",
         agent_name: str = "remediation_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -83,24 +84,28 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
         # Initialize GitHub and local patch management
         self.use_local_patches = use_local_patches
         self.repo_name = repo_name
-        self.github: Optional[GitHubClient] = None
-        self.repo: Optional[Repository] = None
-        self.local_patch_manager: Optional[LocalPatchManager] = None
-        
+        self.github: GitHubClient | None = None
+        self.repo: Repository | None = None
+        self.local_patch_manager: LocalPatchManager | None = None
+
         if use_local_patches or not github_token or github_token == "dummy_token":
             self.local_patch_manager = LocalPatchManager(patch_dir)
             logger.info(
-                f"[ENHANCED_REMEDIATION] EnhancedRemediationAgent initialized with local patches in: {patch_dir}"
+                f"[ENHANCED_REMEDIATION] EnhancedRemediationAgent initialized with "
+                f"local patches in: {patch_dir}"
             )
         else:
             self.github = GitHubClient(github_token)
             if repo_name:
                 self.repo = self.github.get_repo(repo_name)
             logger.info(
-                f"[ENHANCED_REMEDIATION] EnhancedRemediationAgent initialized for repository: {repo_name}"
+                f"[ENHANCED_REMEDIATION] EnhancedRemediationAgent initialized for "
+                f"repository: {repo_name}"
             )
 
-        logger.info("EnhancedRemediationAgent initialized with quality-focused optimization")
+        logger.info(
+            "EnhancedRemediationAgent initialized with quality-focused optimization"
+        )
 
     async def create_pull_request(
         self,
@@ -136,17 +141,24 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
         try:
             # Check if GitHub repo is available
             if self.repo is None:
-                logger.error(f"[ENHANCED_REMEDIATION] GitHub repository not available: flow_id={flow_id}, issue_id={issue_id}")
-                return await self._create_local_patch(remediation_plan, flow_id, issue_id)
-            
+                logger.error(
+                    f"[ENHANCED_REMEDIATION] GitHub repository not available: "
+                    f"flow_id={flow_id}, issue_id={issue_id}"
+                )
+                return await self._create_local_patch(
+                    remediation_plan, flow_id, issue_id
+                )
+
             # Get event loop for async operations
             loop = asyncio.get_event_loop()
-            
+
             # 1. Get the base branch (non-blocking)
-            base: Branch = await loop.run_in_executor(None, self.repo.get_branch, base_branch)
+            base: Branch = await loop.run_in_executor(
+                None, self.repo.get_branch, base_branch
+            )
             logger.debug(
-                f"[ENHANCED_REMEDIATION] Base branch found: flow_id={flow_id}, issue_id={issue_id}, "
-                f"branch={base_branch}, sha={base.commit.sha}"
+                f"[ENHANCED_REMEDIATION] Base branch found: flow_id={flow_id}, "
+                f"issue_id={issue_id}, branch={base_branch}, sha={base.commit.sha}"
             )
 
             # 2. Create a new branch (idempotent, non-blocking)
@@ -155,7 +167,9 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                 if self.repo is not None:
                     await loop.run_in_executor(
                         None,
-                        functools.partial(self.repo.create_git_ref, ref=ref, sha=base.commit.sha)
+                        functools.partial(
+                            self.repo.create_git_ref, ref=ref, sha=base.commit.sha
+                        ),
                     )
                 logger.info(
                     f"[ENHANCED_REMEDIATION] Branch created successfully: flow_id={flow_id}, "
@@ -165,19 +179,21 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                 if e.status == 422 and "Reference already exists" in str(e.data):
                     # Branch already exists - this is fine for retry scenarios
                     logger.info(
-                        f"[ENHANCED_REMEDIATION] Branch already exists (idempotent): flow_id={flow_id}, "
-                        f"issue_id={issue_id}, branch={branch_name}"
+                        f"[ENHANCED_REMEDIATION] Branch already exists (idempotent): "
+                        f"flow_id={flow_id}, issue_id={issue_id}, branch={branch_name}"
                     )
                 else:
                     raise
 
             # 3. Apply the service code fix (non-blocking operations)
             if remediation_plan.code_patch:
-                file_path = self._extract_file_path_from_patch(remediation_plan.code_patch)
+                file_path = self._extract_file_path_from_patch(
+                    remediation_plan.code_patch
+                )
                 if not file_path:
                     logger.warning(
-                        f"[ENHANCED_REMEDIATION] Service code patch provided but no target file path found: "
-                        f"flow_id={flow_id}, issue_id={issue_id}"
+                        f"[ENHANCED_REMEDIATION] Service code patch provided but no "
+                        f"target file path found: flow_id={flow_id}, issue_id={issue_id}"
                     )
                 else:
                     # Extract code content (skip the first line with FILE: comment)
@@ -186,20 +202,30 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                     )
                     try:
                         if self.repo is not None:
-                            contents: Union[ContentFile, List[ContentFile]] = await loop.run_in_executor(
-                                None, functools.partial(self.repo.get_contents, file_path, ref=branch_name)
+                            contents: ContentFile | list[ContentFile] = (
+                                await loop.run_in_executor(
+                                    None,
+                                    functools.partial(
+                                        self.repo.get_contents,
+                                        file_path,
+                                        ref=branch_name,
+                                    ),
+                                )
                             )
                         else:
                             raise Exception("GitHub repository not available")
-                        if isinstance(contents, list):  # Handle case where get_contents returns a list
+                        if isinstance(
+                            contents, list
+                        ):  # Handle case where get_contents returns a list
                             logger.error(
                                 f"[ERROR_HANDLING] Cannot update directory: flow_id={flow_id}, "
                                 f"issue_id={issue_id}, path={file_path}"
                             )
                             raise RuntimeError(
-                                f"Cannot update directory {file_path}. Expected a service code file."
+                                f"Cannot update directory {file_path}. "
+                                f"Expected a service code file."
                             )
-                        
+
                         if self.repo is not None:
                             await loop.run_in_executor(
                                 None,
@@ -209,8 +235,8 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                                     f"Fix service issue in {file_path}",
                                     content_to_write,
                                     contents.sha,
-                                    branch=branch_name
-                                )
+                                    branch=branch_name,
+                                ),
                             )
                         logger.info(
                             f"[ENHANCED_REMEDIATION] Updated service code file: flow_id={flow_id}, "
@@ -226,23 +252,27 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                                         file_path,
                                         f"Add service code fix in {file_path}",
                                         content_to_write,
-                                        branch=branch_name
-                                    )
+                                        branch=branch_name,
+                                    ),
                                 )
                             logger.info(
-                                f"[ENHANCED_REMEDIATION] Created service code file: flow_id={flow_id}, "
-                                f"issue_id={issue_id}, file={file_path}"
+                                f"[ENHANCED_REMEDIATION] Created service code file: "
+                                f"flow_id={flow_id}, issue_id={issue_id}, file={file_path}"
                             )
                         else:
                             raise
             else:
                 logger.warning(
-                    f"[ENHANCED_REMEDIATION] No service code patch provided: flow_id={flow_id}, issue_id={issue_id}"
+                    f"[ENHANCED_REMEDIATION] No service code patch provided: "
+                    f"flow_id={flow_id}, issue_id={issue_id}"
                 )
 
             # 4. Create a pull request (non-blocking)
             title = f"Fix: {remediation_plan.proposed_fix[:50]}..."
-            body = f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\nProposed Fix:\n{remediation_plan.proposed_fix}"
+            body = (
+                f"Root Cause Analysis:\n{remediation_plan.root_cause_analysis}\n\n"
+                f"Proposed Fix:\n{remediation_plan.proposed_fix}"
+            )
             if self.repo is not None:
                 pull_request: PullRequest = await loop.run_in_executor(
                     None,
@@ -251,8 +281,8 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                         title=title,
                         body=body,
                         head=branch_name,
-                        base=base_branch
-                    )
+                        base=base_branch,
+                    ),
                 )
                 logger.info(
                     f"[ENHANCED_REMEDIATION] Pull request created successfully: flow_id={flow_id}, "
@@ -260,8 +290,13 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                 )
                 return pull_request.html_url
             else:
-                logger.error(f"[ENHANCED_REMEDIATION] Cannot create pull request - repository not available: flow_id={flow_id}, issue_id={issue_id}")
-                return await self._create_local_patch(remediation_plan, flow_id, issue_id)
+                logger.error(
+                    f"[ENHANCED_REMEDIATION] Cannot create pull request - repository not "
+                    f"available: flow_id={flow_id}, issue_id={issue_id}"
+                )
+                return await self._create_local_patch(
+                    remediation_plan, flow_id, issue_id
+                )
 
         except GithubException as e:
             logger.error(
@@ -273,12 +308,12 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
             ) from e
         except Exception as e:
             logger.error(
-                f"[ERROR_HANDLING] An unexpected error occurred during PR creation: flow_id={flow_id}, "
-                f"issue_id={issue_id}, error={e}"
+                f"[ERROR_HANDLING] An unexpected error occurred during PR creation: "
+                f"flow_id={flow_id}, issue_id={issue_id}, error={e}"
             )
             raise RuntimeError(f"Failed to create pull request: {e}") from e
 
-    def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
+    def _extract_file_path_from_patch(self, patch_content: str) -> str | None:
         """
         Extract the target file path from a special comment in the patch content.
         Supports multiple comment formats (e.g., # FILE:, // FILE:, /* FILE: */).
@@ -350,8 +385,8 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
             file_path = self._extract_file_path_from_patch(remediation_plan.code_patch)
             if not file_path:
                 logger.warning(
-                    f"[ENHANCED_REMEDIATION] Service code patch provided but no target file path found: "
-                    f"flow_id={flow_id}, issue_id={issue_id}"
+                    f"[ENHANCED_REMEDIATION] Service code patch provided but no "
+                    f"target file path found: flow_id={flow_id}, issue_id={issue_id}"
                 )
                 file_path = "unknown_file.py"  # fallback
 
@@ -363,7 +398,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                 file_path=file_path,
                 patch_content=remediation_plan.code_patch,
                 description=remediation_plan.proposed_fix,
-                severity=remediation_plan.priority
+                severity=remediation_plan.priority,
             )
 
             logger.info(
@@ -378,4 +413,3 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[RemediationResponse]):
                 f"issue_id={issue_id}, error={e}"
             )
             raise RuntimeError(f"Failed to create local patch: {e}") from e
-

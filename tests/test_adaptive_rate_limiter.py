@@ -264,7 +264,9 @@ class TestAdaptiveRateLimiter:
         assert rate_limiter._is_rate_limit_active() is False
         assert rate_limiter._get_rate_limit_reset_seconds() == 0
 
-    def test_rate_limit_reset_calculation(self, rate_limiter: AdaptiveRateLimiter) -> None:
+    def test_rate_limit_reset_calculation(
+        self, rate_limiter: AdaptiveRateLimiter
+    ) -> None:
         """Test rate limit reset time calculation."""
         # Set rate limit as recently active
         rate_limiter.rate_limit_hit = True

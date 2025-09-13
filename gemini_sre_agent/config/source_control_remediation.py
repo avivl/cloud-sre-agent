@@ -5,7 +5,6 @@ Remediation strategy configuration models for source control operations.
 """
 
 from enum import Enum
-from typing import List, Optional
 
 from pydantic import Field, field_validator
 
@@ -54,30 +53,30 @@ class RemediationStrategyConfig(BaseConfig):
     )
 
     # PR/MR metadata
-    labels: List[str] = Field(
+    labels: list[str] = Field(
         default_factory=list, description="Labels to apply to PRs/MRs"
     )
-    assignees: List[str] = Field(
+    assignees: list[str] = Field(
         default_factory=list, description="Users to assign to PRs/MRs"
     )
-    reviewers: List[str] = Field(
+    reviewers: list[str] = Field(
         default_factory=list, description="Users to request review from"
     )
 
     # Commit message settings
-    commit_message_template: Optional[str] = Field(
+    commit_message_template: str | None = Field(
         default=None,
         description="Template for commit messages (for direct_commit strategy)",
     )
-    commit_author_name: Optional[str] = Field(
+    commit_author_name: str | None = Field(
         default=None, description="Author name for commits"
     )
-    commit_author_email: Optional[str] = Field(
+    commit_author_email: str | None = Field(
         default=None, description="Author email for commits"
     )
 
     # Patch-specific settings
-    output_path: Optional[str] = Field(
+    output_path: str | None = Field(
         default=None, description="Path for patch files (for patch strategy)"
     )
     format: PatchFormat = Field(default=PatchFormat.UNIFIED, description="Patch format")
@@ -89,7 +88,7 @@ class RemediationStrategyConfig(BaseConfig):
     branch_prefix: str = Field(
         default="sre-fix", description="Prefix for created branches"
     )
-    branch_suffix: Optional[str] = Field(
+    branch_suffix: str | None = Field(
         default=None, description="Suffix for created branches"
     )
 
@@ -175,7 +174,8 @@ class RemediationStrategyConfig(BaseConfig):
                 raise ValueError("Branch component cannot exceed 20 characters")
             if not v.replace("-", "").replace("_", "").isalnum():
                 raise ValueError(
-                    "Branch components can only contain alphanumeric characters, hyphens, and underscores"
+                    "Branch components can only contain alphanumeric characters, "
+                    "hyphens, and underscores"
                 )
         return v
 

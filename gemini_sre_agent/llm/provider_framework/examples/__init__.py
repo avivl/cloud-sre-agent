@@ -11,6 +11,6 @@ from .custom_provider import CustomProvider
 from .simple_provider import SimpleProvider
 
 __all__ = [
-    "SimpleProvider",
     "CustomProvider",
+    "SimpleProvider",
 ]

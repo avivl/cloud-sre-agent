@@ -9,9 +9,9 @@ support validation, serialization, and integration with the multi-provider
 LLM system.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
@@ -81,8 +81,8 @@ class ValidationError(BaseModel):
 
     field: str = Field(..., description="Field that failed validation")
     message: str = Field(..., description="Error message")
-    value: Optional[Any] = Field(None, description="Value that caused the error")
-    code: Optional[str] = Field(
+    value: Any | None = Field(None, description="Value that caused the error")
+    code: str | None = Field(
         None, description="Error code for programmatic handling"
     )
 
@@ -94,7 +94,7 @@ class BaseAgentResponse(BaseModel):
         default_factory=lambda: str(uuid4()), description="Unique request identifier"
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Response timestamp",
     )
     agent_id: str = Field(
@@ -104,17 +104,17 @@ class BaseAgentResponse(BaseModel):
         ..., description="Type of agent (triage, analysis, remediation, health_check)"
     )
     status: StatusCode = Field(..., description="Overall status of the response")
-    execution_time_ms: Optional[float] = Field(
+    execution_time_ms: float | None = Field(
         None, description="Time taken to generate response in milliseconds"
     )
-    model_used: Optional[str] = Field(
+    model_used: str | None = Field(
         None, description="LLM model used for this response"
     )
-    provider_used: Optional[str] = Field(
+    provider_used: str | None = Field(
         None, description="LLM provider used for this response"
     )
-    cost_usd: Optional[float] = Field(None, description="Cost of this request in USD")
-    validation_errors: List[ValidationError] = Field(
+    cost_usd: float | None = Field(None, description="Cost of this request in USD")
+    validation_errors: list[ValidationError] = Field(
         default_factory=list, description="Any validation errors"
     )
 
@@ -146,22 +146,22 @@ class TriageResult(BaseAgentResponse):
         ..., description="Urgency level (immediate, high, medium, low)"
     )
     impact_assessment: str = Field(..., description="Assessment of potential impact")
-    affected_components: List[str] = Field(
+    affected_components: list[str] = Field(
         default_factory=list, description="Components affected by the issue"
     )
-    recommended_actions: List[str] = Field(
+    recommended_actions: list[str] = Field(
         ..., description="Recommended immediate actions"
     )
     escalation_required: bool = Field(
         False, description="Whether escalation is required"
     )
-    estimated_resolution_time: Optional[str] = Field(
+    estimated_resolution_time: str | None = Field(
         None, description="Estimated time to resolve"
     )
-    related_issues: List[str] = Field(
+    related_issues: list[str] = Field(
         default_factory=list, description="IDs of related issues"
     )
-    tags: List[str] = Field(
+    tags: list[str] = Field(
         default_factory=list, description="Tags for categorization and filtering"
     )
 
@@ -210,16 +210,16 @@ class AnalysisFinding(BaseModel):
     confidence: float = Field(
         ..., ge=0.0, le=1.0, description="Confidence in this finding"
     )
-    evidence: List[str] = Field(
+    evidence: list[str] = Field(
         default_factory=list, description="Evidence supporting this finding"
     )
-    recommendations: List[str] = Field(
+    recommendations: list[str] = Field(
         default_factory=list, description="Recommendations for this finding"
     )
-    affected_files: List[str] = Field(
+    affected_files: list[str] = Field(
         default_factory=list, description="Files affected by this finding"
     )
-    line_numbers: List[int] = Field(
+    line_numbers: list[int] = Field(
         default_factory=list, description="Specific line numbers if applicable"
     )
     category: IssueCategory = Field(..., description="Category of this finding")
@@ -229,13 +229,13 @@ class RootCauseAnalysis(BaseModel):
     """Root cause analysis for an issue."""
 
     primary_cause: str = Field(..., description="Primary root cause identified")
-    contributing_factors: List[str] = Field(
+    contributing_factors: list[str] = Field(
         default_factory=list, description="Contributing factors"
     )
-    timeline: List[str] = Field(
+    timeline: list[str] = Field(
         default_factory=list, description="Timeline of events leading to the issue"
     )
-    evidence: List[str] = Field(
+    evidence: list[str] = Field(
         default_factory=list, description="Evidence supporting the root cause"
     )
     confidence: float = Field(
@@ -248,10 +248,10 @@ class AnalysisResult(BaseAgentResponse):
 
     analysis_type: str = Field(..., description="Type of analysis performed")
     summary: str = Field(..., description="Executive summary of the analysis")
-    key_findings: List[AnalysisFinding] = Field(
+    key_findings: list[AnalysisFinding] = Field(
         ..., description="Key findings from the analysis"
     )
-    root_cause_analysis: Optional[RootCauseAnalysis] = Field(
+    root_cause_analysis: RootCauseAnalysis | None = Field(
         None, description="Root cause analysis if applicable"
     )
     overall_severity: SeverityLevel = Field(
@@ -262,18 +262,18 @@ class AnalysisResult(BaseAgentResponse):
     )
     risk_assessment: str = Field(..., description="Risk assessment of the findings")
     business_impact: str = Field(..., description="Assessment of business impact")
-    technical_debt_score: Optional[float] = Field(
+    technical_debt_score: float | None = Field(
         None, ge=0.0, le=10.0, description="Technical debt score (0-10)"
     )
-    recommendations: List[str] = Field(..., description="High-level recommendations")
-    next_steps: List[str] = Field(..., description="Recommended next steps")
+    recommendations: list[str] = Field(..., description="High-level recommendations")
+    next_steps: list[str] = Field(..., description="Recommended next steps")
     requires_follow_up: bool = Field(
         False, description="Whether follow-up analysis is required"
     )
-    analysis_scope: List[str] = Field(
+    analysis_scope: list[str] = Field(
         default_factory=list, description="Scope of the analysis"
     )
-    excluded_areas: List[str] = Field(
+    excluded_areas: list[str] = Field(
         default_factory=list, description="Areas excluded from analysis"
     )
 
@@ -302,29 +302,29 @@ class RemediationStep(BaseModel):
     title: str = Field(..., description="Title of the remediation step")
     description: str = Field(..., description="Detailed description of the step")
     action_type: ActionType = Field(..., description="Type of action required")
-    commands: List[str] = Field(
+    commands: list[str] = Field(
         default_factory=list, description="Commands or code to execute"
     )
-    estimated_duration: Optional[str] = Field(
+    estimated_duration: str | None = Field(
         None, description="Estimated time to complete this step"
     )
-    estimated_effort: Optional[str] = Field(
+    estimated_effort: str | None = Field(
         None, description="Estimated effort required (low, medium, high)"
     )
     risk_level: SeverityLevel = Field(..., description="Risk level of this step")
-    prerequisites: List[str] = Field(
+    prerequisites: list[str] = Field(
         default_factory=list, description="Prerequisites for this step"
     )
-    dependencies: List[str] = Field(
+    dependencies: list[str] = Field(
         default_factory=list, description="Step IDs this step depends on"
     )
-    rollback_plan: Optional[str] = Field(
+    rollback_plan: str | None = Field(
         None, description="Plan for rolling back this step"
     )
-    validation_criteria: List[str] = Field(
+    validation_criteria: list[str] = Field(
         default_factory=list, description="Criteria to validate success"
     )
-    affected_systems: List[str] = Field(
+    affected_systems: list[str] = Field(
         default_factory=list, description="Systems affected by this step"
     )
     requires_approval: bool = Field(
@@ -343,26 +343,26 @@ class RemediationPlan(BaseAgentResponse):
     priority: SeverityLevel = Field(
         ..., description="Priority level of the remediation"
     )
-    estimated_total_duration: Optional[str] = Field(
+    estimated_total_duration: str | None = Field(
         None, description="Total estimated duration"
     )
-    estimated_total_effort: Optional[str] = Field(
+    estimated_total_effort: str | None = Field(
         None, description="Total estimated effort"
     )
-    steps: List[RemediationStep] = Field(
+    steps: list[RemediationStep] = Field(
         ..., description="Remediation steps in execution order"
     )
-    success_criteria: List[str] = Field(
+    success_criteria: list[str] = Field(
         ..., description="Criteria for successful remediation"
     )
     risk_assessment: str = Field(..., description="Assessment of risks involved")
-    rollback_strategy: Optional[str] = Field(
+    rollback_strategy: str | None = Field(
         None, description="Overall rollback strategy"
     )
-    testing_plan: List[str] = Field(
+    testing_plan: list[str] = Field(
         default_factory=list, description="Testing plan for validation"
     )
-    monitoring_plan: List[str] = Field(
+    monitoring_plan: list[str] = Field(
         default_factory=list, description="Monitoring plan during execution"
     )
     approval_required: bool = Field(
@@ -426,14 +426,14 @@ class ComponentHealth(BaseModel):
     last_check: datetime = Field(
         ..., description="Last time this component was checked"
     )
-    response_time_ms: Optional[float] = Field(
+    response_time_ms: float | None = Field(
         None, description="Response time in milliseconds"
     )
-    error_message: Optional[str] = Field(None, description="Error message if unhealthy")
-    metrics: Dict[str, Any] = Field(
+    error_message: str | None = Field(None, description="Error message if unhealthy")
+    metrics: dict[str, Any] = Field(
         default_factory=dict, description="Component-specific metrics"
     )
-    dependencies: List[str] = Field(
+    dependencies: list[str] = Field(
         default_factory=list, description="Dependencies of this component"
     )
 
@@ -441,22 +441,22 @@ class ComponentHealth(BaseModel):
 class ResourceUtilization(BaseModel):
     """Resource utilization metrics."""
 
-    cpu_usage_percent: Optional[float] = Field(
+    cpu_usage_percent: float | None = Field(
         None, ge=0.0, le=100.0, description="CPU usage percentage"
     )
-    memory_usage_percent: Optional[float] = Field(
+    memory_usage_percent: float | None = Field(
         None, ge=0.0, le=100.0, description="Memory usage percentage"
     )
-    disk_usage_percent: Optional[float] = Field(
+    disk_usage_percent: float | None = Field(
         None, ge=0.0, le=100.0, description="Disk usage percentage"
     )
-    network_io_mbps: Optional[float] = Field(
+    network_io_mbps: float | None = Field(
         None, ge=0.0, description="Network I/O in Mbps"
     )
-    active_connections: Optional[int] = Field(
+    active_connections: int | None = Field(
         None, ge=0, description="Number of active connections"
     )
-    queue_depth: Optional[int] = Field(
+    queue_depth: int | None = Field(
         None, ge=0, description="Queue depth if applicable"
     )
 
@@ -468,33 +468,33 @@ class HealthCheckResponse(BaseAgentResponse):
     overall_severity: SeverityLevel = Field(
         ..., description="Overall severity of health issues"
     )
-    system_uptime: Optional[str] = Field(None, description="System uptime")
-    last_restart: Optional[datetime] = Field(
+    system_uptime: str | None = Field(None, description="System uptime")
+    last_restart: datetime | None = Field(
         None, description="Last system restart time"
     )
-    components: List[ComponentHealth] = Field(
+    components: list[ComponentHealth] = Field(
         ..., description="Health status of individual components"
     )
-    resource_utilization: Optional[ResourceUtilization] = Field(
+    resource_utilization: ResourceUtilization | None = Field(
         None, description="Resource utilization metrics"
     )
-    critical_alerts: List[str] = Field(
+    critical_alerts: list[str] = Field(
         default_factory=list, description="Critical alerts requiring attention"
     )
-    warnings: List[str] = Field(default_factory=list, description="Warning messages")
-    recommendations: List[str] = Field(
+    warnings: list[str] = Field(default_factory=list, description="Warning messages")
+    recommendations: list[str] = Field(
         default_factory=list, description="Health improvement recommendations"
     )
-    next_check_time: Optional[datetime] = Field(
+    next_check_time: datetime | None = Field(
         None, description="Scheduled time for next health check"
     )
-    health_score: Optional[float] = Field(
+    health_score: float | None = Field(
         None, ge=0.0, le=100.0, description="Overall health score (0-100)"
     )
-    degraded_components: List[str] = Field(
+    degraded_components: list[str] = Field(
         default_factory=list, description="Components in degraded state"
     )
-    failed_components: List[str] = Field(
+    failed_components: list[str] = Field(
         default_factory=list, description="Components that have failed"
     )
 
@@ -535,12 +535,12 @@ class TextResponse(BaseAgentResponse):
     character_count: int = Field(
         ..., ge=0, description="Number of characters in the generated text"
     )
-    language: Optional[str] = Field(None, description="Detected or specified language")
-    sentiment: Optional[str] = Field(None, description="Sentiment analysis result")
-    topics: List[str] = Field(
+    language: str | None = Field(None, description="Detected or specified language")
+    sentiment: str | None = Field(None, description="Sentiment analysis result")
+    topics: list[str] = Field(
         default_factory=list, description="Detected topics or themes"
     )
-    quality_score: Optional[float] = Field(
+    quality_score: float | None = Field(
         None, ge=0.0, le=1.0, description="Quality score of the generated text"
     )
 
@@ -570,29 +570,29 @@ class CodeResponse(BaseAgentResponse):
     language: str = Field(..., description="Programming language")
     explanation: str = Field(..., description="Explanation of the code")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
-    dependencies: List[str] = Field(
+    dependencies: list[str] = Field(
         default_factory=list, description="Required dependencies"
     )
-    imports: List[str] = Field(default_factory=list, description="Required imports")
-    functions: List[str] = Field(
+    imports: list[str] = Field(default_factory=list, description="Required imports")
+    functions: list[str] = Field(
         default_factory=list, description="Functions defined in the code"
     )
-    classes: List[str] = Field(
+    classes: list[str] = Field(
         default_factory=list, description="Classes defined in the code"
     )
-    complexity_score: Optional[float] = Field(
+    complexity_score: float | None = Field(
         None, ge=0.0, le=10.0, description="Code complexity score"
     )
-    test_coverage: Optional[float] = Field(
+    test_coverage: float | None = Field(
         None, ge=0.0, le=1.0, description="Estimated test coverage"
     )
-    security_issues: List[str] = Field(
+    security_issues: list[str] = Field(
         default_factory=list, description="Potential security issues"
     )
-    performance_notes: List[str] = Field(
+    performance_notes: list[str] = Field(
         default_factory=list, description="Performance considerations"
     )
-    best_practices: List[str] = Field(
+    best_practices: list[str] = Field(
         default_factory=list, description="Best practices applied"
     )
     line_count: int = Field(
@@ -661,7 +661,7 @@ def create_triage_result(
 def create_analysis_result(
     analysis_type: str,
     summary: str,
-    key_findings: List[AnalysisFinding],
+    key_findings: list[AnalysisFinding],
     overall_severity: SeverityLevel,
     overall_confidence: float,
     agent_id: str,
@@ -689,7 +689,7 @@ def create_remediation_plan(
     plan_name: str,
     issue_description: str,
     priority: SeverityLevel,
-    steps: List[RemediationStep],
+    steps: list[RemediationStep],
     agent_id: str,
     **kwargs,
 ) -> RemediationPlan:
@@ -711,7 +711,7 @@ def create_remediation_plan(
 def create_health_check_response(
     overall_status: StatusCode,
     overall_severity: SeverityLevel,
-    components: List[ComponentHealth],
+    components: list[ComponentHealth],
     agent_id: str,
     **kwargs,
 ) -> HealthCheckResponse:

@@ -16,7 +16,7 @@ The module is organized as follows:
 """
 
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 # ============================================================================
 # Common Enums and Base Models
@@ -86,7 +86,8 @@ class ActionType(str, Enum):
 # from .request_models import *
 
 # Import from response_models
-from .response_models import (  # Base models; Response models; Supporting models; Factory functions; Registry and utilities
+# Base models; Response models; Supporting models; Factory functions; Registry and utilities
+from .response_models import (
     AGENT_RESPONSE_MODELS,
     AnalysisFinding,
     AnalysisResult,
@@ -110,7 +111,6 @@ from .response_models import (  # Base models; Response models; Supporting model
 )
 
 # Import from state_models
-from .state_models import StateTransition  # State enums; State models; State utilities
 from .state_models import (
     AgentExecutionContext,
     AgentExecutionMetrics,
@@ -120,13 +120,16 @@ from .state_models import (
     PersistentAgentData,
     StateManager,
     StateSnapshot,
+    StateTransition,  # State enums; State models; State utilities
     WorkflowContext,
     WorkflowState,
     WorkflowStep,
 )
 
 # Import from validation_models
-from .validation_models import (  # Validation error models; Validation schemas; Validation utilities; Custom validators; Validation decorators
+# Validation error models; Validation schemas; Validation utilities; 
+# Custom validators; Validation decorators
+from .validation_models import (
     CodeAnalysisValidationSchema,
     LogValidationSchema,
     MetricValidationSchema,
@@ -153,12 +156,12 @@ from .validation_models import (  # Validation error models; Validation schemas;
 # ============================================================================
 
 
-def get_all_response_models() -> Dict[str, type]:
+def get_all_response_models() -> dict[str, type]:
     """Get all available response models."""
     return AGENT_RESPONSE_MODELS.copy()
 
 
-def get_all_state_models() -> Dict[str, type]:
+def get_all_state_models() -> dict[str, type]:
     """Get all available state models."""
     return {
         "AgentExecutionState": AgentExecutionState,
@@ -168,7 +171,7 @@ def get_all_state_models() -> Dict[str, type]:
     }
 
 
-def get_all_validation_models() -> Dict[str, type]:
+def get_all_validation_models() -> dict[str, type]:
     """Get all available validation models."""
     return {
         "ValidationError": ValidationError,
@@ -191,7 +194,7 @@ def create_agent_response(
 
 
 def validate_agent_data(
-    data: Dict[str, Any], data_type: str = "agent_response"
+    data: dict[str, Any], data_type: str = "agent_response"
 ) -> ValidationResult:
     """Validate agent data using the appropriate validator."""
     if data_type == "agent_response":

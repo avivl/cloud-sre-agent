@@ -6,9 +6,8 @@ This script validates ingestion configuration files and provides
 detailed feedback on any issues found.
 """
 
-import sys
 from pathlib import Path
-from typing import List
+import sys
 
 # Add the parent directory to the path so we can import the modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -19,7 +18,7 @@ from gemini_sre_agent.config.ingestion_config import (
 )
 
 
-def validate_config_file(config_path: Path) -> List[str]:
+def validate_config_file(config_path: Path) -> list[str]:
     """Validate a single configuration file."""
     errors = []
 

@@ -5,9 +5,10 @@ Time window accumulation logic.
 """
 
 import asyncio
+from collections.abc import Callable
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from .models import LogEntry, TimeWindow
 
@@ -21,13 +22,13 @@ class LogAccumulator:
         self,
         window_duration_minutes: int = 5,
         max_windows: int = 10,
-        on_window_ready: Optional[Callable[[TimeWindow], None]] = None,
+        on_window_ready: Callable[[TimeWindow], None] | None = None,
     ):
         self.window_duration_minutes = window_duration_minutes
         self.max_windows = max_windows
         self.on_window_ready = on_window_ready
-        self.windows: Dict[datetime, TimeWindow] = {}
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self.windows: dict[datetime, TimeWindow] = {}
+        self._cleanup_task: asyncio.Task | None = None
         self._shutdown = False
         logger.info(
             f"[PATTERN_DETECTION] LogAccumulator initialized: "
@@ -52,7 +53,7 @@ class LogAccumulator:
         await self._process_expired_windows()
         logger.info("[PATTERN_DETECTION] LogAccumulator stopped")
 
-    def add_log(self, raw_log_data: Dict[str, Any]) -> None:
+    def add_log(self, raw_log_data: dict[str, Any]) -> None:
         """
         Add Log.
 
@@ -126,7 +127,7 @@ class LogAccumulator:
                 await asyncio.sleep(30)
 
     async def _process_expired_windows(self) -> None:
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
         expired_windows = [
             (start_time, window)
             for start_time, window in self.windows.items()
@@ -155,7 +156,7 @@ class WindowManager:
         fast_window_minutes: int = 5,
         trend_window_minutes: int = 15,
         max_windows: int = 20,
-        pattern_callback: Optional[Callable[[TimeWindow], None]] = None,
+        pattern_callback: Callable[[TimeWindow], None] | None = None,
     ):
         self.fast_window_minutes = fast_window_minutes
         self.trend_window_minutes = trend_window_minutes
@@ -190,7 +191,7 @@ class WindowManager:
         )
         logger.info("[PATTERN_DETECTION] WindowManager stopped")
 
-    def add_log(self, raw_log_data: Dict[str, Any]) -> None:
+    def add_log(self, raw_log_data: dict[str, Any]) -> None:
         """Add log to both fast and trend accumulators."""
         self.fast_accumulator.add_log(raw_log_data)
         self.trend_accumulator.add_log(raw_log_data)

@@ -3,12 +3,12 @@
 """Secure configuration manager for API key management and rotation."""
 
 import asyncio
+from datetime import datetime
 import hashlib
 import logging
 import os
 import secrets
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import boto3
 from cryptography.fernet import Fernet
@@ -24,11 +24,11 @@ class APIKeyInfo(BaseModel):
     provider: str = Field(..., description="Provider this key belongs to")
     key_hash: str = Field(..., description="SHA-256 hash of the key")
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_used: Optional[datetime] = Field(default=None)
-    expires_at: Optional[datetime] = Field(default=None)
+    last_used: datetime | None = Field(default=None)
+    expires_at: datetime | None = Field(default=None)
     is_active: bool = Field(default=True)
     usage_count: int = Field(default=0)
-    last_rotated: Optional[datetime] = Field(default=None)
+    last_rotated: datetime | None = Field(default=None)
 
 
 class RotationPolicy(BaseModel):
@@ -47,9 +47,9 @@ class SecureConfigManager:
 
     def __init__(
         self,
-        encryption_key: Optional[str] = None,
+        encryption_key: str | None = None,
         aws_region: str = "us-east-1",
-        secrets_manager_secret_name: Optional[str] = None,
+        secrets_manager_secret_name: str | None = None,
     ):
         """Initialize the secure config manager.
 
@@ -79,8 +79,8 @@ class SecureConfigManager:
                 logger.warning(f"Failed to initialize AWS Secrets Manager: {e}")
 
         # In-memory cache for API keys
-        self._key_cache: Dict[str, APIKeyInfo] = {}
-        self._rotation_policies: Dict[str, RotationPolicy] = {}
+        self._key_cache: dict[str, APIKeyInfo] = {}
+        self._rotation_policies: dict[str, RotationPolicy] = {}
 
         # Load existing keys
         asyncio.create_task(self._load_keys())
@@ -150,7 +150,7 @@ class SecureConfigManager:
         self,
         provider: str,
         key_value: str,
-        expires_at: Optional[datetime] = None,
+        expires_at: datetime | None = None,
     ) -> str:
         """Store a new API key securely.
 
@@ -176,7 +176,7 @@ class SecureConfigManager:
         logger.info(f"Stored new API key for provider: {provider}")
         return key_id
 
-    async def get_key(self, key_id: str) -> Optional[str]:
+    async def get_key(self, key_id: str) -> str | None:
         """Retrieve an API key by ID.
 
         Args:
@@ -226,7 +226,7 @@ class SecureConfigManager:
         # In a real implementation, this would trigger rotation workflow
         # For now, we just log the need for rotation
 
-    async def _retrieve_key_value(self, key_id: str) -> Optional[str]:
+    async def _retrieve_key_value(self, key_id: str) -> str | None:
         """Retrieve the actual key value from storage."""
         # In a real implementation, this would decrypt and return the key
         # For security, we don't store the actual key values in memory
@@ -248,7 +248,7 @@ class SecureConfigManager:
         except Exception as e:
             logger.error(f"Failed to persist keys: {e}")
 
-    async def _persist_to_aws_secrets(self, keys_data: Dict[str, Any]) -> None:
+    async def _persist_to_aws_secrets(self, keys_data: dict[str, Any]) -> None:
         """Persist keys to AWS Secrets Manager."""
         import json
 
@@ -266,7 +266,7 @@ class SecureConfigManager:
             SecretString=secret_data,
         )
 
-    async def _persist_to_local(self, keys_data: Dict[str, Any]) -> None:
+    async def _persist_to_local(self, keys_data: dict[str, Any]) -> None:
         """Persist keys to local encrypted storage."""
         # In a real implementation, this would write to encrypted local storage
         logger.debug("Keys persisted to local storage")
@@ -276,11 +276,11 @@ class SecureConfigManager:
         self._rotation_policies[provider] = policy
         logger.info(f"Set rotation policy for provider: {provider}")
 
-    def get_rotation_policy(self, provider: str) -> Optional[RotationPolicy]:
+    def get_rotation_policy(self, provider: str) -> RotationPolicy | None:
         """Get rotation policy for a provider."""
         return self._rotation_policies.get(provider)
 
-    async def list_keys(self, provider: Optional[str] = None) -> List[APIKeyInfo]:
+    async def list_keys(self, provider: str | None = None) -> list[APIKeyInfo]:
         """List all keys, optionally filtered by provider."""
         keys = list(self._key_cache.values())
         if provider:

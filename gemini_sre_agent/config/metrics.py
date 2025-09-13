@@ -4,10 +4,10 @@
 Configuration metrics and alerting.
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict
+import logging
+from typing import Any
 
 
 @dataclass
@@ -111,7 +111,7 @@ class ConfigMetricsCollector:
         logger = logging.getLogger("config.alerts")
         logger.warning("Configuration performance alerts", extra=alert_data)
 
-    def get_performance_summary(self, hours: int = 24) -> Dict[str, Any]:
+    def get_performance_summary(self, hours: int = 24) -> dict[str, Any]:
         """Get configuration performance summary."""
         cutoff_time = datetime.now() - timedelta(hours=hours)
         recent_metrics = [m for m in self.metrics_history if m.timestamp >= cutoff_time]

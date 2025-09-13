@@ -7,9 +7,9 @@ This module provides configuration support for sub-operation modules,
 allowing them to have their own error handling and operational settings.
 """
 
-import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from ..error_handling.core import CircuitBreakerConfig, RetryConfig
 
@@ -24,8 +24,8 @@ class SubOperationConfig:
 
     # Error handling configuration
     error_handling_enabled: bool = True
-    circuit_breaker_config: Optional[CircuitBreakerConfig] = None
-    retry_config: Optional[RetryConfig] = None
+    circuit_breaker_config: CircuitBreakerConfig | None = None
+    retry_config: RetryConfig | None = None
 
     # Operation-specific timeouts
     default_timeout: float = 30.0
@@ -51,10 +51,10 @@ class SubOperationConfig:
     enable_tracing: bool = False
 
     # Provider-specific settings
-    provider_settings: Dict[str, Any] = field(default_factory=dict)
+    provider_settings: dict[str, Any] = field(default_factory=dict)
 
     # Custom operation settings
-    custom_settings: Dict[str, Any] = field(default_factory=dict)
+    custom_settings: dict[str, Any] = field(default_factory=dict)
 
     def get_operation_timeout(self, operation_type: str) -> float:
         """Get timeout for specific operation type."""
@@ -76,7 +76,7 @@ class SubOperationConfig:
         }
         return retry_map.get(operation_type, 2)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
             "operation_name": self.operation_name,
@@ -108,7 +108,7 @@ class SubOperationConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SubOperationConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "SubOperationConfig":
         """Create configuration from dictionary."""
         # Extract circuit breaker config
         circuit_breaker_config = None
@@ -151,10 +151,10 @@ class SubOperationConfig:
 class SubOperationConfigManager:
     """Manages configuration for sub-operation modules."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize configuration manager."""
         self.logger = logger or logging.getLogger("SubOperationConfigManager")
-        self._configs: Dict[str, SubOperationConfig] = {}
+        self._configs: dict[str, SubOperationConfig] = {}
 
     def register_config(self, config: SubOperationConfig) -> None:
         """Register a sub-operation configuration."""
@@ -164,7 +164,7 @@ class SubOperationConfigManager:
 
     def get_config(
         self, provider_type: str, operation_name: str
-    ) -> Optional[SubOperationConfig]:
+    ) -> SubOperationConfig | None:
         """Get configuration for a specific sub-operation."""
         key = f"{provider_type}_{operation_name}"
         return self._configs.get(key)
@@ -173,7 +173,7 @@ class SubOperationConfigManager:
         self,
         provider_type: str,
         operation_name: str,
-        custom_settings: Optional[Dict[str, Any]] = None,
+        custom_settings: dict[str, Any] | None = None,
     ) -> SubOperationConfig:
         """Create default configuration for a sub-operation."""
         # Get provider-specific defaults
@@ -196,7 +196,7 @@ class SubOperationConfigManager:
 
         return config
 
-    def _get_provider_defaults(self, provider_type: str) -> Dict[str, Any]:
+    def _get_provider_defaults(self, provider_type: str) -> dict[str, Any]:
         """Get provider-specific default settings."""
         defaults = {
             "github": {
@@ -229,7 +229,7 @@ class SubOperationConfigManager:
 
         return defaults.get(provider_type, {})
 
-    def list_configs(self) -> List[str]:
+    def list_configs(self) -> list[str]:
         """List all registered configuration keys."""
         return list(self._configs.keys())
 
@@ -245,7 +245,7 @@ _config_manager = SubOperationConfigManager()
 
 def get_sub_operation_config(
     provider_type: str, operation_name: str
-) -> Optional[SubOperationConfig]:
+) -> SubOperationConfig | None:
     """Get sub-operation configuration."""
     return _config_manager.get_config(provider_type, operation_name)
 
@@ -258,7 +258,7 @@ def register_sub_operation_config(config: SubOperationConfig) -> None:
 def create_sub_operation_config(
     provider_type: str,
     operation_name: str,
-    custom_settings: Optional[Dict[str, Any]] = None,
+    custom_settings: dict[str, Any] | None = None,
 ) -> SubOperationConfig:
     """Create sub-operation configuration."""
     return _config_manager.create_default_config(

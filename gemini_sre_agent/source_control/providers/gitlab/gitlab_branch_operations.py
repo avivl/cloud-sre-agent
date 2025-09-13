@@ -8,7 +8,7 @@ This module handles branch-specific operations for the GitLab provider.
 
 import base64
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import gitlab
 from gitlab.exceptions import GitlabGetError
@@ -28,7 +28,7 @@ class GitLabBranchOperations:
         gl: gitlab.Gitlab,
         project: Any,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize branch operations with GitLab client and project."""
         self.gl = gl
@@ -50,7 +50,7 @@ class GitLabBranchOperations:
         # Fall back to direct execution
         return await func(*args, **kwargs)
 
-    async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
+    async def create_branch(self, name: str, base_ref: str | None = None) -> bool:
         """Create a new branch."""
 
         async def _create():
@@ -83,7 +83,7 @@ class GitLabBranchOperations:
 
         return await self._execute_with_error_handling("delete_branch", _delete)
 
-    async def list_branches(self) -> List[BranchInfo]:
+    async def list_branches(self) -> list[BranchInfo]:
         """List all branches."""
 
         async def _list():
@@ -104,7 +104,7 @@ class GitLabBranchOperations:
 
         return await self._execute_with_error_handling("list_branches", _list)
 
-    async def get_branch_info(self, name: str) -> Optional[BranchInfo]:
+    async def get_branch_info(self, name: str) -> BranchInfo | None:
         """Get information about a specific branch."""
 
         async def _get():

@@ -4,11 +4,11 @@
 Tests for source control repository configuration models.
 """
 
-import tempfile
 from pathlib import Path
+import tempfile
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from gemini_sre_agent.config.source_control_remediation import RemediationStrategyConfig
 from gemini_sre_agent.config.source_control_repositories import (

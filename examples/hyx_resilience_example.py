@@ -6,7 +6,7 @@ Following the Jimini Resilience Guide for Python implementation.
 
 import asyncio
 import os
-from typing import Any, Dict
+from typing import Any
 
 from gemini_sre_agent.config.ingestion_config import IngestionConfigManager
 from gemini_sre_agent.ingestion.interfaces.resilience import (
@@ -18,7 +18,7 @@ from gemini_sre_agent.ingestion.interfaces.resilience import (
 
 async def simulate_external_api_call(
     api_name: str, should_fail: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Simulate an external API call that might fail."""
     await asyncio.sleep(0.1)  # Simulate network delay
 
@@ -35,7 +35,7 @@ async def simulate_external_api_call(
 
 async def simulate_database_operation(
     operation: str, should_fail: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Simulate a database operation that might fail."""
     await asyncio.sleep(0.05)  # Simulate database delay
 
@@ -193,8 +193,8 @@ async def demonstrate_with_ingestion_config():
             print(f"   Max throughput: {global_cfg.max_throughput} logs/sec")
             print(f"   Buffer strategy: {global_cfg.buffer_strategy}")
             print(f"   Error threshold: {global_cfg.error_threshold}")
-            print(f"   Retry attempts: 3 (default)")
-            print(f"   Circuit breaker threshold: 5 (default)")
+            print("   Retry attempts: 3 (default)")
+            print("   Circuit breaker threshold: 5 (default)")
 
         else:
             print(f"❌ Configuration file not found: {config_path}")

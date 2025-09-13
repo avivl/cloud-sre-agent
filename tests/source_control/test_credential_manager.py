@@ -297,7 +297,7 @@ class TestCredentialManager:
         assert os.path.exists(cred_file)
 
         # Verify the content is encrypted (not plain text)
-        with open(cred_file, "r") as f:
+        with open(cred_file) as f:
             content = f.read()
             assert "sensitive-token" not in content
 

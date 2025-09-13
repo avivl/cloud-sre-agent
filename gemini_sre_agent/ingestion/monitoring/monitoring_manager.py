@@ -11,10 +11,10 @@ This module provides a unified interface for all monitoring capabilities:
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from .alerts import (
     AlertLevel,
@@ -67,7 +67,7 @@ class MonitoringManager:
     - Alerting and notification management
     """
 
-    def __init__(self, config: Optional[MonitoringConfig] = None) -> None:
+    def __init__(self, config: MonitoringConfig | None = None) -> None:
         """
         Initialize the monitoring manager.
 
@@ -77,13 +77,13 @@ class MonitoringManager:
         self.config = config or MonitoringConfig()
 
         # Initialize monitoring components
-        self.metrics_collector: Optional[MetricsCollector] = None
-        self.health_checker: Optional[HealthChecker] = None
-        self.performance_monitor: Optional[PerformanceMonitor] = None
-        self.alert_manager: Optional[AlertManager] = None
+        self.metrics_collector: MetricsCollector | None = None
+        self.health_checker: HealthChecker | None = None
+        self.performance_monitor: PerformanceMonitor | None = None
+        self.alert_manager: AlertManager | None = None
 
         self._running = False
-        self._startup_task: Optional[asyncio.Task] = None
+        self._startup_task: asyncio.Task | None = None
 
         logger.info("MonitoringManager initialized")
 
@@ -164,35 +164,35 @@ class MonitoringManager:
         if startup_tasks:
             await asyncio.gather(*startup_tasks)
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get comprehensive metrics summary."""
         if not self.metrics_collector:
             return {"error": "Metrics collection not enabled"}
 
         return self.metrics_collector.get_metrics_summary()
 
-    def get_health_summary(self) -> Dict[str, Any]:
+    def get_health_summary(self) -> dict[str, Any]:
         """Get comprehensive health summary."""
         if not self.health_checker:
             return {"error": "Health checking not enabled"}
 
         return self.health_checker.get_health_summary()
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary."""
         if not self.performance_monitor:
             return {"error": "Performance monitoring not enabled"}
 
         return self.performance_monitor.get_performance_summary()
 
-    def get_alert_summary(self) -> Dict[str, Any]:
+    def get_alert_summary(self) -> dict[str, Any]:
         """Get comprehensive alert summary."""
         if not self.alert_manager:
             return {"error": "Alerting not enabled"}
 
         return self.alert_manager.get_alert_summary()
 
-    def get_comprehensive_status(self) -> Dict[str, Any]:
+    def get_comprehensive_status(self) -> dict[str, Any]:
         """
         Get comprehensive system status including all monitoring data.
 
@@ -273,8 +273,8 @@ class MonitoringManager:
         message: str,
         level: AlertLevel,
         source: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Any]:
+        metadata: dict[str, Any] | None = None,
+    ) -> Any | None:
         """Create an alert."""
         if self.alert_manager:
             return await self.alert_manager.create_alert(
@@ -288,13 +288,13 @@ class MonitoringManager:
             logger.warning("Alerting not enabled, cannot create alert")
             return None
 
-    def get_bottlenecks(self, threshold_ms: float = 1000.0) -> List[Dict[str, Any]]:
+    def get_bottlenecks(self, threshold_ms: float = 1000.0) -> list[dict[str, Any]]:
         """Get performance bottlenecks."""
         if self.performance_monitor:
             return self.performance_monitor.get_bottlenecks(threshold_ms)
         return []
 
-    def get_active_alerts(self) -> List[Any]:
+    def get_active_alerts(self) -> list[Any]:
         """Get active alerts."""
         if self.alert_manager:
             return self.alert_manager.get_active_alerts()
@@ -302,7 +302,7 @@ class MonitoringManager:
 
 
 # Global monitoring manager instance
-_global_monitoring_manager: Optional[MonitoringManager] = None
+_global_monitoring_manager: MonitoringManager | None = None
 
 
 def get_global_monitoring_manager() -> MonitoringManager:
@@ -321,7 +321,7 @@ def set_global_monitoring_manager(manager: MonitoringManager) -> None:
 
 # Convenience functions for common monitoring operations
 async def start_monitoring(
-    config: Optional[MonitoringConfig] = None,
+    config: MonitoringConfig | None = None,
 ) -> MonitoringManager:
     """Start the global monitoring system."""
     manager = MonitoringManager(config)
@@ -337,7 +337,7 @@ async def stop_monitoring() -> None:
         await manager.stop()
 
 
-def get_system_status() -> Dict[str, Any]:
+def get_system_status() -> dict[str, Any]:
     """Get comprehensive system status."""
     manager = get_global_monitoring_manager()
     if manager:
@@ -369,7 +369,7 @@ async def create_system_alert(
     message: str,
     level: AlertLevel = AlertLevel.WARNING,
     source: str = "system",
-) -> Optional[Any]:
+) -> Any | None:
     """Create a system alert."""
     manager = get_global_monitoring_manager()
     if manager:

@@ -1,6 +1,6 @@
 # gemini_sre_agent/metrics/metrics_manager.py
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from gemini_sre_agent.llm.config_manager import ConfigManager
 
@@ -21,10 +21,10 @@ class MetricsManager:
             config_manager: The configuration manager instance.
         """
         self.config_manager = config_manager
-        self.provider_metrics: Dict[str, ProviderMetrics] = {}
-        self.global_metrics: Dict[str, Any] = {}
-        self.alert_thresholds: Dict[str, Any] = {}
-        self.history: Dict[str, Any] = {}
+        self.provider_metrics: dict[str, ProviderMetrics] = {}
+        self.global_metrics: dict[str, Any] = {}
+        self.alert_thresholds: dict[str, Any] = {}
+        self.history: dict[str, Any] = {}
         self._setup_metrics_storage()
 
     def _setup_metrics_storage(self) -> None:
@@ -45,7 +45,7 @@ class MetricsManager:
         output_tokens: int,
         cost: float,
         success: bool,
-        error_info: Optional[Dict[str, Any]] = None,
+        error_info: dict[str, Any] | None = None,
     ) -> None:
         """
         Record metrics for a provider request.
@@ -92,7 +92,7 @@ class MetricsManager:
             return self.provider_metrics[provider_id].health_score
         return 1.0  # Default to healthy if no metrics yet
 
-    def get_dashboard_data(self, time_range: str = "1h") -> Dict[str, Any]:
+    def get_dashboard_data(self, time_range: str = "1h") -> dict[str, Any]:
         """
         Get Dashboard Data.
 
@@ -117,7 +117,7 @@ class MetricsManager:
         generator = DashboardDataGenerator(self)
         return generator.generate_overview_data()
 
-    def check_alerts(self) -> List[Any]:
+    def check_alerts(self) -> list[Any]:
         """
         Check for threshold violations and generate alerts.
 
@@ -127,7 +127,7 @@ class MetricsManager:
         # Placeholder for alert checking logic
         return []
 
-    def rank_providers(self, metric: str = "health") -> List[Tuple[str, float]]:
+    def rank_providers(self, metric: str = "health") -> list[tuple[str, float]]:
         """
         Rank providers by a specified metric.
 
@@ -137,7 +137,7 @@ class MetricsManager:
         Returns:
             A list of tuples with provider ID and the metric value, sorted.
         """
-        ranked_providers: List[Tuple[str, float]] = []
+        ranked_providers: list[tuple[str, float]] = []
         if metric == "health":
             ranked_providers = [
                 (pid, m.health_score) for pid, m in self.provider_metrics.items()

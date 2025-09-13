@@ -9,14 +9,14 @@ error handling, and other common LLM operations.
 
 import json
 import re
-from typing import Type, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
 
 
-def parse_structured_output(text: str, model: Type[T]) -> T:
+def parse_structured_output(text: str, model: type[T]) -> T:
     """
     Parse text into a structured Pydantic model.
 
@@ -45,7 +45,7 @@ def parse_structured_output(text: str, model: Type[T]) -> T:
             else:
                 raise ValueError("Could not extract JSON from response")
         except Exception as e:
-            raise ValueError(f"Failed to parse structured output: {str(e)}") from e
+            raise ValueError(f"Failed to parse structured output: {e!s}") from e
 
 
 def extract_json_from_text(text: str) -> dict:

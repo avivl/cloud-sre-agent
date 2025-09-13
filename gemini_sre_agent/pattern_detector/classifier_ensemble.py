@@ -9,7 +9,7 @@ robustness of pattern detection.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 from ..logger import setup_logging
 from .confidence_calculators import ConfidenceRuleFactory, ConfidenceScoreProcessor
@@ -45,14 +45,14 @@ class EnsembleConfig:
     min_agreement_threshold: float = 0.3
 
     # Pattern-specific configurations
-    pattern_configs: Optional[Dict[str, PatternMatcherConfig]] = None
+    pattern_configs: dict[str, PatternMatcherConfig] | None = None
 
     def __post_init__(self) -> None:
         """Set default pattern configurations."""
         if self.pattern_configs is None:
             self.pattern_configs = self._get_default_pattern_configs()
 
-    def _get_default_pattern_configs(self) -> Dict[str, PatternMatcherConfig]:
+    def _get_default_pattern_configs(self) -> dict[str, PatternMatcherConfig]:
         """Get default pattern matcher configurations."""
         return {
             "cascade_failure": PatternMatcherConfig(
@@ -107,8 +107,8 @@ class EnsembleStrategy(Protocol):
     """Protocol for ensemble voting strategies."""
 
     def combine_patterns(
-        self, patterns: List[PatternMatch], config: EnsembleConfig
-    ) -> List[PatternMatch]:
+        self, patterns: list[PatternMatch], config: EnsembleConfig
+    ) -> list[PatternMatch]:
         """Combine patterns using the ensemble strategy."""
         ...
 
@@ -117,8 +117,8 @@ class MajorityVotingStrategy:
     """Majority voting ensemble strategy."""
 
     def combine_patterns(
-        self, patterns: List[PatternMatch], config: EnsembleConfig
-    ) -> List[PatternMatch]:
+        self, patterns: list[PatternMatch], config: EnsembleConfig
+    ) -> list[PatternMatch]:
         """Combine patterns using majority voting."""
         if not patterns:
             return []
@@ -146,8 +146,8 @@ class WeightedVotingStrategy:
     """Weighted voting ensemble strategy."""
 
     def combine_patterns(
-        self, patterns: List[PatternMatch], config: EnsembleConfig
-    ) -> List[PatternMatch]:
+        self, patterns: list[PatternMatch], config: EnsembleConfig
+    ) -> list[PatternMatch]:
         """Combine patterns using weighted voting."""
         if not patterns:
             return []
@@ -180,8 +180,8 @@ class WeightedVotingStrategy:
         return ensemble_patterns
 
     def _combine_group_patterns(
-        self, patterns: List[PatternMatch], config: EnsembleConfig
-    ) -> Optional[PatternMatch]:
+        self, patterns: list[PatternMatch], config: EnsembleConfig
+    ) -> PatternMatch | None:
         """Combine multiple patterns of the same type."""
         if not patterns:
             return None
@@ -250,7 +250,7 @@ class WeightedVotingStrategy:
 
         return confidence_weight + frequency_weight + recency_weight
 
-    def _combine_evidence(self, patterns: List[PatternMatch]) -> Dict[str, Any]:
+    def _combine_evidence(self, patterns: list[PatternMatch]) -> dict[str, Any]:
         """Combine evidence from multiple patterns."""
         combined_evidence = {}
 
@@ -284,7 +284,7 @@ class WeightedVotingStrategy:
 
         return combined_evidence
 
-    def _combine_suggested_actions(self, patterns: List[PatternMatch]) -> List[str]:
+    def _combine_suggested_actions(self, patterns: list[PatternMatch]) -> list[str]:
         """Combine suggested actions from multiple patterns."""
         all_actions = []
         for pattern in patterns:
@@ -300,7 +300,7 @@ class WeightedVotingStrategy:
 
         return unique_actions
 
-    def _determine_combined_severity(self, severity_levels: List[str]) -> str:
+    def _determine_combined_severity(self, severity_levels: list[str]) -> str:
         """Determine combined severity level from multiple patterns."""
         severity_order = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
         max_severity = "LOW"
@@ -314,7 +314,7 @@ class WeightedVotingStrategy:
 
         return max_severity
 
-    def _determine_combined_priority(self, priorities: List[str]) -> str:
+    def _determine_combined_priority(self, priorities: list[str]) -> str:
         """Determine combined remediation priority from multiple patterns."""
         priority_order = ["LOW", "MEDIUM", "HIGH", "IMMEDIATE"]
         max_priority = "LOW"
@@ -333,8 +333,8 @@ class ConsensusVotingStrategy:
     """Consensus voting ensemble strategy."""
 
     def combine_patterns(
-        self, patterns: List[PatternMatch], config: EnsembleConfig
-    ) -> List[PatternMatch]:
+        self, patterns: list[PatternMatch], config: EnsembleConfig
+    ) -> list[PatternMatch]:
         """Combine patterns using consensus voting."""
         if not patterns:
             return []
@@ -363,8 +363,8 @@ class ConsensusVotingStrategy:
         return ensemble_patterns
 
     def _find_consensus_pattern(
-        self, patterns: List[PatternMatch], config: EnsembleConfig
-    ) -> Optional[PatternMatch]:
+        self, patterns: list[PatternMatch], config: EnsembleConfig
+    ) -> PatternMatch | None:
         """Find consensus pattern from multiple patterns."""
         if len(patterns) < 2:
             return patterns[0] if patterns else None
@@ -429,7 +429,11 @@ class ConsensusVotingStrategy:
 class PatternEnsemble:
     """Ensemble pattern classifier that combines multiple pattern matchers."""
 
-    def __init__(self, config: Optional[EnsembleConfig] = None, confidence_scorer: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        config: EnsembleConfig | None = None,
+        confidence_scorer: str | None = None,
+    ) -> None:
         self.config = config or EnsembleConfig()
         self.confidence_scorer = confidence_scorer
         self.logger = setup_logging()
@@ -449,8 +453,8 @@ class PatternEnsemble:
         self.logger.info("[PATTERN_ENSEMBLE] PatternEnsemble initialized")
 
     def classify_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Classify patterns using ensemble methods."""
         self.logger.info(
             f"[PATTERN_ENSEMBLE] Starting ensemble classification: "
@@ -511,7 +515,7 @@ class PatternEnsemble:
             )
             return WeightedVotingStrategy()
 
-    def get_ensemble_metrics(self) -> Dict[str, Any]:
+    def get_ensemble_metrics(self) -> dict[str, Any]:
         """Get metrics about the ensemble performance."""
         return {
             "voting_strategy": self.config.voting_strategy,

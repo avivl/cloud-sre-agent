@@ -10,7 +10,6 @@ components for better maintainability and testability.
 """
 
 import logging
-from typing import Dict, List, Optional
 
 from ..cost_management_integration import IntegratedCostManager
 from ..factory import LLMProviderFactory
@@ -32,7 +31,7 @@ class PerformanceBenchmark:
         self,
         provider_factory: LLMProviderFactory,
         model_registry: ModelRegistry,
-        cost_manager: Optional[IntegratedCostManager] = None,
+        cost_manager: IntegratedCostManager | None = None,
     ):
         """Initialize the performance benchmark tool."""
         self.provider_factory = provider_factory
@@ -47,10 +46,10 @@ class PerformanceBenchmark:
 
     async def run_latency_benchmarks(
         self,
-        providers: Optional[List[str]] = None,
-        models: Optional[List[str]] = None,
-        config: Optional[BenchmarkConfig] = None,
-    ) -> Dict[str, BenchmarkResult]:
+        providers: list[str] | None = None,
+        models: list[str] | None = None,
+        config: BenchmarkConfig | None = None,
+    ) -> dict[str, BenchmarkResult]:
         """Run latency benchmarks across providers and models."""
         config = config or BenchmarkConfig()
         results = {}
@@ -115,10 +114,10 @@ class PerformanceBenchmark:
 
     async def run_throughput_benchmarks(
         self,
-        providers: Optional[List[str]] = None,
-        models: Optional[List[str]] = None,
-        config: Optional[BenchmarkConfig] = None,
-    ) -> Dict[str, BenchmarkResult]:
+        providers: list[str] | None = None,
+        models: list[str] | None = None,
+        config: BenchmarkConfig | None = None,
+    ) -> dict[str, BenchmarkResult]:
         """Run throughput benchmarks across providers and models."""
         config = config or BenchmarkConfig()
         results = {}
@@ -183,10 +182,10 @@ class PerformanceBenchmark:
 
     async def run_memory_benchmarks(
         self,
-        providers: Optional[List[str]] = None,
-        models: Optional[List[str]] = None,
-        config: Optional[BenchmarkConfig] = None,
-    ) -> Dict[str, BenchmarkResult]:
+        providers: list[str] | None = None,
+        models: list[str] | None = None,
+        config: BenchmarkConfig | None = None,
+    ) -> dict[str, BenchmarkResult]:
         """Run memory usage benchmarks across providers and models."""
         config = config or BenchmarkConfig()
         results = {}
@@ -251,10 +250,10 @@ class PerformanceBenchmark:
 
     async def run_concurrency_benchmarks(
         self,
-        providers: Optional[List[str]] = None,
-        models: Optional[List[str]] = None,
-        config: Optional[BenchmarkConfig] = None,
-    ) -> Dict[str, BenchmarkResult]:
+        providers: list[str] | None = None,
+        models: list[str] | None = None,
+        config: BenchmarkConfig | None = None,
+    ) -> dict[str, BenchmarkResult]:
         """Run concurrency benchmarks across providers and models."""
         config = config or BenchmarkConfig()
         results = {}
@@ -317,15 +316,15 @@ class PerformanceBenchmark:
 
         return results
 
-    def get_summary_stats(self) -> Dict[str, float]:
+    def get_summary_stats(self) -> dict[str, float]:
         """Get summary statistics across all benchmark results."""
         return self.metrics_collector.get_summary_stats()
 
-    def get_results_by_provider(self) -> Dict[str, List[BenchmarkResult]]:
+    def get_results_by_provider(self) -> dict[str, list[BenchmarkResult]]:
         """Group results by provider."""
         return self.metrics_collector.get_results_by_provider()
 
-    def get_results_by_model(self) -> Dict[str, List[BenchmarkResult]]:
+    def get_results_by_model(self) -> dict[str, list[BenchmarkResult]]:
         """Group results by model."""
         return self.metrics_collector.get_results_by_model()
 
@@ -337,9 +336,9 @@ class PerformanceBenchmark:
 # Backward compatibility - re-export the main class and models
 
 __all__ = [
-    "PerformanceBenchmark",
-    "BenchmarkResult",
     "BenchmarkConfig",
-    "MemoryMonitor",
+    "BenchmarkResult",
     "CPUMonitor",
+    "MemoryMonitor",
+    "PerformanceBenchmark",
 ]

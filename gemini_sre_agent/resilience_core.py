@@ -1,10 +1,12 @@
 # gemini_sre_agent/resilience_core.py
 
 import asyncio
-import logging
 from asyncio import TimeoutError  # Added for asyncio.wait_for
+import builtins
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Dict, TypeVar
+import logging
+from typing import Any, TypeVar
 
 # from hyx.timeout.api import timeout # Removed due to unclear API
 from hyx.bulkhead import bulkhead  # type: ignore
@@ -26,11 +28,11 @@ class ResilienceConfig:
     Configuration model for various resilience patterns.
     """
 
-    retry: Dict[str, Any]
-    circuit_breaker: Dict[str, Any]
+    retry: dict[str, Any]
+    circuit_breaker: dict[str, Any]
     timeout: float  # Re-added timeout
-    bulkhead: Dict[str, Any]
-    rate_limit: Dict[str, Any]  # Re-added rate_limit
+    bulkhead: dict[str, Any]
+    rate_limit: dict[str, Any]  # Re-added rate_limit
 
 
 class HyxResilientClient:
@@ -121,7 +123,7 @@ class HyxResilientClient:
             self._stats["successful_operations"] += 1
             logger.info("Resilient operation completed successfully.")
             return result
-        except TimeoutError:  # Catch asyncio.TimeoutError
+        except builtins.TimeoutError:  # Catch asyncio.TimeoutError
             self._stats["failed_operations"] += 1
             self._stats["timeouts"] += 1  # Increment timeouts stat
             logger.error(
@@ -158,7 +160,7 @@ class HyxResilientClient:
             )
             pass
 
-    def get_health_stats(self) -> Dict[str, Any]:
+    def get_health_stats(self) -> dict[str, Any]:
         """
         Retrieves comprehensive health statistics for the resilient client.
 

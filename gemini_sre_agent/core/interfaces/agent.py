@@ -8,7 +8,7 @@ to agent operations and coordination.
 """
 
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from ..types import (
     AgentContext,
@@ -39,7 +39,7 @@ class BaseAgent(MonitorableComponent[RequestT, ResponseT]):
         self,
         agent_id: AgentId,
         agent_name: AgentName,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the base agent.
@@ -67,17 +67,17 @@ class BaseAgent(MonitorableComponent[RequestT, ResponseT]):
         return self._agent_name
 
     @property
-    def capabilities(self) -> List[str]:
+    def capabilities(self) -> list[str]:
         """Get the agent's capabilities."""
         return self._capabilities.copy()
 
     @property
-    def current_request_id(self) -> Optional[RequestId]:
+    def current_request_id(self) -> RequestId | None:
         """Get the current request ID being processed."""
         return self._current_request_id
 
     @property
-    def current_user_id(self) -> Optional[UserId]:
+    def current_user_id(self) -> UserId | None:
         """Get the current user ID."""
         return self._current_user_id
 
@@ -122,7 +122,7 @@ class BaseAgent(MonitorableComponent[RequestT, ResponseT]):
         pass
 
     def set_current_request(
-        self, request_id: RequestId, user_id: Optional[UserId] = None
+        self, request_id: RequestId, user_id: UserId | None = None
     ) -> None:
         """
         Set the current request being processed.
@@ -201,7 +201,7 @@ class TriageAgent(BaseAgent[RequestT, ResponseT]):
         self,
         agent_id: AgentId,
         agent_name: AgentName,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the triage agent.
@@ -270,7 +270,7 @@ class AnalysisAgent(BaseAgent[RequestT, ResponseT]):
         self,
         agent_id: AgentId,
         agent_name: AgentName,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the analysis agent.
@@ -302,7 +302,7 @@ class AnalysisAgent(BaseAgent[RequestT, ResponseT]):
     @abstractmethod
     def detect_trends(
         self, data: Content, context: AgentContext
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Detect trends in data.
 
@@ -318,7 +318,7 @@ class AnalysisAgent(BaseAgent[RequestT, ResponseT]):
     @abstractmethod
     def generate_insights(
         self, analysis_result: Any, context: AgentContext
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Generate insights from analysis results.
 
@@ -343,7 +343,7 @@ class RemediationAgent(BaseAgent[RequestT, ResponseT]):
         self,
         agent_id: AgentId,
         agent_name: AgentName,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the remediation agent.
@@ -389,7 +389,7 @@ class RemediationAgent(BaseAgent[RequestT, ResponseT]):
     @abstractmethod
     def analyze_impact(
         self, remediation_action: Any, context: AgentContext
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze the impact of a remediation action.
 
@@ -411,7 +411,7 @@ class AgentCoordinator(MonitorableComponent[RequestT, ResponseT]):
     """
 
     def __init__(
-        self, coordinator_id: str, name: str, config: Optional[ConfigDict] = None
+        self, coordinator_id: str, name: str, config: ConfigDict | None = None
     ) -> None:
         """
         Initialize the agent coordinator.
@@ -422,11 +422,11 @@ class AgentCoordinator(MonitorableComponent[RequestT, ResponseT]):
             config: Optional initial configuration
         """
         super().__init__(coordinator_id, name, config)
-        self._agents: Dict[AgentId, BaseAgent] = {}
+        self._agents: dict[AgentId, BaseAgent] = {}
         self._workflow_state = {}
 
     @property
-    def agents(self) -> Dict[AgentId, BaseAgent]:
+    def agents(self) -> dict[AgentId, BaseAgent]:
         """Get registered agents."""
         return self._agents.copy()
 
@@ -466,7 +466,7 @@ class AgentCoordinator(MonitorableComponent[RequestT, ResponseT]):
 
     @abstractmethod
     def coordinate_workflow(
-        self, workflow: Dict[str, Any], context: AgentContext
+        self, workflow: dict[str, Any], context: AgentContext
     ) -> ResponseT:
         """
         Coordinate a multi-agent workflow.
@@ -480,7 +480,7 @@ class AgentCoordinator(MonitorableComponent[RequestT, ResponseT]):
         """
         pass
 
-    def get_agent_by_id(self, agent_id: AgentId) -> Optional[BaseAgent]:
+    def get_agent_by_id(self, agent_id: AgentId) -> BaseAgent | None:
         """
         Get an agent by its ID.
 
@@ -492,7 +492,7 @@ class AgentCoordinator(MonitorableComponent[RequestT, ResponseT]):
         """
         return self._agents.get(agent_id)
 
-    def get_agents_by_capability(self, capability: str) -> List[BaseAgent]:
+    def get_agents_by_capability(self, capability: str) -> list[BaseAgent]:
         """
         Get agents that have a specific capability.
 
@@ -506,7 +506,7 @@ class AgentCoordinator(MonitorableComponent[RequestT, ResponseT]):
             agent for agent in self._agents.values() if agent.has_capability(capability)
         ]
 
-    def get_workflow_state(self) -> Dict[str, Any]:
+    def get_workflow_state(self) -> dict[str, Any]:
         """
         Get the current workflow state.
 

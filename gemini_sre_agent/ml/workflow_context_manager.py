@@ -8,7 +8,7 @@ for the unified workflow orchestrator.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .caching import IssuePatternCache, RepositoryContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
@@ -36,8 +36,8 @@ class WorkflowContextManager:
         self,
         enhanced_agent: EnhancedAnalysisAgent,
         repo_path: str = ".",
-        repo_cache: Optional[RepositoryContextCache] = None,
-        pattern_cache: Optional[IssuePatternCache] = None,
+        repo_cache: RepositoryContextCache | None = None,
+        pattern_cache: IssuePatternCache | None = None,
     ):
         """
         Initialize the context manager.
@@ -69,7 +69,7 @@ class WorkflowContextManager:
 
     async def build_enhanced_context(
         self,
-        triage_packet: Dict[str, Any],
+        triage_packet: dict[str, Any],
         flow_id: str,
         analysis_depth: str,
     ) -> PromptContext:
@@ -210,7 +210,7 @@ class WorkflowContextManager:
             raise
 
     async def _extract_issue_context_async(
-        self, triage_packet: Dict[str, Any]
+        self, triage_packet: dict[str, Any]
     ) -> IssueContext:
         """Helper method for async issue context extraction."""
         try:
@@ -220,7 +220,7 @@ class WorkflowContextManager:
             raise
 
     def _create_fallback_context(
-        self, triage_packet: Dict[str, Any], issue_context: Optional[IssueContext]
+        self, triage_packet: dict[str, Any], issue_context: IssueContext | None
     ) -> PromptContext:
         """Create fallback context when context building fails."""
         # Create fallback issue context with safe defaults
@@ -258,7 +258,7 @@ class WorkflowContextManager:
             generator_type="unknown",
         )
 
-    async def get_cache_stats(self) -> Dict[str, Any]:
+    async def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         return {
             "repo_cache_stats": self.repo_cache.get_cache_stats(),

@@ -4,8 +4,8 @@
 Tests for the file system adapter.
 """
 
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 

@@ -4,9 +4,8 @@
 Baseline tracking for rate-based threshold evaluation.
 """
 
-import logging
 from collections import defaultdict
-from typing import Dict, List
+import logging
 
 from .models import TimeWindow
 
@@ -18,8 +17,8 @@ class BaselineTracker:
 
     def __init__(self, max_history: int = 100) -> None:
         self.max_history = max_history
-        self.service_baselines: Dict[str, List[float]] = defaultdict(list)
-        self.global_baseline: List[float] = []
+        self.service_baselines: dict[str, list[float]] = defaultdict(list)
+        self.global_baseline: list[float] = []
         logger.info(
             f"[PATTERN_DETECTION] BaselineTracker initialized: max_history={max_history}"
         )

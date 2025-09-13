@@ -8,14 +8,11 @@ versioning, A/B testing, analytics, optimization, and team collaboration.
 import asyncio
 import json
 import logging
-from typing import Dict, List
 
 from gemini_sre_agent.llm.enhanced_mirascope_integration import (
     EnhancedPromptManager,
     get_enhanced_prompt_manager,
 )
-from gemini_sre_agent.llm.config_manager import ConfigManager
-from gemini_sre_agent.llm.factory import LLMProviderFactory
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -25,15 +22,16 @@ logger = logging.getLogger(__name__)
 async def demo_prompt_creation_and_versioning():
     """Demonstrate prompt creation and versioning."""
     logger.info("=== Demo: Prompt Creation and Versioning ===")
-    
+
     # Initialize enhanced prompt manager
     prompt_manager = EnhancedPromptManager(storage_path="./demo_prompts")
-    
+
     # Create a new prompt
     prompt_id = prompt_manager.create_prompt(
         name="SRE Triage Analysis",
         template="""
-        You are an expert SRE analyst. Analyze the following log entries and provide a triage assessment.
+        You are an expert SRE analyst. Analyze the following log entries and 
+        provide a triage assessment.
         
         Log entries:
         {log_entries}
@@ -52,9 +50,9 @@ async def demo_prompt_creation_and_versioning():
         tags=["sre", "triage", "analysis"],
         metadata={"domain": "infrastructure", "criticality": "high"}
     )
-    
+
     logger.info(f"Created prompt with ID: {prompt_id}")
-    
+
     # Create a new version with improvements
     version_2 = prompt_manager.create_version(
         prompt_id=prompt_id,
@@ -82,24 +80,24 @@ async def demo_prompt_creation_and_versioning():
         tags=["sre", "triage", "analysis", "enhanced"],
         metadata={"improvements": ["detailed_analysis", "impact_assessment", "escalation"]}
     )
-    
+
     logger.info(f"Created version 2: {version_2}")
-    
+
     # Deploy version to different environments
     prompt_manager.deploy_version(prompt_id, "1.0.0", "staging", "sre_team")
     prompt_manager.deploy_version(prompt_id, version_2, "production", "senior_sre")
-    
+
     logger.info("Deployed versions to staging and production environments")
-    
+
     return prompt_id
 
 
 async def demo_ab_testing():
     """Demonstrate A/B testing capabilities."""
     logger.info("=== Demo: A/B Testing ===")
-    
+
     prompt_manager = get_enhanced_prompt_manager()
-    
+
     # Create a prompt for A/B testing
     prompt_id = prompt_manager.create_prompt(
         name="Customer Support Response",
@@ -107,7 +105,7 @@ async def demo_ab_testing():
         category="support",
         owner="support_team"
     )
-    
+
     # Create two versions for A/B testing
     version_a = prompt_manager.create_version(
         prompt_id=prompt_id,
@@ -124,7 +122,7 @@ async def demo_ab_testing():
         created_by="support_team",
         description="Version A: Standard response format"
     )
-    
+
     version_b = prompt_manager.create_version(
         prompt_id=prompt_id,
         template="""
@@ -142,14 +140,14 @@ async def demo_ab_testing():
         created_by="support_team",
         description="Version B: Friendly, emoji-enhanced response"
     )
-    
+
     # Run A/B test
     test_config = {
         "traffic_split": 0.5,  # 50/50 split
         "success_metric": "customer_satisfaction",
         "minimum_sample_size": 100,
     }
-    
+
     test_id = prompt_manager.run_ab_test(
         prompt_id=prompt_id,
         version_a=version_a,
@@ -157,9 +155,9 @@ async def demo_ab_testing():
         test_config=test_config,
         duration_hours=48
     )
-    
+
     logger.info(f"Started A/B test {test_id} between versions {version_a} and {version_b}")
-    
+
     # Simulate some usage data
     for i in range(20):
         # Simulate version A usage
@@ -177,7 +175,7 @@ async def demo_ab_testing():
                 "customer_satisfaction": 0.7 + i * 0.02,
             }
         )
-        
+
         # Simulate version B usage
         prompt_manager.record_usage(
             prompt_id=prompt_id,
@@ -193,42 +191,42 @@ async def demo_ab_testing():
                 "customer_satisfaction": 0.8 + i * 0.02,
             }
         )
-    
+
     logger.info("Recorded usage data for A/B test")
-    
+
     return prompt_id, test_id
 
 
 async def demo_analytics():
     """Demonstrate analytics and reporting."""
     logger.info("=== Demo: Analytics and Reporting ===")
-    
+
     prompt_manager = get_enhanced_prompt_manager()
-    
+
     # Get analytics for a prompt
     analytics = prompt_manager.get_analytics(
         prompt_id="demo_prompt",  # Use the prompt from previous demo
         time_range_hours=24
     )
-    
+
     logger.info(f"Analytics data: {json.dumps(analytics, indent=2)}")
-    
+
     # Get version-specific analytics
     version_analytics = prompt_manager.get_analytics(
         prompt_id="demo_prompt",
         version="2.0.0",
         time_range_hours=24
     )
-    
+
     logger.info(f"Version analytics: {json.dumps(version_analytics, indent=2)}")
 
 
 async def demo_prompt_optimization():
     """Demonstrate prompt optimization."""
     logger.info("=== Demo: Prompt Optimization ===")
-    
+
     prompt_manager = get_enhanced_prompt_manager()
-    
+
     # Create a prompt to optimize
     prompt_id = prompt_manager.create_prompt(
         name="Code Review Assistant",
@@ -236,7 +234,7 @@ async def demo_prompt_optimization():
         category="development",
         owner="dev_team"
     )
-    
+
     # Define optimization goals
     optimization_goals = [
         "improve_code_quality_detection",
@@ -244,7 +242,7 @@ async def demo_prompt_optimization():
         "reduce_response_time",
         "increase_accuracy"
     ]
-    
+
     # Define test cases
     test_cases = [
         {
@@ -263,32 +261,32 @@ async def demo_prompt_optimization():
             "type": "contains"
         }
     ]
-    
+
     # Run optimization
     optimized_version = prompt_manager.optimize_prompt(
         prompt_id=prompt_id,
         optimization_goals=optimization_goals,
         test_cases=test_cases
     )
-    
+
     logger.info(f"Created optimized version: {optimized_version}")
-    
+
     # Run tests on the optimized version
     test_results = prompt_manager.test_prompt(
         prompt_id=prompt_id,
         test_cases=test_cases,
         version=optimized_version
     )
-    
+
     logger.info(f"Test results: {json.dumps(test_results, indent=2)}")
 
 
 async def demo_comprehensive_testing():
     """Demonstrate comprehensive prompt testing."""
     logger.info("=== Demo: Comprehensive Testing ===")
-    
+
     prompt_manager = get_enhanced_prompt_manager()
-    
+
     # Create a prompt for testing
     prompt_id = prompt_manager.create_prompt(
         name="API Documentation Generator",
@@ -310,7 +308,7 @@ async def demo_comprehensive_testing():
         category="documentation",
         owner="api_team"
     )
-    
+
     # Define comprehensive test cases
     test_cases = [
         {
@@ -344,22 +342,22 @@ async def demo_comprehensive_testing():
             "type": "contains"
         }
     ]
-    
+
     # Run tests
     test_results = prompt_manager.test_prompt(
         prompt_id=prompt_id,
         test_cases=test_cases
     )
-    
+
     logger.info(f"Comprehensive test results: {json.dumps(test_results, indent=2)}")
 
 
 async def demo_team_collaboration():
     """Demonstrate team collaboration features."""
     logger.info("=== Demo: Team Collaboration ===")
-    
+
     prompt_manager = get_enhanced_prompt_manager()
-    
+
     # Create a prompt for team collaboration
     prompt_id = prompt_manager.create_prompt(
         name="Security Incident Response",
@@ -367,7 +365,7 @@ async def demo_team_collaboration():
         category="security",
         owner="security_team"
     )
-    
+
     # Add collaborators
     prompt_data = prompt_manager.prompts[prompt_id]
     prompt_data.collaborators = ["security_lead", "incident_manager", "sre_team"]
@@ -376,7 +374,7 @@ async def demo_team_collaboration():
         "incident_manager": ["read", "write"],
         "sre_team": ["read"]
     }
-    
+
     # Create a version by a collaborator
     version = prompt_manager.create_version(
         prompt_id=prompt_id,
@@ -412,9 +410,9 @@ async def demo_team_collaboration():
         description="Enhanced security incident analysis template",
         tags=["security", "incident", "response", "enhanced"]
     )
-    
+
     logger.info(f"Created collaborative version: {version}")
-    
+
     # Deploy with approval workflow
     prompt_manager.deploy_version(
         prompt_id=prompt_id,
@@ -422,43 +420,43 @@ async def demo_team_collaboration():
         environment="production",
         deploy_by="security_lead"
     )
-    
+
     logger.info("Deployed version with team collaboration")
 
 
 async def main():
     """Run all Mirascope integration demos."""
     logger.info("Starting Enhanced Mirascope Integration Demo")
-    
+
     try:
         # Demo 1: Prompt creation and versioning
         prompt_id = await demo_prompt_creation_and_versioning()
-        
+
         # Demo 2: A/B testing
         ab_prompt_id, test_id = await demo_ab_testing()
-        
+
         # Demo 3: Analytics
         await demo_analytics()
-        
+
         # Demo 4: Prompt optimization
         await demo_prompt_optimization()
-        
+
         # Demo 5: Comprehensive testing
         await demo_comprehensive_testing()
-        
+
         # Demo 6: Team collaboration
         await demo_team_collaboration()
-        
+
         logger.info("All Mirascope integration demos completed successfully!")
-        
+
         # Summary
         prompt_manager = get_enhanced_prompt_manager()
         all_prompts = prompt_manager.prompts
         logger.info(f"Created {len(all_prompts)} prompts with enhanced Mirascope integration")
-        
+
         for prompt_id, prompt_data in all_prompts.items():
             logger.info(f"Prompt '{prompt_data.name}': {len(prompt_data.versions)} versions")
-        
+
     except Exception as e:
         logger.error(f"Demo failed: {e}")
         raise

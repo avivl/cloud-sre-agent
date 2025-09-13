@@ -20,7 +20,7 @@ import json
 import logging
 import re
 import time
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any
 
 try:
     from mirascope.llm import Provider
@@ -56,7 +56,7 @@ class StructuredResponseGenerator:
         model_selector: ModelSelector,
         model_scorer: ModelScorer,
         performance_monitor: PerformanceMonitor,
-        providers: Dict[str, Any],
+        providers: dict[str, Any],
     ):
         """Initialize the structured response generator.
 
@@ -76,8 +76,8 @@ class StructuredResponseGenerator:
 
     async def generate(
         self,
-        prompt: Union[str, Any],
-        response_model: Type[T],
+        prompt: str | Any,
+        response_model: type[T],
         context: ServiceContext,
         **kwargs: Any,
     ) -> T:
@@ -179,10 +179,10 @@ class StructuredResponseGenerator:
             except Exception as metrics_error:
                 self.logger.warning(f"Failed to record metrics: {metrics_error}")
 
-            self.logger.error(f"Error generating structured response: {str(e)}")
+            self.logger.error(f"Error generating structured response: {e!s}")
             raise
 
-    def _create_structured_prompt(self, prompt: str, response_model: Type[T]) -> str:
+    def _create_structured_prompt(self, prompt: str, response_model: type[T]) -> str:
         """Create a structured prompt based on the response model.
 
         Args:
@@ -237,7 +237,7 @@ Please respond with a valid JSON object that includes all required fields for th
 
 Respond only with the JSON object, no additional text."""
 
-    def _parse_structured_response(self, content: str, response_model: Type[T]) -> T:
+    def _parse_structured_response(self, content: str, response_model: type[T]) -> T:
         """Parse structured response from content.
 
         Args:
@@ -261,7 +261,7 @@ Respond only with the JSON object, no additional text."""
             # Fallback: create a basic response with the raw content
             return self._create_fallback_response(content, response_model)
 
-    def _create_fallback_response(self, content: str, response_model: Type[T]) -> T:
+    def _create_fallback_response(self, content: str, response_model: type[T]) -> T:
         """Create a fallback response when JSON parsing fails.
 
         Args:
@@ -300,7 +300,7 @@ Respond only with the JSON object, no additional text."""
     async def _select_model_for_task(
         self,
         context: ServiceContext,
-        required_capabilities: Optional[List] = None,
+        required_capabilities: list | None = None,
     ) -> tuple[ModelInfo, SelectionResult]:
         """Select the best model for a task based on criteria.
 
@@ -373,7 +373,7 @@ class TextResponseGenerator:
         model_selector: ModelSelector,
         model_scorer: ModelScorer,
         performance_monitor: PerformanceMonitor,
-        providers: Dict[str, Any],
+        providers: dict[str, Any],
     ):
         """Initialize the text response generator.
 
@@ -393,7 +393,7 @@ class TextResponseGenerator:
 
     async def generate(
         self,
-        prompt: Union[str, Any],
+        prompt: str | Any,
         context: ServiceContext,
         **kwargs: Any,
     ) -> str:
@@ -477,13 +477,13 @@ class TextResponseGenerator:
             except Exception as metrics_error:
                 self.logger.warning(f"Failed to record metrics: {metrics_error}")
 
-            self.logger.error(f"Error generating text response: {str(e)}")
+            self.logger.error(f"Error generating text response: {e!s}")
             raise
 
     async def _select_model_for_task(
         self,
         context: ServiceContext,
-        required_capabilities: Optional[List] = None,
+        required_capabilities: list | None = None,
     ) -> tuple[ModelInfo, SelectionResult]:
         """Select the best model for a task based on criteria.
 
@@ -556,7 +556,7 @@ class FallbackResponseGenerator:
         model_selector: ModelSelector,
         model_scorer: ModelScorer,
         performance_monitor: PerformanceMonitor,
-        providers: Dict[str, Any],
+        providers: dict[str, Any],
     ):
         """Initialize the fallback response generator.
 
@@ -576,11 +576,11 @@ class FallbackResponseGenerator:
 
     async def generate(
         self,
-        prompt: Union[str, Any],
+        prompt: str | Any,
         context: ServiceContext,
-        response_model: Optional[Type[T]] = None,
+        response_model: type[T] | None = None,
         **kwargs: Any,
-    ) -> Union[str, T]:
+    ) -> str | T:
         """Generate response with automatic fallback chain execution.
 
         Args:
@@ -651,7 +651,7 @@ class FallbackResponseGenerator:
 
             except Exception as e:
                 last_error = e
-                self.logger.warning(f"Model {model_info.name} failed: {str(e)}")
+                self.logger.warning(f"Model {model_info.name} failed: {e!s}")
 
                 # Record failure
                 self.performance_monitor.record_success(
@@ -669,11 +669,11 @@ class FallbackResponseGenerator:
 
         # All models failed
         self.logger.error(
-            f"All {context.max_attempts} models in fallback chain failed. Last error: {str(last_error)}"
+            f"All {context.max_attempts} models in fallback chain failed. Last error: {last_error!s}"
         )
         raise last_error or Exception("All models in fallback chain failed")
 
-    def _parse_structured_response(self, content: str, response_model: Type[T]) -> T:
+    def _parse_structured_response(self, content: str, response_model: type[T]) -> T:
         """Parse structured response from content.
 
         Args:
@@ -697,7 +697,7 @@ class FallbackResponseGenerator:
             # Fallback: create a basic response with the raw content
             return self._create_fallback_response(content, response_model)
 
-    def _create_fallback_response(self, content: str, response_model: Type[T]) -> T:
+    def _create_fallback_response(self, content: str, response_model: type[T]) -> T:
         """Create a fallback response when JSON parsing fails.
 
         Args:

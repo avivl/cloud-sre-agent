@@ -7,9 +7,9 @@ This module provides comprehensive error classification logic using modular
 components for pattern detection, classification algorithms, and metrics collection.
 """
 
-import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from .classification_algorithms import (
     BaseErrorClassifier,
@@ -46,14 +46,14 @@ class ErrorClassifierConfig:
     enable_metrics_collection: bool = True
     confidence_threshold: float = 0.5
     fallback_to_unknown: bool = True
-    custom_patterns: Optional[Dict[str, Any]] = None
-    algorithm_config: Optional[Dict[str, Any]] = None
+    custom_patterns: dict[str, Any] | None = None
+    algorithm_config: dict[str, Any] | None = None
 
 
 class ErrorClassifier:
     """Refactored error classifier using modular components."""
 
-    def __init__(self, config: Optional[ErrorClassifierConfig] = None) -> None:
+    def __init__(self, config: ErrorClassifierConfig | None = None) -> None:
         """Initialize the error classifier with modular components."""
         self.config = config or ErrorClassifierConfig()
         self.logger = logging.getLogger("ErrorClassifier")
@@ -93,7 +93,7 @@ class ErrorClassifier:
             # Fallback to hybrid
             return HybridClassifier(**algorithm_config)
 
-    def _create_pattern_matcher(self) -> Optional[PatternMatcher]:
+    def _create_pattern_matcher(self) -> PatternMatcher | None:
         """Create pattern matcher based on configuration."""
         if self.config.custom_patterns:
             # Use custom pattern configuration
@@ -159,8 +159,8 @@ class ErrorClassifier:
                 raise
 
     def _classify_with_patterns(
-        self, error_text: str, context: Dict[str, Any]
-    ) -> Optional[PatternMatch]:
+        self, error_text: str, context: dict[str, Any]
+    ) -> PatternMatch | None:
         """Classify error using pattern matching."""
         if not self.pattern_matcher:
             return None
@@ -377,13 +377,13 @@ class ErrorClassifier:
         else:
             return ErrorType.UNKNOWN_ERROR
 
-    def get_metrics_summary(self) -> Optional[MetricsSummary]:
+    def get_metrics_summary(self) -> MetricsSummary | None:
         """Get metrics summary if metrics collection is enabled."""
         if self.metrics_collector:
             return self.metrics_collector.export_metrics(self.config.strategy.value)
         return None
 
-    def get_performance_report(self) -> Optional[str]:
+    def get_performance_report(self) -> str | None:
         """Get performance report if metrics collection is enabled."""
         if self.metrics_collector:
             return self.metrics_collector.generate_classification_report()
@@ -402,15 +402,15 @@ class ErrorClassifier:
             self.pattern_matcher.add_pattern(pattern, error_type, confidence)
             self.logger.info(f"Added custom pattern for {error_type}: {pattern}")
 
-    def get_classification_statistics(self) -> Optional[Dict[str, Any]]:
+    def get_classification_statistics(self) -> dict[str, Any] | None:
         """Get classification statistics if metrics collection is enabled."""
         if self.metrics_collector:
             return self.metrics_collector.get_performance_summary()
         return None
 
     def compare_with_original_classifier(
-        self, original_classifier: "ErrorClassifier", test_errors: List[Exception]
-    ) -> Optional[MetricsComparator]:
+        self, original_classifier: "ErrorClassifier", test_errors: list[Exception]
+    ) -> MetricsComparator | None:
         """Compare performance with the original classifier."""
         if not self.metrics_collector:
             return None
@@ -423,14 +423,14 @@ class ErrorClassifier:
 
 # Backward compatibility functions
 def create_error_classifier(
-    config: Optional[ErrorClassifierConfig] = None,
+    config: ErrorClassifierConfig | None = None,
 ) -> ErrorClassifier:
     """Create an ErrorClassifier instance with the given configuration."""
     return ErrorClassifier(config)
 
 
 def classify_error(
-    error: Exception, config: Optional[ErrorClassifierConfig] = None
+    error: Exception, config: ErrorClassifierConfig | None = None
 ) -> ErrorClassification:
     """Classify an error using the default classifier configuration."""
     classifier = ErrorClassifier(config)

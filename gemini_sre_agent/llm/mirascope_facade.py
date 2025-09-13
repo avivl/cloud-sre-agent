@@ -7,12 +7,12 @@ This module provides a unified facade for Mirascope integration, combining
 configuration, client management, response processing, and analytics.
 """
 
-import logging
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type, TypeVar
+import logging
+from typing import Any, TypeVar
+import uuid
 
 from pydantic import BaseModel
 
@@ -60,10 +60,10 @@ class IntegrationMetrics:
     average_response_time_ms: float = 0.0
     total_tokens_used: int = 0
     total_cost_usd: float = 0.0
-    provider_usage: Dict[str, int] = field(default_factory=dict)
-    request_type_usage: Dict[str, int] = field(default_factory=dict)
-    error_rates: Dict[str, float] = field(default_factory=dict)
-    last_request_time: Optional[datetime] = None
+    provider_usage: dict[str, int] = field(default_factory=dict)
+    request_type_usage: dict[str, int] = field(default_factory=dict)
+    error_rates: dict[str, float] = field(default_factory=dict)
+    last_request_time: datetime | None = None
     uptime_seconds: float = 0.0
 
 
@@ -73,11 +73,11 @@ class RequestContext:
 
     request_id: str
     request_type: RequestType
-    provider: Optional[str] = None
-    model: Optional[str] = None
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    provider: str | None = None
+    model: str | None = None
+    user_id: str | None = None
+    session_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
 
 
@@ -86,7 +86,7 @@ class AnalyticsCollector:
 
     def __init__(self) -> None:
         self.metrics = IntegrationMetrics()
-        self.request_history: List[Dict[str, Any]] = []
+        self.request_history: list[dict[str, Any]] = []
         self.logger = logging.getLogger(__name__)
         self._start_time = datetime.now()
 
@@ -95,9 +95,9 @@ class AnalyticsCollector:
         context: RequestContext,
         success: bool,
         response_time_ms: float,
-        tokens_used: Optional[int] = None,
-        cost_usd: Optional[float] = None,
-        error_message: Optional[str] = None,
+        tokens_used: int | None = None,
+        cost_usd: float | None = None,
+        error_message: str | None = None,
     ) -> None:
         """Record a request in analytics."""
         self.metrics.total_requests += 1
@@ -189,7 +189,7 @@ class AnalyticsCollector:
         """Get current metrics."""
         return self.metrics
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get health status based on metrics."""
         if self.metrics.total_requests == 0:
             return {"status": "no_requests", "message": "No requests processed yet"}
@@ -211,7 +211,7 @@ class AnalyticsCollector:
             "uptime_seconds": self.metrics.uptime_seconds,
         }
 
-    def get_provider_stats(self) -> Dict[str, Dict[str, Any]]:
+    def get_provider_stats(self) -> dict[str, dict[str, Any]]:
         """Get statistics by provider."""
         stats = {}
 
@@ -243,9 +243,9 @@ class MirascopeIntegrationFacade:
 
     def __init__(
         self,
-        config_manager: Optional[ConfigurationManager] = None,
-        client_manager: Optional[MirascopeClientManager] = None,
-        response_processor: Optional[ResponseProcessor] = None,
+        config_manager: ConfigurationManager | None = None,
+        client_manager: MirascopeClientManager | None = None,
+        response_processor: ResponseProcessor | None = None,
     ):
         """Initialize the integration facade."""
         self.config_manager = config_manager or get_config_manager()
@@ -283,10 +283,10 @@ class MirascopeIntegrationFacade:
     async def generate(
         self,
         prompt: str,
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        provider: str | None = None,
+        model: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
         **kwargs: Any,
     ) -> ProcessedResponse:
         """Generate a response with full processing."""
@@ -361,13 +361,13 @@ class MirascopeIntegrationFacade:
     async def generate_structured(
         self,
         prompt: str,
-        response_model: Type[T],
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        response_model: type[T],
+        provider: str | None = None,
+        model: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
         **kwargs: Any,
-    ) -> tuple[ProcessedResponse, Optional[T]]:
+    ) -> tuple[ProcessedResponse, T | None]:
         """Generate a structured response."""
         context = RequestContext(
             request_id=str(uuid.uuid4()),
@@ -460,10 +460,10 @@ class MirascopeIntegrationFacade:
     async def stream_generate(
         self,
         prompt: str,
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        provider: str | None = None,
+        model: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
         **kwargs: Any,
     ) -> Any:
         """Generate a streaming response."""
@@ -505,7 +505,7 @@ class MirascopeIntegrationFacade:
             )
             raise
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get comprehensive health status."""
         return {
             "integration_status": self.status.value,
@@ -515,7 +515,7 @@ class MirascopeIntegrationFacade:
             "client_health": self.client_manager.get_client_health(),
         }
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get comprehensive metrics."""
         return {
             "integration_metrics": self.analytics.get_metrics(),
@@ -568,7 +568,7 @@ class MirascopeIntegrationFacade:
 
 
 # Global integration facade instance
-_integration_facade: Optional[MirascopeIntegrationFacade] = None
+_integration_facade: MirascopeIntegrationFacade | None = None
 
 
 def get_integration_facade() -> MirascopeIntegrationFacade:
@@ -580,9 +580,9 @@ def get_integration_facade() -> MirascopeIntegrationFacade:
 
 
 def create_integration_facade(
-    config_manager: Optional[ConfigurationManager] = None,
-    client_manager: Optional[MirascopeClientManager] = None,
-    response_processor: Optional[ResponseProcessor] = None,
+    config_manager: ConfigurationManager | None = None,
+    client_manager: MirascopeClientManager | None = None,
+    response_processor: ResponseProcessor | None = None,
 ) -> MirascopeIntegrationFacade:
     """Create a new integration facade instance."""
     return MirascopeIntegrationFacade(

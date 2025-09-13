@@ -7,13 +7,13 @@ This module provides comprehensive metrics collection, analysis, and reporting
 for service performance monitoring and optimization.
 """
 
-import logging
-import statistics
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+import logging
+import statistics
+from typing import Any
 
 
 class MetricType(Enum):
@@ -43,8 +43,8 @@ class MetricPoint:
 
     timestamp: datetime
     value: float
-    tags: Dict[str, str] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -56,14 +56,14 @@ class MetricSeries:
     points: deque = field(default_factory=lambda: deque(maxlen=1000))
     aggregation_window: timedelta = field(default_factory=lambda: timedelta(minutes=5))
 
-    def add_point(self, value: float, tags: Optional[Dict[str, str]] = None) -> None:
+    def add_point(self, value: float, tags: dict[str, str] | None = None) -> None:
         """Add a new data point to the series."""
         point = MetricPoint(timestamp=datetime.now(), value=value, tags=tags or {})
         self.points.append(point)
 
     def get_aggregated_value(
-        self, aggregation: MetricAggregation, window: Optional[timedelta] = None
-    ) -> Optional[float]:
+        self, aggregation: MetricAggregation, window: timedelta | None = None
+    ) -> float | None:
         """Get aggregated value for the specified time window."""
         if not self.points:
             return None
@@ -114,12 +114,12 @@ class ServicePerformanceMetrics:
     error_rate: float = 0.0
     throughput: float = 0.0  # requests per second
     availability: float = 100.0
-    last_request_time: Optional[datetime] = None
-    first_request_time: Optional[datetime] = None
+    last_request_time: datetime | None = None
+    first_request_time: datetime | None = None
     health_score: float = 1.0
 
     def update_with_request(
-        self, success: bool, response_time: float, timestamp: Optional[datetime] = None
+        self, success: bool, response_time: float, timestamp: datetime | None = None
     ) -> None:
         """Update metrics with a new request."""
         if timestamp is None:
@@ -193,8 +193,8 @@ class ServiceAlert:
     severity: str  # 'low', 'medium', 'high', 'critical'
     message: str
     is_active: bool = False
-    triggered_at: Optional[datetime] = None
-    resolved_at: Optional[datetime] = None
+    triggered_at: datetime | None = None
+    resolved_at: datetime | None = None
 
     def check_condition(self, value: float) -> bool:
         """Check if the alert condition is met."""
@@ -218,8 +218,8 @@ class MetricsCollector:
     """Collects and stores metrics for services."""
 
     def __init__(self, max_series_length: int = 1000) -> None:
-        self.metrics: Dict[str, ServicePerformanceMetrics] = {}
-        self.metric_series: Dict[str, MetricSeries] = {}
+        self.metrics: dict[str, ServicePerformanceMetrics] = {}
+        self.metric_series: dict[str, MetricSeries] = {}
         self.max_series_length = max_series_length
         self.logger = logging.getLogger(__name__)
 
@@ -228,7 +228,7 @@ class MetricsCollector:
         service_id: str,
         success: bool,
         response_time: float,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
     ) -> None:
         """Record a service request."""
         if service_id not in self.metrics:
@@ -246,7 +246,7 @@ class MetricsCollector:
         )
 
     def _record_metric_point(
-        self, metric_name: str, value: float, tags: Optional[Dict[str, str]] = None
+        self, metric_name: str, value: float, tags: dict[str, str] | None = None
     ) -> None:
         """Record a metric point in the time series."""
         if metric_name not in self.metric_series:
@@ -258,11 +258,11 @@ class MetricsCollector:
 
     def get_service_metrics(
         self, service_id: str
-    ) -> Optional[ServicePerformanceMetrics]:
+    ) -> ServicePerformanceMetrics | None:
         """Get metrics for a specific service."""
         return self.metrics.get(service_id)
 
-    def get_all_metrics(self) -> Dict[str, ServicePerformanceMetrics]:
+    def get_all_metrics(self) -> dict[str, ServicePerformanceMetrics]:
         """Get metrics for all services."""
         return self.metrics.copy()
 
@@ -270,8 +270,8 @@ class MetricsCollector:
         self,
         metric_name: str,
         aggregation: MetricAggregation = MetricAggregation.AVG,
-        window: Optional[timedelta] = None,
-    ) -> Optional[float]:
+        window: timedelta | None = None,
+    ) -> float | None:
         """Get aggregated value for a metric series."""
         series = self.metric_series.get(metric_name)
         if not series:
@@ -284,8 +284,8 @@ class AlertManager:
     """Manages alerts and notifications for service metrics."""
 
     def __init__(self) -> None:
-        self.alerts: Dict[str, List[ServiceAlert]] = defaultdict(list)
-        self.active_alerts: Dict[str, ServiceAlert] = {}
+        self.alerts: dict[str, list[ServiceAlert]] = defaultdict(list)
+        self.active_alerts: dict[str, ServiceAlert] = {}
         self.logger = logging.getLogger(__name__)
 
     def add_alert(self, alert: ServiceAlert) -> None:
@@ -295,7 +295,7 @@ class AlertManager:
 
     def check_alerts(
         self, service_id: str, metrics: ServicePerformanceMetrics
-    ) -> List[ServiceAlert]:
+    ) -> list[ServiceAlert]:
         """Check all alerts for a service and return triggered alerts."""
         triggered_alerts = []
         service_alerts = self.alerts.get(service_id, [])
@@ -339,7 +339,7 @@ class AlertManager:
 
     def _get_metric_value(
         self, metric_name: str, metrics: ServicePerformanceMetrics
-    ) -> Optional[float]:
+    ) -> float | None:
         """Get the value of a specific metric."""
         if metric_name == "error_rate":
             return metrics.error_rate
@@ -356,7 +356,7 @@ class AlertManager:
         else:
             return None
 
-    def get_active_alerts(self) -> List[ServiceAlert]:
+    def get_active_alerts(self) -> list[ServiceAlert]:
         """Get all currently active alerts."""
         return list(self.active_alerts.values())
 
@@ -368,7 +368,7 @@ class MetricsReporter:
         self.metrics_collector = metrics_collector
         self.logger = logging.getLogger(__name__)
 
-    def generate_service_report(self, service_id: str) -> Dict[str, Any]:
+    def generate_service_report(self, service_id: str) -> dict[str, Any]:
         """Generate a comprehensive report for a service."""
         metrics = self.metrics_collector.get_service_metrics(service_id)
         if not metrics:
@@ -404,7 +404,7 @@ class MetricsReporter:
             },
         }
 
-    def generate_summary_report(self) -> Dict[str, Any]:
+    def generate_summary_report(self) -> dict[str, Any]:
         """Generate a summary report for all services."""
         all_metrics = self.metrics_collector.get_all_metrics()
 
@@ -437,7 +437,7 @@ class MetricsReporter:
             },
         }
 
-    def export_metrics(self, format: str = "json") -> Union[Dict[str, Any], str]:
+    def export_metrics(self, format: str = "json") -> dict[str, Any] | str:
         """Export metrics in the specified format."""
         all_metrics = self.metrics_collector.get_all_metrics()
 
@@ -489,7 +489,7 @@ class ServiceMetricsManager:
         service_id: str,
         success: bool,
         response_time: float,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
     ) -> None:
         """Record a service request and check for alerts."""
         self.collector.record_request(service_id, success, response_time, timestamp)
@@ -509,26 +509,26 @@ class ServiceMetricsManager:
 
     def get_service_metrics(
         self, service_id: str
-    ) -> Optional[ServicePerformanceMetrics]:
+    ) -> ServicePerformanceMetrics | None:
         """Get metrics for a specific service."""
         return self.collector.get_service_metrics(service_id)
 
-    def get_all_metrics(self) -> Dict[str, ServicePerformanceMetrics]:
+    def get_all_metrics(self) -> dict[str, ServicePerformanceMetrics]:
         """Get metrics for all services."""
         return self.collector.get_all_metrics()
 
-    def generate_service_report(self, service_id: str) -> Dict[str, Any]:
+    def generate_service_report(self, service_id: str) -> dict[str, Any]:
         """Generate a report for a specific service."""
         return self.reporter.generate_service_report(service_id)
 
-    def generate_summary_report(self) -> Dict[str, Any]:
+    def generate_summary_report(self) -> dict[str, Any]:
         """Generate a summary report for all services."""
         return self.reporter.generate_summary_report()
 
-    def get_active_alerts(self) -> List[ServiceAlert]:
+    def get_active_alerts(self) -> list[ServiceAlert]:
         """Get all currently active alerts."""
         return self.alert_manager.get_active_alerts()
 
-    def export_metrics(self, format: str = "json") -> Union[Dict[str, Any], str]:
+    def export_metrics(self, format: str = "json") -> dict[str, Any] | str:
         """Export metrics in the specified format."""
         return self.reporter.export_metrics(format)

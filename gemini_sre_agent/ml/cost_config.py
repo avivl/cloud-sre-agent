@@ -8,8 +8,8 @@ cost tracker for managing API usage costs and budget constraints.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
@@ -27,9 +27,9 @@ class BudgetConfig:
     enable_daily_reset: bool = True
     enable_monthly_reset: bool = True
     currency: str = "USD"
-    model_costs: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    model_costs: dict[str, dict[str, float]] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
             "daily_budget_usd": self.daily_budget_usd,
@@ -42,7 +42,7 @@ class BudgetConfig:
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "BudgetConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "BudgetConfig":
         """Create configuration from dictionary."""
         return cls(**config_dict)
 
@@ -77,12 +77,12 @@ class UsageRecord:
         operation: str = "unknown",
         model: str = "unknown",
         success: bool = True,
-        error_message: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        error_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
         # Aliases for backward compatibility
-        model_name: Optional[str] = None,
-        operation_type: Optional[str] = None,
-        request_id: Optional[str] = None,
+        model_name: str | None = None,
+        operation_type: str | None = None,
+        request_id: str | None = None,
     ):
         self.timestamp = timestamp
         self.operation = operation_type or operation
@@ -113,7 +113,7 @@ class UsageRecord:
         """Get request ID from metadata."""
         return self.metadata.get("request_id", "")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert usage record to dictionary."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -128,7 +128,7 @@ class UsageRecord:
         }
 
     @classmethod
-    def from_dict(cls, record_dict: Dict[str, Any]) -> "UsageRecord":
+    def from_dict(cls, record_dict: dict[str, Any]) -> "UsageRecord":
         """Create usage record from dictionary."""
         # Parse timestamp
         timestamp = record_dict["timestamp"]
@@ -168,10 +168,10 @@ class CostSummary:
     failed_requests: int
     total_input_tokens: int
     total_output_tokens: int
-    cost_by_model: Dict[str, float] = field(default_factory=dict)
-    cost_by_operation: Dict[str, float] = field(default_factory=dict)
+    cost_by_model: dict[str, float] = field(default_factory=dict)
+    cost_by_operation: dict[str, float] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert cost summary to dictionary."""
         return {
             "period_start": self.period_start.isoformat(),
@@ -217,9 +217,9 @@ class BudgetStatus:
     monthly_usage_percent: float
     is_over_budget: bool
     is_near_limit: bool
-    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_updated: datetime = field(default_factory=lambda: datetime.now(UTC))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert budget status to dictionary."""
         return {
             "daily_used_usd": self.daily_used_usd,

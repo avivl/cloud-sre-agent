@@ -3,8 +3,9 @@
 """Main resilience manager orchestrating all resilience patterns."""
 
 import asyncio
+from collections.abc import Callable
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from .circuit_breaker import (
     CircuitBreaker,
@@ -23,7 +24,7 @@ class ResilienceManager:
 
     def __init__(
         self,
-        providers: Optional[List[str]] = None,
+        providers: list[str] | None = None,
         max_retries: int = 3,
         base_delay: float = 1.0,
         max_delay: float = 60.0,
@@ -101,7 +102,7 @@ class ResilienceManager:
         enable_retry: bool = True,
         enable_fallback: bool = True,
         **kwargs,
-    ) -> Tuple[Any, str]:
+    ) -> tuple[Any, str]:
         """Execute a function with full resilience patterns.
 
         Args:
@@ -187,7 +188,7 @@ class ResilienceManager:
         original_func: Callable,
         *args,
         **kwargs,
-    ) -> Tuple[Any, str]:
+    ) -> tuple[Any, str]:
         """Try fallback to other providers.
 
         Args:
@@ -261,7 +262,7 @@ class ResilienceManager:
             return self.fallback_manager.get_provider_health(provider)
         return True
 
-    def get_comprehensive_stats(self) -> Dict[str, Any]:
+    def get_comprehensive_stats(self) -> dict[str, Any]:
         """Get comprehensive statistics for all resilience components."""
         stats = {
             "resilience_manager": {
@@ -286,7 +287,7 @@ class ResilienceManager:
 
         return stats
 
-    def get_provider_stats(self, provider: str) -> Dict[str, Any]:
+    def get_provider_stats(self, provider: str) -> dict[str, Any]:
         """Get statistics for a specific provider."""
         stats = {
             "provider": provider,
@@ -302,9 +303,9 @@ class ResilienceManager:
     def configure_provider(
         self,
         provider: str,
-        max_retries: Optional[int] = None,
-        circuit_breaker_threshold: Optional[int] = None,
-        circuit_breaker_timeout: Optional[float] = None,
+        max_retries: int | None = None,
+        circuit_breaker_threshold: int | None = None,
+        circuit_breaker_timeout: float | None = None,
     ) -> None:
         """Configure resilience settings for a specific provider.
 
@@ -324,7 +325,7 @@ class ResilienceManager:
 
         logger.info(f"Updated configuration for provider {provider}")
 
-    def add_provider(self, provider: str, position: Optional[int] = None) -> None:
+    def add_provider(self, provider: str, position: int | None = None) -> None:
         """Add a provider to the resilience system."""
         if provider not in self.providers:
             self.providers.append(provider)
@@ -344,7 +345,7 @@ class ResilienceManager:
 
         return True
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform a health check of the resilience system."""
         healthy_providers = 0
         total_providers = len(self.providers)

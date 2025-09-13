@@ -10,7 +10,7 @@ shows real-world usage patterns.
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # Import the error handling components
 from gemini_sre_agent.source_control.error_handling import (
@@ -38,7 +38,7 @@ class ProviderManager:
 
     def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
-        self.providers: Dict[str, Any] = {}
+        self.providers: dict[str, Any] = {}
         self.config_manager = SubOperationConfigManager()
         self.error_handling_factory = ErrorHandlingFactory()
         self._setup_default_configurations()
@@ -370,14 +370,14 @@ class ProviderManager:
             self.logger.error(f"Health check failed for {provider_name}: {e}")
             return False
 
-    async def get_all_provider_health(self) -> Dict[str, bool]:
+    async def get_all_provider_health(self) -> dict[str, bool]:
         """Get health status of all providers."""
         health_status = {}
         for provider_name in self.providers:
             health_status[provider_name] = await self.get_provider_health(provider_name)
         return health_status
 
-    def get_provider_stats(self, provider_name: str) -> Dict[str, Any]:
+    def get_provider_stats(self, provider_name: str) -> dict[str, Any]:
         """Get performance statistics for a provider."""
         if provider_name not in self.providers:
             return {}
@@ -387,7 +387,7 @@ class ProviderManager:
             return provider.get_performance_stats()
         return {}
 
-    def get_all_provider_stats(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_provider_stats(self) -> dict[str, dict[str, Any]]:
         """Get performance statistics for all providers."""
         stats = {}
         for provider_name in self.providers:
@@ -440,9 +440,7 @@ async def local_provider_example():
                     print(
                         f"     - Content: '{result[:50]}{'...' if len(result) > 50 else ''}'"
                     )
-                elif isinstance(result, bool):
-                    print(f"     - Result: {result}")
-                elif hasattr(result, "__dict__"):
+                elif isinstance(result, bool) or hasattr(result, "__dict__"):
                     print(f"     - Result: {result}")
             except Exception as e:
                 print(f"   {op_name}: FAILED - {type(e).__name__}: {e}")
@@ -636,9 +634,8 @@ async def configuration_management_example():
 
         # Test deserialization
         restored_config = SubOperationConfig.from_dict(config_dict)
-        print(
-            f"   Restored config matches: {restored_config.operation_name == custom_config.operation_name}"
-        )
+        matches = restored_config.operation_name == custom_config.operation_name
+        print(f"   Restored config matches: {matches}")
 
         print("\n4. Testing configuration retrieval...")
 
@@ -684,9 +681,8 @@ async def configuration_management_example():
             "local", "file_operations"
         )
         if updated_retrieved:
-            print(
-                f"   Updated config - Max retries: {updated_retrieved.get_operation_retries('file')}"
-            )
+            retries = updated_retrieved.get_operation_retries("file")
+            print(f"   Updated config - Max retries: {retries}")
             print(
                 f"   Updated config - Timeout: {updated_retrieved.get_operation_timeout('file')}"
             )

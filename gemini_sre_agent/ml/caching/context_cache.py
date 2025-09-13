@@ -8,12 +8,12 @@ and other frequently accessed data to improve response times.
 """
 
 import asyncio
+from dataclasses import dataclass
 import hashlib
 import json
 import logging
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -62,11 +62,11 @@ class ContextCache:
         self.cleanup_interval_seconds = cleanup_interval_seconds
         self.max_entries = max_entries
 
-        self.cache: Dict[str, CacheEntry] = {}
+        self.cache: dict[str, CacheEntry] = {}
         self.logger = logging.getLogger(__name__)
 
         # Start cleanup task
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
         self._start_cleanup_task()
 
     def _start_cleanup_task(self):
@@ -150,7 +150,7 @@ class ContextCache:
             # Fallback for non-serializable objects
             return 1024  # Default size
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """
         Get a value from cache.
 
@@ -179,7 +179,7 @@ class ContextCache:
         return entry.value
 
     async def set(
-        self, key: str, value: Any, ttl_seconds: Optional[int] = None
+        self, key: str, value: Any, ttl_seconds: int | None = None
     ) -> bool:
         """
         Set a value in cache.
@@ -238,7 +238,7 @@ class ContextCache:
         self.cache.clear()
         self.logger.info("Cache cleared")
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         current_time = time.time()
         current_size = sum(entry.size_bytes for entry in self.cache.values())
@@ -303,7 +303,7 @@ class RepositoryContextCache:
 
     async def get_repository_context(
         self, repo_path: str, analysis_depth: str = "standard"
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """
         Get cached repository context.
 
@@ -380,7 +380,7 @@ class IssuePatternCache:
 
     async def get_issue_pattern(
         self, pattern_type: str, pattern_data: str
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """
         Get cached issue pattern.
 

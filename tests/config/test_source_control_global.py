@@ -4,8 +4,8 @@
 Tests for source control global configuration models.
 """
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from gemini_sre_agent.config.source_control_credentials import CredentialConfig
 from gemini_sre_agent.config.source_control_global import (

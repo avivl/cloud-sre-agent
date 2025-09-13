@@ -5,7 +5,6 @@ Credential configuration models for source control providers.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import Field, field_validator, model_validator
 from pydantic.types import SecretStr
@@ -17,58 +16,58 @@ class CredentialConfig(BaseConfig):
     """Configuration for repository credentials."""
 
     # Token-based authentication
-    token_env: Optional[str] = Field(
+    token_env: str | None = Field(
         None, description="Environment variable containing the token"
     )
-    token_file: Optional[str] = Field(
+    token_file: str | None = Field(
         None, description="File path containing the token"
     )
-    token: Optional[SecretStr] = Field(
+    token: SecretStr | None = Field(
         None, description="Direct token value (not recommended for production)"
     )
 
     # Username/password authentication
-    username_env: Optional[str] = Field(
+    username_env: str | None = Field(
         None, description="Environment variable for username"
     )
-    password_env: Optional[str] = Field(
+    password_env: str | None = Field(
         None, description="Environment variable for password"
     )
-    username: Optional[str] = Field(
+    username: str | None = Field(
         None, description="Direct username value (not recommended for production)"
     )
-    password: Optional[SecretStr] = Field(
+    password: SecretStr | None = Field(
         None, description="Direct password value (not recommended for production)"
     )
 
     # SSH key authentication
-    ssh_key_path: Optional[str] = Field(None, description="Path to SSH private key")
-    ssh_key_passphrase_env: Optional[str] = Field(
+    ssh_key_path: str | None = Field(None, description="Path to SSH private key")
+    ssh_key_passphrase_env: str | None = Field(
         None, description="Environment variable for SSH key passphrase"
     )
-    ssh_key_passphrase: Optional[SecretStr] = Field(
+    ssh_key_passphrase: SecretStr | None = Field(
         None, description="Direct SSH key passphrase (not recommended for production)"
     )
 
     # OAuth authentication
-    client_id_env: Optional[str] = Field(
+    client_id_env: str | None = Field(
         None, description="Environment variable for OAuth client ID"
     )
-    client_secret_env: Optional[str] = Field(
+    client_secret_env: str | None = Field(
         None, description="Environment variable for OAuth client secret"
     )
-    client_id: Optional[str] = Field(
+    client_id: str | None = Field(
         None, description="Direct OAuth client ID (not recommended for production)"
     )
-    client_secret: Optional[SecretStr] = Field(
+    client_secret: SecretStr | None = Field(
         None, description="Direct OAuth client secret (not recommended for production)"
     )
 
     # Service account authentication (for cloud providers)
-    service_account_key_file: Optional[str] = Field(
+    service_account_key_file: str | None = Field(
         None, description="Path to service account key file"
     )
-    service_account_key_env: Optional[str] = Field(
+    service_account_key_env: str | None = Field(
         None, description="Environment variable containing service account key JSON"
     )
 
@@ -120,7 +119,7 @@ class CredentialConfig(BaseConfig):
 
         return self
 
-    def get_token(self) -> Optional[str]:
+    def get_token(self) -> str | None:
         """Get token from environment variable or file."""
         if self.token:
             return self.token.get_secret_value()
@@ -132,16 +131,16 @@ class CredentialConfig(BaseConfig):
 
         if self.token_file:
             try:
-                with open(self.token_file, "r") as f:
+                with open(self.token_file) as f:
                     return f.read().strip()
-            except (IOError, OSError) as e:
+            except OSError as e:
                 raise ValueError(
                     f"Failed to read token from file {self.token_file}: {e}"
                 ) from e
 
         return None
 
-    def get_username(self) -> Optional[str]:
+    def get_username(self) -> str | None:
         """Get username from environment variable or direct value."""
         if self.username:
             return self.username
@@ -153,7 +152,7 @@ class CredentialConfig(BaseConfig):
 
         return None
 
-    def get_password(self) -> Optional[str]:
+    def get_password(self) -> str | None:
         """Get password from environment variable or direct value."""
         if self.password:
             return self.password.get_secret_value()
@@ -165,7 +164,7 @@ class CredentialConfig(BaseConfig):
 
         return None
 
-    def get_ssh_key_passphrase(self) -> Optional[str]:
+    def get_ssh_key_passphrase(self) -> str | None:
         """Get SSH key passphrase from environment variable or direct value."""
         if self.ssh_key_passphrase:
             return self.ssh_key_passphrase.get_secret_value()
@@ -177,7 +176,7 @@ class CredentialConfig(BaseConfig):
 
         return None
 
-    def get_client_credentials(self) -> tuple[Optional[str], Optional[str]]:
+    def get_client_credentials(self) -> tuple[str | None, str | None]:
         """Get OAuth client credentials."""
         client_id = self.client_id
         if self.client_id_env:
@@ -195,7 +194,7 @@ class CredentialConfig(BaseConfig):
 
         return client_id, client_secret
 
-    def get_service_account_key(self) -> Optional[dict]:
+    def get_service_account_key(self) -> dict | None:
         """Get service account key as dictionary."""
         if self.service_account_key_env:
             import json
@@ -212,9 +211,9 @@ class CredentialConfig(BaseConfig):
             import json
 
             try:
-                with open(self.service_account_key_file, "r") as f:
+                with open(self.service_account_key_file) as f:
                     return json.load(f)
-            except (IOError, OSError, json.JSONDecodeError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 raise ValueError(f"Failed to read service account key: {e}") from e
 
         return None

@@ -2,9 +2,9 @@
 
 """Error classification system for different error types."""
 
-import logging
 from enum import Enum
-from typing import Any, Dict, Optional, Type
+import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class ErrorClassifier:
 
     def __init__(self) -> None:
         """Initialize the error classifier with default patterns."""
-        self._error_patterns: Dict[ErrorCategory, list] = {
+        self._error_patterns: dict[ErrorCategory, list] = {
             ErrorCategory.RATE_LIMITED: [
                 "rate limit exceeded",
                 "rate_limit_exceeded",
@@ -121,7 +121,7 @@ class ErrorClassifier:
         }
 
         # HTTP status code mappings
-        self._status_code_mappings: Dict[int, ErrorCategory] = {
+        self._status_code_mappings: dict[int, ErrorCategory] = {
             400: ErrorCategory.PERMANENT,
             401: ErrorCategory.AUTHENTICATION,
             402: ErrorCategory.QUOTA_EXCEEDED,
@@ -138,7 +138,7 @@ class ErrorClassifier:
         }
 
         # Exception type mappings
-        self._exception_mappings: Dict[Type[Exception], ErrorCategory] = {
+        self._exception_mappings: dict[type[Exception], ErrorCategory] = {
             ConnectionError: ErrorCategory.NETWORK,
             TimeoutError: ErrorCategory.TIMEOUT,
             OSError: ErrorCategory.NETWORK,
@@ -147,9 +147,9 @@ class ErrorClassifier:
     def classify_error(
         self,
         error: Exception,
-        status_code: Optional[int] = None,
-        error_message: Optional[str] = None,
-        provider: Optional[str] = None,
+        status_code: int | None = None,
+        error_message: str | None = None,
+        provider: str | None = None,
     ) -> ErrorCategory:
         """Classify an error into a category.
 
@@ -236,7 +236,7 @@ class ErrorClassifier:
 
         return provider_defaults.get(provider.lower(), ErrorCategory.TRANSIENT)
 
-    def _extract_status_code_from_message(self, error_message: str) -> Optional[int]:
+    def _extract_status_code_from_message(self, error_message: str) -> int | None:
         """Extract HTTP status code from error message.
 
         Args:
@@ -361,7 +361,7 @@ class ErrorClassifier:
         logger.info(f"Added status code mapping {status_code} -> {category}")
 
     def add_exception_mapping(
-        self, exception_type: Type[Exception], category: ErrorCategory
+        self, exception_type: type[Exception], category: ErrorCategory
     ) -> None:
         """Add a custom exception type mapping.
 
@@ -372,7 +372,7 @@ class ErrorClassifier:
         self._exception_mappings[exception_type] = category
         logger.info(f"Added exception mapping {exception_type.__name__} -> {category}")
 
-    def get_classification_stats(self) -> Dict[str, Any]:
+    def get_classification_stats(self) -> dict[str, Any]:
         """Get statistics about error classifications."""
         return {
             "error_patterns": {

@@ -305,7 +305,7 @@ class IngestionConfig:
 class IngestionConfigManager:
     """Manager for ingestion configuration loading and validation."""
 
-    def __init__(self, config_path: Optional[Union[str, Path]]: Optional[str] = None) -> None:
+    def __init__(self, config_path: Optional[Union[str, Path]] = None) -> None:
         """Initialize the config manager."""
         self.config_path = Path(config_path) if config_path else None
         self._config: Optional[IngestionConfig] = None

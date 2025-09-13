@@ -9,7 +9,7 @@ circuit breaker implementation, and request deduplication for improved system re
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .circuit_breaker import CircuitBreaker
 from .deduplicator import RequestDeduplicator
@@ -30,7 +30,7 @@ class EnhancedErrorHandler:
         self.deduplicator = RequestDeduplicator(config.deduplication_config)
         self.analytics = ErrorAnalytics()
 
-    def _load_error_patterns(self) -> Dict[str, ErrorCategory]:
+    def _load_error_patterns(self) -> dict[str, ErrorCategory]:
         """Load error patterns for categorization."""
         return {
             "rate limit": ErrorCategory.RATE_LIMITED,
@@ -66,13 +66,13 @@ class EnhancedErrorHandler:
 
     async def handle_error(
         self, error: Exception, context: RequestContext
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Main error handling entry point."""
         category = self.categorize_error(error)
         await self.analytics.record_error(error, category, context)
 
         self.logger.warning(
-            f"Error {category.name} for provider {context.provider_id}: {str(error)}"
+            f"Error {category.name} for provider {context.provider_id}: {error!s}"
         )
 
         # Check circuit breaker for provider failures
@@ -97,7 +97,7 @@ class EnhancedErrorHandler:
 
     async def _handle_transient(
         self, error: Exception, context: RequestContext
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Handle transient errors with retry."""
         if context.retry_count < context.max_retries:
             delay = min(
@@ -113,7 +113,7 @@ class EnhancedErrorHandler:
 
     async def _handle_rate_limited(
         self, error: Exception, context: RequestContext
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Handle rate limit errors with backoff."""
         delay = min(60.0, self.config.retry_delay_base * (2**context.retry_count))
         self.logger.info(f"Rate limited, backing off for {delay}s")
@@ -122,7 +122,7 @@ class EnhancedErrorHandler:
 
     async def _handle_timeout(
         self, error: Exception, context: RequestContext
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Handle timeout errors."""
         if context.retry_count < context.max_retries:
             delay = self.config.retry_delay_base * 2
@@ -133,7 +133,7 @@ class EnhancedErrorHandler:
 
     async def _handle_network(
         self, error: Exception, context: RequestContext
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Handle network errors."""
         if context.retry_count < context.max_retries:
             delay = min(
@@ -167,6 +167,6 @@ class EnhancedErrorHandler:
         """Record successful request for circuit breaker."""
         await self.circuit_breaker.record_success(provider_id)
 
-    async def get_error_summary(self) -> Dict[str, Any]:
+    async def get_error_summary(self) -> dict[str, Any]:
         """Get comprehensive error summary."""
         return await self.analytics.get_error_summary()

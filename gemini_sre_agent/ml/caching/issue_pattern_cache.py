@@ -9,7 +9,7 @@ pattern recognition, classification, and historical analysis data.
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .context_cache import CacheEntry, ContextCache
 
@@ -42,15 +42,15 @@ class IssuePatternCache(ContextCache):
         self.logger = logging.getLogger(__name__)
 
         # Pattern-specific metadata
-        self.pattern_domains: Dict[str, str] = {}  # pattern_key -> domain
-        self.domain_patterns: Dict[str, List[str]] = {}  # domain -> pattern_keys
-        self.pattern_similarity: Dict[str, List[str]] = (
+        self.pattern_domains: dict[str, str] = {}  # pattern_key -> domain
+        self.domain_patterns: dict[str, list[str]] = {}  # domain -> pattern_keys
+        self.pattern_similarity: dict[str, list[str]] = (
             {}
         )  # pattern_key -> similar_patterns
 
     async def get_issue_pattern(
-        self, pattern_type: str, pattern_key: str, domain: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, pattern_type: str, pattern_key: str, domain: str | None = None
+    ) -> dict[str, Any] | None:
         """
         Get cached issue pattern with domain-specific optimization.
 
@@ -87,10 +87,10 @@ class IssuePatternCache(ContextCache):
         self,
         pattern_type: str,
         pattern_key: str,
-        pattern_data: Dict[str, Any],
-        domain: Optional[str] = None,
-        ttl_seconds: Optional[int] = None,
-        similarity_keys: Optional[List[str]] = None,
+        pattern_data: dict[str, Any],
+        domain: str | None = None,
+        ttl_seconds: int | None = None,
+        similarity_keys: list[str] | None = None,
     ) -> None:
         """
         Cache issue pattern with domain-specific metadata.
@@ -137,7 +137,7 @@ class IssuePatternCache(ContextCache):
 
     async def get_similar_patterns(
         self, pattern_key: str, limit: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get patterns similar to the given pattern.
 
@@ -162,7 +162,7 @@ class IssuePatternCache(ContextCache):
 
     async def get_domain_patterns(
         self, domain: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get all patterns for a specific domain.
 
@@ -216,7 +216,7 @@ class IssuePatternCache(ContextCache):
         return invalidated_count
 
     def _generate_pattern_key(
-        self, pattern_type: str, pattern_key: str, domain: Optional[str] = None
+        self, pattern_type: str, pattern_key: str, domain: str | None = None
     ) -> str:
         """Generate cache key for pattern."""
         if domain:
@@ -226,8 +226,8 @@ class IssuePatternCache(ContextCache):
     def _calculate_pattern_ttl(
         self,
         pattern_type: str,
-        domain: Optional[str] = None,
-        custom_ttl: Optional[int] = None,
+        domain: str | None = None,
+        custom_ttl: int | None = None,
     ) -> int:
         """Calculate TTL for pattern based on type and domain."""
         if custom_ttl:
@@ -270,7 +270,7 @@ class IssuePatternCache(ContextCache):
         """Check if cache entry is expired."""
         return self._get_current_time() > entry.expires_at
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics for monitoring."""
         total_size = sum(entry.size_bytes for entry in self.cache.values())
         domain_counts = {

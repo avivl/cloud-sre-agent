@@ -1,6 +1,5 @@
 # gemini_sre_agent/source_control/setup.py
 
-from typing import Optional
 
 from ..config.source_control_global import (
     SourceControlConfig,
@@ -15,7 +14,7 @@ from .repository_manager import RepositoryManager
 
 
 async def setup_repository_system(
-    config: SourceControlGlobalConfig, encryption_key: Optional[str] = None
+    config: SourceControlGlobalConfig, encryption_key: str | None = None
 ) -> RepositoryManager:
     """Set up the complete repository management system."""
 

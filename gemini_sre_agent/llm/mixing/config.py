@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class MixingStrategy(Enum):
@@ -148,8 +148,8 @@ class SecurityConfig:
     enable_input_validation: bool = True
     max_prompt_length: int = 50000
     max_context_size: int = 10000
-    allowed_prompt_patterns: Optional[list] = None
-    blocked_prompt_patterns: Optional[list] = None
+    allowed_prompt_patterns: list | None = None
+    blocked_prompt_patterns: list | None = None
 
     # Authentication
     enable_authentication: bool = False
@@ -204,7 +204,7 @@ class IntegratedConfig:
         )
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "IntegratedConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "IntegratedConfig":
         """Create configuration from dictionary."""
         mixing_config = ModelMixingConfig(**config_dict.get("mixing", {}))
         monitoring_config = MonitoringConfig(**config_dict.get("monitoring", {}))

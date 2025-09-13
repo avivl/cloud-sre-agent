@@ -6,8 +6,8 @@ Data models for the pattern detection system.
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -18,9 +18,9 @@ class LogEntry(BaseModel):
     insert_id: str
     timestamp: datetime
     severity: str
-    service_name: Optional[str] = None
-    error_message: Optional[str] = None
-    raw_data: Dict[str, Any]
+    service_name: str | None = None
+    error_message: str | None = None
+    raw_data: dict[str, Any]
 
     def __init__(self, **data: str) -> None:
         data = self._process_timestamp(data)
@@ -29,7 +29,7 @@ class LogEntry(BaseModel):
         data = self._process_error_message(data)
         super().__init__(**data)
 
-    def _process_timestamp(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_timestamp(self, data: dict[str, Any]) -> dict[str, Any]:
         """Extract and process timestamp from raw data."""
         if "timestamp" not in data and "raw_data" in data:
             raw_timestamp = data["raw_data"].get("timestamp")
@@ -39,18 +39,18 @@ class LogEntry(BaseModel):
                         raw_timestamp.replace("Z", "+00:00")
                     )
                 except (ValueError, TypeError):
-                    data["timestamp"] = datetime.now(timezone.utc)
+                    data["timestamp"] = datetime.now(UTC)
             else:
-                data["timestamp"] = datetime.now(timezone.utc)
+                data["timestamp"] = datetime.now(UTC)
         return data
 
-    def _process_severity(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_severity(self, data: dict[str, Any]) -> dict[str, Any]:
         """Extract severity from raw data."""
         if "severity" not in data and "raw_data" in data:
             data["severity"] = data["raw_data"].get("severity", "INFO")
         return data
 
-    def _process_service_name(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_service_name(self, data: dict[str, Any]) -> dict[str, Any]:
         """Extract service name from resource labels."""
         if "service_name" not in data and "raw_data" in data:
             resource = data["raw_data"].get("resource", {})
@@ -60,7 +60,7 @@ class LogEntry(BaseModel):
             )
         return data
 
-    def _process_error_message(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_error_message(self, data: dict[str, Any]) -> dict[str, Any]:
         """Extract error message from raw data."""
         if "error_message" not in data and "raw_data" in data:
             data["error_message"] = data["raw_data"].get("textPayload") or data[
@@ -75,7 +75,7 @@ class TimeWindow:
 
     start_time: datetime
     duration_minutes: int
-    logs: List[LogEntry] = field(default_factory=list)
+    logs: list[LogEntry] = field(default_factory=list)
 
     @property
     def end_time(self) -> datetime:
@@ -101,7 +101,7 @@ class TimeWindow:
             return True
         return False
 
-    def get_error_logs(self) -> List[LogEntry]:
+    def get_error_logs(self) -> list[LogEntry]:
         """Get only error-level logs from this window."""
         return [
             log
@@ -109,9 +109,9 @@ class TimeWindow:
             if log.severity in ["ERROR", "CRITICAL", "ALERT", "EMERGENCY"]
         ]
 
-    def get_service_groups(self) -> Dict[str, List[LogEntry]]:
+    def get_service_groups(self) -> dict[str, list[LogEntry]]:
         """Group logs by service name."""
-        groups: Dict[str, List[LogEntry]] = defaultdict(list)
+        groups: dict[str, list[LogEntry]] = defaultdict(list)
         for log in self.logs:
             service = log.service_name or "unknown"
             groups[service].append(log)
@@ -134,7 +134,7 @@ class ThresholdConfig:
 
     threshold_type: str
     min_value: float
-    max_value: Optional[float] = None
+    max_value: float | None = None
 
     # Error frequency thresholds
     min_error_count: int = 3
@@ -147,7 +147,7 @@ class ThresholdConfig:
     min_affected_services: int = 2
 
     # Severity weights for scoring
-    severity_weights: Dict[str, float] = field(
+    severity_weights: dict[str, float] = field(
         default_factory=lambda: {
             "CRITICAL": 10.0,
             "ERROR": 5.0,
@@ -168,9 +168,9 @@ class ThresholdResult:
     threshold_type: str
     triggered: bool
     score: float
-    details: Dict[str, Any]
-    triggering_logs: List[LogEntry]
-    affected_services: List[str]
+    details: dict[str, Any]
+    triggering_logs: list[LogEntry]
+    affected_services: list[str]
 
 
 class PatternType:
@@ -191,16 +191,16 @@ class PatternMatch:
 
     pattern_type: str
     confidence_score: float  # 0.0 to 1.0
-    primary_service: Optional[str]
-    affected_services: List[str]
+    primary_service: str | None
+    affected_services: list[str]
     severity_level: str  # LOW, MEDIUM, HIGH, CRITICAL
 
     # Evidence supporting the pattern classification
-    evidence: Dict[str, Any]
+    evidence: dict[str, Any]
 
     # Recommended remediation approach
     remediation_priority: str  # IMMEDIATE, HIGH, MEDIUM, LOW
-    suggested_actions: List[str]
+    suggested_actions: list[str]
 
 
 class ConfidenceFactors:
@@ -240,10 +240,10 @@ class ConfidenceRule:
 
     factor_type: str
     weight: float  # 0.0 to 1.0
-    threshold: Optional[float] = None
+    threshold: float | None = None
     max_contribution: float = 1.0
-    decay_function: Optional[str] = None
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    decay_function: str | None = None
+    parameters: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -251,7 +251,7 @@ class ConfidenceScore:
     """Detailed confidence score with factor breakdown."""
 
     overall_score: float
-    factor_scores: Dict[str, float]
-    raw_factors: Dict[str, float]
+    factor_scores: dict[str, float]
+    raw_factors: dict[str, float]
     confidence_level: str
-    explanation: List[str]
+    explanation: list[str]

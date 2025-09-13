@@ -8,12 +8,12 @@ enabling real-time monitoring, optimization, and intelligent model selection
 based on historical performance data.
 """
 
-import logging
-import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+import logging
+import time
+from typing import Any
 
 from .common.enums import ProviderType
 
@@ -40,9 +40,9 @@ class PerformanceMetric:
     value: float
     timestamp: float = field(default_factory=time.time)
     model_name: str = ""
-    provider: Optional[ProviderType] = None
-    context: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    provider: ProviderType | None = None
+    context: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -51,10 +51,10 @@ class ModelPerformanceStats:
 
     model_name: str
     provider: ProviderType
-    metric_counts: Dict[MetricType, int] = field(default_factory=dict)
-    metric_sums: Dict[MetricType, float] = field(default_factory=dict)
-    metric_mins: Dict[MetricType, float] = field(default_factory=dict)
-    metric_maxs: Dict[MetricType, float] = field(default_factory=dict)
+    metric_counts: dict[MetricType, int] = field(default_factory=dict)
+    metric_sums: dict[MetricType, float] = field(default_factory=dict)
+    metric_mins: dict[MetricType, float] = field(default_factory=dict)
+    metric_maxs: dict[MetricType, float] = field(default_factory=dict)
     last_updated: float = field(default_factory=time.time)
     sample_count: int = 0
 
@@ -83,7 +83,7 @@ class ModelPerformanceStats:
         self.last_updated = time.time()
         self.sample_count += 1
 
-    def get_average(self, metric_type: MetricType) -> Optional[float]:
+    def get_average(self, metric_type: MetricType) -> float | None:
         """Get average value for a metric type."""
         if (
             metric_type not in self.metric_counts
@@ -94,7 +94,7 @@ class ModelPerformanceStats:
 
     def get_percentile(
         self, metric_type: MetricType, percentile: float
-    ) -> Optional[float]:
+    ) -> float | None:
         """Get percentile value for a metric type (simplified implementation)."""
         # This is a simplified implementation - in production, you'd want to store
         # individual values and calculate proper percentiles
@@ -137,13 +137,13 @@ class PerformanceCache:
         self._metrics: deque = deque(maxlen=max_cache_size)
 
         # Aggregated statistics by model
-        self._model_stats: Dict[str, ModelPerformanceStats] = {}
+        self._model_stats: dict[str, ModelPerformanceStats] = {}
 
         # Indexes for efficient querying
-        self._model_index: Dict[str, List[int]] = defaultdict(list)
-        self._provider_index: Dict[ProviderType, List[int]] = defaultdict(list)
-        self._metric_type_index: Dict[MetricType, List[int]] = defaultdict(list)
-        self._time_index: List[Tuple[float, int]] = []  # (timestamp, metric_index)
+        self._model_index: dict[str, list[int]] = defaultdict(list)
+        self._provider_index: dict[ProviderType, list[int]] = defaultdict(list)
+        self._metric_type_index: dict[MetricType, list[int]] = defaultdict(list)
+        self._time_index: list[tuple[float, int]] = []  # (timestamp, metric_index)
 
         self._last_cleanup = time.time()
         self.logger = logging.getLogger(f"{__name__}.PerformanceCache")
@@ -184,19 +184,19 @@ class PerformanceCache:
             f"Added metric: {metric.metric_type.value}={metric.value} for {metric.model_name}"
         )
 
-    def get_model_stats(self, model_name: str) -> Optional[ModelPerformanceStats]:
+    def get_model_stats(self, model_name: str) -> ModelPerformanceStats | None:
         """Get aggregated statistics for a specific model."""
         return self._model_stats.get(model_name)
 
     def get_metrics(
         self,
-        model_name: Optional[str] = None,
-        provider: Optional[ProviderType] = None,
-        metric_type: Optional[MetricType] = None,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
-        limit: Optional[int] = None,
-    ) -> List[PerformanceMetric]:
+        model_name: str | None = None,
+        provider: ProviderType | None = None,
+        metric_type: MetricType | None = None,
+        start_time: float | None = None,
+        end_time: float | None = None,
+        limit: int | None = None,
+    ) -> list[PerformanceMetric]:
         """Get metrics matching the specified criteria."""
         # Start with all metrics
         candidate_indices = set(range(len(self._metrics)))
@@ -235,8 +235,8 @@ class PerformanceCache:
         return metrics
 
     def get_performance_summary(
-        self, model_name: str, metric_types: Optional[List[MetricType]] = None
-    ) -> Dict[str, Any]:
+        self, model_name: str, metric_types: list[MetricType] | None = None
+    ) -> dict[str, Any]:
         """Get a performance summary for a model."""
         stats = self._model_stats.get(model_name)
         if not stats:
@@ -269,7 +269,7 @@ class PerformanceCache:
 
     def get_top_models(
         self, metric_type: MetricType, limit: int = 10, ascending: bool = True
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Get top performing models for a specific metric."""
         model_scores = []
 
@@ -285,9 +285,9 @@ class PerformanceCache:
 
     def get_model_rankings(
         self,
-        metric_types: List[MetricType],
-        weights: Optional[Dict[MetricType, float]] = None,
-    ) -> List[Tuple[str, float]]:
+        metric_types: list[MetricType],
+        weights: dict[MetricType, float] | None = None,
+    ) -> list[tuple[str, float]]:
         """Get model rankings based on weighted combination of metrics."""
         if weights is None:
             # Equal weights
@@ -356,7 +356,7 @@ class PerformanceCache:
 
         self.logger.info("Performance cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         current_time = time.time()
         valid_metrics = sum(
@@ -385,7 +385,7 @@ class PerformanceMonitor:
     with automatic aggregation and analysis capabilities.
     """
 
-    def __init__(self, cache: Optional[PerformanceCache] = None) -> None:
+    def __init__(self, cache: PerformanceCache | None = None) -> None:
         """Initialize the performance monitor."""
         self.cache = cache or PerformanceCache()
         self.logger = logging.getLogger(f"{__name__}.PerformanceMonitor")
@@ -394,8 +394,8 @@ class PerformanceMonitor:
         self,
         model_name: str,
         latency_ms: float,
-        provider: Optional[ProviderType] = None,
-        context: Optional[Dict[str, Any]] = None,
+        provider: ProviderType | None = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Record latency metric for a model."""
         metric = PerformanceMetric(
@@ -411,8 +411,8 @@ class PerformanceMonitor:
         self,
         model_name: str,
         tokens_per_second: float,
-        provider: Optional[ProviderType] = None,
-        context: Optional[Dict[str, Any]] = None,
+        provider: ProviderType | None = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Record throughput metric for a model."""
         metric = PerformanceMetric(
@@ -428,8 +428,8 @@ class PerformanceMonitor:
         self,
         model_name: str,
         success: bool,
-        provider: Optional[ProviderType] = None,
-        context: Optional[Dict[str, Any]] = None,
+        provider: ProviderType | None = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Record success/failure metric for a model."""
         metric_type = MetricType.SUCCESS_RATE if success else MetricType.ERROR_RATE
@@ -446,8 +446,8 @@ class PerformanceMonitor:
         self,
         model_name: str,
         cost_per_token: float,
-        provider: Optional[ProviderType] = None,
-        context: Optional[Dict[str, Any]] = None,
+        provider: ProviderType | None = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Record cost efficiency metric for a model."""
         metric = PerformanceMetric(
@@ -463,8 +463,8 @@ class PerformanceMonitor:
         self,
         model_name: str,
         quality_score: float,
-        provider: Optional[ProviderType] = None,
-        context: Optional[Dict[str, Any]] = None,
+        provider: ProviderType | None = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Record quality score metric for a model."""
         metric = PerformanceMetric(
@@ -477,31 +477,31 @@ class PerformanceMonitor:
         self.cache.add_metric(metric)
 
     def get_model_performance(
-        self, model_name: str, metric_types: Optional[List[MetricType]] = None
-    ) -> Dict[str, Any]:
+        self, model_name: str, metric_types: list[MetricType] | None = None
+    ) -> dict[str, Any]:
         """Get performance summary for a model."""
         return self.cache.get_performance_summary(model_name, metric_types)
 
     def get_best_models(
         self, metric_type: MetricType, limit: int = 5
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Get best performing models for a metric."""
         return self.cache.get_top_models(metric_type, limit, ascending=True)
 
     def get_worst_models(
         self, metric_type: MetricType, limit: int = 5
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Get worst performing models for a metric."""
         return self.cache.get_top_models(metric_type, limit, ascending=False)
 
     def get_model_rankings(
         self,
-        metric_types: List[MetricType],
-        weights: Optional[Dict[MetricType, float]] = None,
-    ) -> List[Tuple[str, float]]:
+        metric_types: list[MetricType],
+        weights: dict[MetricType, float] | None = None,
+    ) -> list[tuple[str, float]]:
         """Get model rankings based on multiple metrics."""
         return self.cache.get_model_rankings(metric_types, weights)
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         return self.cache.get_cache_stats()

@@ -10,9 +10,6 @@ across all components of the system.
 from .agent import (
     AgentConfigurationError,
     AgentCoordinationError,
-)
-from .agent import AgentError as AgentSpecificError
-from .agent import (
     AgentExecutionError,
     AgentStateError,
     AnalysisAgentError,
@@ -21,6 +18,7 @@ from .agent import (
     ResponseError,
     TriageAgentError,
 )
+from .agent import AgentError as AgentSpecificError
 from .base import (
     AgentError,
     ConfigurationError,

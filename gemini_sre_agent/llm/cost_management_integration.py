@@ -7,9 +7,9 @@ This module provides a unified interface for all cost management functionality,
 integrating dynamic pricing, optimization, budget management, and analytics.
 """
 
-import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+import logging
+from typing import Any
 
 from .budget_manager import BudgetConfig, BudgetManager
 from .cost_analytics import AnalyticsConfig, CostAnalytics
@@ -89,7 +89,7 @@ class IntegratedCostManager:
 
     async def can_make_request(
         self, provider: str, model: str, input_tokens: int, output_tokens: int = 0
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """Check if a request can be made within budget constraints."""
         estimated_cost = await self.estimate_request_cost(
             provider, model, input_tokens, output_tokens
@@ -101,8 +101,8 @@ class IntegratedCostManager:
         model_type: str,
         input_tokens: int,
         output_tokens: int = 0,
-        performance_requirements: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[str, str, float]:
+        performance_requirements: dict[str, Any] | None = None,
+    ) -> tuple[str, str, float]:
         """Get the optimal provider and model for a request."""
         from .common.enums import ModelType
         from .cost_management import OptimizationStrategy
@@ -152,7 +152,7 @@ class IntegratedCostManager:
         output_tokens: int,
         cost_usd: float,
         success: bool,
-        response_time_ms: Optional[int] = None,
+        response_time_ms: int | None = None,
     ) -> None:
         """Record a completed request for tracking and analytics."""
         from .common.enums import ProviderType
@@ -193,7 +193,7 @@ class IntegratedCostManager:
 
         logger.debug(f"Recorded request: {provider}/{model}, cost: ${cost_usd:.4f}")
 
-    def get_budget_status(self) -> Dict[str, Any]:
+    def get_budget_status(self) -> dict[str, Any]:
         """Get current budget status."""
         status = self.budget_manager.get_budget_status()
         return {
@@ -209,14 +209,14 @@ class IntegratedCostManager:
         }
 
     def get_cost_analytics(
-        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> dict[str, Any]:
         """Get comprehensive cost analytics."""
         return self.analytics.get_cost_summary(start_date, end_date)
 
     def get_optimization_recommendations(
         self, lookback_days: int = 30
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get cost optimization recommendations."""
         recommendations = self.analytics.get_optimization_recommendations(lookback_days)
         return [
@@ -233,8 +233,8 @@ class IntegratedCostManager:
         ]
 
     def get_provider_comparison(
-        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List[Dict[str, Any]]:
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> list[dict[str, Any]]:
         """Get provider comparison data."""
         comparisons = self.analytics.get_provider_comparison(start_date, end_date)
         return [
@@ -252,7 +252,7 @@ class IntegratedCostManager:
 
     def get_cost_trends(
         self, start_date: datetime, end_date: datetime, interval: str = "daily"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get cost trends for a specific period."""
         trends = self.analytics.get_cost_trends(start_date, end_date, interval)
         return [
@@ -269,15 +269,15 @@ class IntegratedCostManager:
             for trend in trends
         ]
 
-    def get_spending_breakdown(self) -> Dict[str, Any]:
+    def get_spending_breakdown(self) -> dict[str, Any]:
         """Get detailed spending breakdown."""
         return self.budget_manager.get_spending_breakdown()
 
-    def get_budget_forecast(self, days_ahead: int = 30) -> Dict[str, Any]:
+    def get_budget_forecast(self, days_ahead: int = 30) -> dict[str, Any]:
         """Get budget forecast for the next N days."""
         return self.budget_manager.get_budget_forecast(days_ahead)
 
-    def get_recent_alerts(self, hours: int = 24) -> List[Dict[str, Any]]:
+    def get_recent_alerts(self, hours: int = 24) -> list[dict[str, Any]]:
         """Get recent budget alerts."""
         alerts = self.budget_manager.get_recent_alerts(hours)
         return [
@@ -312,7 +312,7 @@ class IntegratedCostManager:
         """Export analytics data in specified format."""
         return self.analytics.export_data(format)
 
-    def get_system_health(self) -> Dict[str, Any]:
+    def get_system_health(self) -> dict[str, Any]:
         """Get overall system health status."""
         budget_status = self.budget_manager.get_budget_status()
 

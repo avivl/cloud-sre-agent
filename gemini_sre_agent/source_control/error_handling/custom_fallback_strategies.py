@@ -7,10 +7,10 @@ This module provides intelligent fallback mechanisms that are tailored to
 specific source control operations and provider capabilities.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from ..models import FileInfo, RemediationResult
 from .core import ErrorType
@@ -26,7 +26,7 @@ class FallbackStrategyBase(ABC):
 
     @abstractmethod
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if this strategy can handle the given operation and error."""
 
@@ -47,10 +47,10 @@ class CachedResponseStrategy(FallbackStrategyBase):
     def __init__(self, cache_ttl_seconds: int = 300) -> None:
         super().__init__("cached_response", priority=1)
         self.cache_ttl = cache_ttl_seconds
-        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.cache: dict[str, dict[str, Any]] = {}
 
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if we have a cached response for this operation."""
         if error_type in [ErrorType.AUTHENTICATION_ERROR]:
@@ -71,7 +71,7 @@ class CachedResponseStrategy(FallbackStrategyBase):
 
         return cached_data
 
-    def _generate_cache_key(self, operation_type: str, context: Dict[str, Any]) -> str:
+    def _generate_cache_key(self, operation_type: str, context: dict[str, Any]) -> str:
         """Generate a cache key for the operation."""
         # Create a simple hash of the operation and context
         key_parts = [operation_type]
@@ -91,7 +91,7 @@ class CachedResponseStrategy(FallbackStrategyBase):
         return datetime.now() - cached_time > timedelta(seconds=self.cache_ttl)
 
     def cache_response(
-        self, operation_type: str, context: Dict[str, Any], data: Any
+        self, operation_type: str, context: dict[str, Any], data: Any
     ) -> None:
         """Cache a successful response."""
         cache_key = self._generate_cache_key(operation_type, context)
@@ -108,7 +108,7 @@ class SimplifiedOperationStrategy(FallbackStrategyBase):
         super().__init__("simplified_operation", priority=2)
 
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if we can provide a simplified version."""
         return operation_type in [
@@ -138,28 +138,28 @@ class SimplifiedOperationStrategy(FallbackStrategyBase):
             )
 
     async def _simplified_get_file_content(
-        self, path: str, ref: Optional[str] = None
+        self, path: str, ref: str | None = None
     ) -> str:
         """Simplified file content retrieval."""
         # Return empty string as fallback
         return ""
 
     async def _simplified_file_exists(
-        self, path: str, ref: Optional[str] = None
+        self, path: str, ref: str | None = None
     ) -> bool:
         """Simplified file existence check."""
         # Assume file exists as fallback
         return True
 
     async def _simplified_list_files(
-        self, path: str = "", ref: Optional[str] = None
-    ) -> List[FileInfo]:
+        self, path: str = "", ref: str | None = None
+    ) -> list[FileInfo]:
         """Simplified file listing."""
         # Return empty list as fallback
         return []
 
     async def _simplified_get_file_info(
-        self, path: str, ref: Optional[str] = None
+        self, path: str, ref: str | None = None
     ) -> FileInfo:
         """Simplified file info retrieval."""
         return FileInfo(
@@ -176,10 +176,10 @@ class OfflineModeStrategy(FallbackStrategyBase):
 
     def __init__(self) -> None:
         super().__init__("offline_mode", priority=3)
-        self.offline_data: Dict[str, Any] = {}
+        self.offline_data: dict[str, Any] = {}
 
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if we can handle this in offline mode."""
         return error_type in [
@@ -242,7 +242,7 @@ class ProviderSpecificStrategy(FallbackStrategyBase):
         self.provider_name = provider_name
 
     async def can_handle(
-        self, operation_type: str, error_type: ErrorType, context: Dict[str, Any]
+        self, operation_type: str, error_type: ErrorType, context: dict[str, Any]
     ) -> bool:
         """Check if this provider-specific strategy can handle the operation."""
         return self._has_provider_specific_fallback(operation_type, error_type)
@@ -327,7 +327,7 @@ class CustomFallbackManager:
     """Manages custom fallback strategies for different operations and providers."""
 
     def __init__(self) -> None:
-        self.strategies: List[FallbackStrategyBase] = []
+        self.strategies: list[FallbackStrategyBase] = []
         self.logger = logging.getLogger("CustomFallbackManager")
         self._initialize_default_strategies()
 
@@ -355,7 +355,7 @@ class CustomFallbackManager:
         operation_type: str,
         error_type: ErrorType,
         original_func: Any,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         *args,
         **kwargs,
     ) -> Any:
@@ -393,7 +393,7 @@ class CustomFallbackManager:
 
     def get_available_strategies(
         self, operation_type: str, error_type: ErrorType
-    ) -> List[str]:
+    ) -> list[str]:
         """Get list of available strategies for an operation and error type."""
         strategies = []
         for strategy in self.strategies:
@@ -401,7 +401,7 @@ class CustomFallbackManager:
                 strategies.append(strategy.name)
         return strategies
 
-    def get_strategy_stats(self) -> Dict[str, Any]:
+    def get_strategy_stats(self) -> dict[str, Any]:
         """Get statistics about fallback strategies."""
         return {
             "total_strategies": len(self.strategies),

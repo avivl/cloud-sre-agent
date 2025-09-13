@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from google.cloud import aiplatform
 from pydantic import BaseModel, ValidationError
@@ -26,8 +26,8 @@ class TriagePacket(BaseModel):
     initial_timestamp: str
     detected_pattern: str
     preliminary_severity_score: int
-    affected_services: List[str]
-    sample_log_entries: List[str]
+    affected_services: list[str]
+    sample_log_entries: list[str]
     natural_language_summary: str
 
 
@@ -59,7 +59,7 @@ class TriageAgent:
         wait=wait_exponential(multiplier=1, min=4, max=10),
         retry=retry_if_exception_type((RuntimeError, ValueError, json.JSONDecodeError)),
     )
-    async def analyze_logs(self, logs: List[str], flow_id: str) -> TriagePacket:
+    async def analyze_logs(self, logs: list[str], flow_id: str) -> TriagePacket:
         """
         Analyzes logs using the triage model and returns a TriagePacket.
 
@@ -111,7 +111,7 @@ class TriageAgent:
             )
 
             # Attempt to parse the JSON response
-            triage_data: Dict[str, Any] = json.loads(json_response_str)
+            triage_data: dict[str, Any] = json.loads(json_response_str)
             triage_packet: TriagePacket = TriagePacket(**triage_data)
 
             logger.info(

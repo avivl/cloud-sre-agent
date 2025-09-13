@@ -4,7 +4,6 @@
 Main application configuration consolidating all configuration sections.
 """
 
-from typing import List, Optional
 
 from pydantic import Field, field_validator
 
@@ -20,7 +19,7 @@ class ServiceConfig(BaseConfig):
     project_id: str = Field(..., description="GCP project ID")
     location: str = Field(..., description="GCP location/region")
     subscription_id: str = Field(..., description="Pub/Sub subscription ID")
-    source_control: Optional[SourceControlConfig] = Field(
+    source_control: SourceControlConfig | None = Field(
         None, description="Source control configuration"
     )
 
@@ -60,7 +59,7 @@ class GitHubConfig(BaseConfig):
 
     repository: str = Field(..., description="GitHub repository (owner/repo)")
     base_branch: str = Field(default="main", description="Base branch name")
-    token: Optional[str] = Field(
+    token: str | None = Field(
         default=None, description="GitHub token (set via env var)"
     )
 
@@ -70,7 +69,7 @@ class LoggingConfig(BaseConfig):
 
     level: str = Field(default="INFO", description="Log level")
     format: str = Field(default="json", description="Log format (json/text)")
-    file: Optional[str] = Field(default=None, description="Log file path")
+    file: str | None = Field(default=None, description="Log file path")
     max_size_mb: int = Field(
         default=100, ge=1, description="Maximum log file size in MB"
     )
@@ -101,7 +100,7 @@ class MonitoringConfig(BaseConfig):
     """Monitoring configuration."""
 
     enable_metrics: bool = Field(default=True, description="Enable metrics collection")
-    metrics_endpoint: Optional[str] = Field(
+    metrics_endpoint: str | None = Field(
         default=None, description="Metrics endpoint URL"
     )
     enable_health_checks: bool = Field(default=True, description="Enable health checks")
@@ -109,7 +108,7 @@ class MonitoringConfig(BaseConfig):
         default=60, ge=1, description="Health check interval"
     )
     enable_alerting: bool = Field(default=True, description="Enable alerting")
-    alert_webhook_url: Optional[str] = Field(
+    alert_webhook_url: str | None = Field(
         default=None, description="Alert webhook URL"
     )
 
@@ -135,7 +134,7 @@ class AppConfig(BaseConfig):
     """Main application configuration."""
 
     # Core service configuration
-    services: List[ServiceConfig] = Field(
+    services: list[ServiceConfig] = Field(
         default_factory=list, description="Services to monitor"
     )
 
@@ -152,12 +151,12 @@ class AppConfig(BaseConfig):
     )
 
     # Source control configuration
-    source_control: Optional[SourceControlGlobalConfig] = Field(
+    source_control: SourceControlGlobalConfig | None = Field(
         None, description="Global source control settings"
     )
 
     # GitHub configuration (deprecated - use source_control instead)
-    github: Optional[GitHubConfig] = Field(
+    github: GitHubConfig | None = Field(
         None, description="Legacy GitHub configuration (deprecated)"
     )
 

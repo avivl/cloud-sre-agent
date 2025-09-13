@@ -5,9 +5,9 @@ Tests for the file-based queue system.
 """
 
 import asyncio
-import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+import tempfile
 
 import pytest
 
@@ -52,7 +52,7 @@ class TestFileSystemQueue:
         """Create a sample log entry."""
         return LogEntry(
             id="test-123",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             message="Test log message",
             source="test_source",
             severity=LogSeverity.INFO,
@@ -97,7 +97,7 @@ class TestFileSystemQueue:
         for i in range(5):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,
@@ -138,7 +138,7 @@ class TestFileSystemQueue:
         for i in range(15):  # More than batch size
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,
@@ -182,7 +182,7 @@ class TestFileSystemQueue:
         assert len(files) > 0
 
         # Check file content
-        with open(files[0], "r") as f:
+        with open(files[0]) as f:
             content = f.read()
             assert "test-123" in content
             assert "Test log message" in content
@@ -209,7 +209,7 @@ class TestFileSystemQueue:
         for i in range(100):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i} with some extra content to make it larger",
                 source="test_source",
                 severity=LogSeverity.INFO,
@@ -247,7 +247,7 @@ class TestFileSystemQueue:
         for i in range(200):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,
@@ -302,7 +302,7 @@ class TestFileSystemQueue:
             for i in range(count):
                 log_entry = LogEntry(
                     id=f"worker-{worker_id}-{i}",
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                     message=f"Worker {worker_id} message {i}",
                     source=f"worker_{worker_id}",
                     severity=LogSeverity.INFO,
@@ -365,7 +365,7 @@ class TestFileSystemQueue:
         for i in range(3):
             log_entry = LogEntry(
                 id=f"test-{i}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 message=f"Test message {i}",
                 source="test_source",
                 severity=LogSeverity.INFO,

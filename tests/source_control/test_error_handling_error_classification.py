@@ -2,7 +2,6 @@
 Unit tests for ErrorClassifier.
 """
 
-import asyncio
 from unittest.mock import MagicMock
 
 import pytest
@@ -42,7 +41,7 @@ class TestErrorClassifier:
 
     def test_classify_timeout_errors(self, error_classifier: str) -> None:
         """Test classification of timeout errors."""
-        error = asyncio.TimeoutError("Operation timed out")
+        error = TimeoutError("Operation timed out")
         classification = error_classifier._classify_timeout_errors(error)
 
         assert classification is not None

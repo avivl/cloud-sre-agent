@@ -10,7 +10,7 @@ import json
 import os
 import sys
 import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gemini_sre_agent.agents.enhanced_specialized import (
     EnhancedAnalysisAgent,
@@ -18,7 +18,6 @@ from gemini_sre_agent.agents.enhanced_specialized import (
     EnhancedTriageAgent,
 )
 from gemini_sre_agent.agents.response_models import RemediationResponse
-# Legacy adapter functions are now integrated directly into the enhanced agents
 
 # New ingestion system imports
 from gemini_sre_agent.config.ingestion_config import (
@@ -31,11 +30,13 @@ from gemini_sre_agent.ingestion.manager.log_manager import LogManager
 from gemini_sre_agent.llm.capabilities.discovery import CapabilityDiscovery
 from gemini_sre_agent.llm.config_manager import ConfigManager
 from gemini_sre_agent.llm.factory import LLMProviderFactory
-from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
 from gemini_sre_agent.llm.monitoring.llm_metrics import get_llm_metrics_collector
+from gemini_sre_agent.llm.strategy_manager import OptimizationGoal
 from gemini_sre_agent.local_patch_manager import LocalPatchManager
 from gemini_sre_agent.logger import setup_logging
 from gemini_sre_agent.triage_agent import TriagePacket  # Used for mock TriagePacket
+
+# Legacy adapter functions are now integrated directly into the enhanced agents
 
 
 def validate_environment() -> None:
@@ -52,7 +53,7 @@ def validate_environment() -> None:
         logger.error(
             f"[STARTUP] Missing required environment variables: {missing_required}"
         )
-        raise EnvironmentError(
+        raise OSError(
             f"Missing required environment variables: {missing_required}"
         )
 
@@ -69,61 +70,66 @@ def get_feature_flags() -> dict:
     return {
         "use_enhanced_agents": True,
         "use_multi_provider": True,
-        "enable_cost_optimization": os.getenv("ENABLE_COST_OPTIMIZATION", "true").lower() == "true",
-        "enable_model_mixing": os.getenv("ENABLE_MODEL_MIXING", "true").lower() == "true",
+        "enable_cost_optimization": os.getenv(
+            "ENABLE_COST_OPTIMIZATION", "true"
+        ).lower()
+        == "true",
+        "enable_model_mixing": os.getenv("ENABLE_MODEL_MIXING", "true").lower()
+        == "true",
         "enable_monitoring": os.getenv("ENABLE_MONITORING", "true").lower() == "true",
-        "use_legacy_adapters": os.getenv("USE_LEGACY_ADAPTERS", "false").lower() == "true",
+        "use_legacy_adapters": os.getenv("USE_LEGACY_ADAPTERS", "false").lower()
+        == "true",
     }
 
 
 async def initialize_enhanced_agents(
-    llm_config, 
-    feature_flags: Dict[str, bool],
-    logger
-) -> Dict[str, Any]:
+    llm_config, feature_flags: dict[str, bool], logger
+) -> dict[str, Any]:
     """Initialize enhanced agents with full multi-provider support."""
-    
+
     # Get metrics collector for monitoring
     metrics_collector = get_llm_metrics_collector()
-    
+
     if feature_flags.get("use_legacy_adapters", False):
         # Use legacy adapters for backward compatibility
         logger.info("[STARTUP] Using legacy adapters with enhanced backend")
-        
+
         triage_agent = EnhancedTriageAgent(
             project_id="enhanced-project",
-            location="us-central1", 
+            location="us-central1",
             triage_model="gemini-1.5-flash",
-            llm_config=llm_config
+            llm_config=llm_config,
         )
-        
+
         analysis_agent = EnhancedAnalysisAgent(
             project_id="enhanced-project",
             location="us-central1",
-            analysis_model="gemini-1.5-flash", 
-            llm_config=llm_config
+            analysis_model="gemini-1.5-flash",
+            llm_config=llm_config,
         )
-        
+
         remediation_agent = EnhancedRemediationAgentV2(
             github_token=os.getenv("GITHUB_TOKEN", "dummy_token"),
             repo_name="enhanced/repo",
             llm_config=llm_config,
-            use_local_patches=True
+            use_local_patches=True,
         )
     else:
         # Use direct enhanced agents with full capabilities
-        logger.info("[STARTUP] Using direct enhanced agents with full multi-provider support")
-        
+        logger.info(
+            "[STARTUP] Using direct enhanced agents with full multi-provider support"
+        )
+
         # Configure optimization goals based on feature flags
         triage_optimization = OptimizationGoal.QUALITY
         analysis_optimization = OptimizationGoal.QUALITY
         remediation_optimization = OptimizationGoal.HYBRID
-        
+
         if feature_flags.get("enable_cost_optimization", True):
             triage_optimization = OptimizationGoal.COST
             analysis_optimization = OptimizationGoal.HYBRID
             remediation_optimization = OptimizationGoal.HYBRID
-        
+
         triage_agent = EnhancedTriageAgent(
             llm_config=llm_config,
             primary_model="llama3.2:3b",  # Fast model for triage
@@ -133,7 +139,7 @@ async def initialize_enhanced_agents(
             min_quality=0.7,
             collect_stats=True,
         )
-        
+
         analysis_agent = EnhancedAnalysisAgent(
             llm_config=llm_config,
             primary_model="llama3.2:3b",  # Balanced model for analysis
@@ -143,7 +149,7 @@ async def initialize_enhanced_agents(
             min_quality=0.8,
             collect_stats=True,
         )
-        
+
         remediation_agent = EnhancedRemediationAgentV2(
             llm_config=llm_config,
             primary_model="llama3.2:3b",  # Quality model for remediation
@@ -153,10 +159,10 @@ async def initialize_enhanced_agents(
             min_quality=0.9,
             collect_stats=True,
         )
-    
+
     return {
         "triage_agent": triage_agent,
-        "analysis_agent": analysis_agent, 
+        "analysis_agent": analysis_agent,
         "remediation_agent": remediation_agent,
         "metrics_collector": metrics_collector,
     }
@@ -164,25 +170,32 @@ async def initialize_enhanced_agents(
 
 async def process_log_with_enhanced_pipeline(
     log_entry: LogEntry,
-    agents: Dict[str, Any],
+    agents: dict[str, Any],
     patch_manager: LocalPatchManager,
-    logger
+    logger,
 ):
     """Process log entries through the enhanced agent pipeline."""
     flow_id = getattr(log_entry, "id", "unknown")
-    
+
     try:
         # Validate inputs
         if not log_entry or not agents:
             logger.error(f"[ENHANCED_PIPELINE] Invalid inputs: flow_id={flow_id}")
             return
-            
-        if not all(key in agents for key in ["triage_agent", "analysis_agent", "remediation_agent"]):
-            logger.error(f"[ENHANCED_PIPELINE] Missing required agents: flow_id={flow_id}")
+
+        if not all(
+            key in agents
+            for key in ["triage_agent", "analysis_agent", "remediation_agent"]
+        ):
+            logger.error(
+                f"[ENHANCED_PIPELINE] Missing required agents: flow_id={flow_id}"
+            )
             return
         # Convert LogEntry to dict format expected by agents
         timestamp = getattr(log_entry, "timestamp", "")
-        if hasattr(timestamp, "isoformat") and callable(getattr(timestamp, "isoformat", None)):
+        if hasattr(timestamp, "isoformat") and callable(
+            getattr(timestamp, "isoformat", None)
+        ):
             if not isinstance(timestamp, str):
                 timestamp = timestamp.isoformat()
 
@@ -212,10 +225,12 @@ async def process_log_with_enhanced_pipeline(
         log_text = json.dumps(log_data)
 
         # Step 1: Enhanced Triage Analysis
-        logger.info(f"[ENHANCED_TRIAGE] Starting intelligent triage analysis: flow_id={flow_id}")
-        
+        logger.info(
+            f"[ENHANCED_TRIAGE] Starting intelligent triage analysis: flow_id={flow_id}"
+        )
+
         triage_agent = agents["triage_agent"]
-        if hasattr(triage_agent, 'analyze_logs'):
+        if hasattr(triage_agent, "analyze_logs"):
             # Direct enhanced agent
             triage_response = await triage_agent.analyze_logs([log_text], flow_id)
         else:
@@ -226,18 +241,30 @@ async def process_log_with_enhanced_pipeline(
         triage_packet = TriagePacket(
             issue_id=f"enhanced_{flow_id}",
             initial_timestamp=log_data.get("timestamp", ""),
-            detected_pattern=triage_response.description if hasattr(triage_response, 'description') else "Unknown pattern",
+            detected_pattern=(
+                triage_response.description
+                if hasattr(triage_response, "description")
+                else "Unknown pattern"
+            ),
             preliminary_severity_score=8,  # High severity for errors
             affected_services=["enhanced_service"],
             sample_log_entries=[log_text],
-            natural_language_summary=triage_response.description if hasattr(triage_response, 'description') else "Issue detected",
+            natural_language_summary=(
+                triage_response.description
+                if hasattr(triage_response, "description")
+                else "Issue detected"
+            ),
         )
 
-        logger.info(f"[ENHANCED_TRIAGE] Triage completed: flow_id={flow_id}, issue_id={triage_packet.issue_id}")
+        logger.info(
+            f"[ENHANCED_TRIAGE] Triage completed: flow_id={flow_id}, issue_id={triage_packet.issue_id}"
+        )
 
         # Step 2: Enhanced Analysis
-        logger.info(f"[ENHANCED_ANALYSIS] Starting intelligent analysis: flow_id={flow_id}")
-        
+        logger.info(
+            f"[ENHANCED_ANALYSIS] Starting intelligent analysis: flow_id={flow_id}"
+        )
+
         analysis_agent = agents["analysis_agent"]
         # Both enhanced agents and legacy adapters use the same interface
         analysis_response = await analysis_agent.analyze_issue(
@@ -247,17 +274,27 @@ async def process_log_with_enhanced_pipeline(
         logger.info(f"[ENHANCED_ANALYSIS] Analysis completed: flow_id={flow_id}")
 
         # Step 3: Enhanced Remediation
-        logger.info(f"[ENHANCED_REMEDIATION] Starting intelligent remediation: flow_id={flow_id}")
-        
+        logger.info(
+            f"[ENHANCED_REMEDIATION] Starting intelligent remediation: flow_id={flow_id}"
+        )
+
         remediation_agent = agents["remediation_agent"]
-        if hasattr(remediation_agent, 'create_remediation_plan'):
+        if hasattr(remediation_agent, "create_remediation_plan"):
             # Direct enhanced agent
             remediation_response = await remediation_agent.create_remediation_plan(
                 issue_description=triage_packet.natural_language_summary,
                 error_context=log_text,
                 target_file="enhanced_service/app.py",
-                analysis_summary=analysis_response.root_cause_analysis if hasattr(analysis_response, 'root_cause_analysis') else "Analysis completed",
-                key_points=[analysis_response.proposed_fix] if hasattr(analysis_response, 'proposed_fix') else ["Fix required"],
+                analysis_summary=(
+                    analysis_response.root_cause_analysis
+                    if hasattr(analysis_response, "root_cause_analysis")
+                    else "Analysis completed"
+                ),
+                key_points=(
+                    [analysis_response.proposed_fix]
+                    if hasattr(analysis_response, "proposed_fix")
+                    else ["Fix required"]
+                ),
             )
         else:
             # Legacy adapter - create a simple remediation plan
@@ -265,12 +302,14 @@ async def process_log_with_enhanced_pipeline(
                 root_cause_analysis=f"Enhanced analysis for issue {flow_id}",
                 proposed_fix=f"Enhanced fix for issue {flow_id}",
                 code_patch=f'# FILE: enhanced_service/app.py\n# Enhanced fix for {flow_id}\nprint("Fixed issue")',
-                priority='medium',
-                estimated_effort='2 hours'
+                priority="medium",
+                estimated_effort="2 hours",
             )
 
         # Create local patch using the LocalPatchManager
-        logger.info(f"[ENHANCED_REMEDIATION] Creating enhanced local patch: flow_id={flow_id}")
+        logger.info(
+            f"[ENHANCED_REMEDIATION] Creating enhanced local patch: flow_id={flow_id}"
+        )
 
         # Generate a unique issue ID for the patch
         issue_id = f"enhanced_{flow_id.replace(':', '_').replace('/', '_')}"
@@ -284,7 +323,9 @@ async def process_log_with_enhanced_pipeline(
             severity=remediation_response.priority,
         )
 
-        logger.info(f"[ENHANCED_REMEDIATION] Enhanced remediation completed: flow_id={flow_id}, issue_id={issue_id}")
+        logger.info(
+            f"[ENHANCED_REMEDIATION] Enhanced remediation completed: flow_id={flow_id}, issue_id={issue_id}"
+        )
 
         # Log metrics
         metrics_collector = agents["metrics_collector"]
@@ -302,7 +343,9 @@ async def process_log_with_enhanced_pipeline(
 
     except Exception as e:
         flow_id = getattr(log_entry, "id", "unknown")
-        logger.error(f"[ENHANCED_PIPELINE] Error processing log entry: flow_id={flow_id}, error={e}")
+        logger.error(
+            f"[ENHANCED_PIPELINE] Error processing log entry: flow_id={flow_id}, error={e}"
+        )
 
 
 async def main():
@@ -332,17 +375,21 @@ async def main():
     logger.info("[STARTUP] Using ENHANCED multi-provider LLM system")
 
     # Initialize enhanced LLM configuration
-    llm_config_path = os.getenv("LLM_CONFIG_PATH", "examples/dogfooding/configs/llm_config.yaml")
+    llm_config_path = os.getenv(
+        "LLM_CONFIG_PATH", "examples/dogfooding/configs/llm_config.yaml"
+    )
     config_manager_llm = ConfigManager(llm_config_path)
     llm_config = config_manager_llm.get_config()
 
     # Create providers from config first
     all_providers = LLMProviderFactory.create_providers_from_config(llm_config)
-    
+
     # Initialize and run capability discovery
     capability_discovery = CapabilityDiscovery(all_providers)
     await capability_discovery.discover_capabilities()
-    logger.info(f"[STARTUP] Discovered capabilities for {len(capability_discovery.model_capabilities)} models.")
+    logger.info(
+        f"[STARTUP] Discovered capabilities for {len(capability_discovery.model_capabilities)} models."
+    )
 
     # Initialize enhanced agents
     agents = await initialize_enhanced_agents(llm_config, feature_flags, logger)
@@ -362,7 +409,9 @@ async def main():
     # Create a callback function to process logs through the enhanced agent pipeline
     async def process_log_entry(log_entry: LogEntry):
         """Process log entries through the enhanced agent pipeline."""
-        await process_log_with_enhanced_pipeline(log_entry, agents, patch_manager, logger)
+        await process_log_with_enhanced_pipeline(
+            log_entry, agents, patch_manager, logger
+        )
 
     log_manager = LogManager(process_log_entry)
 
@@ -372,9 +421,11 @@ async def main():
         return
     logger.info(f"[STARTUP] Ingestion config: {ingestion_config}")
     logger.info(f"[STARTUP] Found {len(ingestion_config.sources)} sources in config")
-    
+
     for source_config in ingestion_config.sources:
-        logger.info(f"[STARTUP] Processing source: {source_config.name}, type: {source_config.type}")
+        logger.info(
+            f"[STARTUP] Processing source: {source_config.name}, type: {source_config.type}"
+        )
         if source_config.type == "file_system":
             try:
                 file_system_config = FileSystemConfig(
@@ -396,9 +447,13 @@ async def main():
                 )
                 adapter = FileSystemAdapter(file_system_config)
                 await log_manager.add_source(adapter)
-                logger.info(f"[STARTUP] Added enhanced file system source: {source_config.name}")
+                logger.info(
+                    f"[STARTUP] Added enhanced file system source: {source_config.name}"
+                )
             except Exception as e:
-                logger.error(f"[STARTUP] Failed to add source {source_config.name}: {e}")
+                logger.error(
+                    f"[STARTUP] Failed to add source {source_config.name}: {e}"
+                )
         else:
             logger.warning(f"[STARTUP] Unsupported source type: {source_config.type}")
 
@@ -433,12 +488,12 @@ async def main():
                 await log_manager.stop()
             except Exception as e:
                 logger.error(f"[SHUTDOWN] Error stopping log manager: {e}")
-        
+
         # Log final metrics
         if agents.get("metrics_collector"):
             metrics_summary = agents["metrics_collector"].get_metrics_summary()
             logger.info(f"[SHUTDOWN] Final metrics summary: {metrics_summary}")
-        
+
         logger.info("[STARTUP] Enhanced Gemini SRE Agent stopped.")
 
 

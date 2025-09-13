@@ -8,9 +8,9 @@ from .file_queue import FileQueueConfig, FileSystemQueue
 from .memory_queue import MemoryQueue, QueueConfig, QueueStats
 
 __all__ = [
+    "FileQueueConfig",
+    "FileSystemQueue",
     "MemoryQueue",
     "QueueConfig",
     "QueueStats",
-    "FileSystemQueue",
-    "FileQueueConfig",
 ]

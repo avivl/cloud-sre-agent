@@ -8,10 +8,10 @@ error handling performance, circuit breaker states, and system health.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .advanced_circuit_breaker import AdvancedCircuitBreaker
 from .custom_fallback_strategies import CustomFallbackManager
@@ -22,14 +22,14 @@ from .metrics_integration import ErrorHandlingMetrics
 class MonitoringDashboard:
     """Comprehensive monitoring dashboard for error handling system."""
 
-    def __init__(self, metrics: Optional[ErrorHandlingMetrics] = None) -> None:
+    def __init__(self, metrics: ErrorHandlingMetrics | None = None) -> None:
         self.metrics = metrics
         self.logger = logging.getLogger("MonitoringDashboard")
-        self.circuit_breakers: Dict[str, AdvancedCircuitBreaker] = {}
-        self.fallback_manager: Optional[CustomFallbackManager] = None
-        self.self_healing_manager: Optional[SelfHealingManager] = None
-        self.dashboard_data: Dict[str, Any] = {}
-        self.last_update: Optional[datetime] = None
+        self.circuit_breakers: dict[str, AdvancedCircuitBreaker] = {}
+        self.fallback_manager: CustomFallbackManager | None = None
+        self.self_healing_manager: SelfHealingManager | None = None
+        self.dashboard_data: dict[str, Any] = {}
+        self.last_update: datetime | None = None
 
     def register_circuit_breaker(
         self, name: str, circuit_breaker: AdvancedCircuitBreaker
@@ -101,10 +101,10 @@ class MonitoringDashboard:
 
     async def _calculate_system_health(
         self,
-        circuit_breaker_data: Dict[str, Any],
-        fallback_data: Dict[str, Any],
-        self_healing_data: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        circuit_breaker_data: dict[str, Any],
+        fallback_data: dict[str, Any],
+        self_healing_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Calculate overall system health score."""
         health_scores = []
         issues = []
@@ -145,7 +145,7 @@ class MonitoringDashboard:
             "component_count": len(circuit_breaker_data),
         }
 
-    async def _get_metrics_summary(self) -> Dict[str, Any]:
+    async def _get_metrics_summary(self) -> dict[str, Any]:
         """Get summary of metrics data."""
         if not self.metrics:
             return {}
@@ -161,7 +161,7 @@ class MonitoringDashboard:
             "fallback_executions": 0,
         }
 
-    def get_dashboard_summary(self) -> Dict[str, Any]:
+    def get_dashboard_summary(self) -> dict[str, Any]:
         """Get a summary of the current dashboard state."""
         if not self.dashboard_data:
             return {"status": "no_data", "message": "Dashboard data not available"}
@@ -177,7 +177,7 @@ class MonitoringDashboard:
             "last_update": self.dashboard_data.get("timestamp"),
         }
 
-    def get_circuit_breaker_status(self) -> Dict[str, Any]:
+    def get_circuit_breaker_status(self) -> dict[str, Any]:
         """Get status of all circuit breakers."""
         if not self.dashboard_data:
             return {}
@@ -199,28 +199,28 @@ class MonitoringDashboard:
 
         return status
 
-    def get_fallback_strategy_status(self) -> Dict[str, Any]:
+    def get_fallback_strategy_status(self) -> dict[str, Any]:
         """Get status of fallback strategies."""
         if not self.dashboard_data:
             return {}
 
         return self.dashboard_data.get("fallback_strategies", {})
 
-    def get_self_healing_status(self) -> Dict[str, Any]:
+    def get_self_healing_status(self) -> dict[str, Any]:
         """Get status of self-healing system."""
         if not self.dashboard_data:
             return {}
 
         return self.dashboard_data.get("self_healing", {})
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get metrics summary."""
         if not self.dashboard_data:
             return {}
 
         return self.dashboard_data.get("metrics", {})
 
-    def get_alerts(self) -> List[Dict[str, Any]]:
+    def get_alerts(self) -> list[dict[str, Any]]:
         """Get current alerts based on dashboard data."""
         alerts = []
 
@@ -288,7 +288,7 @@ class MonitoringDashboard:
         else:
             raise ValueError(f"Unsupported format: {format}")
 
-    def get_health_trend(self, hours: int = 24) -> Dict[str, Any]:
+    def get_health_trend(self, hours: int = 24) -> dict[str, Any]:
         """Get health trend over specified hours."""
         # This would typically query historical data
         # For now, return a placeholder structure
@@ -375,7 +375,7 @@ class MonitoringDashboard:
         """
         return html
 
-    def _generate_alerts_html(self, alerts: List[Dict[str, Any]]) -> str:
+    def _generate_alerts_html(self, alerts: list[dict[str, Any]]) -> str:
         """Generate HTML for alerts section."""
         if not alerts:
             return "<p>No alerts</p>"
@@ -391,7 +391,7 @@ class MonitoringDashboard:
             """
         return html
 
-    def _generate_circuit_breakers_html(self, circuit_breakers: Dict[str, Any]) -> str:
+    def _generate_circuit_breakers_html(self, circuit_breakers: dict[str, Any]) -> str:
         """Generate HTML for circuit breakers section."""
         if not circuit_breakers:
             return "<p>No circuit breakers registered</p>"

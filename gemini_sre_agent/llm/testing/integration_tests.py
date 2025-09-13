@@ -10,7 +10,6 @@ functionality including sequential, parallel, and cascade mixing strategies.
 import asyncio
 import logging
 import time
-from typing import Dict, Optional
 
 from ..cost_management_integration import IntegratedCostManager
 
@@ -31,7 +30,7 @@ class IntegrationTester:
         self,
         provider_factory: LLMProviderFactory,
         model_registry: ModelRegistry,
-        cost_manager: Optional[IntegratedCostManager] = None,
+        cost_manager: IntegratedCostManager | None = None,
     ):
         """Initialize the integration tester."""
         self.provider_factory = provider_factory
@@ -437,7 +436,7 @@ class IntegrationTester:
                         results[strategy.value] = "no_result"
 
                 except Exception as e:
-                    results[strategy.value] = f"error: {str(e)}"
+                    results[strategy.value] = f"error: {e!s}"
 
             # Check that at least one strategy worked
             successful_strategies = [
@@ -455,7 +454,7 @@ class IntegrationTester:
             logger.error(f"Mixed strategies test failed: {e}")
             return False
 
-    async def run_all_integration_tests(self) -> Dict[str, bool]:
+    async def run_all_integration_tests(self) -> dict[str, bool]:
         """Run all integration tests."""
         logger.info("Running all integration tests")
 

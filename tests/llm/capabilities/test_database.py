@@ -27,7 +27,9 @@ def sample_model_capabilities() -> None:
     return [model_caps1, model_caps2, model_caps3]
 
 
-def test_add_capabilities(capability_database: str, sample_model_capabilities: str) -> None:
+def test_add_capabilities(
+    capability_database: str, sample_model_capabilities: str
+) -> None:
     """
     Test Add Capabilities.
 
@@ -46,7 +48,9 @@ def test_add_capabilities(capability_database: str, sample_model_capabilities: s
     )
 
 
-def test_get_capabilities(capability_database: str, sample_model_capabilities: str) -> None:
+def test_get_capabilities(
+    capability_database: str, sample_model_capabilities: str
+) -> None:
     """
     Test Get Capabilities.
 
@@ -61,7 +65,9 @@ def test_get_capabilities(capability_database: str, sample_model_capabilities: s
     assert capability_database.get_capabilities("non_existent_model") is None
 
 
-def test_query_capabilities_by_name(capability_database: str, sample_model_capabilities: str) -> None:
+def test_query_capabilities_by_name(
+    capability_database: str, sample_model_capabilities: str
+) -> None:
     """
     Test Query Capabilities By Name.
 
@@ -99,7 +105,9 @@ def test_query_capabilities_by_name(capability_database: str, sample_model_capab
     assert len(non_existent_caps) == 0
 
 
-def test_query_all_capabilities(capability_database: str, sample_model_capabilities: str) -> None:
+def test_query_all_capabilities(
+    capability_database: str, sample_model_capabilities: str
+) -> None:
     """
     Test Query All Capabilities.
 
@@ -116,7 +124,9 @@ def test_query_all_capabilities(capability_database: str, sample_model_capabilit
     assert all(c in all_caps for c in sample_model_capabilities)
 
 
-def test_clear_database(capability_database: str, sample_model_capabilities: str) -> None:
+def test_clear_database(
+    capability_database: str, sample_model_capabilities: str
+) -> None:
     """
     Test Clear Database.
 

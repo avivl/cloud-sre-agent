@@ -1,10 +1,11 @@
 # gemini_sre_agent/log_subscriber.py
 
 import asyncio
+from collections.abc import Awaitable, Callable
+from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Awaitable, Callable, Dict, Optional
+from typing import Any
 
 from google.cloud import pubsub_v1
 from google.cloud.pubsub_v1.subscriber.message import Message
@@ -21,7 +22,7 @@ class LogSubscriber:
         self,
         project_id: str,
         subscription_id: str,
-        triage_callback: Optional[Callable[[Dict], Awaitable[Any]]] = None,
+        triage_callback: Callable[[dict], Awaitable[Any]] | None = None,
     ):
         """
         Initializes the LogSubscriber with GCP project and Pub/Sub subscription details.

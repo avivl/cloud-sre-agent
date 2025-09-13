@@ -6,11 +6,9 @@ static analysis integration, and code quality metrics extraction.
 """
 
 import asyncio
-import os
-import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

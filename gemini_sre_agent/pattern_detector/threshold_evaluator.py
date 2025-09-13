@@ -4,9 +4,8 @@
 Threshold evaluation logic.
 """
 
-import logging
 from collections import defaultdict
-from typing import Dict, List, Optional
+import logging
 
 from .baseline_tracker import BaselineTracker
 from .models import (
@@ -25,8 +24,8 @@ class ThresholdEvaluator:
 
     def __init__(
         self,
-        threshold_configs: List[ThresholdConfig],
-        baseline_tracker: Optional[BaselineTracker] = None,
+        threshold_configs: list[ThresholdConfig],
+        baseline_tracker: BaselineTracker | None = None,
     ):
         self.threshold_configs = threshold_configs
         self.baseline_tracker = baseline_tracker or BaselineTracker()
@@ -34,7 +33,7 @@ class ThresholdEvaluator:
             f"[PATTERN_DETECTION] ThresholdEvaluator initialized with {len(threshold_configs)} thresholds"
         )
 
-    def evaluate_window(self, window: TimeWindow) -> List[ThresholdResult]:
+    def evaluate_window(self, window: TimeWindow) -> list[ThresholdResult]:
         """
         Evaluate Window.
 
@@ -254,9 +253,9 @@ class ThresholdEvaluator:
         )
 
     def _get_severity_breakdown(
-        self, logs: List[LogEntry], severity_weights: Dict[str, float]
-    ) -> Dict[str, int]:
-        breakdown: Dict[str, int] = defaultdict(int)
+        self, logs: list[LogEntry], severity_weights: dict[str, float]
+    ) -> dict[str, int]:
+        breakdown: dict[str, int] = defaultdict(int)
         for log in logs:
             breakdown[log.severity] += 1
         return dict(breakdown)

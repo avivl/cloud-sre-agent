@@ -10,7 +10,7 @@ backward compatibility.
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .classification_algorithms import (
     BaseErrorClassifier,
@@ -43,7 +43,7 @@ class RefactoredErrorClassifier:
         algorithm: str = "hybrid",
         enable_metrics: bool = True,
         enable_patterns: bool = True,
-        training_data: Optional[TrainingData] = None,
+        training_data: TrainingData | None = None,
     ):
         """Initialize the refactored error classifier."""
         self.logger = logging.getLogger("RefactoredErrorClassifier")
@@ -75,7 +75,7 @@ class RefactoredErrorClassifier:
         )
 
     def _initialize_classifier(
-        self, algorithm: str, training_data: Optional[TrainingData]
+        self, algorithm: str, training_data: TrainingData | None
     ) -> BaseErrorClassifier:
         """Initialize the classification algorithm."""
         classifier = ClassifierFactory.create_classifier(algorithm)
@@ -141,7 +141,7 @@ class RefactoredErrorClassifier:
             labels=labels,
         )
 
-    def _initialize_legacy_rules(self) -> List[Any]:
+    def _initialize_legacy_rules(self) -> list[Any]:
         """Initialize legacy classification rules for backward compatibility."""
         # These are simplified versions of the original rules
         # They serve as fallbacks when the new system doesn't classify an error
@@ -259,7 +259,7 @@ class RefactoredErrorClassifier:
 
         return classification
 
-    def _extract_error_attributes(self, error: Exception) -> Dict[str, Any]:
+    def _extract_error_attributes(self, error: Exception) -> dict[str, Any]:
         """Extract attributes from an error for classification context."""
         attributes = {}
 
@@ -301,7 +301,7 @@ class RefactoredErrorClassifier:
 
     def _classify_by_exception_type(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Legacy rule: classify by exception type."""
         error_type_mapping = {
             ConnectionError: ErrorType.NETWORK_ERROR,
@@ -333,7 +333,7 @@ class RefactoredErrorClassifier:
 
     def _classify_by_error_message(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Legacy rule: classify by error message keywords."""
         error_str = str(error).lower()
 
@@ -376,7 +376,7 @@ class RefactoredErrorClassifier:
 
     def _classify_by_http_status(
         self, error: Exception
-    ) -> Optional[ErrorClassification]:
+    ) -> ErrorClassification | None:
         """Legacy rule: classify by HTTP status code."""
         status = None
 
@@ -427,19 +427,19 @@ class RefactoredErrorClassifier:
 
         return None
 
-    def get_performance_summary(self) -> Optional[Dict[str, Any]]:
+    def get_performance_summary(self) -> dict[str, Any] | None:
         """Get performance summary from metrics collector."""
         if self.metrics_collector:
             return self.metrics_collector.get_performance_summary()
         return None
 
-    def generate_classification_report(self) -> Optional[str]:
+    def generate_classification_report(self) -> str | None:
         """Generate classification report from metrics collector."""
         if self.metrics_collector:
             return self.metrics_collector.generate_classification_report()
         return None
 
-    def export_metrics(self) -> Optional[MetricsSummary]:
+    def export_metrics(self) -> MetricsSummary | None:
         """Export metrics summary."""
         if self.metrics_collector:
             return self.metrics_collector.export_metrics(self.algorithm)
@@ -470,7 +470,7 @@ class RefactoredErrorClassifier:
             return 0.0
 
     def predict_error_type(
-        self, error_message: str, context: Optional[Dict[str, Any]] = None
+        self, error_message: str, context: dict[str, Any] | None = None
     ) -> ClassificationResult:
         """Predict error type for a given error message."""
         try:
@@ -486,12 +486,12 @@ class RefactoredErrorClassifier:
                 suggested_actions=["Check error message and try again"],
             )
 
-    def get_available_algorithms(self) -> List[str]:
+    def get_available_algorithms(self) -> list[str]:
         """Get list of available classification algorithms."""
         return ClassifierFactory.get_available_algorithms()
 
     def switch_algorithm(
-        self, algorithm: str, training_data: Optional[TrainingData] = None
+        self, algorithm: str, training_data: TrainingData | None = None
     ) -> None:
         """Switch to a different classification algorithm."""
         try:
@@ -511,7 +511,7 @@ def create_error_classifier(
     algorithm: str = "hybrid",
     enable_metrics: bool = True,
     enable_patterns: bool = True,
-    training_data: Optional[TrainingData] = None,
+    training_data: TrainingData | None = None,
 ) -> RefactoredErrorClassifier:
     """Create an error classifier with the specified configuration."""
     return RefactoredErrorClassifier(

@@ -1,14 +1,14 @@
 """Pytest configuration and shared fixtures for the reorganized test structure."""
 
 import asyncio
+from collections.abc import Generator
 import os
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator
-from unittest.mock import Mock, patch
+import tempfile
+from typing import Any
+from unittest.mock import Mock
 
 import pytest
-from pytest_mock import MockerFixture
 
 # Set test environment variables
 os.environ["TESTING"] = "true"
@@ -31,56 +31,36 @@ def temp_dir() -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def mock_config() -> Dict[str, Any]:
+def mock_config() -> dict[str, Any]:
     """Mock configuration for testing."""
     return {
         "llm": {
             "providers": {
-                "openai": {
-                    "api_key": "test-key",
-                    "model": "gpt-4",
-                    "temperature": 0.7
-                },
+                "openai": {"api_key": "test-key", "model": "gpt-4", "temperature": 0.7},
                 "anthropic": {
                     "api_key": "test-key",
                     "model": "claude-3-sonnet",
-                    "temperature": 0.7
-                }
+                    "temperature": 0.7,
+                },
             },
             "default_provider": "openai",
             "timeout": 30,
-            "max_retries": 3
+            "max_retries": 3,
         },
-        "metrics": {
-            "enabled": True,
-            "collection_interval": 60,
-            "retention_days": 30
-        },
+        "metrics": {"enabled": True, "collection_interval": 60, "retention_days": 30},
         "resilience": {
-            "circuit_breaker": {
-                "failure_threshold": 5,
-                "recovery_timeout": 60
-            },
-            "retry": {
-                "max_attempts": 3,
-                "backoff_factor": 2
-            }
+            "circuit_breaker": {"failure_threshold": 5, "recovery_timeout": 60},
+            "retry": {"max_attempts": 3, "backoff_factor": 2},
         },
         "security": {
-            "encryption": {
-                "enabled": True,
-                "algorithm": "AES-256"
-            },
-            "access_control": {
-                "enabled": True,
-                "default_permission": "read"
-            }
-        }
+            "encryption": {"enabled": True, "algorithm": "AES-256"},
+            "access_control": {"enabled": True, "default_permission": "read"},
+        },
     }
 
 
 @pytest.fixture
-def mock_llm_response() -> Dict[str, Any]:
+def mock_llm_response() -> dict[str, Any]:
     """Mock LLM response for testing."""
     return {
         "content": "This is a test response",
@@ -89,12 +69,12 @@ def mock_llm_response() -> Dict[str, Any]:
         "tokens_used": 100,
         "cost_usd": 0.01,
         "latency_ms": 500,
-        "quality_score": 0.95
+        "quality_score": 0.95,
     }
 
 
 @pytest.fixture
-def mock_agent_request() -> Dict[str, Any]:
+def mock_agent_request() -> dict[str, Any]:
     """Mock agent request for testing."""
     return {
         "agent_id": "test-agent",
@@ -103,12 +83,12 @@ def mock_agent_request() -> Dict[str, Any]:
         "context": {"test": "data"},
         "max_tokens": 1000,
         "temperature": 0.7,
-        "timeout_seconds": 30
+        "timeout_seconds": 30,
     }
 
 
 @pytest.fixture
-def mock_workflow_context() -> Dict[str, Any]:
+def mock_workflow_context() -> dict[str, Any]:
     """Mock workflow context for testing."""
     return {
         "workflow_id": "test-workflow",
@@ -116,29 +96,25 @@ def mock_workflow_context() -> Dict[str, Any]:
         "branch": "main",
         "commit_sha": "abc123",
         "files_changed": ["test.py"],
-        "context_data": {"test": "context"}
+        "context_data": {"test": "context"},
     }
 
 
 @pytest.fixture
-def mock_error_data() -> Dict[str, Any]:
+def mock_error_data() -> dict[str, Any]:
     """Mock error data for testing."""
     return {
         "error_type": "ValueError",
         "error_message": "Test error message",
         "traceback": "Traceback (most recent call last):\n  File \"test.py\", line 1, in <module>\n    raise ValueError('Test error')\nValueError: Test error",
-        "context": {
-            "file": "test.py",
-            "line": 1,
-            "function": "test_function"
-        },
+        "context": {"file": "test.py", "line": 1, "function": "test_function"},
         "timestamp": "2024-01-01T00:00:00Z",
-        "severity": "error"
+        "severity": "error",
     }
 
 
 @pytest.fixture
-def mock_metrics_data() -> Dict[str, Any]:
+def mock_metrics_data() -> dict[str, Any]:
     """Mock metrics data for testing."""
     return {
         "total_requests": 1000,
@@ -149,12 +125,12 @@ def mock_metrics_data() -> Dict[str, Any]:
         "p95_latency_ms": 800,
         "p99_latency_ms": 1200,
         "total_cost_usd": 10.50,
-        "total_tokens": 50000
+        "total_tokens": 50000,
     }
 
 
 @pytest.fixture
-def mock_provider_health() -> Dict[str, Any]:
+def mock_provider_health() -> dict[str, Any]:
     """Mock provider health data for testing."""
     return {
         "provider": "openai",
@@ -165,12 +141,12 @@ def mock_provider_health() -> Dict[str, Any]:
         "failure_count": 5,
         "success_rate": 0.95,
         "avg_response_time_ms": 500,
-        "issues": []
+        "issues": [],
     }
 
 
 @pytest.fixture
-def mock_pattern_match() -> Dict[str, Any]:
+def mock_pattern_match() -> dict[str, Any]:
     """Mock pattern match data for testing."""
     return {
         "pattern_id": "test-pattern",
@@ -179,12 +155,12 @@ def mock_pattern_match() -> Dict[str, Any]:
         "matched_text": "test error",
         "start_position": 0,
         "end_position": 10,
-        "context": "This is a test error message"
+        "context": "This is a test error message",
     }
 
 
 @pytest.fixture
-def mock_classification_result() -> Dict[str, Any]:
+def mock_classification_result() -> dict[str, Any]:
     """Mock classification result for testing."""
     return {
         "error_type": "ValueError",
@@ -193,37 +169,28 @@ def mock_classification_result() -> Dict[str, Any]:
         "suggested_actions": [
             "Check input validation",
             "Verify data types",
-            "Add error handling"
+            "Add error handling",
         ],
         "severity": "medium",
-        "patterns_matched": ["test-pattern-1", "test-pattern-2"]
+        "patterns_matched": ["test-pattern-1", "test-pattern-2"],
     }
 
 
 @pytest.fixture
-def mock_cost_data() -> Dict[str, Any]:
+def mock_cost_data() -> dict[str, Any]:
     """Mock cost data for testing."""
     return {
         "total_cost_usd": 150.75,
         "daily_average": 5.02,
         "cost_trend": "stable",
-        "breakdown": {
-            "input_tokens": 120.50,
-            "output_tokens": 30.25
-        },
-        "by_provider": {
-            "openai": 100.00,
-            "anthropic": 50.75
-        },
-        "by_model": {
-            "gpt-4": 80.00,
-            "claude-3-sonnet": 50.75
-        }
+        "breakdown": {"input_tokens": 120.50, "output_tokens": 30.25},
+        "by_provider": {"openai": 100.00, "anthropic": 50.75},
+        "by_model": {"gpt-4": 80.00, "claude-3-sonnet": 50.75},
     }
 
 
 @pytest.fixture
-def mock_alert() -> Dict[str, Any]:
+def mock_alert() -> dict[str, Any]:
     """Mock alert data for testing."""
     return {
         "alert_id": "test-alert-1",
@@ -231,12 +198,9 @@ def mock_alert() -> Dict[str, Any]:
         "severity": "warning",
         "provider": "openai",
         "message": "High error rate detected",
-        "details": {
-            "error_rate": 0.15,
-            "threshold": 0.10
-        },
+        "details": {"error_rate": 0.15, "threshold": 0.10},
         "timestamp": "2024-01-01T00:00:00Z",
-        "status": "active"
+        "status": "active",
     }
 
 
@@ -247,11 +211,11 @@ def mock_file_system(temp_dir: Path) -> Generator[Path, None, None]:
     (temp_dir / "test_file.py").write_text("print('Hello, World!')")
     (temp_dir / "test_config.json").write_text('{"test": "config"}')
     (temp_dir / "test_log.txt").write_text("2024-01-01 INFO: Test log message")
-    
+
     # Create subdirectories
     (temp_dir / "subdir").mkdir()
     (temp_dir / "subdir" / "nested_file.py").write_text("def test(): pass")
-    
+
     yield temp_dir
 
 
@@ -325,7 +289,7 @@ def mock_pattern_classifier() -> Mock:
     classifier.classify.return_value = {
         "error_type": "ValueError",
         "confidence": 0.85,
-        "category": "validation"
+        "category": "validation",
     }
     classifier.get_patterns.return_value = ["pattern1", "pattern2"]
     classifier.get_confidence.return_value = 0.85
@@ -405,7 +369,7 @@ async def async_mock_agent() -> Mock:
 
 # Test data fixtures
 @pytest.fixture
-def sample_log_entries() -> list[Dict[str, Any]]:
+def sample_log_entries() -> list[dict[str, Any]]:
     """Sample log entries for testing."""
     return [
         {
@@ -414,20 +378,20 @@ def sample_log_entries() -> list[Dict[str, Any]]:
             "message": "ValueError: Invalid input",
             "service": "test-service",
             "traceback": "Traceback...",
-            "context": {"user_id": "123"}
+            "context": {"user_id": "123"},
         },
         {
             "timestamp": "2024-01-01T00:01:00Z",
             "level": "INFO",
             "message": "Request processed successfully",
             "service": "test-service",
-            "context": {"request_id": "req-123"}
-        }
+            "context": {"request_id": "req-123"},
+        },
     ]
 
 
 @pytest.fixture
-def sample_error_patterns() -> list[Dict[str, Any]]:
+def sample_error_patterns() -> list[dict[str, Any]]:
     """Sample error patterns for testing."""
     return [
         {
@@ -436,7 +400,7 @@ def sample_error_patterns() -> list[Dict[str, Any]]:
             "pattern": r"ValueError: (.+)",
             "error_type": "ValueError",
             "category": "validation",
-            "confidence": 0.9
+            "confidence": 0.9,
         },
         {
             "pattern_id": "connection-error-1",
@@ -444,8 +408,8 @@ def sample_error_patterns() -> list[Dict[str, Any]]:
             "pattern": "ConnectionError",
             "error_type": "ConnectionError",
             "category": "network",
-            "confidence": 0.8
-        }
+            "confidence": 0.8,
+        },
     ]
 
 

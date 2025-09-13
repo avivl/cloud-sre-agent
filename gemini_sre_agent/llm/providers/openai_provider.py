@@ -8,7 +8,7 @@ for OpenAI's GPT models.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from openai import AsyncOpenAI
 
@@ -128,7 +128,7 @@ class OpenAIProvider(LLMProvider):
         """Check if OpenAI supports tool calling."""
         return True
 
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available OpenAI models mapped to semantic types."""
         # Default mappings
         default_mappings = {
@@ -145,7 +145,7 @@ class OpenAIProvider(LLMProvider):
 
         return default_mappings
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings using OpenAI API."""
         logger.info(f"Generating embeddings for text of length: {len(text)}")
 
@@ -184,8 +184,8 @@ class OpenAIProvider(LLMProvider):
         return input_cost + output_cost
 
     def _convert_messages_to_openai_format(
-        self, messages: List[Dict[str, str]]
-    ) -> List[Dict[str, str]]:
+        self, messages: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
         """Convert generic message format to OpenAI format."""
         openai_messages = []
         for message in messages:
@@ -205,7 +205,7 @@ class OpenAIProvider(LLMProvider):
 
         return openai_messages
 
-    def _extract_usage(self, usage: Any) -> Dict[str, int]:
+    def _extract_usage(self, usage: Any) -> dict[str, int]:
         """Extract usage information from OpenAI response."""
         if not usage:
             return {"input_tokens": 0, "output_tokens": 0}

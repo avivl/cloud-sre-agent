@@ -8,10 +8,11 @@ failures and preventing cascading failures in distributed systems.
 """
 
 import asyncio
+from collections.abc import Callable
+from datetime import datetime
 import logging
 import time
-from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from .core import (
     CircuitBreakerConfig,
@@ -30,7 +31,7 @@ class CircuitBreaker:
         self,
         config: CircuitBreakerConfig,
         name: str = "default",
-        metrics: Optional[ErrorHandlingMetrics] = None,
+        metrics: ErrorHandlingMetrics | None = None,
     ):
         self.config = config
         self.name = name
@@ -41,8 +42,8 @@ class CircuitBreaker:
         self.state = CircuitState.CLOSED
         self.failure_count = 0
         self.success_count = 0
-        self.last_failure_time: Optional[datetime] = None
-        self.last_success_time: Optional[datetime] = None
+        self.last_failure_time: datetime | None = None
+        self.last_success_time: datetime | None = None
 
         # Statistics
         self.total_requests = 0
@@ -162,7 +163,7 @@ class CircuitBreaker:
 
             return result
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             await self._record_failure()
 
             # Record timeout in metrics
@@ -195,7 +196,7 @@ class CircuitBreaker:
 
             raise e from e
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get circuit breaker statistics."""
         return {
             "name": self.name,

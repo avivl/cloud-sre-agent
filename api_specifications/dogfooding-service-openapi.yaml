@@ -30,12 +30,12 @@ paths:
       tags:
         - Health
       responses:
-        '200':
+        "200":
           description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: "#/components/schemas/HealthResponse"
 
   /status:
     get:
@@ -45,12 +45,12 @@ paths:
       tags:
         - Status
       responses:
-        '200':
+        "200":
           description: Service status retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatusResponse'
+                $ref: "#/components/schemas/StatusResponse"
 
   /error/division:
     get:
@@ -60,12 +60,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '500':
+        "500":
           description: Division by zero error occurred
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/memory:
     get:
@@ -75,12 +75,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '500':
+        "500":
           description: Memory allocation failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/timeout:
     get:
@@ -90,12 +90,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '408':
+        "408":
           description: Request timeout
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/json:
     get:
@@ -105,12 +105,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '400':
+        "400":
           description: JSON parsing failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/file:
     get:
@@ -120,12 +120,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '404':
+        "404":
           description: File not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/permission:
     get:
@@ -135,12 +135,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '403':
+        "403":
           description: Permission denied
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/connection:
     get:
@@ -150,12 +150,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '503':
+        "503":
           description: Connection failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/validation:
     get:
@@ -165,12 +165,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '400':
+        "400":
           description: Invalid input format
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/key:
     get:
@@ -180,12 +180,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '400':
+        "400":
           description: Key not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/attribute:
     get:
@@ -195,12 +195,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '500':
+        "500":
           description: Attribute not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/import:
     get:
@@ -210,12 +210,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '500':
+        "500":
           description: Module not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/type:
     get:
@@ -225,12 +225,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '400':
+        "400":
           description: Type mismatch
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/index:
     get:
@@ -240,12 +240,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '400':
+        "400":
           description: Index out of range
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/recursion:
     get:
@@ -255,12 +255,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '500':
+        "500":
           description: Maximum recursion depth exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/database:
     get:
@@ -270,12 +270,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '503':
+        "503":
           description: Database connection failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /error/rate_limit:
     get:
@@ -285,12 +285,12 @@ paths:
       tags:
         - Error Testing
       responses:
-        '429':
+        "429":
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RateLimitErrorResponse'
+                $ref: "#/components/schemas/RateLimitErrorResponse"
 
 components:
   schemas:

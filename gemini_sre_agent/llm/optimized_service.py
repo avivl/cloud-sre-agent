@@ -11,7 +11,7 @@ overhead requirement.
 import asyncio
 import logging
 import time
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Generic, TypeVar
 
 try:
     from mirascope.llm import Provider
@@ -78,11 +78,11 @@ class OptimizedLLMService(Generic[T]):
         self._performance_monitor_loader = LazyLoader(self._create_performance_monitor)
 
         # Cache for frequently accessed data
-        self._model_cache: Dict[str, Any] = {}
-        self._provider_cache: Dict[str, Any] = {}
+        self._model_cache: dict[str, Any] = {}
+        self._provider_cache: dict[str, Any] = {}
 
         # Performance tracking
-        self._operation_times: Dict[str, List[float]] = {}
+        self._operation_times: dict[str, list[float]] = {}
         self._total_operations = 0
 
         self.logger.info(
@@ -119,16 +119,16 @@ class OptimizedLLMService(Generic[T]):
 
     async def generate_structured(
         self,
-        prompt: Union[str, Any],
-        response_model: Type[T],
-        model: Optional[str] = None,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[str] = None,
+        prompt: str | Any,
+        response_model: type[T],
+        model: str | None = None,
+        model_type: ModelType | None = None,
+        provider: str | None = None,
         selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE,
-        custom_weights: Optional[Any] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_reliability: Optional[float] = None,
+        custom_weights: Any | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_reliability: float | None = None,
         **kwargs: Any,
     ) -> T:
         """Generate structured response with performance optimizations."""
@@ -190,10 +190,10 @@ class OptimizedLLMService(Generic[T]):
 
     async def generate_text(
         self,
-        prompt: Union[str, Any],
-        model: Optional[str] = None,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[str] = None,
+        prompt: str | Any,
+        model: str | None = None,
+        model_type: ModelType | None = None,
+        provider: str | None = None,
         selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE,
         **kwargs: Any,
     ) -> str:
@@ -249,9 +249,9 @@ class OptimizedLLMService(Generic[T]):
     @cached_model_selection(ttl_seconds=60.0)
     async def get_available_models(
         self,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[ProviderType] = None,
-    ) -> List[str]:
+        model_type: ModelType | None = None,
+        provider: ProviderType | None = None,
+    ) -> list[str]:
         """Get available models with caching."""
         await self._ensure_initialized()
 
@@ -280,10 +280,10 @@ class OptimizedLLMService(Generic[T]):
 
     async def batch_generate_structured(
         self,
-        requests: List[Dict[str, Any]],
-        response_model: Type[T],
+        requests: list[dict[str, Any]],
+        response_model: type[T],
         **kwargs: Any,
-    ) -> List[T]:
+    ) -> list[T]:
         """Batch generate structured responses with optimizations."""
         if not self.enable_optimizations or not self.batch_processor:
             # Fallback to sequential processing
@@ -322,7 +322,7 @@ class OptimizedLLMService(Generic[T]):
         if len(self._operation_times[operation]) > 100:
             self._operation_times[operation] = self._operation_times[operation][-100:]
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get comprehensive performance statistics."""
         stats = {
             "total_operations": self._total_operations,
@@ -353,7 +353,7 @@ class OptimizedLLMService(Generic[T]):
 
         return stats
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform health check with performance metrics."""
         start_time = time.time()
 

@@ -8,9 +8,9 @@ delegating specific functionality to specialized modules while maintaining
 a clean, focused interface under 200 LOC.
 """
 
-import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from .caching import ContextCache
 from .performance import PerformanceConfig
@@ -28,8 +28,8 @@ class WorkflowConfig:
     analysis_depth: str = "standard"
     enable_validation: bool = True
     enable_specialized_generators: bool = True
-    performance_config: Optional[PerformanceConfig] = None
-    cache: Optional[ContextCache] = None
+    performance_config: PerformanceConfig | None = None
+    cache: ContextCache | None = None
     repo_path: str = "."
 
 
@@ -74,14 +74,14 @@ class WorkflowOrchestrator:
         self.metrics_collector = WorkflowMetricsCollector()
 
         # Workflow state
-        self.current_workflow_id: Optional[str] = None
-        self.workflow_history: List[WorkflowResult] = []
+        self.current_workflow_id: str | None = None
+        self.workflow_history: list[WorkflowResult] = []
 
     async def execute_workflow(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         analysis_depth: str = "standard",
         enable_validation: bool = True,
@@ -187,7 +187,7 @@ class WorkflowOrchestrator:
 
             return error_result
 
-    async def get_workflow_status(self, flow_id: str) -> Optional[Dict[str, Any]]:
+    async def get_workflow_status(self, flow_id: str) -> dict[str, Any] | None:
         """
         Get the status of a specific workflow.
 
@@ -209,7 +209,7 @@ class WorkflowOrchestrator:
                 }
         return None
 
-    async def get_workflow_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_workflow_history(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get recent workflow history.
 
@@ -238,7 +238,7 @@ class WorkflowOrchestrator:
         self.workflow_history.clear()
         self.logger.info("[WORKFLOW] Workflow state reset")
 
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """
         Get aggregated performance metrics across all workflows.
 
@@ -249,7 +249,7 @@ class WorkflowOrchestrator:
             self.workflow_history
         )
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """
         Perform a health check on all workflow components.
 

@@ -8,7 +8,7 @@ Extracted from unified_workflow_orchestrator_original.py.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .caching import ContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
@@ -25,7 +25,7 @@ class WorkflowGenerationEngine:
     with proper error handling and caching.
     """
 
-    def __init__(self, performance_config: Optional[PerformanceConfig]) -> None:
+    def __init__(self, performance_config: PerformanceConfig | None) -> None:
         """
         Initialize the workflow generation engine.
 
@@ -36,8 +36,8 @@ class WorkflowGenerationEngine:
         self.logger = logging.getLogger(__name__)
 
         # Initialize enhanced agent (will be injected)
-        self.enhanced_agent: Optional[EnhancedAnalysisAgent] = None
-        self.cache: Optional[ContextCache] = None
+        self.enhanced_agent: EnhancedAnalysisAgent | None = None
+        self.cache: ContextCache | None = None
 
     def set_enhanced_agent(self, enhanced_agent: EnhancedAnalysisAgent) -> None:
         """Set the enhanced analysis agent."""
@@ -49,7 +49,7 @@ class WorkflowGenerationEngine:
 
     async def generate_enhanced_code(
         self,
-        analysis_result: Dict[str, Any],
+        analysis_result: dict[str, Any],
         prompt_context: PromptContext,
         enable_specialized_generators: bool,
     ) -> str:
@@ -184,7 +184,7 @@ except Exception as e:
         else:
             return f"# Basic error handling for {file_ext} files\n# TODO: Implement based on: {proposed_fix}"
 
-    async def get_cached_generation(self, flow_id: str) -> Optional[str]:
+    async def get_cached_generation(self, flow_id: str) -> str | None:
         """
         Get cached generation result for a specific flow.
 
@@ -226,7 +226,7 @@ except Exception as e:
         except Exception as e:
             self.logger.warning(f"Failed to cache generation: {e}")
 
-    async def clear_generation_cache(self, flow_id: Optional[str] = None) -> None:
+    async def clear_generation_cache(self, flow_id: str | None = None) -> None:
         """
         Clear generation cache for a specific flow or all flows.
 
@@ -247,7 +247,7 @@ except Exception as e:
         except Exception as e:
             self.logger.error(f"Failed to clear generation cache: {e}")
 
-    async def get_generation_statistics(self) -> Dict[str, Any]:
+    async def get_generation_statistics(self) -> dict[str, Any]:
         """
         Get generation statistics for monitoring.
 
@@ -309,10 +309,10 @@ except Exception as e:
                     return "unhealthy - basic code generation failed"
 
             except Exception as e:
-                return f"unhealthy - generation test failed: {str(e)}"
+                return f"unhealthy - generation test failed: {e!s}"
 
             return "healthy"
 
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
-            return f"unhealthy - {str(e)}"
+            return f"unhealthy - {e!s}"

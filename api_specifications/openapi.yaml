@@ -30,18 +30,18 @@ paths:
       tags:
         - Health
       responses:
-        '200':
+        "200":
           description: Health status retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthStatusResponse'
-        '500':
+                $ref: "#/components/schemas/HealthStatusResponse"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /overview:
     get:
@@ -51,18 +51,18 @@ paths:
       tags:
         - Dashboard
       responses:
-        '200':
+        "200":
           description: System overview retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OverviewResponse'
-        '500':
+                $ref: "#/components/schemas/OverviewResponse"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /metrics:
     get:
@@ -87,24 +87,24 @@ paths:
             type: string
             example: "gpt-4"
       responses:
-        '200':
+        "200":
           description: Metrics data retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MetricsResponse'
-        '400':
+                $ref: "#/components/schemas/MetricsResponse"
+        "400":
           description: Bad request - invalid parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /performance:
     get:
@@ -131,24 +131,24 @@ paths:
             minimum: 1
             maximum: 168
       responses:
-        '200':
+        "200":
           description: Performance data retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PerformanceResponse'
-        '400':
+                $ref: "#/components/schemas/PerformanceResponse"
+        "400":
           description: Bad request - invalid parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /cost-analytics:
     get:
@@ -175,24 +175,24 @@ paths:
             minimum: 1
             maximum: 365
       responses:
-        '200':
+        "200":
           description: Cost analytics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CostAnalyticsResponse'
-        '400':
+                $ref: "#/components/schemas/CostAnalyticsResponse"
+        "400":
           description: Bad request - invalid parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /alerts:
     get:
@@ -202,18 +202,18 @@ paths:
       tags:
         - Alerts
       responses:
-        '200':
+        "200":
           description: Alerts retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AlertsResponse'
-        '500':
+                $ref: "#/components/schemas/AlertsResponse"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /status:
     get:
@@ -223,18 +223,18 @@ paths:
       tags:
         - Status
       responses:
-        '200':
+        "200":
           description: System status retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SystemStatusResponse'
-        '500':
+                $ref: "#/components/schemas/SystemStatusResponse"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:
@@ -250,11 +250,11 @@ components:
           format: date-time
           description: Timestamp of the health check
         summary:
-          $ref: '#/components/schemas/HealthSummary'
+          $ref: "#/components/schemas/HealthSummary"
         providers:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/ProviderHealth'
+            $ref: "#/components/schemas/ProviderHealth"
 
     HealthSummary:
       type: object
@@ -315,7 +315,7 @@ components:
         models:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/ModelHealth'
+            $ref: "#/components/schemas/ModelHealth"
 
     ModelHealth:
       type: object
@@ -353,9 +353,9 @@ components:
           type: string
           format: date-time
         health:
-          $ref: '#/components/schemas/HealthSummary'
+          $ref: "#/components/schemas/HealthSummary"
         metrics:
-          $ref: '#/components/schemas/MetricsSummary'
+          $ref: "#/components/schemas/MetricsSummary"
         cost:
           type: object
           additionalProperties: true
@@ -396,17 +396,17 @@ components:
         model:
           type: string
         summary:
-          $ref: '#/components/schemas/MetricsSummary'
+          $ref: "#/components/schemas/MetricsSummary"
         providers:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/ProviderMetrics'
+            $ref: "#/components/schemas/ProviderMetrics"
         models:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/ModelMetrics'
+            $ref: "#/components/schemas/ModelMetrics"
         metrics:
-          $ref: '#/components/schemas/ModelMetrics'
+          $ref: "#/components/schemas/ModelMetrics"
 
     ProviderMetrics:
       type: object
@@ -519,22 +519,22 @@ components:
         time_range_hours:
           type: integer
         current_metrics:
-          $ref: '#/components/schemas/CurrentMetrics'
+          $ref: "#/components/schemas/CurrentMetrics"
         historical_data:
           type: array
           items:
-            $ref: '#/components/schemas/HistoricalDataPoint'
+            $ref: "#/components/schemas/HistoricalDataPoint"
         providers:
           type: object
           additionalProperties:
             type: object
             properties:
               current_metrics:
-                $ref: '#/components/schemas/CurrentMetrics'
+                $ref: "#/components/schemas/CurrentMetrics"
               historical_data:
                 type: array
                 items:
-                  $ref: '#/components/schemas/HistoricalDataPoint'
+                  $ref: "#/components/schemas/HistoricalDataPoint"
 
     CurrentMetrics:
       type: object
@@ -607,7 +607,7 @@ components:
           type: object
           additionalProperties: true
         cost_data:
-          $ref: '#/components/schemas/CostData'
+          $ref: "#/components/schemas/CostData"
 
     CostData:
       type: object
@@ -657,7 +657,7 @@ components:
         alerts:
           type: array
           items:
-            $ref: '#/components/schemas/Alert'
+            $ref: "#/components/schemas/Alert"
 
     Alert:
       type: object
@@ -702,9 +702,9 @@ components:
           type: string
           enum: [operational, degraded, unhealthy]
         health:
-          $ref: '#/components/schemas/HealthSummary'
+          $ref: "#/components/schemas/HealthSummary"
         metrics:
-          $ref: '#/components/schemas/MetricsSummary'
+          $ref: "#/components/schemas/MetricsSummary"
         alerts:
           type: object
           required:

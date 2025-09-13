@@ -10,7 +10,6 @@ graceful degradation strategies.
 
 import asyncio
 import logging
-from typing import Optional
 
 from gemini_sre_agent.llm.base import LLMRequest
 from gemini_sre_agent.llm.common.enums import ModelType
@@ -36,8 +35,8 @@ class ErrorHandlingExample:
     def __init__(self) -> None:
         """Initialize the error handling example."""
         self.provider_factory = LLMProviderFactory()
-        self.model_mixer: Optional[ModelMixer] = None
-        self.health_checker: Optional[CircuitBreakerHealthChecker] = None
+        self.model_mixer: ModelMixer | None = None
+        self.health_checker: CircuitBreakerHealthChecker | None = None
         self.cache = IntelligentCache(max_size=100, ttl_seconds=300)
 
     async def setup_mock_environment(self):
@@ -170,7 +169,7 @@ class ErrorHandlingExample:
                 )
                 logger.info(f"Request completed: {result.content[:50]}...")
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.info("✅ Correctly handled timeout error")
 
                 # Demonstrate graceful degradation
@@ -277,9 +276,10 @@ class ErrorHandlingExample:
             )
 
             logger.info("✅ Model mixing completed successfully")
-            logger.info(
-                f"Primary result: {result.primary_result.content[:100] if result.primary_result else 'None'}..."
+            primary_content = (
+                result.primary_result.content[:100] if result.primary_result else "None"
             )
+            logger.info(f"Primary result: {primary_content}...")
             logger.info(f"Confidence: {result.confidence_score}")
             logger.info(f"Total cost: ${result.total_cost:.4f}")
 
@@ -437,7 +437,7 @@ class ErrorHandlingExample:
             logger.error(f"❌ Unexpected error: {type(e).__name__}: {e}")
 
             # Log additional context
-            logger.error(f"Error details: {str(e)}")
+            logger.error(f"Error details: {e!s}")
 
             # Attempt recovery
             logger.info("Attempting error recovery...")

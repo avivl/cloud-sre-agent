@@ -6,7 +6,7 @@ Central configuration manager with hot reloading and monitoring.
 
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .app_config import AppConfig
 from .errors import ConfigError
@@ -18,9 +18,9 @@ class ConfigManager:
 
     def __init__(self, config_dir: str = "config") -> None:
         self.loader = ConfigLoader(config_dir)
-        self._config: Optional[AppConfig] = None
+        self._config: AppConfig | None = None
         self._lock = threading.RLock()
-        self._last_modified: Optional[float] = None
+        self._last_modified: float | None = None
         self._auto_reload = True
         self._reload_interval = 30  # seconds
 
@@ -73,7 +73,7 @@ class ConfigManager:
         """Enable or disable automatic configuration reloading."""
         self._auto_reload = enabled
 
-    def get_config_info(self) -> Dict[str, Any]:
+    def get_config_info(self) -> dict[str, Any]:
         """Get information about the current configuration."""
         if not self._config:
             return {"status": "not_loaded"}

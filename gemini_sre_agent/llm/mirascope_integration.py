@@ -7,11 +7,11 @@ This module provides comprehensive prompt management capabilities using Mirascop
 with versioning, testing, optimization, analytics, and team collaboration features.
 """
 
-import json
-import uuid
 from datetime import datetime
+import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, TypeVar
+import uuid
 
 from pydantic import BaseModel
 
@@ -44,10 +44,10 @@ class PromptVersion(BaseModel):
     version: str
     template: str
     created_at: str
-    description: Optional[str] = None
-    metrics: Dict[str, Any] = {}
-    tests: List[Dict[str, Any]] = []
-    metrics_history: List[Dict[str, Any]] = []
+    description: str | None = None
+    metrics: dict[str, Any] = {}
+    tests: list[dict[str, Any]] = []
+    metrics_history: list[dict[str, Any]] = []
 
 
 class PromptData(BaseModel):
@@ -55,9 +55,9 @@ class PromptData(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     prompt_type: str = "chat"
-    versions: Dict[str, PromptVersion] = {}
+    versions: dict[str, PromptVersion] = {}
     current_version: str = "1.0.0"
     created_at: str
     updated_at: str
@@ -70,15 +70,15 @@ class PromptManager:
         """Initialize the prompt manager."""
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
-        self.prompts: Dict[str, PromptData] = {}
-        self.active_versions: Dict[str, str] = {}
+        self.prompts: dict[str, PromptData] = {}
+        self.active_versions: dict[str, str] = {}
         self._load_prompts()
 
     def create_prompt(
         self,
         name: str,
         template: str,
-        description: Optional[str] = None,
+        description: str | None = None,
         prompt_type: str = "chat",
     ) -> str:
         """Create a new prompt with version tracking."""
@@ -107,8 +107,8 @@ class PromptManager:
         return prompt_id
 
     def get_prompt(
-        self, prompt_id: str, version: Optional[str] = None
-    ) -> Union[Any, str]:
+        self, prompt_id: str, version: str | None = None
+    ) -> Any | str:
         """Get a Mirascope prompt object for the specified prompt."""
         if prompt_id not in self.prompts:
             raise ValueError(f"Prompt with ID {prompt_id} not found")
@@ -131,7 +131,7 @@ class PromptManager:
         return template
 
     def create_version(
-        self, prompt_id: str, template: str, version: Optional[str] = None
+        self, prompt_id: str, template: str, version: str | None = None
     ) -> str:
         """Create a new version of an existing prompt."""
         if prompt_id not in self.prompts:
@@ -161,9 +161,9 @@ class PromptManager:
     def test_prompt(
         self,
         prompt_id: str,
-        test_cases: List[Dict[str, Any]],
-        version: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        test_cases: list[dict[str, Any]],
+        version: str | None = None,
+    ) -> dict[str, Any]:
         """Run tests on a prompt version and record results."""
         prompt = self.get_prompt(prompt_id, version)
         version_to_use = version or self.prompts[prompt_id].current_version
@@ -215,7 +215,7 @@ class PromptManager:
         return {"success_rate": success_rate, "results": results}
 
     def record_metrics(
-        self, prompt_id: str, metrics: Dict[str, Any], version: Optional[str] = None
+        self, prompt_id: str, metrics: dict[str, Any], version: str | None = None
     ) -> None:
         """Record performance metrics for a prompt version."""
         if prompt_id not in self.prompts:
@@ -254,7 +254,7 @@ class PromptManager:
 
         self._save_prompts()
 
-    def list_prompts(self) -> List[Dict[str, Any]]:
+    def list_prompts(self) -> list[dict[str, Any]]:
         """List all prompts with their metadata."""
         return [
             {
@@ -268,7 +268,7 @@ class PromptManager:
             for prompt_id, data in self.prompts.items()
         ]
 
-    def get_prompt_versions(self, prompt_id: str) -> List[str]:
+    def get_prompt_versions(self, prompt_id: str) -> list[str]:
         """Get all versions for a specific prompt."""
         if prompt_id not in self.prompts:
             raise ValueError(f"Prompt with ID {prompt_id} not found")
@@ -280,7 +280,7 @@ class PromptManager:
         prompts_file = self.storage_path / "prompts.json"
         if prompts_file.exists():
             try:
-                with open(prompts_file, "r") as f:
+                with open(prompts_file) as f:
                     data = json.load(f)
                     for prompt_id, prompt_data in data.items():
                         self.prompts[prompt_id] = PromptData(**prompt_data)
@@ -307,7 +307,7 @@ class PromptEnvironment:
     def __init__(self, name: str, prompt_manager: PromptManager) -> None:
         self.name = name
         self.prompt_manager = prompt_manager
-        self.environment_versions: Dict[str, str] = {}
+        self.environment_versions: dict[str, str] = {}
 
     def deploy_prompt(self, prompt_id: str, version: str) -> None:
         """Deploy a specific prompt version to this environment."""
@@ -321,7 +321,7 @@ class PromptEnvironment:
 
         self.environment_versions[prompt_id] = version
 
-    def get_prompt(self, prompt_id: str) -> Union[Any, str]:
+    def get_prompt(self, prompt_id: str) -> Any | str:
         """Get the environment-specific version of a prompt."""
         if prompt_id not in self.environment_versions:
             # Fall back to the current version if not specifically deployed
@@ -336,7 +336,7 @@ class PromptCollaborationManager:
 
     def __init__(self, prompt_manager: PromptManager) -> None:
         self.prompt_manager = prompt_manager
-        self.reviews: Dict[str, List[Dict[str, Any]]] = {}
+        self.reviews: dict[str, list[dict[str, Any]]] = {}
 
     def create_review(
         self, prompt_id: str, version: str, reviewer: str, comments: str
@@ -389,15 +389,17 @@ class PromptCollaborationManager:
 class PromptOptimizer:
     """Prompt optimization capabilities."""
 
-    def __init__(self, prompt_manager: PromptManager, llm_service: Optional[str] = None) -> None:
+    def __init__(
+        self, prompt_manager: PromptManager, llm_service: str | None = None
+    ) -> None:
         self.prompt_manager = prompt_manager
         self.llm_service = llm_service
 
     async def optimize_prompt(
         self,
         prompt_id: str,
-        optimization_goals: List[str],
-        test_cases: List[Dict[str, Any]],
+        optimization_goals: list[str],
+        test_cases: list[dict[str, Any]],
     ) -> str:
         """Use LLM to optimize a prompt based on goals and test cases."""
         if not self.llm_service:

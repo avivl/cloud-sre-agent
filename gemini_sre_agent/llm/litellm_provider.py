@@ -6,8 +6,9 @@ LiteLLM Provider implementation.
 This module contains the concrete implementation of LLMProvider using LiteLLM.
 """
 
+from collections.abc import AsyncGenerator
 import logging
-from typing import Any, AsyncGenerator, List, Optional, Type, TypeVar, Union
+from typing import Any, TypeVar
 
 try:
     import instructor
@@ -87,12 +88,12 @@ class LiteLLMProvider(LLMProvider):
             )
         except Exception as e:
             self.logger.error(
-                f"Failed to initialize LiteLLM provider '{self.provider_name}': {str(e)}"
+                f"Failed to initialize LiteLLM provider '{self.provider_name}': {e!s}"
             )
             raise
 
     async def generate_text(
-        self, prompt: Union[str, Any], model: Optional[str] = None, **kwargs: Any
+        self, prompt: str | Any, model: str | None = None, **kwargs: Any
     ) -> str:
         """Generate text response using LiteLLM."""
         if not self._initialized:
@@ -111,14 +112,14 @@ class LiteLLMProvider(LLMProvider):
             )
             return response.choices[0].message.content  # type: ignore
         except Exception as e:
-            self.logger.error(f"Error generating text with {model_name}: {str(e)}")
+            self.logger.error(f"Error generating text with {model_name}: {e!s}")
             raise
 
     async def generate_structured(
         self,
-        prompt: Union[str, Any],
-        response_model: Type[T],
-        model: Optional[str] = None,
+        prompt: str | Any,
+        response_model: type[T],
+        model: str | None = None,
         **kwargs: Any,
     ) -> T:
         """Generate structured response using Instructor + LiteLLM."""
@@ -143,12 +144,12 @@ class LiteLLMProvider(LLMProvider):
             return response
         except Exception as e:
             self.logger.error(
-                f"Error generating structured response with {model_name}: {str(e)}"
+                f"Error generating structured response with {model_name}: {e!s}"
             )
             raise
 
     def generate_stream(
-        self, prompt: Union[str, Any], model: Optional[str] = None, **kwargs: Any
+        self, prompt: str | Any, model: str | None = None, **kwargs: Any
     ) -> AsyncGenerator[str, None]:
         """Generate streaming text response using LiteLLM."""
 
@@ -174,7 +175,7 @@ class LiteLLMProvider(LLMProvider):
                         yield chunk.choices[0].delta.content
             except Exception as e:
                 self.logger.error(
-                    f"Error generating stream with {model_name}: {str(e)}"
+                    f"Error generating stream with {model_name}: {e!s}"
                 )
                 raise
 
@@ -187,15 +188,15 @@ class LiteLLMProvider(LLMProvider):
             return bool(test_response)
         except Exception as e:
             self.logger.error(
-                f"Health check failed for provider '{self.provider_name}': {str(e)}"
+                f"Health check failed for provider '{self.provider_name}': {e!s}"
             )
             return False
 
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """Get list of available models for this provider."""
         return list(self.config.models.keys())
 
-    def estimate_cost(self, prompt: str, model: Optional[str] = None) -> float:
+    def estimate_cost(self, prompt: str, model: str | None = None) -> float:
         """Estimate the cost for a given prompt and model."""
         model_name = self._resolve_model(model)
         if model_name in self.config.models:

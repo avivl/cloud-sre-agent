@@ -20,12 +20,12 @@ from .manager import CredentialManager
 from .rotation import CredentialRotationManager
 
 __all__ = [
+    "AWSSecretsBackend",
+    "AzureKeyVaultBackend",
+    "CredentialBackend",
     "CredentialManager",
     "CredentialRotationManager",
-    "CredentialBackend",
     "EnvironmentBackend",
     "FileBackend",
     "VaultBackend",
-    "AWSSecretsBackend",
-    "AzureKeyVaultBackend",
 ]

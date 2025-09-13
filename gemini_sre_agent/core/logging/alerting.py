@@ -1,10 +1,11 @@
 """Alerting system for the logging framework."""
 
-import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from threading import Lock
-from typing import Any, Callable, Dict, List, Optional
+import time
+from typing import Any
 
 from .exceptions import AlertingError
 
@@ -32,15 +33,15 @@ class AlertRule:
     """Alert rule definition."""
 
     name: str
-    condition: Callable[[Dict[str, Any]], bool]
+    condition: Callable[[dict[str, Any]], bool]
     severity: AlertSeverity
     message_template: str
     cooldown_seconds: int = 300  # 5 minutes default
     enabled: bool = True
-    tags: Dict[str, str] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def evaluate(self, data: Dict[str, Any]) -> bool:
+    def evaluate(self, data: dict[str, Any]) -> bool:
         """Evaluate the alert rule.
 
         Args:
@@ -68,13 +69,13 @@ class Alert:
     message: str
     timestamp: float
     status: AlertStatus = AlertStatus.ACTIVE
-    acknowledged_by: Optional[str] = None
-    acknowledged_at: Optional[float] = None
-    resolved_at: Optional[float] = None
-    tags: Dict[str, str] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    acknowledged_by: str | None = None
+    acknowledged_at: float | None = None
+    resolved_at: float | None = None
+    tags: dict[str, str] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert alert to dictionary.
 
         Returns:
@@ -98,20 +99,20 @@ class Alert:
 class AlertManager:
     """Manages alerts and alert rules."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the alert manager.
 
         Args:
             config: Optional configuration for alerting
         """
         self._config = config or {}
-        self._rules: Dict[str, AlertRule] = {}
-        self._alerts: Dict[str, Alert] = {}
-        self._last_triggered: Dict[str, float] = {}
+        self._rules: dict[str, AlertRule] = {}
+        self._alerts: dict[str, Alert] = {}
+        self._last_triggered: dict[str, float] = {}
         self._lock = Lock()
         self._enabled = self._config.get("enabled", True)
         self._max_alerts = self._config.get("max_alerts", 1000)
-        self._alert_handlers: List[Callable[[Alert], None]] = []
+        self._alert_handlers: list[Callable[[Alert], None]] = []
 
     def add_rule(self, rule: AlertRule) -> None:
         """Add an alert rule.
@@ -127,7 +128,7 @@ class AlertManager:
                 self._rules[rule.name] = rule
         except Exception as e:
             raise AlertingError(
-                f"Failed to add alert rule: {str(e)}", rule_name=rule.name
+                f"Failed to add alert rule: {e!s}", rule_name=rule.name
             ) from e
 
     def remove_rule(self, rule_name: str) -> None:
@@ -139,7 +140,7 @@ class AlertManager:
         with self._lock:
             self._rules.pop(rule_name, None)
 
-    def get_rule(self, rule_name: str) -> Optional[AlertRule]:
+    def get_rule(self, rule_name: str) -> AlertRule | None:
         """Get an alert rule by name.
 
         Args:
@@ -150,7 +151,7 @@ class AlertManager:
         """
         return self._rules.get(rule_name)
 
-    def get_all_rules(self) -> List[AlertRule]:
+    def get_all_rules(self) -> list[AlertRule]:
         """Get all alert rules.
 
         Returns:
@@ -158,7 +159,7 @@ class AlertManager:
         """
         return list(self._rules.values())
 
-    def evaluate_rules(self, data: Dict[str, Any]) -> List[Alert]:
+    def evaluate_rules(self, data: dict[str, Any]) -> list[Alert]:
         """Evaluate all rules against data.
 
         Args:
@@ -229,7 +230,7 @@ class AlertManager:
 
         return triggered_alerts
 
-    def get_alert(self, alert_id: str) -> Optional[Alert]:
+    def get_alert(self, alert_id: str) -> Alert | None:
         """Get an alert by ID.
 
         Args:
@@ -242,11 +243,11 @@ class AlertManager:
 
     def get_alerts(
         self,
-        status: Optional[AlertStatus] = None,
-        severity: Optional[AlertSeverity] = None,
-        rule_name: Optional[str] = None,
-        limit: Optional[int] = None,
-    ) -> List[Alert]:
+        status: AlertStatus | None = None,
+        severity: AlertSeverity | None = None,
+        rule_name: str | None = None,
+        limit: int | None = None,
+    ) -> list[Alert]:
         """Get alerts with optional filtering.
 
         Args:
@@ -401,7 +402,7 @@ class AlertManager:
         """
         return self._enabled
 
-    def get_alert_stats(self) -> Dict[str, Any]:
+    def get_alert_stats(self) -> dict[str, Any]:
         """Get alert statistics.
 
         Returns:
@@ -442,7 +443,7 @@ class AlertManager:
                 "enabled_rules": len([r for r in self._rules.values() if r.enabled]),
             }
 
-    def _format_message(self, template: str, data: Dict[str, Any]) -> str:
+    def _format_message(self, template: str, data: dict[str, Any]) -> str:
         """Format alert message template with data.
 
         Args:
@@ -459,7 +460,7 @@ class AlertManager:
 
 
 # Global alert manager instance
-_alert_manager: Optional[AlertManager] = None
+_alert_manager: AlertManager | None = None
 
 
 def get_alert_manager() -> AlertManager:

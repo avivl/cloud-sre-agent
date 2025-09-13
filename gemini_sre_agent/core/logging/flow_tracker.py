@@ -1,11 +1,11 @@
 """Flow tracking system for the logging framework."""
 
-import time
-import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from threading import local
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any
+import uuid
 
 from .exceptions import FlowTrackingError
 
@@ -17,14 +17,14 @@ class FlowContext:
     flow_id: str
     operation: str
     start_time: float
-    parent_flow_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    tags: List[str] = field(default_factory=list)
-    duration: Optional[float] = None
+    parent_flow_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    duration: float | None = None
     status: str = "running"
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert flow context to dictionary.
 
         Returns:
@@ -46,7 +46,7 @@ class FlowContext:
 class FlowTracker:
     """Tracks operations and flows across the system."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the flow tracker.
 
         Args:
@@ -54,17 +54,17 @@ class FlowTracker:
         """
         self._config = config or {}
         self._thread_local = local()
-        self._active_flows: Dict[str, FlowContext] = {}
-        self._flow_history: List[FlowContext] = []
+        self._active_flows: dict[str, FlowContext] = {}
+        self._flow_history: list[FlowContext] = []
         self._max_history = self._config.get("max_history", 1000)
 
     def start_flow(
         self,
         operation: str,
-        flow_id: Optional[str] = None,
-        parent_flow_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
+        flow_id: str | None = None,
+        parent_flow_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
     ) -> FlowContext:
         """Start a new flow.
 
@@ -115,15 +115,15 @@ class FlowTracker:
 
         except Exception as e:
             raise FlowTrackingError(
-                f"Failed to start flow: {str(e)}", flow_id=flow_id, operation=operation
+                f"Failed to start flow: {e!s}", flow_id=flow_id, operation=operation
             ) from e
 
     def end_flow(
         self,
         flow_id: str,
         status: str = "completed",
-        error: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        error: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> FlowContext:
         """End a flow.
 
@@ -174,10 +174,10 @@ class FlowTracker:
 
         except Exception as e:
             raise FlowTrackingError(
-                f"Failed to end flow: {str(e)}", flow_id=flow_id, operation="end_flow"
+                f"Failed to end flow: {e!s}", flow_id=flow_id, operation="end_flow"
             ) from e
 
-    def get_current_flow_id(self) -> Optional[str]:
+    def get_current_flow_id(self) -> str | None:
         """Get the current flow ID for this thread.
 
         Returns:
@@ -187,7 +187,7 @@ class FlowTracker:
             return self._thread_local.flow_stack[-1]
         return None
 
-    def get_flow_context(self, flow_id: str) -> Optional[FlowContext]:
+    def get_flow_context(self, flow_id: str) -> FlowContext | None:
         """Get flow context by ID.
 
         Args:
@@ -198,7 +198,7 @@ class FlowTracker:
         """
         return self._active_flows.get(flow_id)
 
-    def get_active_flows(self) -> List[FlowContext]:
+    def get_active_flows(self) -> list[FlowContext]:
         """Get all active flows.
 
         Returns:
@@ -206,7 +206,7 @@ class FlowTracker:
         """
         return list(self._active_flows.values())
 
-    def get_flow_history(self, limit: Optional[int] = None) -> List[FlowContext]:
+    def get_flow_history(self, limit: int | None = None) -> list[FlowContext]:
         """Get flow history.
 
         Args:
@@ -219,7 +219,7 @@ class FlowTracker:
             return self._flow_history.copy()
         return self._flow_history[-limit:]
 
-    def get_flows_by_operation(self, operation: str) -> List[FlowContext]:
+    def get_flows_by_operation(self, operation: str) -> list[FlowContext]:
         """Get flows by operation name.
 
         Args:
@@ -230,7 +230,7 @@ class FlowTracker:
         """
         return [flow for flow in self._flow_history if flow.operation == operation]
 
-    def get_flows_by_status(self, status: str) -> List[FlowContext]:
+    def get_flows_by_status(self, status: str) -> list[FlowContext]:
         """Get flows by status.
 
         Args:
@@ -241,7 +241,7 @@ class FlowTracker:
         """
         return [flow for flow in self._flow_history if flow.status == status]
 
-    def get_flows_by_tag(self, tag: str) -> List[FlowContext]:
+    def get_flows_by_tag(self, tag: str) -> list[FlowContext]:
         """Get flows by tag.
 
         Args:
@@ -252,7 +252,7 @@ class FlowTracker:
         """
         return [flow for flow in self._flow_history if tag in flow.tags]
 
-    def get_flow_tree(self, root_flow_id: str) -> Dict[str, Any]:
+    def get_flow_tree(self, root_flow_id: str) -> dict[str, Any]:
         """Get flow tree starting from a root flow.
 
         Args:
@@ -262,7 +262,7 @@ class FlowTracker:
             Dictionary representing the flow tree
         """
 
-        def build_tree(flow_id: str) -> Dict[str, Any]:
+        def build_tree(flow_id: str) -> dict[str, Any]:
             flow = self.get_flow_context(flow_id)
             if not flow:
                 # Try to find in history
@@ -353,10 +353,10 @@ class FlowTracker:
     def flow(
         self,
         operation: str,
-        flow_id: Optional[str] = None,
-        parent_flow_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
+        flow_id: str | None = None,
+        parent_flow_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
     ):
         """Context manager for flow tracking.
 
@@ -388,7 +388,7 @@ class FlowTracker:
 
 
 # Global flow tracker instance
-_flow_tracker: Optional[FlowTracker] = None
+_flow_tracker: FlowTracker | None = None
 
 
 def get_flow_tracker() -> FlowTracker:

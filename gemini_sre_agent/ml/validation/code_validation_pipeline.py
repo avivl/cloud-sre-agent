@@ -10,7 +10,7 @@ including syntax validation, pattern compliance, security review, and performanc
 import ast
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .validation_models import (
     ValidationFeedback,
@@ -89,7 +89,7 @@ class CodeValidationPipeline:
         }
 
     async def validate_code(
-        self, code_result: Dict[str, Any], context: Optional[Dict[str, Any]] = None
+        self, code_result: dict[str, Any], context: dict[str, Any] | None = None
     ) -> ValidationResult:
         """
         Multi-level validation of generated code.
@@ -224,7 +224,7 @@ class CodeValidationPipeline:
                     issue_id="syntax_parse_error",
                     validation_type=ValidationType.SYNTAX,
                     level=ValidationLevel.ERROR,
-                    message=f"Code parsing failed: {str(e)}",
+                    message=f"Code parsing failed: {e!s}",
                     description="Unable to parse the generated code",
                     file_path=file_path,
                     suggested_fix="Check for malformed code or missing imports",
@@ -241,7 +241,7 @@ class CodeValidationPipeline:
         )
 
     async def _validate_patterns(
-        self, code: str, generator_type: str, context: Optional[Dict[str, Any]]
+        self, code: str, generator_type: str, context: dict[str, Any] | None
     ) -> ValidationResult:
         """Validate code against domain-specific patterns."""
         issues = []
@@ -326,7 +326,7 @@ class CodeValidationPipeline:
         )
 
     async def _assess_performance_impact(
-        self, code: str, context: Optional[Dict[str, Any]]
+        self, code: str, context: dict[str, Any] | None
     ) -> ValidationResult:
         """Assess performance impact of generated code."""
         issues = []
@@ -358,7 +358,7 @@ class CodeValidationPipeline:
         )
 
     async def _validate_best_practices(
-        self, code: str, context: Optional[Dict[str, Any]]
+        self, code: str, context: dict[str, Any] | None
     ) -> ValidationResult:
         """Validate code against best practices."""
         issues = []
@@ -429,8 +429,8 @@ class CodeValidationPipeline:
     async def _validate_api_patterns(
         self,
         code: str,
-        issues: List[ValidationIssue],
-        feedback: List[ValidationFeedback],
+        issues: list[ValidationIssue],
+        feedback: list[ValidationFeedback],
     ):
         """Validate API-specific patterns."""
         # Check for authentication
@@ -460,8 +460,8 @@ class CodeValidationPipeline:
     async def _validate_database_patterns(
         self,
         code: str,
-        issues: List[ValidationIssue],
-        feedback: List[ValidationFeedback],
+        issues: list[ValidationIssue],
+        feedback: list[ValidationFeedback],
     ):
         """Validate database-specific patterns."""
         # Check for connection handling
@@ -480,8 +480,8 @@ class CodeValidationPipeline:
     async def _validate_security_patterns(
         self,
         code: str,
-        issues: List[ValidationIssue],
-        feedback: List[ValidationFeedback],
+        issues: list[ValidationIssue],
+        feedback: list[ValidationFeedback],
     ):
         """Validate security-specific patterns."""
         # Check for input sanitization

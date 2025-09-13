@@ -11,10 +11,11 @@ This module provides optimizations for async processing including:
 """
 
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
 import logging
 import time
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from .performance_monitor import record_performance
 
@@ -28,9 +29,9 @@ class AsyncTask:
     task_id: str
     coroutine: Callable[..., Any]
     args: tuple = ()
-    kwargs: Optional[Dict[str, Any]] = None
+    kwargs: dict[str, Any] | None = None
     priority: int = 0  # Higher number = higher priority
-    timeout: Optional[float] = None
+    timeout: float | None = None
     retry_count: int = 0
     max_retries: int = 3
 
@@ -50,8 +51,8 @@ class AsyncTask:
 class BatchResult:
     """Result of batch processing."""
 
-    successful: List[Any]
-    failed: List[Dict[str, Any]]
+    successful: list[Any]
+    failed: list[dict[str, Any]]
     total_duration_ms: float
     success_rate: float
 
@@ -86,9 +87,9 @@ class AsyncOptimizer:
 
         # Task management
         self.task_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
-        self.running_tasks: Dict[str, asyncio.Task] = {}
-        self.completed_tasks: Dict[str, Any] = {}
-        self.failed_tasks: Dict[str, Exception] = {}
+        self.running_tasks: dict[str, asyncio.Task] = {}
+        self.completed_tasks: dict[str, Any] = {}
+        self.failed_tasks: dict[str, Exception] = {}
 
         # Semaphore for concurrency control
         self.semaphore = asyncio.Semaphore(max_concurrent_tasks)
@@ -98,8 +99,8 @@ class AsyncOptimizer:
         self.total_batches_processed = 0
 
     async def execute_concurrent_tasks(
-        self, tasks: List[AsyncTask], wait_for_all: bool = True
-    ) -> Dict[str, Any]:
+        self, tasks: list[AsyncTask], wait_for_all: bool = True
+    ) -> dict[str, Any]:
         """
         Execute multiple tasks concurrently with priority queuing.
 
@@ -168,7 +169,7 @@ class AsyncOptimizer:
             raise
 
     async def execute_batch(
-        self, batch_tasks: List[AsyncTask], batch_id: Optional[str] = None
+        self, batch_tasks: list[AsyncTask], batch_id: str | None = None
     ) -> BatchResult:
         """
         Execute a batch of similar tasks efficiently.
@@ -250,7 +251,7 @@ class AsyncOptimizer:
             raise
 
     async def execute_with_retry(
-        self, task: AsyncTask, max_retries: Optional[int] = None
+        self, task: AsyncTask, max_retries: int | None = None
     ) -> Any:
         """
         Execute a task with automatic retry on failure.
@@ -292,7 +293,7 @@ class AsyncOptimizer:
 
                 return result
 
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 last_exception = e
                 self.logger.warning(
                     f"Task {task.task_id} timed out on attempt {attempt + 1}/{retries + 1}"
@@ -355,8 +356,8 @@ class AsyncOptimizer:
                 break
 
     async def optimize_context_building(
-        self, context_tasks: List[AsyncTask]
-    ) -> Dict[str, Any]:
+        self, context_tasks: list[AsyncTask]
+    ) -> dict[str, Any]:
         """
         Optimize context building operations with specialized batching.
 
@@ -430,8 +431,8 @@ class AsyncOptimizer:
             raise
 
     def _group_tasks_by_type(
-        self, tasks: List[AsyncTask]
-    ) -> Dict[str, List[AsyncTask]]:
+        self, tasks: list[AsyncTask]
+    ) -> dict[str, list[AsyncTask]]:
         """Group tasks by their type for optimal processing."""
         grouped = {}
 
@@ -465,7 +466,7 @@ class AsyncOptimizer:
         # Default type
         return "general"
 
-    def get_optimizer_stats(self) -> Dict[str, Any]:
+    def get_optimizer_stats(self) -> dict[str, Any]:
         """Get optimizer performance statistics."""
         return {
             "total_tasks_processed": self.total_tasks_processed,
@@ -506,7 +507,7 @@ class AsyncOptimizer:
 
 
 # Global async optimizer instance
-_async_optimizer: Optional[AsyncOptimizer] = None
+_async_optimizer: AsyncOptimizer | None = None
 
 
 def get_async_optimizer() -> AsyncOptimizer:

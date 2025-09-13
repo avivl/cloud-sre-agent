@@ -1,8 +1,9 @@
 """Interfaces for the dependency injection system."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from enum import Enum
-from typing import Callable, Generic, Optional, Type, TypeVar, Union
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -50,7 +51,7 @@ class FactoryProvider(ServiceProvider[T]):
         """
         self._factory = factory
         self._lifetime = lifetime
-        self._instance: Optional[T] = None
+        self._instance: T | None = None
 
     def get_service(self) -> T:
         """Get the service instance."""
@@ -104,7 +105,7 @@ class TypeProvider(ServiceProvider[T]):
 
     def __init__(
         self,
-        service_type: Type[T],
+        service_type: type[T],
         lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
     ):
         """Initialize the type provider.
@@ -115,7 +116,7 @@ class TypeProvider(ServiceProvider[T]):
         """
         self._service_type = service_type
         self._lifetime = lifetime
-        self._instance: Optional[T] = None
+        self._instance: T | None = None
 
     def get_service(self) -> T:
         """Get the service instance."""
@@ -144,7 +145,7 @@ class ServiceScope(ABC):
     """Abstract base class for service scopes."""
 
     @abstractmethod
-    def get_service(self, service_type: Type[T]) -> T:
+    def get_service(self, service_type: type[T]) -> T:
         """Get a service from the scope."""
         pass
 
@@ -160,8 +161,8 @@ class ServiceRegistry(ABC):
     @abstractmethod
     def register(
         self,
-        service_type: Type[T],
-        implementation: Union[Type[T], Callable[[], T], T],
+        service_type: type[T],
+        implementation: type[T] | Callable[[], T] | T,
         lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
     ) -> None:
         """Register a service."""
@@ -169,31 +170,31 @@ class ServiceRegistry(ABC):
 
     @abstractmethod
     def register_singleton(
-        self, service_type: Type[T], implementation: Union[Type[T], Callable[[], T], T]
+        self, service_type: type[T], implementation: type[T] | Callable[[], T] | T
     ) -> None:
         """Register a singleton service."""
         pass
 
     @abstractmethod
     def register_transient(
-        self, service_type: Type[T], implementation: Union[Type[T], Callable[[], T], T]
+        self, service_type: type[T], implementation: type[T] | Callable[[], T] | T
     ) -> None:
         """Register a transient service."""
         pass
 
     @abstractmethod
     def register_scoped(
-        self, service_type: Type[T], implementation: Union[Type[T], Callable[[], T], T]
+        self, service_type: type[T], implementation: type[T] | Callable[[], T] | T
     ) -> None:
         """Register a scoped service."""
         pass
 
     @abstractmethod
-    def is_registered(self, service_type: Type[T]) -> bool:
+    def is_registered(self, service_type: type[T]) -> bool:
         """Check if a service is registered."""
         pass
 
     @abstractmethod
-    def get_provider(self, service_type: Type[T]) -> ServiceProvider[T]:
+    def get_provider(self, service_type: type[T]) -> ServiceProvider[T]:
         """Get the service provider for a type."""
         pass

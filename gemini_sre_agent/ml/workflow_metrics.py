@@ -7,9 +7,9 @@ This module handles all metrics collection and tracking for the workflow orchest
 Extracted from unified_workflow_orchestrator_original.py.
 """
 
-import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from .caching import ContextCache
 from .performance import PerformanceConfig
@@ -34,11 +34,11 @@ class WorkflowResult:
     """Result of the unified workflow execution."""
 
     success: bool
-    analysis_result: Dict[str, Any]
+    analysis_result: dict[str, Any]
     generated_code: str
-    validation_result: Dict[str, Any]
+    validation_result: dict[str, Any]
     metrics: WorkflowMetrics
-    error_message: Optional[str] = None
+    error_message: str | None = None
     fallback_used: bool = False
 
 
@@ -50,7 +50,7 @@ class WorkflowMetricsCollector:
     cache statistics, and workflow result management with proper error handling.
     """
 
-    def __init__(self, performance_config: Optional[PerformanceConfig]) -> None:
+    def __init__(self, performance_config: PerformanceConfig | None) -> None:
         """
         Initialize the workflow metrics collector.
 
@@ -61,8 +61,8 @@ class WorkflowMetricsCollector:
         self.logger = logging.getLogger(__name__)
 
         # Initialize cache (will be injected)
-        self.cache: Optional[ContextCache] = None
-        self.workflow_history: List[WorkflowResult] = []
+        self.cache: ContextCache | None = None
+        self.workflow_history: list[WorkflowResult] = []
 
     def set_cache(self, cache: ContextCache) -> None:
         """Set the context cache."""
@@ -85,7 +85,7 @@ class WorkflowMetricsCollector:
         except Exception as e:
             self.logger.error(f"Failed to add workflow result: {e}")
 
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """
         Get comprehensive performance metrics.
 
@@ -138,7 +138,7 @@ class WorkflowMetricsCollector:
             self.logger.error(f"Failed to get performance metrics: {e}")
             return {"error": str(e)}
 
-    async def get_workflow_history(self) -> List[WorkflowResult]:
+    async def get_workflow_history(self) -> list[WorkflowResult]:
         """
         Get workflow execution history.
 
@@ -159,7 +159,7 @@ class WorkflowMetricsCollector:
         except Exception as e:
             self.logger.error(f"Failed to clear workflow history: {e}")
 
-    async def get_recent_workflows(self, limit: int = 10) -> List[WorkflowResult]:
+    async def get_recent_workflows(self, limit: int = 10) -> list[WorkflowResult]:
         """
         Get recent workflow results.
 
@@ -176,7 +176,7 @@ class WorkflowMetricsCollector:
             return []
 
     async def get_success_rate(
-        self, time_window_minutes: Optional[int] = None
+        self, time_window_minutes: int | None = None
     ) -> float:
         """
         Get success rate for workflows.
@@ -227,7 +227,7 @@ class WorkflowMetricsCollector:
             self.logger.error(f"Failed to get average duration: {e}")
             return 0.0
 
-    async def get_error_statistics(self) -> Dict[str, Any]:
+    async def get_error_statistics(self) -> dict[str, Any]:
         """
         Get error statistics for workflows.
 
@@ -266,7 +266,7 @@ class WorkflowMetricsCollector:
             self.logger.error(f"Failed to get error statistics: {e}")
             return {"error": str(e)}
 
-    async def get_metrics_statistics(self) -> Dict[str, Any]:
+    async def get_metrics_statistics(self) -> dict[str, Any]:
         """
         Get metrics collection statistics for monitoring.
 
@@ -304,10 +304,10 @@ class WorkflowMetricsCollector:
                     return f"unhealthy - metrics calculation failed: {metrics['error']}"
 
             except Exception as e:
-                return f"unhealthy - metrics test failed: {str(e)}"
+                return f"unhealthy - metrics test failed: {e!s}"
 
             return "healthy"
 
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
-            return f"unhealthy - {str(e)}"
+            return f"unhealthy - {e!s}"

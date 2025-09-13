@@ -2,12 +2,12 @@
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Set
 from functools import lru_cache
+from typing import Any, Dict, List, Optional, Set
 
-from gemini_sre_agent.llm.capabilities.models import ModelCapabilities, ModelCapability
-from gemini_sre_agent.llm.capabilities.config import get_capability_config
 from gemini_sre_agent.llm.base import LLMProvider
+from gemini_sre_agent.llm.capabilities.config import get_capability_config
+from gemini_sre_agent.llm.capabilities.models import ModelCapabilities, ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class CapabilityDiscovery:
     Discovers and catalogs capabilities of LLM models across various providers.
     """
 
-    def __init__(self, providers: Dict[str, LLMProvider]: str, cache_ttl: int = 3600) -> None:
+    def __init__(self, providers: Dict[str, LLMProvider], cache_ttl: int = 3600) -> None:
         """
         Initialize the CapabilityDiscovery.
 
@@ -61,7 +61,9 @@ class CapabilityDiscovery:
         self._cache_timestamps.clear()
         logger.info("Capability discovery cache cleared")
 
-    async def discover_capabilities(self, force_refresh: bool = False) -> Dict[str, ModelCapabilities]:
+    async def discover_capabilities(
+        self, force_refresh: bool = False
+    ) -> Dict[str, ModelCapabilities]:
         """
         Discover capabilities for all configured models across all providers.
 
@@ -112,15 +114,23 @@ class CapabilityDiscovery:
                         # Safely check provider capabilities
                         try:
                             # Check if the provider has these methods using getattr
-                            supports_streaming_method = getattr(provider_instance, 'supports_streaming', None)
+                            supports_streaming_method = getattr(
+                                provider_instance, 'supports_streaming', None
+                            )
                             if supports_streaming_method:
-                                supports_streaming = await self._safe_check_capability(supports_streaming_method)
+                                supports_streaming = await self._safe_check_capability(
+                                    supports_streaming_method
+                                )
                             else:
                                 supports_streaming = False
                                 
-                            supports_tools_method = getattr(provider_instance, 'supports_tools', None)
+                            supports_tools_method = getattr(
+                                provider_instance, 'supports_tools', None
+                            )
                             if supports_tools_method:
-                                supports_tools = await self._safe_check_capability(supports_tools_method)
+                                supports_tools = await self._safe_check_capability(
+                                    supports_tools_method
+                                )
                             else:
                                 supports_tools = False
                         except Exception as e:
@@ -135,7 +145,8 @@ class CapabilityDiscovery:
                             model_config = provider_instance.config.models.get(model_name)
                             if not model_config:
                                 logger.warning(
-                                    f"No configuration found for model {model_name} in provider {provider_name}"
+                                    f"No configuration found for model {model_name} "
+                            f"in provider {provider_name}"
                                 )
                                 continue
                         except AttributeError:
@@ -159,8 +170,12 @@ class CapabilityDiscovery:
                                     name=cap_def.name,
                                     description=cap_def.description,
                                     parameters=cap_def.parameters,
-                                    performance_score=getattr(model_config, "performance_score", cap_def.performance_score),
-                                    cost_efficiency=getattr(model_config, "cost_per_1k_tokens", cap_def.cost_efficiency),
+                                    performance_score=getattr(
+                            model_config, "performance_score", cap_def.performance_score
+                        ),
+                                    cost_efficiency=getattr(
+                                        model_config, "cost_per_1k_tokens", cap_def.cost_efficiency
+                                    ),
                                 )
                                 capabilities.append(capability)
                         
@@ -195,12 +210,14 @@ class CapabilityDiscovery:
             else:
                 # Running average
                 self._metrics["average_discovery_time"] = (
-                    (self._metrics["average_discovery_time"] * (self._metrics["discovery_attempts"] - 1) + discovery_time)
+                    (self._metrics["average_discovery_time"] * 
+                     (self._metrics["discovery_attempts"] - 1) + discovery_time)
                     / self._metrics["discovery_attempts"]
                 )
             
             logger.info(
-                f"Discovered capabilities for {len(self.model_capabilities)} models in {discovery_time:.2f}s."
+                f"Discovered capabilities for {len(self.model_capabilities)} models "
+                f"in {discovery_time:.2f}s."
             )
             return self.model_capabilities
             
@@ -233,7 +250,9 @@ class CapabilityDiscovery:
             logger.debug(f"Capability check failed: {e}")
             return False
 
-    def get_model_capabilities(self, model_id: str, auto_refresh: bool = True) -> Optional[ModelCapabilities]:
+    def get_model_capabilities(
+        self, model_id: str, auto_refresh: bool = True
+    ) -> Optional[ModelCapabilities]:
         """
         Retrieve capabilities for a specific model.
 
@@ -269,7 +288,9 @@ class CapabilityDiscovery:
                     break
         return matching_models
 
-    def find_models_by_capabilities(self, capability_names: List[str], require_all: bool = False) -> List[str]:
+    def find_models_by_capabilities(
+        self, capability_names: List[str], require_all: bool = False
+    ) -> List[str]:
         """
         Find models that support multiple capabilities.
 
@@ -329,12 +350,18 @@ class CapabilityDiscovery:
         )
         
         cache_hit_rate = (
-            self._metrics["cache_hits"] / (self._metrics["cache_hits"] + self._metrics["cache_misses"])
-            if (self._metrics["cache_hits"] + self._metrics["cache_misses"]) > 0 else 0.0
+            self._metrics["cache_hits"] / 
+            (self._metrics["cache_hits"] + self._metrics["cache_misses"])
+            if (self._metrics["cache_hits"] + self._metrics["cache_misses"]) > 0 
+            else 0.0
         )
         
         return {
-            "status": "healthy" if success_rate > 0.8 else "degraded" if success_rate > 0.5 else "unhealthy",
+            "status": (
+                "healthy" if success_rate > 0.8 
+                else "degraded" if success_rate > 0.5 
+                else "unhealthy"
+            ),
             "success_rate": success_rate,
             "cache_hit_rate": cache_hit_rate,
             "total_models": len(self.model_capabilities),
@@ -374,9 +401,13 @@ class CapabilityDiscovery:
             }
         
         available_capabilities = [cap.name for cap in model_caps.capabilities]
-        return self.capability_config.validate_capability_requirements(task_type, available_capabilities)
+        return self.capability_config.validate_capability_requirements(
+            task_type, available_capabilities
+        )
 
-    def find_models_for_task(self, task_type: str, min_coverage: float = 0.8) -> List[Dict[str, Any]]:
+    def find_models_for_task(
+        self, task_type: str, min_coverage: float = 0.8
+    ) -> List[Dict[str, Any]]:
         """
         Find models that meet the requirements for a specific task type.
         

@@ -8,7 +8,7 @@ result processing for the unified workflow orchestrator.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from .prompt_context_models import PromptContext
 from .validation import CodeValidationPipeline
@@ -31,8 +31,8 @@ class WorkflowValidationEngine:
         self.logger = logging.getLogger(__name__)
 
     async def validate_generated_code(
-        self, analysis_result: Dict[str, Any], prompt_context: PromptContext
-    ) -> Dict[str, Any]:
+        self, analysis_result: dict[str, Any], prompt_context: PromptContext
+    ) -> dict[str, Any]:
         """
         Validate generated code for quality and correctness using the validation pipeline.
 
@@ -70,7 +70,7 @@ class WorkflowValidationEngine:
             self.logger.error(f"[VALIDATION] Code validation failed: {e}")
             return self._create_error_validation_result(str(e))
 
-    async def validate_python_code(self, code: str) -> Dict[str, Any]:
+    async def validate_python_code(self, code: str) -> dict[str, Any]:
         """
         Validate Python code for syntax and common issues.
 
@@ -105,7 +105,7 @@ class WorkflowValidationEngine:
 
         return validation_result
 
-    def _format_validation_result(self, validation_result) -> Dict[str, Any]:
+    def _format_validation_result(self, validation_result) -> dict[str, Any]:
         """
         Format validation result to legacy format for compatibility.
 
@@ -148,7 +148,7 @@ class WorkflowValidationEngine:
             "validation_summary": validation_result.get_validation_summary(),
         }
 
-    def _create_error_validation_result(self, error_message: str) -> Dict[str, Any]:
+    def _create_error_validation_result(self, error_message: str) -> dict[str, Any]:
         """
         Create error validation result.
 
@@ -177,8 +177,8 @@ class WorkflowValidationEngine:
         return self.validation_pipeline
 
     async def validate_code_with_custom_rules(
-        self, code: str, custom_rules: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, code: str, custom_rules: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Validate code with custom validation rules.
 

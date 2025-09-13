@@ -5,8 +5,8 @@ Tests cover pattern classification, confidence assessment, model selection,
 structured output parsing, and performance tracking.
 """
 
+from datetime import UTC, datetime
 import json
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -38,7 +38,9 @@ class TestGeminiPatternClassifierInit:
         assert classifier.confidence_assessment_threshold == 0.8
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_init_with_monitoring_components(self, mock_gemini_client_class: str) -> None:
+    def test_init_with_monitoring_components(
+        self, mock_gemini_client_class: str
+    ) -> None:
         """Test initialization with cost tracker and rate limiter."""
         cost_tracker = Mock()
         rate_limiter = Mock()
@@ -59,7 +61,7 @@ class TestGeminiPatternClassifierClassification:
     @pytest.fixture
     def sample_window(self) -> None:
         """Create sample time window with logs."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         window = TimeWindow(start_time=start_time, duration_minutes=5)
 
         # Add sample logs
@@ -319,7 +321,7 @@ class TestGeminiPatternClassifierHelpers:
         """Test model selection for simple incidents."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
-        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=5)
+        window = TimeWindow(start_time=datetime.now(UTC), duration_minutes=5)
         window.logs = [
             LogEntry(
                 insert_id="log1",
@@ -339,7 +341,7 @@ class TestGeminiPatternClassifierHelpers:
         """Test model selection for complex incidents."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
-        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=60)
+        window = TimeWindow(start_time=datetime.now(UTC), duration_minutes=60)
 
         # Create many logs from multiple services
         window.logs = []
@@ -416,11 +418,13 @@ class TestGeminiPatternClassifierPrompts:
     """Test prompt building functionality."""
 
     @patch("gemini_sre_agent.ml.gemini_pattern_classifier.GeminiAPIClient")
-    def test_classification_prompt_building(self, mock_gemini_client_class: str) -> None:
+    def test_classification_prompt_building(
+        self, mock_gemini_client_class: str
+    ) -> None:
         """Test classification prompt construction."""
         classifier = GeminiPatternClassifier(api_key="test_key")
 
-        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=15)
+        window = TimeWindow(start_time=datetime.now(UTC), duration_minutes=15)
         window.logs = [
             LogEntry(
                 insert_id="log1",
@@ -465,7 +469,7 @@ class TestGeminiPatternClassifierPrompts:
             "reasoning": "Multiple service failures detected",
         }
 
-        window = TimeWindow(start_time=datetime.now(timezone.utc), duration_minutes=10)
+        window = TimeWindow(start_time=datetime.now(UTC), duration_minutes=10)
         window.logs = [Mock()]
 
         prompt = classifier._build_confidence_prompt(pattern_data, window)

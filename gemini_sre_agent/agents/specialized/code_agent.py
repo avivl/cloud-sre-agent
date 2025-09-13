@@ -8,7 +8,7 @@ with multi-provider support and intelligent model selection.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...llm.base import ModelType
 from ...llm.common.enums import ProviderType
@@ -33,9 +33,9 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         llm_config: LLMConfig,
         agent_name: str = "code_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -68,8 +68,8 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         self,
         description: str,
         language: str,
-        framework: Optional[str] = None,
-        style_guide: Optional[str] = None,
+        framework: str | None = None,
+        style_guide: str | None = None,
         **kwargs: Any,
     ) -> CodeResponse:
         """
@@ -136,7 +136,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         self,
         code: str,
         language: str,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
         **kwargs: Any,
     ) -> CodeResponse:
         """
@@ -202,7 +202,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         self,
         code: str,
         language: str,
-        test_framework: Optional[str] = None,
+        test_framework: str | None = None,
         test_type: str = "unit",
         **kwargs: Any,
     ) -> CodeResponse:
@@ -267,7 +267,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
             optimization_goal=OptimizationGoal.QUALITY,
         )
 
-    def get_agent_capabilities(self) -> Dict[str, Any]:
+    def get_agent_capabilities(self) -> dict[str, Any]:
         """
         Get the capabilities and configuration of this code agent.
 

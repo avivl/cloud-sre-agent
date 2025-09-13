@@ -20,10 +20,10 @@ from .gcp_pubsub import GCPPubSubAdapter
 from .kubernetes import KubernetesAdapter
 
 __all__ = [
+    "AWSCloudWatchAdapter",
     "FileSystemAdapter",
-    "QueuedFileSystemAdapter",
     "GCPLoggingAdapter",
     "GCPPubSubAdapter",
-    "AWSCloudWatchAdapter",
     "KubernetesAdapter",
+    "QueuedFileSystemAdapter",
 ]

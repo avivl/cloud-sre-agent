@@ -8,7 +8,7 @@ LLM system while maintaining backward compatibility with the original interface.
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any
 
 from ..llm.base import ModelType
 from ..llm.common.enums import ProviderType
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
     """
     Enhanced Triage Agent with multi-provider support.
-    
+
     Provides intelligent model selection for triage tasks while maintaining
     backward compatibility with the original TriageAgent interface.
     """
@@ -33,9 +33,9 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         llm_config: LLMConfig,
         agent_name: str = "triage_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -64,7 +64,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
 
         logger.info("EnhancedTriageAgent initialized with quality-focused optimization")
 
-    async def analyze_logs(self, logs: List[str], flow_id: str) -> TriageResponse:
+    async def analyze_logs(self, logs: list[str], flow_id: str) -> TriageResponse:
         """
         Analyze logs using intelligent model selection and return structured triage response.
 
@@ -81,7 +81,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
 
         # Construct the prompt for triage analysis
         prompt = self._build_triage_prompt(logs)
-        
+
         # Use the enhanced base agent's intelligent model selection
         response = await self.execute(
             prompt_name="triage_analysis",
@@ -100,13 +100,13 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             f"[ENHANCED_TRIAGE] Triage analysis complete: flow_id={flow_id}, "
             f"severity={response.severity}, category={response.category}"
         )
-        
+
         return response
 
-    def _build_triage_prompt(self, logs: List[str]) -> str:
+    def _build_triage_prompt(self, logs: list[str]) -> str:
         """Build the triage analysis prompt."""
         log_entries = "\n".join(logs)
-        
+
         return f"""
 You are an expert SRE Triage Agent. Your task is to analyze the provided log entries, 
 identify any critical issues, and provide a structured triage assessment.
@@ -123,7 +123,6 @@ Provide a structured analysis with:
 
 Focus on identifying patterns, anomalies, and potential service impacts.
 """
-
 
     def _severity_to_score(self, severity: str) -> int:
         """Convert severity string to numeric score."""

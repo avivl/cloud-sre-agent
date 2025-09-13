@@ -11,14 +11,14 @@ Provides comprehensive metrics collection including:
 """
 
 import asyncio
-import logging
-import threading
-import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+import logging
+import threading
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,11 @@ class MetricValue:
     """Represents a metric value with metadata."""
 
     name: str
-    value: Union[int, float]
+    value: int | float
     metric_type: MetricType
     timestamp: datetime = field(default_factory=datetime.now)
-    labels: Dict[str, str] = field(default_factory=dict)
-    unit: Optional[str] = None
+    labels: dict[str, str] = field(default_factory=dict)
+    unit: str | None = None
 
 
 @dataclass
@@ -70,17 +70,17 @@ class MetricsCollector:
             retention_period: How long to retain metrics data
         """
         self.retention_period = retention_period
-        self._metrics: Dict[str, List[MetricValue]] = defaultdict(list)
-        self._counters: Dict[str, float] = defaultdict(float)
-        self._gauges: Dict[str, float] = defaultdict(float)
-        self._histograms: Dict[str, List[float]] = defaultdict(list)
-        self._rates: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self._metrics: dict[str, list[MetricValue]] = defaultdict(list)
+        self._counters: dict[str, float] = defaultdict(float)
+        self._gauges: dict[str, float] = defaultdict(float)
+        self._histograms: dict[str, list[float]] = defaultdict(list)
+        self._rates: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
 
         # Thread safety
         self._lock = threading.RLock()
 
         # Background cleanup task
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
         self._running = False
 
         logger.info("MetricsCollector initialized")
@@ -106,7 +106,7 @@ class MetricsCollector:
         logger.info("MetricsCollector stopped")
 
     def increment_counter(
-        self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float = 1.0, labels: dict[str, str] | None = None
     ) -> None:
         """
         Increment a counter metric.
@@ -129,7 +129,7 @@ class MetricsCollector:
             self._metrics[name].append(metric)
 
     def set_gauge(
-        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float, labels: dict[str, str] | None = None
     ) -> None:
         """
         Set a gauge metric value.
@@ -152,7 +152,7 @@ class MetricsCollector:
             self._metrics[name].append(metric)
 
     def record_histogram(
-        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float, labels: dict[str, str] | None = None
     ) -> None:
         """
         Record a value in a histogram metric.
@@ -175,7 +175,7 @@ class MetricsCollector:
             self._metrics[name].append(metric)
 
     def record_rate(
-        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float, labels: dict[str, str] | None = None
     ) -> None:
         """
         Record a value for rate calculation.
@@ -189,21 +189,21 @@ class MetricsCollector:
             key = self._make_key(name, labels)
             self._rates[key].append((time.time(), value))
 
-    def get_counter(self, name: str, labels: Optional[Dict[str, str]] = None) -> float:
+    def get_counter(self, name: str, labels: dict[str, str] | None = None) -> float:
         """Get current counter value."""
         with self._lock:
             key = self._make_key(name, labels)
             return self._counters.get(key, 0.0)
 
-    def get_gauge(self, name: str, labels: Optional[Dict[str, str]] = None) -> float:
+    def get_gauge(self, name: str, labels: dict[str, str] | None = None) -> float:
         """Get current gauge value."""
         with self._lock:
             key = self._make_key(name, labels)
             return self._gauges.get(key, 0.0)
 
     def get_histogram_stats(
-        self, name: str, labels: Optional[Dict[str, str]] = None
-    ) -> Dict[str, float]:
+        self, name: str, labels: dict[str, str] | None = None
+    ) -> dict[str, float]:
         """
         Get histogram statistics (count, sum, min, max, avg, p50, p95, p99).
 
@@ -249,7 +249,7 @@ class MetricsCollector:
         self,
         name: str,
         window_seconds: int = 60,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
     ) -> float:
         """
         Calculate rate over a time window.
@@ -281,7 +281,7 @@ class MetricsCollector:
             total_value = sum(v for _, v in recent_values)
             return total_value / time_span
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """
         Get a comprehensive summary of all metrics.
 
@@ -302,8 +302,8 @@ class MetricsCollector:
             return summary
 
     def get_metrics_for_export(
-        self, metric_names: Optional[List[str]] = None
-    ) -> List[MetricValue]:
+        self, metric_names: list[str] | None = None
+    ) -> list[MetricValue]:
         """
         Get metrics in a format suitable for export to monitoring systems.
 
@@ -328,7 +328,7 @@ class MetricsCollector:
                     for metric in metrics[-100:]  # Last 100 values per metric
                 ]
 
-    def _make_key(self, name: str, labels: Optional[Dict[str, str]]) -> str:
+    def _make_key(self, name: str, labels: dict[str, str] | None) -> str:
         """Create a unique key for a metric with labels."""
         if not labels:
             return name
@@ -366,7 +366,7 @@ class MetricsCollector:
 
 
 # Global metrics collector instance
-_global_metrics: Optional[MetricsCollector] = None
+_global_metrics: MetricsCollector | None = None
 
 
 def get_global_metrics() -> MetricsCollector:

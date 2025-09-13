@@ -31,7 +31,9 @@ class TestRepositoryManager:
         )
 
     @pytest.fixture
-    def repository_manager(self, mock_global_config: str, mock_provider_factory: str) -> None:
+    def repository_manager(
+        self, mock_global_config: str, mock_provider_factory: str
+    ) -> None:
         """
         Repository Manager.
 

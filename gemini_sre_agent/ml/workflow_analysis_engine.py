@@ -8,7 +8,7 @@ for the unified workflow orchestrator.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from .caching import ContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
@@ -48,12 +48,12 @@ class WorkflowAnalysisEngine:
 
     async def execute_enhanced_analysis(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         prompt_context: PromptContext,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute enhanced analysis with the enhanced analysis agent.
 
@@ -92,11 +92,11 @@ class WorkflowAnalysisEngine:
 
     async def execute_fallback_analysis(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute fallback analysis when enhanced analysis fails.
 
@@ -143,7 +143,7 @@ class WorkflowAnalysisEngine:
             return {"success": False, "error": str(e), "fallback": True}
 
     def _analyze_root_cause_basic(
-        self, triage_packet: Dict[str, Any], historical_logs: List[str]
+        self, triage_packet: dict[str, Any], historical_logs: list[str]
     ) -> str:
         """Basic root cause analysis for fallback scenarios."""
         error_patterns = triage_packet.get("error_patterns", [])

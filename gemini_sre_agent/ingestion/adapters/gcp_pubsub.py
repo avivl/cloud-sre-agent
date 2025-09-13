@@ -7,10 +7,11 @@ This adapter implements the LogIngestionInterface for consuming logs
 from Google Cloud Pub/Sub subscriptions.
 """
 
+from collections.abc import AsyncGenerator
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any
 
 from ...config.ingestion_config import GCPPubSubConfig
 from ..interfaces.core import (
@@ -149,7 +150,7 @@ class GCPPubSubAdapter(LogIngestionInterface):
             self._consecutive_failures += 1
             raise SourceConnectionError(f"Failed to get logs from Pub/Sub: {e}") from e
 
-    def _parse_message(self, message) -> Optional[LogEntry]:
+    def _parse_message(self, message) -> LogEntry | None:
         """Parse a Pub/Sub message into a LogEntry."""
         try:
             # Try to parse as JSON first
@@ -236,9 +237,7 @@ class GCPPubSubAdapter(LogIngestionInterface):
         error_rate = self._total_messages_failed / max(total_messages, 1)
 
         # Determine health status
-        if not self._is_running:
-            status = "unhealthy"
-        elif self._consecutive_failures > 5:
+        if not self._is_running or self._consecutive_failures > 5:
             status = "unhealthy"
         elif error_rate > 0.1:  # 10% error rate
             status = "degraded"
@@ -286,17 +285,23 @@ class GCPPubSubAdapter(LogIngestionInterface):
         else:
             raise ValueError("Config must be GCPPubSubConfig")
 
-    async def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
+    async def handle_error(self, error: Exception, context: dict[str, Any]) -> bool:
         """Handle errors with context. Return True if recoverable."""
         logger.error(f"GCP Pub/Sub adapter error: {error} in context: {context}")
         self._consecutive_failures += 1
 
         # Consider GCP API errors as potentially recoverable
-        if hasattr(error, "code") and getattr(error, "code", None) in [429, 500, 502, 503, 504]:
+        if hasattr(error, "code") and getattr(error, "code", None) in [
+            429,
+            500,
+            502,
+            503,
+            504,
+        ]:
             return True
         return False
 
-    async def get_health_metrics(self) -> Dict[str, Any]:
+    async def get_health_metrics(self) -> dict[str, Any]:
         """Get detailed health and performance metrics."""
         return {
             "is_running": self._is_running,

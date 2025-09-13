@@ -5,8 +5,9 @@ LogManager orchestrates multiple log sources with health monitoring and failover
 """
 
 import asyncio
+from collections.abc import Awaitable, Callable
 import logging
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from ..interfaces import (
     BackpressureManager,
@@ -27,17 +28,15 @@ class LogManager:
 
     def __init__(
         self,
-        callback: Optional[
-            Union[Callable[[LogEntry], None], Callable[[LogEntry], Awaitable[None]]]
-        ] = None,
+        callback: Callable[[LogEntry], None] | Callable[[LogEntry], Awaitable[None]] | None = None,
     ):
-        self.sources: Dict[str, LogIngestionInterface] = {}
-        self.source_configs: Dict[str, SourceConfig] = {}
+        self.sources: dict[str, LogIngestionInterface] = {}
+        self.source_configs: dict[str, SourceConfig] = {}
         self.backpressure_manager = BackpressureManager()
         self.callback = callback
         self.running = False
-        self.tasks: List[asyncio.Task] = []
-        self.health_check_task: Optional[asyncio.Task] = None
+        self.tasks: list[asyncio.Task] = []
+        self.health_check_task: asyncio.Task | None = None
 
     async def add_source(self, source: LogIngestionInterface) -> None:
         """Add a log source to the manager."""
@@ -167,7 +166,8 @@ class LogManager:
                 # For file system sources, wait a bit before checking again
                 try:
                     source_config = source.get_config()
-                    if hasattr(source_config, 'source_type') and source_config.source_type.value == 'file_system':
+                    if (hasattr(source_config, "source_type") and 
+                        source_config.source_type.value == "file_system"):
                         await asyncio.sleep(1)
                 except Exception:
                     # If we can't get config, continue without the sleep
@@ -204,7 +204,7 @@ class LogManager:
             # Wait before next health check
             await asyncio.sleep(30)
 
-    async def get_health_status(self) -> Dict[str, SourceHealth]:
+    async def get_health_status(self) -> dict[str, SourceHealth]:
         """Get health status of all sources."""
         health_status = {}
         for source_name, source in self.sources.items():
@@ -217,7 +217,7 @@ class LogManager:
                 )
         return health_status
 
-    async def get_metrics(self) -> Dict[str, Any]:
+    async def get_metrics(self) -> dict[str, Any]:
         """Get comprehensive metrics for all sources."""
         metrics = {
             "sources": {},
@@ -251,6 +251,6 @@ class LogManager:
             raise SourceNotFoundError(f"Source '{source_name}' not found")
         return self.sources[source_name]
 
-    def list_sources(self) -> List[str]:
+    def list_sources(self) -> list[str]:
         """List all source names."""
         return list(self.sources.keys())

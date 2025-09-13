@@ -7,9 +7,9 @@ This module implements an adaptive strategy that chooses between meta-prompt gen
 static templates, and hybrid approaches based on context analysis.
 """
 
-import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+import logging
+from typing import Any
 
 from .base_prompt_template import BasePromptTemplate, GenericErrorPromptTemplate
 from .prompt_context_models import IssueType, TaskContext
@@ -43,11 +43,11 @@ class PromptCache:
         Args:
             ttl_seconds: Time-to-live for cached prompts
         """
-        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.cache: dict[str, dict[str, Any]] = {}
         self.ttl_seconds = ttl_seconds
         self.logger = logging.getLogger(__name__)
 
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """Get cached prompt if valid."""
         if key in self.cache:
             entry = self.cache[key]
@@ -67,7 +67,7 @@ class PromptCache:
         self.cache[key] = {"prompt": prompt, "timestamp": time.time()}
         self.logger.debug(f"[CACHE] Stored prompt for key: {key}")
 
-    def _is_valid(self, entry: Dict[str, Any]) -> bool:
+    def _is_valid(self, entry: dict[str, Any]) -> bool:
         """Check if cache entry is still valid."""
         import time
 
@@ -109,8 +109,8 @@ class AdaptivePromptStrategy:
     async def get_optimal_prompt(
         self,
         task_context: TaskContext,
-        issue_context: Optional[Dict[str, Any]] = None,
-        repository_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
+        repository_context: dict[str, Any] | None = None,
     ) -> str:
         """
         Choose the optimal prompt generation strategy and return the prompt.
@@ -194,8 +194,8 @@ class AdaptivePromptStrategy:
         self,
         strategy: str,
         task_context: TaskContext,
-        issue_context: Optional[Dict[str, Any]] = None,
-        repository_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
+        repository_context: dict[str, Any] | None = None,
     ) -> str:
         """
         Execute the selected strategy to generate a prompt.
@@ -231,8 +231,8 @@ class AdaptivePromptStrategy:
     async def _use_meta_prompt(
         self,
         task_context: TaskContext,
-        issue_context: Optional[Dict[str, Any]] = None,
-        repository_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
+        repository_context: dict[str, Any] | None = None,
     ) -> str:
         """Use meta-prompt generation approach."""
         # This would integrate with MetaPromptGenerator
@@ -242,8 +242,8 @@ class AdaptivePromptStrategy:
     async def _use_static_template(
         self,
         task_context: TaskContext,
-        issue_context: Optional[Dict[str, Any]] = None,
-        repository_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
+        repository_context: dict[str, Any] | None = None,
     ) -> str:
         """Use static template approach."""
         # Select appropriate template based on context
@@ -256,8 +256,8 @@ class AdaptivePromptStrategy:
     async def _use_cached_prompt(
         self,
         task_context: TaskContext,
-        issue_context: Optional[Dict[str, Any]] = None,
-        repository_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
+        repository_context: dict[str, Any] | None = None,
     ) -> str:
         """Use cached prompt approach."""
         # This would retrieve from cache or generate and cache
@@ -266,8 +266,8 @@ class AdaptivePromptStrategy:
     async def _use_hybrid_approach(
         self,
         task_context: TaskContext,
-        issue_context: Optional[Dict[str, Any]] = None,
-        repository_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
+        repository_context: dict[str, Any] | None = None,
     ) -> str:
         """Use hybrid approach combining multiple strategies."""
         # Combine static template with dynamic elements
@@ -281,7 +281,7 @@ class AdaptivePromptStrategy:
         return f"""Hybrid prompt for {task_context.task_type} with dynamic elements: {dynamic_elements}"""
 
     def _select_static_template(
-        self, task_context: TaskContext, issue_context: Optional[Dict[str, Any]] = None
+        self, task_context: TaskContext, issue_context: dict[str, Any] | None = None
     ) -> BasePromptTemplate:
         """Select appropriate static template based on context."""
         if issue_context:
@@ -297,7 +297,7 @@ class AdaptivePromptStrategy:
         # Default to generic template
         return self.static_templates["generic"]
 
-    def _initialize_static_templates(self) -> Dict[str, BasePromptTemplate]:
+    def _initialize_static_templates(self) -> dict[str, BasePromptTemplate]:
         """Initialize static template registry."""
         return {
             "generic": GenericErrorPromptTemplate("generic"),
@@ -314,7 +314,7 @@ class AdaptivePromptStrategy:
         ]
 
     def _generate_cache_key(
-        self, task_context: TaskContext, issue_context: Optional[Dict[str, Any]] = None
+        self, task_context: TaskContext, issue_context: dict[str, Any] | None = None
     ) -> str:
         """Generate cache key for the context."""
         import hashlib
@@ -334,8 +334,8 @@ class AdaptivePromptStrategy:
     def _extract_dynamic_elements(
         self,
         task_context: TaskContext,
-        issue_context: Optional[Dict[str, Any]] = None,
-        repository_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
+        repository_context: dict[str, Any] | None = None,
     ) -> str:
         """Extract dynamic elements for hybrid approach."""
         elements = []
@@ -356,7 +356,7 @@ class AdaptivePromptStrategy:
         self,
         context: TaskContext,
         strategy: str,
-        issue_context: Optional[Dict[str, Any]] = None,
+        issue_context: dict[str, Any] | None = None,
     ) -> str:
         """
         Select optimal model based on strategy and context.
@@ -393,7 +393,7 @@ class AdaptivePromptStrategy:
         # Fallback to flash for any edge cases
         return "gemini-1.5-flash-001"
 
-    def get_model_selection_stats(self) -> Dict[str, Any]:
+    def get_model_selection_stats(self) -> dict[str, Any]:
         """Get statistics about model selection decisions."""
         return {
             "model_selection_enabled": True,
@@ -409,7 +409,7 @@ class AdaptivePromptStrategy:
             },
         }
 
-    def get_strategy_stats(self) -> Dict[str, Any]:
+    def get_strategy_stats(self) -> dict[str, Any]:
         """Get statistics about strategy usage."""
         return {
             "cache_size": len(self.cached_prompts.cache) if self.cached_prompts else 0,

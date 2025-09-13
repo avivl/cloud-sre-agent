@@ -9,7 +9,7 @@ intelligent model selection and multi-provider capabilities.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..llm.base import ModelType
 from ..llm.common.enums import ProviderType
@@ -40,9 +40,9 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
         llm_config: LLMConfig,
         agent_name: str = "text_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.7,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.7,
         **kwargs: Any,
     ):
         """
@@ -74,10 +74,10 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     async def generate_text(
         self,
         prompt: str,
-        max_length: Optional[int] = None,
+        max_length: int | None = None,
         temperature: float = 0.7,
-        provider: Optional[ProviderType] = None,
-        optimization_goal: Optional[OptimizationGoal] = None,
+        provider: ProviderType | None = None,
+        optimization_goal: OptimizationGoal | None = None,
         **kwargs: Any,
     ) -> TextResponse:
         """
@@ -111,8 +111,8 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
     async def summarize_text(
         self,
         text: str,
-        max_length: Optional[int] = None,
-        focus_points: Optional[List[str]] = None,
+        max_length: int | None = None,
+        focus_points: list[str] | None = None,
         **kwargs: Any,
     ) -> TextResponse:
         """
@@ -145,7 +145,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
         self,
         text: str,
         target_language: str,
-        source_language: Optional[str] = None,
+        source_language: str | None = None,
         **kwargs: Any,
     ) -> TextResponse:
         """
@@ -188,9 +188,9 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         llm_config: LLMConfig,
         agent_name: str = "analysis_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -224,7 +224,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     async def analyze(
         self,
         content: str,
-        criteria: List[str],
+        criteria: list[str],
         analysis_type: str = "general",
         depth: str = "detailed",
         **kwargs: Any,
@@ -258,8 +258,8 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
 
     async def compare_analysis(
         self,
-        items: List[str],
-        comparison_criteria: List[str],
+        items: list[str],
+        comparison_criteria: list[str],
         **kwargs: Any,
     ) -> AnalysisResponse:
         """
@@ -288,9 +288,9 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
 
     async def trend_analysis(
         self,
-        data: List[Dict[str, Any]],
+        data: list[dict[str, Any]],
         time_period: str,
-        metrics: List[str],
+        metrics: list[str],
         **kwargs: Any,
     ) -> AnalysisResponse:
         """
@@ -333,9 +333,9 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         llm_config: LLMConfig,
         agent_name: str = "code_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -368,8 +368,8 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         self,
         description: str,
         language: str,
-        framework: Optional[str] = None,
-        style_guide: Optional[str] = None,
+        framework: str | None = None,
+        style_guide: str | None = None,
         **kwargs: Any,
     ) -> CodeResponse:
         """
@@ -436,7 +436,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         self,
         code: str,
         language: str,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
         **kwargs: Any,
     ) -> CodeResponse:
         """
@@ -512,9 +512,9 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         llm_config: LLMConfig,
         agent_name: str = "triage_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.PERFORMANCE,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -548,7 +548,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
     async def triage_issue(
         self,
         issue: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         urgency_level: str = "medium",
         **kwargs: Any,
     ) -> AnalysisResponse:
@@ -577,26 +577,31 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             prompt_args=prompt_args,
             optimization_goal=OptimizationGoal.PERFORMANCE,
         )
-        
+
         # Convert TriageResponse to AnalysisResponse if needed
-        if hasattr(result, 'category') and hasattr(result, 'description'):
+        if hasattr(result, "category") and hasattr(result, "description"):
             from .response_models import AnalysisResponse
+
             return AnalysisResponse(
                 summary=result.description,
                 key_points=[result.category],
                 scores={"urgency": 8 if urgency_level == "high" else 5},
-                recommendations=["Investigate the issue further", "Monitor for similar patterns"]
+                recommendations=[
+                    "Investigate the issue further",
+                    "Monitor for similar patterns",
+                ],
             )
         # If result is already an AnalysisResponse, return it
-        if hasattr(result, 'summary') and hasattr(result, 'key_points'):
+        if hasattr(result, "summary") and hasattr(result, "key_points"):
             return result  # type: ignore
         # Fallback: create a basic AnalysisResponse
         from .response_models import AnalysisResponse
+
         return AnalysisResponse(
             summary=str(result),
             key_points=["Unknown issue type"],
             scores={"urgency": 5},
-            recommendations=["Manual investigation required"]
+            recommendations=["Manual investigation required"],
         )
 
 
@@ -613,9 +618,9 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         llm_config: LLMConfig,
         agent_name: str = "remediation_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -649,7 +654,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
     async def provide_remediation(
         self,
         problem: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         remediation_type: str = "general",
         **kwargs: Any,
     ) -> AnalysisResponse:
@@ -697,9 +702,9 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         llm_config: LLMConfig,
         agent_name: str = "remediation_agent_v2",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = None,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = None,
         **kwargs: Any,
     ):
         """
@@ -750,7 +755,11 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
             RemediationResponse with detailed remediation plan
         """
         prompt_args = {
-            "problem": f"Issue: {issue_description}\nError Context: {error_context}\nTarget File: {target_file}\nAnalysis: {kwargs.get('analysis_summary', '')}\nKey Points: {', '.join(kwargs.get('key_points', []))}",
+            "problem": (
+                f"Issue: {issue_description}\nError Context: {error_context}\n"
+                f"Target File: {target_file}\nAnalysis: {kwargs.get('analysis_summary', '')}\n"
+                f"Key Points: {', '.join(kwargs.get('key_points', []))}"
+            ),
             **kwargs,
         }
 

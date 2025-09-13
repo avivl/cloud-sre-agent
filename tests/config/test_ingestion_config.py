@@ -6,8 +6,8 @@ functionality for the log ingestion system.
 """
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 import yaml

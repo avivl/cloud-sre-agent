@@ -8,9 +8,9 @@ comprehensive observability of LLM operations, including request/response
 tracking, performance metrics, and error context.
 """
 
-import logging
 from contextvars import ContextVar
-from typing import Any, Dict, Optional
+import logging
+from typing import Any
 
 try:
     import structlog
@@ -23,9 +23,9 @@ except ImportError:
 from ..base import LLMRequest, LLMResponse
 
 # Context variables for request tracking
-request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
-session_id_var: ContextVar[Optional[str]] = ContextVar("session_id", default=None)
-user_id_var: ContextVar[Optional[str]] = ContextVar("user_id", default=None)
+request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
+session_id_var: ContextVar[str | None] = ContextVar("session_id", default=None)
+user_id_var: ContextVar[str | None] = ContextVar("user_id", default=None)
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class StructuredLogger:
 
         self.logger = structlog.get_logger(self.name)
 
-    def _get_context(self) -> Dict[str, Any]:
+    def _get_context(self) -> dict[str, Any]:
         """Get current context variables."""
         context = {}
         if request_id_var.get():
@@ -274,7 +274,7 @@ class ErrorLogger:
         provider: str,
         model: str,
         error: Exception,
-        request_context: Dict[str, Any],
+        request_context: dict[str, Any],
         **kwargs,
     ):
         """Log provider-specific error with full context."""
@@ -320,9 +320,9 @@ error_logger = ErrorLogger()
 
 
 def set_request_context(
-    request_id: Optional[str] = None,
-    session_id: Optional[str] = None,
-    user_id: Optional[str] = None,
+    request_id: str | None = None,
+    session_id: str | None = None,
+    user_id: str | None = None,
 ):
     """Set context variables for request tracking."""
     if request_id:
@@ -340,7 +340,7 @@ def clear_request_context() -> None:
     user_id_var.set(None)
 
 
-def get_request_context() -> Dict[str, Any]:
+def get_request_context() -> dict[str, Any]:
     """Get current request context."""
     context = {}
     if request_id_var.get():

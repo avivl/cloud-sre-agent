@@ -12,8 +12,8 @@ from .issue_pattern_cache import IssuePatternCache
 from .repository_context_cache import RepositoryContextCache
 
 __all__ = [
-    "ContextCache",
-    "RepositoryContextCache",
-    "IssuePatternCache",
     "CacheEntry",
+    "ContextCache",
+    "IssuePatternCache",
+    "RepositoryContextCache",
 ]

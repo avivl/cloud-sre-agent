@@ -4,8 +4,8 @@ Unit tests for the LiteLLM Provider implementation.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from pydantic import BaseModel
+import pytest
 
 # Mock the dependencies before importing the provider
 with patch.dict(

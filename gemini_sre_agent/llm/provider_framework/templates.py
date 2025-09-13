@@ -9,7 +9,7 @@ making it even easier to implement new providers.
 
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import httpx
 
@@ -35,7 +35,7 @@ class HTTPAPITemplate(BaseProviderTemplate):
             headers=self._get_headers(),
         )
 
-    async def _make_api_request(self, request: LLMRequest) -> Dict[str, Any]:
+    async def _make_api_request(self, request: LLMRequest) -> dict[str, Any]:
         """Make HTTP API request."""
         payload = self._get_request_payload(request)
 
@@ -46,11 +46,11 @@ class HTTPAPITemplate(BaseProviderTemplate):
         response.raise_for_status()
         return response.json()
 
-    def _parse_response(self, response_data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, response_data: dict[str, Any]) -> LLMResponse:
         """Parse HTTP API response."""
         return self._parse_openai_response(response_data)
 
-    def _get_model_mapping(self) -> Dict[ModelType, str]:
+    def _get_model_mapping(self) -> dict[ModelType, str]:
         """Get model mapping. Override in subclasses."""
         return {
             ModelType.FAST: "fast-model",
@@ -81,7 +81,7 @@ class OpenAICompatibleTemplate(BaseProviderTemplate):
             headers=self._get_headers(),
         )
 
-    async def _make_api_request(self, request: LLMRequest) -> Dict[str, Any]:
+    async def _make_api_request(self, request: LLMRequest) -> dict[str, Any]:
         """Make OpenAI-compatible API request."""
         payload = self._get_request_payload(request)
 
@@ -92,11 +92,11 @@ class OpenAICompatibleTemplate(BaseProviderTemplate):
         response.raise_for_status()
         return response.json()
 
-    def _parse_response(self, response_data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, response_data: dict[str, Any]) -> LLMResponse:
         """Parse OpenAI-compatible response."""
         return self._parse_openai_response(response_data)
 
-    def _get_model_mapping(self) -> Dict[ModelType, str]:
+    def _get_model_mapping(self) -> dict[ModelType, str]:
         """Get model mapping. Override in subclasses."""
         return {
             ModelType.FAST: "gpt-3.5-turbo",
@@ -135,7 +135,7 @@ class RESTAPITemplate(BaseProviderTemplate):
             "health_endpoint", "/health"
         )
 
-    async def _make_api_request(self, request: LLMRequest) -> Dict[str, Any]:
+    async def _make_api_request(self, request: LLMRequest) -> dict[str, Any]:
         """Make custom REST API request."""
         payload = self._customize_payload(request)
 
@@ -146,19 +146,19 @@ class RESTAPITemplate(BaseProviderTemplate):
         response.raise_for_status()
         return response.json()
 
-    def _parse_response(self, response_data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, response_data: dict[str, Any]) -> LLMResponse:
         """Parse custom REST API response."""
         # Override in subclasses for custom response formats
         return self._parse_openai_response(response_data)
 
-    def _get_model_mapping(self) -> Dict[ModelType, str]:
+    def _get_model_mapping(self) -> dict[ModelType, str]:
         """Get model mapping. Override in subclasses."""
         return {
             ModelType.FAST: "fast",
             ModelType.SMART: "smart",
         }
 
-    def _customize_payload(self, request: LLMRequest) -> Dict[str, Any]:
+    def _customize_payload(self, request: LLMRequest) -> dict[str, Any]:
         """Customize the request payload. Override in subclasses."""
         return self._get_request_payload(request)
 
@@ -186,7 +186,7 @@ class StreamingTemplate(BaseProviderTemplate):
             headers=self._get_headers(),
         )
 
-    async def _make_api_request(self, request: LLMRequest) -> Dict[str, Any]:
+    async def _make_api_request(self, request: LLMRequest) -> dict[str, Any]:
         """Make streaming API request."""
         payload = self._get_request_payload(request)
         payload["stream"] = True
@@ -198,11 +198,11 @@ class StreamingTemplate(BaseProviderTemplate):
         response.raise_for_status()
         return response.json()
 
-    def _parse_response(self, response_data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, response_data: dict[str, Any]) -> LLMResponse:
         """Parse streaming response."""
         return self._parse_openai_response(response_data)
 
-    def _get_model_mapping(self) -> Dict[ModelType, str]:
+    def _get_model_mapping(self) -> dict[ModelType, str]:
         """Get model mapping. Override in subclasses."""
         return {
             ModelType.FAST: "streaming-fast",
@@ -261,7 +261,7 @@ class AnthropicCompatibleTemplate(BaseProviderTemplate):
             headers=self._get_headers(),
         )
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get Anthropic-compatible headers."""
         return {
             "x-api-key": self.api_key or "",
@@ -269,7 +269,7 @@ class AnthropicCompatibleTemplate(BaseProviderTemplate):
             "anthropic-version": "2023-06-01",
         }
 
-    def _get_request_payload(self, request: LLMRequest) -> Dict[str, Any]:
+    def _get_request_payload(self, request: LLMRequest) -> dict[str, Any]:
         """Convert to Anthropic format."""
         # Convert OpenAI format to Anthropic format
         messages = []
@@ -297,7 +297,7 @@ class AnthropicCompatibleTemplate(BaseProviderTemplate):
 
         return payload
 
-    async def _make_api_request(self, request: LLMRequest) -> Dict[str, Any]:
+    async def _make_api_request(self, request: LLMRequest) -> dict[str, Any]:
         """Make Anthropic-compatible API request."""
         payload = self._get_request_payload(request)
 
@@ -308,7 +308,7 @@ class AnthropicCompatibleTemplate(BaseProviderTemplate):
         response.raise_for_status()
         return response.json()
 
-    def _parse_response(self, response_data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, response_data: dict[str, Any]) -> LLMResponse:
         """Parse Anthropic-compatible response."""
         content = ""
         for block in response_data.get("content", []):
@@ -322,7 +322,7 @@ class AnthropicCompatibleTemplate(BaseProviderTemplate):
             finish_reason=response_data.get("stop_reason", "end_turn"),
         )
 
-    def _get_model_mapping(self) -> Dict[ModelType, str]:
+    def _get_model_mapping(self) -> dict[ModelType, str]:
         """Get Anthropic model mapping."""
         return {
             ModelType.FAST: "claude-3-haiku-20240307",

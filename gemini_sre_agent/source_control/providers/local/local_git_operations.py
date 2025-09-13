@@ -7,10 +7,10 @@ This module handles Git-specific operations for the local provider.
 """
 
 import logging
+from pathlib import Path
 import shlex
 import subprocess
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from git import GitCommandError, InvalidGitRepositoryError, Repo
 
@@ -31,7 +31,7 @@ class LocalGitOperations:
         git_enabled: bool,
         auto_init_git: bool,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize Git operations."""
         self.root_path = root_path
@@ -39,7 +39,7 @@ class LocalGitOperations:
         self.auto_init_git = auto_init_git
         self.logger = logger
         self.error_handling_components = error_handling_components
-        self.repo: Optional[Repo] = None
+        self.repo: Repo | None = None
         self._initialize_git()
 
     async def _execute_with_error_handling(
@@ -78,7 +78,7 @@ class LocalGitOperations:
                 self.logger.warning(f"No Git repository found at {self.root_path}")
                 self.repo = None
 
-    def _validate_git_command(self, command: List[str]) -> bool:
+    def _validate_git_command(self, command: list[str]) -> bool:
         """Validate Git command for security."""
         if not command:
             return False
@@ -104,7 +104,7 @@ class LocalGitOperations:
 
         return True
 
-    async def create_branch(self, name: str, base_ref: Optional[str] = None) -> bool:
+    async def create_branch(self, name: str, base_ref: str | None = None) -> bool:
         """Create a new branch."""
         if not self.repo:
             return False
@@ -139,7 +139,7 @@ class LocalGitOperations:
 
         return await self._execute_with_error_handling("delete_branch", _delete)
 
-    async def list_branches(self) -> List[BranchInfo]:
+    async def list_branches(self) -> list[BranchInfo]:
         """List all branches."""
         if not self.repo:
             return []
@@ -163,7 +163,7 @@ class LocalGitOperations:
 
         return await self._execute_with_error_handling("list_branches", _list)
 
-    async def get_branch_info(self, name: str) -> Optional[BranchInfo]:
+    async def get_branch_info(self, name: str) -> BranchInfo | None:
         """Get information about a specific branch."""
         if not self.repo:
             return None
@@ -353,7 +353,7 @@ class LocalGitOperations:
 
         return await self._execute_with_error_handling("resolve_conflicts", _resolve)
 
-    async def get_file_history(self, path: str, limit: int = 10) -> List[CommitInfo]:
+    async def get_file_history(self, path: str, limit: int = 10) -> list[CommitInfo]:
         """Get file commit history."""
         if not self.repo:
             return []
@@ -406,7 +406,7 @@ class LocalGitOperations:
             "diff_between_commits", _get_diff
         )
 
-    async def execute_git_command(self, command: List[str]) -> str:
+    async def execute_git_command(self, command: list[str]) -> str:
         """Execute a Git command and return output."""
         if not self.repo:
             return ""

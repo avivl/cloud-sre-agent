@@ -1,7 +1,7 @@
 # gemini_sre_agent/ml/enhanced_code_generation_agent.py
 
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 from .code_generation_models import CodeGenerationResult
 from .code_generator_factory import CodeGeneratorFactory
@@ -29,11 +29,11 @@ class EnhancedCodeGenerationAgent:
 
     async def analyze_andGenerate(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze issue and generate code fix using our unified approach"""
         start_time = time.time()
 
@@ -88,9 +88,9 @@ class EnhancedCodeGenerationAgent:
 
     def _build_issue_context(
         self,
-        triage_packet: Dict[str, Any],
-        analysis_result: Dict[str, Any],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        analysis_result: dict[str, Any],
+        configs: dict[str, Any],
     ) -> tuple[IssueContext, RepositoryContext]:
         """Build issue context from triage packet and analysis result"""
         # Extract issue type from triage packet or analysis
@@ -154,9 +154,9 @@ class EnhancedCodeGenerationAgent:
 
     def _integrate_results(
         self,
-        analysis_result: Dict[str, Any],
+        analysis_result: dict[str, Any],
         code_generation_result: CodeGenerationResult,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Integrate analysis and code generation results"""
         if not code_generation_result.success:
             return {
@@ -169,8 +169,8 @@ class EnhancedCodeGenerationAgent:
         # Check if human review is required
         requires_human_review = (
             code_generation_result.quality_score < self.config.human_review_threshold
-            or code_generation_result.validation_result
-            and len(code_generation_result.validation_result.get_critical_issues()) > 0
+            or (code_generation_result.validation_result
+            and len(code_generation_result.validation_result.get_critical_issues()) > 0)
         )
 
         # Add null checks for code_fix and validation_result
@@ -217,11 +217,11 @@ class EnhancedCodeGenerationAgent:
             "generation_summary": code_generation_result.get_summary(),
         }
 
-    def get_generation_statistics(self) -> Dict[str, Any]:
+    def get_generation_statistics(self) -> dict[str, Any]:
         """Get statistics about code generation performance"""
         return self.learning.get_generation_statistics()
 
-    def get_generator_info(self) -> Dict[str, Any]:
+    def get_generator_info(self) -> dict[str, Any]:
         """Get information about available generators"""
         return {
             "supported_issue_types": [
@@ -237,6 +237,6 @@ class EnhancedCodeGenerationAgent:
         """Reset learning data (useful for testing or starting fresh)"""
         self.learning.reset_learning_data()
 
-    def export_learning_data(self) -> Dict[str, Any]:
+    def export_learning_data(self) -> dict[str, Any]:
         """Export learning data for external analysis"""
         return self.learning.export_learning_data(self.get_generator_info())

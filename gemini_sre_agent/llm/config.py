@@ -8,7 +8,7 @@ management of LLM providers, models, and system settings.
 """
 
 import os
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 
@@ -30,7 +30,7 @@ class ModelConfig(BaseModel):
     )
     supports_streaming: bool = True
     supports_tools: bool = False
-    capabilities: List[str] = Field(
+    capabilities: list[str] = Field(
         default_factory=list, description="List of model capabilities"
     )
     performance_score: float = Field(
@@ -77,23 +77,24 @@ class LLMProviderConfig(BaseModel):
     provider: Literal[
         "gemini", "ollama", "claude", "openai", "grok", "bedrock", "anthropic"
     ]
-    api_key: Optional[str] = Field(None, description="API key for the provider")
-    base_url: Optional[HttpUrl] = Field(
+    api_key: str | None = Field(None, description="API key for the provider")
+    base_url: HttpUrl | None = Field(
         None, description="Base URL for the provider API"
     )
-    region: Optional[str] = Field(None, description="AWS region for Bedrock provider")
+    region: str | None = Field(None, description="AWS region for Bedrock provider")
     timeout: int = Field(30, gt=0, le=300, description="Request timeout in seconds")
     max_retries: int = Field(3, ge=0, le=10, description="Maximum retry attempts")
-    rate_limit: Optional[int] = Field(None, gt=0, description="Rate limit per minute")
-    models: Dict[str, ModelConfig] = Field(
+    rate_limit: int | None = Field(None, gt=0, description="Rate limit per minute")
+    models: dict[str, ModelConfig] = Field(
         default_factory=dict, description="Available models"
     )
-    # ModelType to model name mappings - allows users to configure which models are used for each semantic type
-    model_type_mappings: Dict[ModelType, str] = Field(
+    # ModelType to model name mappings - allows users to configure which models 
+    # are used for each semantic type
+    model_type_mappings: dict[ModelType, str] = Field(
         default_factory=dict,
         description="Mapping of ModelType to specific model names for this provider",
     )
-    provider_specific: Dict[str, Any] = Field(
+    provider_specific: dict[str, Any] = Field(
         default_factory=dict, description="Provider-specific settings"
     )
 
@@ -189,7 +190,8 @@ class LLMProviderConfig(BaseModel):
             for model_type, model_name in self.model_type_mappings.items():
                 if model_name not in self.models:
                     raise ValueError(
-                        f"Model type mapping '{model_type}' references non-existent model '{model_name}'. "
+                        f"Model type mapping '{model_type}' references "
+                        f"non-existent model '{model_name}'. "
                         f"Available models: {list(self.models.keys())}"
                     )
 
@@ -221,19 +223,19 @@ class AgentLLMConfig(BaseModel):
     )
 
     # Fallback configuration
-    fallback_provider: Optional[str] = Field(None, description="Fallback provider name")
-    fallback_model_type: Optional[ModelType] = Field(
+    fallback_provider: str | None = Field(None, description="Fallback provider name")
+    fallback_model_type: ModelType | None = Field(
         None, description="Fallback model type"
     )
 
     # Task-specific model overrides
-    model_overrides: Dict[str, Dict[str, str]] = Field(
+    model_overrides: dict[str, dict[str, str]] = Field(
         default_factory=dict, description="Task-specific model overrides"
     )
     # Example: {"code_generation": {"provider": "openai", "model_type": "code"}}
 
     # Provider-specific configuration
-    provider_specific_config: Dict[str, Any] = Field(
+    provider_specific_config: dict[str, Any] = Field(
         default_factory=dict, description="Provider-specific configuration"
     )
 
@@ -301,7 +303,8 @@ class AgentLLMConfig(BaseModel):
         # Validate that fallback provider is different from primary provider
         if self.fallback_provider and self.fallback_provider == self.primary_provider:
             raise ValueError(
-                f"Fallback provider '{self.fallback_provider}' cannot be the same as primary provider"
+                f"Fallback provider '{self.fallback_provider}' cannot be the same "
+                f"as primary provider"
             )
 
         # Validate model overrides have valid model types
@@ -319,7 +322,8 @@ class AgentLLMConfig(BaseModel):
                     t.value for t in valid_model_types
                 ]:
                     raise ValueError(
-                        f"Invalid model type '{model_type_str}' in override for task '{task_name}'. "
+                        f"Invalid model type '{model_type_str}' in override "
+                        f"for task '{task_name}'. "
                         f"Valid types: {[t.value for t in valid_model_types]}"
                     )
 
@@ -330,13 +334,13 @@ class CostConfig(BaseModel):
     """Cost management configuration."""
 
     # Budget management
-    budget_limits: Dict[str, float] = Field(
+    budget_limits: dict[str, float] = Field(
         default_factory=dict, description="Budget limits per provider in USD"
     )
-    monthly_budget: Optional[float] = Field(
+    monthly_budget: float | None = Field(
         None, gt=0, description="Monthly budget limit in USD"
     )
-    cost_alerts: List[float] = Field(
+    cost_alerts: list[float] = Field(
         default_factory=list, description="Cost alert thresholds as percentages (0-100)"
     )
 
@@ -499,7 +503,7 @@ class CostConfig(BaseModel):
             raise ValueError("Weights must be between 0 and 1")
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_weights_sum(self) -> None:
         """Ensure optimization weights sum to approximately 1.0."""
         total_weight = self.cost_weight + self.performance_weight + self.quality_weight
@@ -550,10 +554,10 @@ class ResilienceConfig(BaseModel):
 class LLMConfig(BaseModel):
     """Main configuration for the LLM system."""
 
-    providers: Dict[str, LLMProviderConfig] = Field(
+    providers: dict[str, LLMProviderConfig] = Field(
         default_factory=dict, description="Available LLM providers"
     )
-    agents: Dict[str, AgentLLMConfig] = Field(
+    agents: dict[str, AgentLLMConfig] = Field(
         default_factory=dict, description="Agent-specific configurations"
     )
     default_provider: str = Field(
@@ -564,15 +568,15 @@ class LLMConfig(BaseModel):
     )
     enable_fallback: bool = Field(True, description="Enable fallback mechanisms")
     enable_monitoring: bool = Field(True, description="Enable monitoring and metrics")
-    cost_config: Optional[CostConfig] = Field(
+    cost_config: CostConfig | None = Field(
         default=None,
         description="Cost management configuration",
     )
-    resilience_config: Optional[ResilienceConfig] = Field(
+    resilience_config: ResilienceConfig | None = Field(
         default=None,
         description="Resilience and reliability configuration",
     )
-    metrics_config: Optional[MetricsConfig] = Field(
+    metrics_config: MetricsConfig | None = Field(
         default=None,
         description="Metrics system configuration",
     )

@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .exceptions import ConfigurationError
 
@@ -49,7 +49,7 @@ class HandlerConfig:
     enabled: bool = True
 
     # File-specific settings
-    file_path: Optional[str] = None
+    file_path: str | None = None
     max_file_size_mb: int = 10
     backup_count: int = 5
     encoding: str = "utf-8"
@@ -59,11 +59,11 @@ class HandlerConfig:
 
     # Syslog-specific settings
     syslog_facility: str = "local0"
-    syslog_address: Optional[str] = None
+    syslog_address: str | None = None
 
     # Remote-specific settings
-    remote_url: Optional[str] = None
-    remote_headers: Dict[str, str] = field(default_factory=dict)
+    remote_url: str | None = None
+    remote_headers: dict[str, str] = field(default_factory=dict)
     remote_timeout: float = 5.0
 
     # Common settings
@@ -95,7 +95,7 @@ class MetricsConfig:
     metrics_interval: float = 60.0  # seconds
     max_metrics_history: int = 1000
     export_metrics: bool = False
-    export_endpoint: Optional[str] = None
+    export_endpoint: str | None = None
 
 
 @dataclass
@@ -108,7 +108,7 @@ class LoggingConfig:
     environment: str = "development"
 
     # Handlers
-    handlers: List[HandlerConfig] = field(default_factory=list)
+    handlers: list[HandlerConfig] = field(default_factory=list)
 
     # Flow tracking
     flow_tracking: FlowTrackingConfig = field(default_factory=FlowTrackingConfig)
@@ -123,7 +123,7 @@ class LoggingConfig:
 
     # Security settings
     sanitize_sensitive_data: bool = True
-    sensitive_fields: List[str] = field(
+    sensitive_fields: list[str] = field(
         default_factory=lambda: ["password", "token", "key", "secret", "auth"]
     )
 
@@ -254,7 +254,7 @@ class LoggingConfig:
                     config_value=handler.remote_timeout,
                 )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary.
 
         Returns:
@@ -321,7 +321,7 @@ class LoggingConfig:
 class LoggingConfigManager:
     """Manager for logging configuration."""
 
-    def __init__(self, config: Optional[LoggingConfig] = None):
+    def __init__(self, config: LoggingConfig | None = None):
         """Initialize the configuration manager.
 
         Args:
@@ -368,7 +368,7 @@ class LoggingConfigManager:
         config.validate()
         self._config = config
 
-    def load_from_dict(self, config_dict: Dict[str, Any]) -> None:
+    def load_from_dict(self, config_dict: dict[str, Any]) -> None:
         """Load configuration from dictionary.
 
         Args:
@@ -413,11 +413,11 @@ class LoggingConfigManager:
 
         except Exception as e:
             raise ConfigurationError(
-                f"Failed to load configuration from dictionary: {str(e)}",
+                f"Failed to load configuration from dictionary: {e!s}",
                 context={"config_dict": config_dict},
             ) from e
 
-    def load_from_file(self, file_path: Union[str, Path]) -> None:
+    def load_from_file(self, file_path: str | Path) -> None:
         """Load configuration from file.
 
         Args:
@@ -438,25 +438,25 @@ class LoggingConfigManager:
         try:
             import json
 
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 config_dict = json.load(f)
 
             self.load_from_dict(config_dict)
 
         except json.JSONDecodeError as e:
             raise ConfigurationError(
-                f"Invalid JSON in configuration file: {str(e)}",
+                f"Invalid JSON in configuration file: {e!s}",
                 config_key="file_path",
                 config_value=str(file_path),
             ) from e
         except Exception as e:
             raise ConfigurationError(
-                f"Failed to load configuration from file: {str(e)}",
+                f"Failed to load configuration from file: {e!s}",
                 config_key="file_path",
                 config_value=str(file_path),
             ) from e
 
-    def save_to_file(self, file_path: Union[str, Path]) -> None:
+    def save_to_file(self, file_path: str | Path) -> None:
         """Save configuration to file.
 
         Args:
@@ -477,7 +477,7 @@ class LoggingConfigManager:
 
         except Exception as e:
             raise ConfigurationError(
-                f"Failed to save configuration to file: {str(e)}",
+                f"Failed to save configuration to file: {e!s}",
                 config_key="file_path",
                 config_value=str(file_path),
             ) from e

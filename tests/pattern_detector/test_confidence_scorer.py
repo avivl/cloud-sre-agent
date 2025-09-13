@@ -2,7 +2,7 @@
 Tests for the confidence scoring system.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -23,7 +23,7 @@ class TestConfidenceScorer:
     @pytest.fixture
     def sample_logs(self) -> None:
         """Create sample log entries for testing."""
-        base_time = datetime.now(timezone.utc)
+        base_time = datetime.now(UTC)
         logs = []
         for i in range(10):
             logs.append(
@@ -41,7 +41,7 @@ class TestConfidenceScorer:
     @pytest.fixture
     def sample_window(self, sample_logs: str) -> None:
         """Create a sample time window with logs."""
-        base_time = datetime.now(timezone.utc)
+        base_time = datetime.now(UTC)
         window = TimeWindow(start_time=base_time, duration_minutes=5)
         for log in sample_logs:
             window.add_log(log)
@@ -123,7 +123,9 @@ class TestConfidenceScorer:
                 assert factor_key in raw_factors
                 assert isinstance(raw_factors[factor_key], float)
 
-    def test_time_concentration_factor(self, sample_window: str, sample_logs: str) -> None:
+    def test_time_concentration_factor(
+        self, sample_window: str, sample_logs: str
+    ) -> None:
         """Test time concentration factor calculation."""
         scorer = ConfidenceScorer()
         concentrated_logs = sample_logs[:5]

@@ -4,9 +4,10 @@
 AWS CloudWatch Logs adapter for log ingestion.
 """
 
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict
+from typing import Any
 
 from ...config.ingestion_config import AWSCloudWatchConfig
 from ..interfaces.core import (
@@ -63,7 +64,7 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
             await self._test_connection()
 
             self.running = True
-            self._last_check_time = datetime.now(timezone.utc)
+            self._last_check_time = datetime.now(UTC)
             logger.info(
                 f"Started AWS CloudWatch adapter for log group: {self.config.log_group_name}"
             )
@@ -133,7 +134,7 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
 
             return SourceHealth(
                 is_healthy=True,
-                last_success=datetime.now(timezone.utc).isoformat(),
+                last_success=datetime.now(UTC).isoformat(),
                 error_count=self._error_count,
                 last_error=self._last_error,
                 metrics={
@@ -173,7 +174,7 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
         else:
             raise ValueError("Invalid config type for AWS CloudWatch adapter")
 
-    async def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
+    async def handle_error(self, error: Exception, context: dict[str, Any]) -> bool:
         """Handle errors from the adapter."""
         logger.error(
             f"AWS CloudWatch error in {context.get('operation', 'unknown')}: {error}"
@@ -186,7 +187,7 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
             return False  # Don't retry credential/connection errors
         return True
 
-    async def get_health_metrics(self) -> Dict[str, Any]:
+    async def get_health_metrics(self) -> dict[str, Any]:
         """Get detailed health metrics."""
         return {
             "log_group_name": self.config.log_group_name,
@@ -205,14 +206,18 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
         """Test the AWS CloudWatch connection."""
         if self.client is None:
             raise SourceConnectionError("AWS client not initialized")
-            
+
         try:
             # Try to describe log groups
             self.client.describe_log_groups(
                 logGroupNamePrefix=self.config.log_group_name, limit=1
             )
         except ClientError as e:
-            if hasattr(e, "response") and getattr(e, "response", {}).get("Error", {}).get("Code") == "ResourceNotFoundException":
+            if (
+                hasattr(e, "response")
+                and getattr(e, "response", {}).get("Error", {}).get("Code")
+                == "ResourceNotFoundException"
+            ):
                 # Log group doesn't exist, but connection is working
                 pass
             else:
@@ -244,7 +249,7 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
             logger.error(f"Error getting log streams: {e}")
             return []
 
-    async def _get_log_events(self, stream_name: str) -> list[Dict[str, Any]]:
+    async def _get_log_events(self, stream_name: str) -> list[dict[str, Any]]:
         """Get log events from a specific stream."""
         try:
             kwargs = {
@@ -267,11 +272,11 @@ class AWSCloudWatchAdapter(LogIngestionInterface):
             return []
 
     def _convert_to_log_entry(
-        self, event: Dict[str, Any], stream_name: str
+        self, event: dict[str, Any], stream_name: str
     ) -> LogEntry:
         """Convert CloudWatch log event to LogEntry."""
         # Extract timestamp
-        timestamp = datetime.fromtimestamp(event["timestamp"] / 1000, tz=timezone.utc)
+        timestamp = datetime.fromtimestamp(event["timestamp"] / 1000, tz=UTC)
 
         # Extract message
         message = event.get("message", "")

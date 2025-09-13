@@ -10,7 +10,7 @@ import asyncio
 import base64
 import difflib
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from github import Github, GithubException
 from github.Repository import Repository
@@ -30,7 +30,7 @@ class GitHubFileOperations:
         client: Github,
         repo: Repository,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
+        error_handling_components: dict[str, Any] | None = None,
     ):
         """Initialize file operations with GitHub client and repository."""
         self.client = client
@@ -52,7 +52,7 @@ class GitHubFileOperations:
         # Fall back to direct execution
         return await func(*args, **kwargs)
 
-    async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
+    async def get_file_content(self, path: str, ref: str | None = None) -> str:
         """Get file content from GitHub repository."""
 
         async def _get_file():
@@ -79,7 +79,7 @@ class GitHubFileOperations:
         file_path: str,
         remediation: str,
         commit_message: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
     ) -> RemediationResult:
         """Apply remediation to a file."""
 
@@ -150,7 +150,7 @@ class GitHubFileOperations:
 
         return await self._execute_with_error_handling("apply_remediation", _apply)
 
-    async def file_exists(self, path: str, ref: Optional[str] = None) -> bool:
+    async def file_exists(self, path: str, ref: str | None = None) -> bool:
         """Check if a file exists in the repository."""
 
         async def _exists():
@@ -167,7 +167,7 @@ class GitHubFileOperations:
 
         return await self._execute_with_error_handling("file_exists", _exists)
 
-    async def get_file_info(self, path: str, ref: Optional[str] = None) -> FileInfo:
+    async def get_file_info(self, path: str, ref: str | None = None) -> FileInfo:
         """Get file information."""
 
         async def _get_info():
@@ -212,8 +212,8 @@ class GitHubFileOperations:
         return await self._execute_with_error_handling("get_file_info", _get_info)
 
     async def list_files(
-        self, path: str = "", ref: Optional[str] = None
-    ) -> List[FileInfo]:
+        self, path: str = "", ref: str | None = None
+    ) -> list[FileInfo]:
         """List files in a directory."""
         try:
 
@@ -317,8 +317,8 @@ class GitHubFileOperations:
         file_path: str,
         content: str,
         message: str,
-        branch: Optional[str] = None,
-    ) -> Optional[str]:
+        branch: str | None = None,
+    ) -> str | None:
         """Commit changes to a file."""
         try:
 
@@ -363,7 +363,7 @@ class GitHubFileOperations:
             self.logger.error(f"Failed to commit changes to {file_path}: {e}")
             return None
 
-    async def get_file_history(self, path: str, limit: int = 10) -> List[CommitInfo]:
+    async def get_file_history(self, path: str, limit: int = 10) -> list[CommitInfo]:
         """Get file commit history."""
         try:
 

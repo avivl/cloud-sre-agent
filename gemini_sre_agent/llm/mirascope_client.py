@@ -8,18 +8,14 @@ Mirascope providers, handling provider-specific differences and providing
 fallback mechanisms.
 """
 
-import asyncio
-import logging
-import time
 from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass
 from enum import Enum
+import logging
+import time
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
-    Type,
     TypeVar,
 )
 
@@ -57,16 +53,16 @@ class RequestMetrics:
     provider: str
     model: str
     start_time: float
-    end_time: Optional[float] = None
-    duration_ms: Optional[float] = None
-    tokens_used: Optional[int] = None
-    cost_usd: Optional[float] = None
+    end_time: float | None = None
+    duration_ms: float | None = None
+    tokens_used: int | None = None
+    cost_usd: float | None = None
     status: RequestStatus = RequestStatus.PENDING
-    error_message: Optional[str] = None
+    error_message: str | None = None
     retry_count: int = 0
 
     def complete(
-        self, tokens_used: Optional[int] = None, cost_usd: Optional[float] = None
+        self, tokens_used: int | None = None, cost_usd: float | None = None
     ) -> None:
         """Mark request as completed."""
         self.end_time = time.time()
@@ -91,9 +87,9 @@ class ClientResponse:
     model: str
     provider: str
     request_id: str
-    tokens_used: Optional[int] = None
-    cost_usd: Optional[float] = None
-    metadata: Optional[Dict[str, Any]] = None
+    tokens_used: int | None = None
+    cost_usd: float | None = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.metadata is None:
@@ -106,7 +102,7 @@ class BaseProviderClient(ABC):
     def __init__(self, config: ProviderConfig) -> None:
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self._client: Optional[Any] = None
+        self._client: Any | None = None
         self._initialize_client()
 
     @abstractmethod
@@ -121,7 +117,7 @@ class BaseProviderClient(ABC):
 
     @abstractmethod
     async def generate_structured(
-        self, prompt: str, response_model: Type[T], **kwargs: Any
+        self, prompt: str, response_model: type[T], **kwargs: Any
     ) -> T:
         """Generate a structured response."""
         pass
@@ -135,7 +131,7 @@ class BaseProviderClient(ABC):
         """Check if the provider is available."""
         return self._client is not None
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get provider-specific metrics."""
         return {
             "provider": self.config.provider_type.value,
@@ -182,7 +178,7 @@ class AnthropicClient(BaseProviderClient):
         )
 
     async def generate_structured(
-        self, prompt: str, response_model: Type[T], **kwargs: Any
+        self, prompt: str, response_model: type[T], **kwargs: Any
     ) -> T:
         """Generate structured response using Anthropic."""
         await self.generate(prompt, **kwargs)
@@ -235,7 +231,7 @@ class OpenAIClient(BaseProviderClient):
         )
 
     async def generate_structured(
-        self, prompt: str, response_model: Type[T], **kwargs: Any
+        self, prompt: str, response_model: type[T], **kwargs: Any
     ) -> T:
         """Generate structured response using OpenAI."""
         await self.generate(prompt, **kwargs)
@@ -284,7 +280,7 @@ class GoogleClient(BaseProviderClient):
         )
 
     async def generate_structured(
-        self, prompt: str, response_model: Type[T], **kwargs: Any
+        self, prompt: str, response_model: type[T], **kwargs: Any
     ) -> T:
         """Generate structured response using Google."""
         await self.generate(prompt, **kwargs)
@@ -319,7 +315,7 @@ class ClientFactory:
         return client_class(config)
 
     @classmethod
-    def get_supported_providers(cls) -> List[ProviderType]:
+    def get_supported_providers(cls) -> list[ProviderType]:
         """Get list of supported provider types."""
         return list(cls._client_classes.keys())
 
@@ -327,7 +323,7 @@ class ClientFactory:
 class MirascopeClientManager:
     """Manages multiple provider clients with fallback and load balancing."""
 
-    def __init__(self, config_manager: Optional[str] = None) -> None:
+    def __init__(self, config_manager: str | None = None) -> None:
         """Initialize client manager."""
         if config_manager is None:
             from .mirascope_config import get_config_manager
@@ -335,8 +331,8 @@ class MirascopeClientManager:
             self.config_manager = get_config_manager()
         else:
             self.config_manager = config_manager
-        self.clients: Dict[str, BaseProviderClient] = {}
-        self.metrics: Dict[str, RequestMetrics] = {}
+        self.clients: dict[str, BaseProviderClient] = {}
+        self.metrics: dict[str, RequestMetrics] = {}
         self.logger = logging.getLogger(__name__)
         self._initialize_clients()
 
@@ -353,8 +349,8 @@ class MirascopeClientManager:
                 self.logger.error(f"Failed to initialize client for {name}: {e}")
 
     def get_client(
-        self, provider_name: Optional[str] = None
-    ) -> Optional[BaseProviderClient]:
+        self, provider_name: str | None = None
+    ) -> BaseProviderClient | None:
         """Get a client by name or the default client."""
         if provider_name:
             return self.clients.get(provider_name)
@@ -370,12 +366,12 @@ class MirascopeClientManager:
 
         return None
 
-    def get_available_clients(self) -> List[BaseProviderClient]:
+    def get_available_clients(self) -> list[BaseProviderClient]:
         """Get all available clients."""
         return [client for client in self.clients.values() if client.is_available()]
 
     async def generate_with_fallback(
-        self, prompt: str, preferred_provider: Optional[str] = None, **kwargs: Any
+        self, prompt: str, preferred_provider: str | None = None, **kwargs: Any
     ) -> ClientResponse:
         """Generate response with automatic fallback."""
         clients_to_try = []
@@ -427,8 +423,8 @@ class MirascopeClientManager:
     async def generate_structured_with_fallback(
         self,
         prompt: str,
-        response_model: Type[T],
-        preferred_provider: Optional[str] = None,
+        response_model: type[T],
+        preferred_provider: str | None = None,
         **kwargs: Any,
     ) -> T:
         """Generate structured response with automatic fallback."""
@@ -463,7 +459,7 @@ class MirascopeClientManager:
 
         raise RuntimeError(f"All clients failed. Last error: {last_error}")
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get aggregated metrics for all clients."""
         client_metrics = {}
         for name, client in self.clients.items():
@@ -488,7 +484,7 @@ class MirascopeClientManager:
             "available_clients": len(self.get_available_clients()),
         }
 
-    def get_client_health(self) -> Dict[str, Dict[str, Any]]:
+    def get_client_health(self) -> dict[str, dict[str, Any]]:
         """Get health status for all clients."""
         health = {}
         for name, client in self.clients.items():
@@ -502,7 +498,7 @@ class MirascopeClientManager:
 
 
 # Global client manager instance
-_client_manager: Optional[MirascopeClientManager] = None
+_client_manager: MirascopeClientManager | None = None
 
 
 def get_client_manager() -> MirascopeClientManager:

@@ -7,9 +7,7 @@ This module defines fundamental type aliases, generic types, and type
 utilities used throughout the system.
 """
 
-from typing import Any, Dict, List, Protocol, TypeVar, Union
-
-from typing_extensions import TypeAlias
+from typing import Any, Protocol, TypeAlias, TypeVar
 
 # Generic type variables
 T = TypeVar("T")
@@ -18,20 +16,18 @@ V = TypeVar("V")
 R = TypeVar("R")
 
 # Common type aliases
-JsonValue: TypeAlias = Union[
-    str, int, float, bool, None, List["JsonValue"], Dict[str, "JsonValue"]
-]
-JsonDict: TypeAlias = Dict[str, JsonValue]
-JsonList: TypeAlias = List[JsonValue]
+JsonValue: TypeAlias = str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
+JsonDict: TypeAlias = dict[str, JsonValue]
+JsonList: TypeAlias = list[JsonValue]
 
 # Configuration types
-ConfigDict: TypeAlias = Dict[str, Any]
-ConfigValue: TypeAlias = Union[str, int, float, bool, None, List[Any], Dict[str, Any]]
+ConfigDict: TypeAlias = dict[str, Any]
+ConfigValue: TypeAlias = str | int | float | bool | None | list[Any] | dict[str, Any]
 
 # Logging types
 LogLevel: TypeAlias = str  # 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
 LogMessage: TypeAlias = str
-LogContext: TypeAlias = Dict[str, Any]
+LogContext: TypeAlias = dict[str, Any]
 
 # Agent types
 AgentId: TypeAlias = str
@@ -51,14 +47,14 @@ Confidence: TypeAlias = float  # 0.0-1.0 scale
 
 # Monitoring types
 MetricName: TypeAlias = str
-MetricValue: TypeAlias = Union[int, float]
-MetricTags: TypeAlias = Dict[str, str]
+MetricValue: TypeAlias = int | float
+MetricTags: TypeAlias = dict[str, str]
 MetricTimestamp: TypeAlias = float
 
 # Error types
 ErrorCode: TypeAlias = str
 ErrorMessage: TypeAlias = str
-ErrorDetails: TypeAlias = Dict[str, Any]
+ErrorDetails: TypeAlias = dict[str, Any]
 
 # Time types
 Timestamp: TypeAlias = float
@@ -167,7 +163,7 @@ class Validatable(Protocol):
         """Validate the object."""
         ...
 
-    def get_validation_errors(self) -> List[str]:
+    def get_validation_errors(self) -> list[str]:
         """Get validation errors if any."""
         ...
 
@@ -219,7 +215,7 @@ def ensure_json_value(value: Any) -> JsonValue:
     raise ValueError(f"Cannot convert {type(value)} to JSON value")
 
 
-def create_type_safe_dict(data: Dict[str, Any]) -> JsonDict:
+def create_type_safe_dict(data: dict[str, Any]) -> JsonDict:
     """
     Create a type-safe JSON dictionary from a regular dictionary.
 

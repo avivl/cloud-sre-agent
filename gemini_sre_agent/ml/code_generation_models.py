@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ValidationSeverity(Enum):
@@ -33,11 +33,11 @@ class ValidationIssue:
     severity: ValidationSeverity
     category: str
     message: str
-    line_number: Optional[int] = None
-    column_number: Optional[int] = None
-    file_path: Optional[str] = None
-    suggestion: Optional[str] = None
-    code_snippet: Optional[str] = None
+    line_number: int | None = None
+    column_number: int | None = None
+    file_path: str | None = None
+    suggestion: str | None = None
+    code_snippet: str | None = None
 
 
 @dataclass
@@ -46,8 +46,8 @@ class ValidationResult:
 
     is_valid: bool
     severity: ValidationSeverity
-    issues: List[ValidationIssue] = field(default_factory=list)
-    suggestions: List[str] = field(default_factory=list)
+    issues: list[ValidationIssue] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
     quality_score: float = 0.0
     validation_time: datetime = field(default_factory=datetime.now)
 
@@ -61,7 +61,7 @@ class ValidationResult:
         """Add a suggestion for improvement"""
         self.suggestions.append(suggestion)
 
-    def get_critical_issues(self) -> List[ValidationIssue]:
+    def get_critical_issues(self) -> list[ValidationIssue]:
         """Get all critical validation issues"""
         return [
             issue
@@ -69,7 +69,7 @@ class ValidationResult:
             if issue.severity == ValidationSeverity.CRITICAL
         ]
 
-    def get_high_priority_issues(self) -> List[ValidationIssue]:
+    def get_high_priority_issues(self) -> list[ValidationIssue]:
         """Get all high and critical priority issues"""
         return [
             issue
@@ -87,9 +87,9 @@ class CodeFix:
     file_path: str
     original_issue: str
     fix_description: str
-    tests: Optional[str] = None
-    documentation: Optional[str] = None
-    validation_results: Optional[ValidationResult] = None
+    tests: str | None = None
+    documentation: str | None = None
+    validation_results: ValidationResult | None = None
     generation_time: datetime = field(default_factory=datetime.now)
     iteration_count: int = 0
     quality_score: float = 0.0
@@ -129,11 +129,11 @@ class CodePattern:
     domain: str
     pattern_type: str
     code_template: str
-    validation_rules: List[str] = field(default_factory=list)
-    best_practices: List[str] = field(default_factory=list)
-    examples: List[str] = field(default_factory=list)
+    validation_rules: list[str] = field(default_factory=list)
+    best_practices: list[str] = field(default_factory=list)
+    examples: list[str] = field(default_factory=list)
 
-    def apply(self, code: str, context: Dict[str, Any]) -> str:
+    def apply(self, code: str, context: dict[str, Any]) -> str:
         """Apply the pattern to the given code"""
         # This is a simplified implementation
         # In practice, this would use more sophisticated pattern matching and replacement
@@ -151,7 +151,7 @@ class ValidationRule:
     rule_type: str
     severity: ValidationSeverity
     validation_function: str  # Name of the validation function
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
     def get_severity_value(self) -> int:
         """Get the numeric severity value"""
@@ -189,10 +189,10 @@ class CodeGenerationResult:
     """Result of a code generation operation"""
 
     success: bool
-    code_fix: Optional[CodeFix] = None
-    validation_result: Optional[ValidationResult] = None
-    error_message: Optional[str] = None
-    warnings: List[str] = field(default_factory=list)
+    code_fix: CodeFix | None = None
+    validation_result: ValidationResult | None = None
+    error_message: str | None = None
+    warnings: list[str] = field(default_factory=list)
     generation_time_ms: int = 0
     iteration_count: int = 0
     quality_score: float = 0.0
@@ -207,7 +207,7 @@ class CodeGenerationResult:
         """Add a warning message"""
         self.warnings.append(warning)
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of the generation result"""
         return {
             "success": self.success,

@@ -7,9 +7,7 @@ This module defines type aliases and protocols specific to LLM operations,
 including provider types, model types, and response types.
 """
 
-from typing import Any, Dict, List, Optional, Protocol, TypeVar, Union
-
-from typing_extensions import TypeAlias
+from typing import Any, Optional, Protocol, TypeAlias, TypeVar
 
 from .base import (
     Content,
@@ -42,14 +40,14 @@ ContentFormat: TypeAlias = str  # 'plain', 'markdown', 'json', 'xml'
 
 # Token types
 TokenCount: TypeAlias = int
-TokenUsage: TypeAlias = Dict[
+TokenUsage: TypeAlias = dict[
     str, TokenCount
 ]  # {'prompt': 100, 'completion': 50, 'total': 150}
 
 # Cost types
 CostPerToken: TypeAlias = float
 TotalCost: TypeAlias = float
-CostBreakdown: TypeAlias = Dict[str, TotalCost]
+CostBreakdown: TypeAlias = dict[str, TotalCost]
 
 # Performance types
 Latency: TypeAlias = float  # milliseconds
@@ -57,9 +55,9 @@ Throughput: TypeAlias = float  # tokens per second
 RateLimit: TypeAlias = int  # requests per minute
 
 # Configuration types
-ModelConfig: TypeAlias = Dict[str, Any]
-ProviderConfig: TypeAlias = Dict[str, Any]
-LLMConfig: TypeAlias = Dict[str, Any]
+ModelConfig: TypeAlias = dict[str, Any]
+ProviderConfig: TypeAlias = dict[str, Any]
+LLMConfig: TypeAlias = dict[str, Any]
 
 # Error types
 ErrorType: TypeAlias = str  # 'rate_limit', 'quota_exceeded', 'invalid_request', etc.
@@ -86,7 +84,7 @@ class LLMProvider(Protocol):
         """Get the provider status."""
         ...
 
-    def get_models(self) -> List["LLMModel"]:
+    def get_models(self) -> list["LLMModel"]:
         """Get available models."""
         ...
 
@@ -114,7 +112,7 @@ class LLMModel(Protocol):
         ...
 
     @property
-    def capabilities(self) -> List[ModelCapability]:
+    def capabilities(self) -> list[ModelCapability]:
         """Get model capabilities."""
         ...
 
@@ -127,7 +125,7 @@ class LLMRequest(Protocol):
     """Protocol for LLM requests."""
 
     @property
-    def messages(self) -> List["Message"]:
+    def messages(self) -> list["Message"]:
         """Get the conversation messages."""
         ...
 
@@ -171,7 +169,7 @@ class LLMResponse(Protocol):
         ...
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """Get response metadata."""
         ...
 
@@ -221,7 +219,7 @@ class StreamingChunk(Protocol):
         ...
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """Get chunk metadata."""
         ...
 
@@ -256,7 +254,7 @@ class ChatRequest(LLMRequest, Protocol):
     """Protocol for chat requests."""
 
     @property
-    def messages(self) -> List[Message]:
+    def messages(self) -> list[Message]:
         """Get the conversation messages."""
         ...
 
@@ -266,7 +264,7 @@ class ChatRequest(LLMRequest, Protocol):
         ...
 
     @property
-    def max_tokens(self) -> Optional[int]:
+    def max_tokens(self) -> int | None:
         """Get the maximum tokens."""
         ...
 
@@ -299,7 +297,7 @@ class CompletionRequest(LLMRequest, Protocol):
         ...
 
     @property
-    def max_tokens(self) -> Optional[int]:
+    def max_tokens(self) -> int | None:
         """Get the maximum tokens."""
         ...
 
@@ -317,7 +315,7 @@ class EmbeddingRequest(LLMRequest, Protocol):
     """Protocol for embedding requests."""
 
     @property
-    def input(self) -> Union[Content, List[Content]]:
+    def input(self) -> Content | list[Content]:
         """Get the input to embed."""
         ...
 
@@ -326,7 +324,7 @@ class EmbeddingResponse(LLMResponse, Protocol):
     """Protocol for embedding responses."""
 
     @property
-    def embeddings(self) -> List[List[float]]:
+    def embeddings(self) -> list[list[float]]:
         """Get the embeddings."""
         ...
 
@@ -339,7 +337,7 @@ class EmbeddingResponse(LLMResponse, Protocol):
 # Utility functions
 def create_message(
     role: RequestRole, content: Content, content_type: ContentType = "text"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a message dictionary.
 
@@ -416,7 +414,7 @@ def validate_model_config(config: ModelConfig) -> bool:
 def create_usage_dict(
     prompt_tokens: TokenCount,
     completion_tokens: TokenCount,
-    total_tokens: Optional[TokenCount] = None,
+    total_tokens: TokenCount | None = None,
 ) -> TokenUsage:
     """
     Create a token usage dictionary.

@@ -1,6 +1,6 @@
 # gemini_sre_agent/metrics/analytics.py
 
-from typing import Any, Dict, List
+from typing import Any
 
 from .metrics_manager import MetricsManager
 
@@ -36,7 +36,7 @@ class PerformanceAnalytics:
         total_cost = sum(metrics.costs)
         return total_cost / metrics.success_count
 
-    def generate_optimization_recommendations(self) -> List[Dict[str, Any]]:
+    def generate_optimization_recommendations(self) -> list[dict[str, Any]]:
         """
         Generate recommendations for optimizing provider usage.
 

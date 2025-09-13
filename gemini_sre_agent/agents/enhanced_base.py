@@ -10,7 +10,7 @@ while maintaining backward compatibility with the existing agent system.
 
 import logging
 import time
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -43,19 +43,18 @@ class EnhancedBaseAgent(Generic[T]):
     def __init__(
         self,
         llm_config: LLMConfig,
-        response_model: Type[T],
-
+        response_model: type[T],
         agent_name: str = "default",
         optimization_goal: OptimizationGoal = OptimizationGoal.HYBRID,
         max_retries: int = 2,
         collect_stats: bool = True,
-        provider_preference: Optional[List[ProviderType]] = None,
-        model_type_preference: Optional[ModelType] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_quality: Optional[float] = None,
+        provider_preference: list[ProviderType] | None = None,
+        model_type_preference: ModelType | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_quality: float | None = None,
         business_hours_only: bool = False,
-        custom_weights: Optional[Dict[str, float]] = None,
+        custom_weights: dict[str, float] | None = None,
     ):
         """
         Initialize the enhanced base agent.
@@ -78,11 +77,13 @@ class EnhancedBaseAgent(Generic[T]):
         self.llm_config = llm_config
         self.response_model = response_model
         self.agent_name = agent_name
-        
+
         # Get agent configuration
         agent_config = llm_config.agents.get(agent_name)
         if agent_config:
-            self.primary_model = f"{agent_config.primary_provider}:{agent_config.primary_model_type.value}"
+            self.primary_model = (
+                f"{agent_config.primary_provider}:{agent_config.primary_model_type.value}"
+            )
             self.fallback_model = (
                 f"{agent_config.fallback_provider}:{agent_config.fallback_model_type.value}"
                 if agent_config.fallback_provider and agent_config.fallback_model_type
@@ -124,10 +125,10 @@ class EnhancedBaseAgent(Generic[T]):
     async def execute(
         self,
         prompt_name: str,
-        prompt_args: Dict[str, Any],
-        model: Optional[str] = None,
-        provider: Optional[ProviderType] = None,
-        optimization_goal: Optional[OptimizationGoal] = None,
+        prompt_args: dict[str, Any],
+        model: str | None = None,
+        provider: ProviderType | None = None,
+        optimization_goal: OptimizationGoal | None = None,
         temperature: float = 0.7,
         use_fallback: bool = True,
         force_model_selection: bool = False,
@@ -238,7 +239,8 @@ class EnhancedBaseAgent(Generic[T]):
                 ]
                 if alternative_providers:
                     logger.warning(
-                        f"Provider {provider} failed, trying alternative provider {alternative_providers[0]}"
+                        f"Provider {provider} failed, trying alternative provider "
+                        f"{alternative_providers[0]}"
                     )
                     return await self.execute(
                         prompt_name=prompt_name,
@@ -256,9 +258,9 @@ class EnhancedBaseAgent(Generic[T]):
 
     async def _select_model(
         self,
-        model: Optional[str] = None,
-        provider: Optional[ProviderType] = None,
-        optimization_goal: Optional[OptimizationGoal] = None,
+        model: str | None = None,
+        provider: ProviderType | None = None,
+        optimization_goal: OptimizationGoal | None = None,
         force_selection: bool = False,
     ) -> str:
         """
@@ -282,7 +284,10 @@ class EnhancedBaseAgent(Generic[T]):
             return self.primary_model
 
         # Create cache key for model selection
-        cache_key = f"{optimization_goal or self.optimization_goal}_{provider}_{self.model_type_preference}_{self.max_cost}_{self.min_performance}"
+        cache_key = (
+            f"{optimization_goal or self.optimization_goal}_{provider}_"
+            f"{self.model_type_preference}_{self.max_cost}_{self.min_performance}"
+        )
 
         # Return cached selection if available and not forcing
         if not force_selection and cache_key in self._model_cache:
@@ -315,15 +320,18 @@ class EnhancedBaseAgent(Generic[T]):
             self._model_cache[cache_key] = selected_model
 
             logger.debug(
-                f"Selected model '{selected_model}' using {result.strategy_used} strategy: {result.reasoning}"
+                f"Selected model '{selected_model}' using {result.strategy_used} "
+                f"strategy: {result.reasoning}"
             )
 
             return selected_model
 
         except Exception as e:
             logger.warning(
-                f"Model selection failed: {e}, falling back to primary model '{self.primary_model or 'smart'}'. "
-                f"Context: task_type={self.model_type_preference}, optimization_goal={optimization_goal}, "
+                f"Model selection failed: {e}, falling back to primary model "
+                f"'{self.primary_model or 'smart'}'. "
+                f"Context: task_type={self.model_type_preference}, "
+                f"optimization_goal={optimization_goal}, "
                 f"provider_preference={self.provider_preference}"
             )
             return self.primary_model or "smart"
@@ -375,7 +383,7 @@ Focus on providing actionable, specific solutions with actual code when applicab
     def _update_conversation_context(
         self,
         prompt_name: str,
-        prompt_args: Dict[str, Any],
+        prompt_args: dict[str, Any],
         model: str,
         response: T,
     ) -> None:
@@ -394,7 +402,7 @@ Focus on providing actionable, specific solutions with actual code when applicab
         if len(self._conversation_context) > 10:
             self._conversation_context = self._conversation_context[-10:]
 
-    def get_conversation_context(self) -> List[Dict[str, Any]]:
+    def get_conversation_context(self) -> list[dict[str, Any]]:
         """Get the current conversation context."""
         return self._conversation_context.copy()
 
@@ -402,16 +410,16 @@ Focus on providing actionable, specific solutions with actual code when applicab
         """Clear the conversation context."""
         self._conversation_context.clear()
 
-    def get_model_selection_stats(self) -> Dict[str, Any]:
+    def get_model_selection_stats(self) -> dict[str, Any]:
         """Get statistics about model selection performance."""
         return self.strategy_manager.get_all_performance_metrics()
 
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """Get list of available models from the registry."""
         models = self.llm_service.model_registry.get_all_models()
         return [model.name for model in models]
 
-    def get_available_providers(self) -> List[ProviderType]:
+    def get_available_providers(self) -> list[ProviderType]:
         """Get list of available providers."""
         return [ProviderType(key) for key in self.llm_service.providers.keys()]
 
@@ -420,7 +428,7 @@ Focus on providing actionable, specific solutions with actual code when applicab
         self.optimization_goal = goal
         logger.info(f"Updated optimization goal to {goal}")
 
-    def update_provider_preference(self, providers: List[ProviderType]) -> None:
+    def update_provider_preference(self, providers: list[ProviderType]) -> None:
         """Update the provider preference list."""
         self.provider_preference = providers
         # Clear model cache to force re-selection with new preferences
@@ -429,9 +437,9 @@ Focus on providing actionable, specific solutions with actual code when applicab
 
     def update_cost_constraints(
         self,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_quality: Optional[float] = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_quality: float | None = None,
     ) -> None:
         """Update cost and quality constraints."""
         self.max_cost = max_cost
@@ -440,10 +448,11 @@ Focus on providing actionable, specific solutions with actual code when applicab
         # Clear model cache to force re-selection with new constraints
         self._model_cache.clear()
         logger.info(
-            f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, min_quality={min_quality}"
+            f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, "
+            f"min_quality={min_quality}"
         )
 
-    def get_stats_summary(self) -> Dict[str, Any]:
+    def get_stats_summary(self) -> dict[str, Any]:
         """Get comprehensive statistics summary."""
         base_stats = self.stats.get_summary()
         model_stats = self.get_model_selection_stats()
@@ -466,16 +475,16 @@ Focus on providing actionable, specific solutions with actual code when applicab
     async def process_request(
         self,
         prompt_name: str,
-        prompt_args: Dict[str, Any],
-        model: Optional[str] = None,
-        provider: Optional[ProviderType] = None,
-        optimization_goal: Optional[OptimizationGoal] = None,
-        temperature: Optional[float] = None,
+        prompt_args: dict[str, Any],
+        model: str | None = None,
+        provider: ProviderType | None = None,
+        optimization_goal: OptimizationGoal | None = None,
+        temperature: float | None = None,
         **kwargs,
     ) -> T:
         """
         Process a request using the enhanced multi-provider system.
-        
+
         This is a convenience method that calls execute with the same parameters.
         """
         return await self.execute(

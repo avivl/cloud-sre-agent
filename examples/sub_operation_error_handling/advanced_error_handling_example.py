@@ -12,8 +12,8 @@ This example demonstrates advanced error handling scenarios including:
 
 import asyncio
 import logging
-import time
 from pathlib import Path
+import time
 from typing import Any
 
 # Import the error handling components

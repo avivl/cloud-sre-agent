@@ -201,7 +201,9 @@ class TestSubOperationConfigManager:
         assert config.file_operation_timeout == 60.0  # Local default
         assert config.file_operation_retries == 2  # Local default
 
-    def test_create_default_config_with_custom_settings(self, config_manager: str) -> None:
+    def test_create_default_config_with_custom_settings(
+        self, config_manager: str
+    ) -> None:
         """Test creating default configuration with custom settings."""
         custom_settings = {
             "file_operation_timeout": 90.0,

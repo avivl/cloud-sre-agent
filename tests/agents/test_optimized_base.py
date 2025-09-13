@@ -9,8 +9,8 @@ import asyncio
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from pydantic import BaseModel
+import pytest
 
 from gemini_sre_agent.agents.optimized_base import OptimizedBaseAgent
 from gemini_sre_agent.llm.base import ModelType, ProviderType
@@ -235,7 +235,9 @@ class TestOptimizedBaseAgent:
         assert optimized_agent.min_performance == 0.8
         assert optimized_agent.min_quality == 0.7
 
-    def test_get_performance_stats(self, optimized_agent: str, mock_llm_service: str) -> None:
+    def test_get_performance_stats(
+        self, optimized_agent: str, mock_llm_service: str
+    ) -> None:
         """Test getting performance statistics."""
         with patch.object(optimized_agent, "llm_service", mock_llm_service):
             stats = optimized_agent.get_performance_stats()
@@ -250,7 +252,9 @@ class TestOptimizedBaseAgent:
             assert "constraints" in stats
             assert "optimizations_enabled" in stats
 
-    def test_conversation_context(self, optimized_agent: str, mock_llm_service: str) -> None:
+    def test_conversation_context(
+        self, optimized_agent: str, mock_llm_service: str
+    ) -> None:
         """Test conversation context management."""
         with patch.object(optimized_agent, "llm_service", mock_llm_service):
             # Initial context should be empty

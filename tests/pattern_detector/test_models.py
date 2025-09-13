@@ -2,9 +2,7 @@
 Tests for the data models in the pattern detection system.
 """
 
-from datetime import datetime, timezone
-
-import pytest
+from datetime import UTC, datetime
 
 from gemini_sre_agent.pattern_detector.models import (
     ConfidenceFactors,
@@ -24,7 +22,7 @@ class TestLogEntry:
 
     def test_log_entry_basic_creation(self) -> None:
         """Test basic LogEntry creation with all fields provided."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         raw_data = {"severity": "ERROR", "textPayload": "Test error"}
 
         log_entry = LogEntry(
@@ -109,9 +107,9 @@ class TestLogEntry:
         """Test fallback to current time for invalid timestamps."""
         raw_data = {"timestamp": "invalid-timestamp", "severity": "ERROR"}
 
-        before_creation = datetime.now(timezone.utc)
+        before_creation = datetime.now(UTC)
         log_entry = LogEntry(insert_id="test-123", raw_data=raw_data)
-        after_creation = datetime.now(timezone.utc)
+        after_creation = datetime.now(UTC)
 
         assert before_creation <= log_entry.timestamp <= after_creation
 

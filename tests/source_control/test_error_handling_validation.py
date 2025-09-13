@@ -37,7 +37,9 @@ class TestErrorHandlingConfigValidator:
         assert is_valid
         assert len(errors) == 0
 
-    def test_validate_circuit_breaker_config_invalid_thresholds(self, validator: str) -> None:
+    def test_validate_circuit_breaker_config_invalid_thresholds(
+        self, validator: str
+    ) -> None:
         """Test validation of circuit breaker config with invalid thresholds."""
         config = CircuitBreakerConfig(
             failure_threshold=0,  # Invalid: too low
@@ -57,7 +59,9 @@ class TestErrorHandlingConfigValidator:
         )
         assert any("timeout must be positive" in error for error in errors)
 
-    def test_validate_circuit_breaker_config_extreme_values(self, validator: str) -> None:
+    def test_validate_circuit_breaker_config_extreme_values(
+        self, validator: str
+    ) -> None:
         """Test validation of circuit breaker config with extreme values."""
         config = CircuitBreakerConfig(
             failure_threshold=2000,  # Too high
@@ -80,7 +84,9 @@ class TestErrorHandlingConfigValidator:
         )
         assert any("timeout should not exceed 300 seconds" in error for error in errors)
 
-    def test_validate_operation_circuit_breaker_config_valid(self, validator: str) -> None:
+    def test_validate_operation_circuit_breaker_config_valid(
+        self, validator: str
+    ) -> None:
         """Test validation of valid operation circuit breaker config."""
         config = OperationCircuitBreakerConfig()
 

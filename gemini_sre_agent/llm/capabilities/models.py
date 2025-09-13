@@ -1,6 +1,6 @@
 # gemini_sre_agent/llm/capabilities/models.py
 
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ class ModelCapability(BaseModel):
         description="Name of the capability (e.g., 'text_generation', 'code_generation').",
     )
     description: str = Field(..., description="A brief description of the capability.")
-    parameters: Dict[str, Any] = Field(
+    parameters: dict[str, Any] = Field(
         default_factory=dict, description="Parameters supported by this capability."
     )
     performance_score: float = Field(
@@ -34,6 +34,6 @@ class ModelCapabilities(BaseModel):
     """A collection of capabilities for a specific model."""
 
     model_id: str = Field(..., description="Unique identifier for the model.")
-    capabilities: List[ModelCapability] = Field(
+    capabilities: list[ModelCapability] = Field(
         default_factory=list, description="List of capabilities supported by the model."
     )

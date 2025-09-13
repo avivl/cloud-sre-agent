@@ -4,10 +4,10 @@
 Configuration monitoring and audit logging.
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+import logging
+from typing import Any
 
 
 @dataclass
@@ -16,12 +16,12 @@ class ConfigChangeEvent:
 
     timestamp: datetime
     change_type: str  # 'reload', 'validation_failure', 'drift_detected'
-    config_file: Optional[str]
-    old_checksum: Optional[str]
-    new_checksum: Optional[str]
-    validation_errors: Optional[list]
+    config_file: str | None
+    old_checksum: str | None
+    new_checksum: str | None
+    validation_errors: list | None
     environment: str
-    user_id: Optional[str] = None
+    user_id: str | None = None
 
 
 class ConfigMonitoring:
@@ -124,7 +124,7 @@ class ConfigMonitoring:
         logger = logging.getLogger("config.audit")
         logger.info("Configuration change event", extra=log_entry)
 
-    def get_change_summary(self, hours: int = 24) -> Dict[str, Any]:
+    def get_change_summary(self, hours: int = 24) -> dict[str, Any]:
         """Get configuration change summary for specified time period."""
         cutoff_time = datetime.now() - timedelta(hours=hours)
         recent_events = [e for e in self.change_history if e.timestamp >= cutoff_time]

@@ -8,9 +8,9 @@ detect, diagnose, and recover from common failure scenarios in source control op
 """
 
 import asyncio
-import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+import logging
+from typing import Any
 
 from .core import CircuitState, ErrorType
 
@@ -21,8 +21,8 @@ class ErrorPattern:
     def __init__(
         self,
         name: str,
-        error_types: List[ErrorType],
-        conditions: Dict[str, Any],
+        error_types: list[ErrorType],
+        conditions: dict[str, Any],
         recovery_action: str,
         priority: int = 1,
     ):
@@ -31,7 +31,7 @@ class ErrorPattern:
         self.conditions = conditions
         self.recovery_action = recovery_action
         self.priority = priority
-        self.last_seen: Optional[datetime] = None
+        self.last_seen: datetime | None = None
         self.occurrence_count = 0
 
 
@@ -42,11 +42,11 @@ class RecoveryAction:
         self.name = name
         self.logger = logging.getLogger(f"RecoveryAction.{name}")
 
-    async def can_execute(self, context: Dict[str, Any]) -> bool:
+    async def can_execute(self, context: dict[str, Any]) -> bool:
         """Check if this recovery action can be executed."""
         return True
 
-    async def execute(self, context: Dict[str, Any]) -> bool:
+    async def execute(self, context: dict[str, Any]) -> bool:
         """Execute the recovery action."""
         raise NotImplementedError
 
@@ -63,7 +63,7 @@ class RetryWithBackoffAction(RecoveryAction):
         self.max_retries = max_retries
         self.base_delay = base_delay
 
-    async def execute(self, context: Dict[str, Any]) -> bool:
+    async def execute(self, context: dict[str, Any]) -> bool:
         """Execute retry with backoff."""
         func = context.get("original_func")
         args = context.get("args", [])
@@ -94,11 +94,11 @@ class CredentialRefreshAction(RecoveryAction):
     def __init__(self) -> None:
         super().__init__("credential_refresh")
 
-    async def can_execute(self, context: Dict[str, Any]) -> bool:
+    async def can_execute(self, context: dict[str, Any]) -> bool:
         """Check if credentials can be refreshed."""
         return "auth_provider" in context
 
-    async def execute(self, context: Dict[str, Any]) -> bool:
+    async def execute(self, context: dict[str, Any]) -> bool:
         """Execute credential refresh."""
         auth_provider = context.get("auth_provider")
         if not auth_provider:
@@ -124,7 +124,7 @@ class ConnectionResetAction(RecoveryAction):
     def __init__(self) -> None:
         super().__init__("connection_reset")
 
-    async def execute(self, context: Dict[str, Any]) -> bool:
+    async def execute(self, context: dict[str, Any]) -> bool:
         """Execute connection reset."""
         client = context.get("client")
         if not client:
@@ -151,7 +151,7 @@ class CircuitBreakerResetAction(RecoveryAction):
     def __init__(self) -> None:
         super().__init__("circuit_breaker_reset")
 
-    async def execute(self, context: Dict[str, Any]) -> bool:
+    async def execute(self, context: dict[str, Any]) -> bool:
         """Execute circuit breaker reset."""
         circuit_breaker = context.get("circuit_breaker")
         if not circuit_breaker:
@@ -177,7 +177,7 @@ class ConfigurationUpdateAction(RecoveryAction):
     def __init__(self) -> None:
         super().__init__("configuration_update")
 
-    async def execute(self, context: Dict[str, Any]) -> bool:
+    async def execute(self, context: dict[str, Any]) -> bool:
         """Execute configuration update."""
         config_manager = context.get("config_manager")
         if not config_manager:
@@ -215,9 +215,9 @@ class SelfHealingManager:
 
     def __init__(self) -> None:
         self.logger = logging.getLogger("SelfHealingManager")
-        self.error_patterns: List[ErrorPattern] = []
-        self.recovery_actions: List[RecoveryAction] = []
-        self.recovery_history: List[Dict[str, Any]] = []
+        self.error_patterns: list[ErrorPattern] = []
+        self.recovery_actions: list[RecoveryAction] = []
+        self.recovery_history: list[dict[str, Any]] = []
         self._initialize_default_patterns()
         self._initialize_default_actions()
 
@@ -285,8 +285,8 @@ class SelfHealingManager:
         self,
         error_type: ErrorType,
         error_message: str,
-        context: Dict[str, Any],
-    ) -> Optional[ErrorPattern]:
+        context: dict[str, Any],
+    ) -> ErrorPattern | None:
         """Analyze an error and find matching patterns."""
         now = datetime.now()
 
@@ -337,7 +337,7 @@ class SelfHealingManager:
     async def execute_recovery(
         self,
         pattern: ErrorPattern,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ) -> bool:
         """Execute recovery actions for a matched pattern."""
         recovery_action_name = pattern.recovery_action
@@ -378,7 +378,7 @@ class SelfHealingManager:
             self.logger.error(f"Recovery action {action.name} raised exception: {e}")
             return False
 
-    def _find_recovery_action(self, action_name: str) -> Optional[RecoveryAction]:
+    def _find_recovery_action(self, action_name: str) -> RecoveryAction | None:
         """Find a recovery action by name."""
         for action in self.recovery_actions:
             if action.name == action_name:
@@ -389,8 +389,8 @@ class SelfHealingManager:
         self,
         error_type: ErrorType,
         error_message: str,
-        context: Dict[str, Any],
-    ) -> Tuple[bool, Optional[str]]:
+        context: dict[str, Any],
+    ) -> tuple[bool, str | None]:
         """Handle an error with automated recovery."""
         # Analyze error for patterns
         pattern = await self.analyze_error(error_type, error_message, context)
@@ -407,7 +407,7 @@ class SelfHealingManager:
         else:
             return False, f"Recovery failed using {pattern.recovery_action}"
 
-    def get_recovery_stats(self) -> Dict[str, Any]:
+    def get_recovery_stats(self) -> dict[str, Any]:
         """Get statistics about recovery operations."""
         total_attempts = len(self.recovery_history)
         successful_attempts = sum(1 for r in self.recovery_history if r["success"])
@@ -442,7 +442,7 @@ class SelfHealingManager:
             },
         }
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get health status of the self-healing system."""
         stats = self.get_recovery_stats()
 

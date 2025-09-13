@@ -8,19 +8,19 @@ the enhanced code generation system.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
 class BaseSchema:
     """Base schema class with common functionality."""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return self.__dict__
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BaseSchema":
+    def from_dict(cls, data: dict[str, Any]) -> "BaseSchema":
         """Create from dictionary."""
         return cls(**data)
 
@@ -30,9 +30,9 @@ class RequestSchema(BaseSchema):
     """Schema for API requests."""
 
     model: str
-    messages: List[Dict[str, str]]
+    messages: list[dict[str, str]]
     temperature: float = 0.7
-    max_tokens: Optional[int] = None
+    max_tokens: int | None = None
 
 
 @dataclass
@@ -42,7 +42,7 @@ class ResponseSchema(BaseSchema):
     content: str
     model: str
     success: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass

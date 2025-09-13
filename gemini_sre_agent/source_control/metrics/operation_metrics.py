@@ -7,13 +7,13 @@ This module provides specialized metrics collection for source control operation
 remediation results, and health checks.
 """
 
+from datetime import datetime
 import logging
 import time
-from datetime import datetime
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from .core import MetricType
 from ..models import OperationResult, ProviderHealth, RemediationResult
+from .core import MetricType
 
 if TYPE_CHECKING:
     from .collectors import MetricsCollector
@@ -30,7 +30,7 @@ class OperationMetrics:
         self,
         operation_name: str,
         provider_name: str,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ) -> str:
         """Record the start of an operation and return an operation ID."""
         operation_id = f"{operation_name}_{int(time.time() * 1000)}"
@@ -61,8 +61,8 @@ class OperationMetrics:
         provider_name: str,
         success: bool,
         duration_ms: float,
-        error: Optional[Exception] = None,
-        tags: Optional[Dict[str, str]] = None,
+        error: Exception | None = None,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record the end of an operation."""
         operation_tags = tags or {}
@@ -117,7 +117,7 @@ class OperationMetrics:
         result: RemediationResult,
         provider_name: str,
         duration_ms: float,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record metrics for a remediation result."""
         operation_tags = tags or {}
@@ -163,7 +163,7 @@ class OperationMetrics:
         result: OperationResult,
         provider_name: str,
         duration_ms: float,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record metrics for a batch operation result."""
         operation_tags = tags or {}
@@ -197,7 +197,7 @@ class OperationMetrics:
         health: ProviderHealth,
         provider_name: str,
         duration_ms: float,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record metrics for a health check."""
         operation_tags = tags or {}
@@ -237,9 +237,9 @@ class OperationMetrics:
     async def get_operation_statistics(
         self,
         provider_name: str,
-        operation_name: Optional[str] = None,
+        operation_name: str | None = None,
         window_minutes: int = 60,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get statistics for operations."""
         stats = {}
 

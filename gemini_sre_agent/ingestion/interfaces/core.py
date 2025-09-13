@@ -5,10 +5,11 @@ Core interfaces and data structures for log ingestion.
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any
 
 
 class LogSourceType(Enum):
@@ -43,25 +44,25 @@ class LogEntry:
     message: str  # Log message content
 
     # Flexible metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     # Standard optional fields
-    severity: Optional[LogSeverity] = None
-    source: Optional[str] = None
-    service: Optional[str] = None
-    environment: Optional[str] = None
+    severity: LogSeverity | None = None
+    source: str | None = None
+    service: str | None = None
+    environment: str | None = None
 
     # Structured data
-    labels: Dict[str, str] = field(default_factory=dict)
-    resource: Dict[str, Any] = field(default_factory=dict)
-    json_payload: Dict[str, Any] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
+    resource: dict[str, Any] = field(default_factory=dict)
+    json_payload: dict[str, Any] = field(default_factory=dict)
 
     # Flow tracking
-    flow_id: Optional[str] = None
-    trace_id: Optional[str] = None
-    span_id: Optional[str] = None
+    flow_id: str | None = None
+    trace_id: str | None = None
+    span_id: str | None = None
 
-    def get_field(self, key: str, default: Optional[str] = None) -> None:
+    def get_field(self, key: str, default: str | None = None) -> None:
         """Safely get field from metadata or attributes."""
         return getattr(self, key, self.metadata.get(key, default))
 
@@ -71,10 +72,10 @@ class SourceHealth:
     """Health status for a log source."""
 
     is_healthy: bool
-    last_success: Optional[str] = None
+    last_success: str | None = None
     error_count: int = 0
-    last_error: Optional[str] = None
-    metrics: Dict[str, Any] = field(default_factory=dict)
+    last_error: str | None = None
+    metrics: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -124,11 +125,11 @@ class LogIngestionInterface(ABC):
         pass
 
     @abstractmethod
-    async def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
+    async def handle_error(self, error: Exception, context: dict[str, Any]) -> bool:
         """Handle errors with context. Return True if recoverable."""
         pass
 
     @abstractmethod
-    async def get_health_metrics(self) -> Dict[str, Any]:
+    async def get_health_metrics(self) -> dict[str, Any]:
         """Get detailed health and performance metrics."""
         pass

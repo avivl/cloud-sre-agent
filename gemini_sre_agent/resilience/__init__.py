@@ -9,11 +9,11 @@ from .resilience_manager import ResilienceManager
 from .retry_handler import RetryHandler
 
 __all__ = [
-    "ResilienceManager",
-    "ErrorClassifier",
-    "ErrorCategory",
     "CircuitBreaker",
     "CircuitState",
-    "RetryHandler",
+    "ErrorCategory",
+    "ErrorClassifier",
     "FallbackManager",
+    "ResilienceManager",
+    "RetryHandler",
 ]

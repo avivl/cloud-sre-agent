@@ -8,7 +8,8 @@ to LLM operations, providers, and models.
 """
 
 from abc import abstractmethod
-from typing import Any, AsyncIterator, Dict, List, Optional, TypeVar
+from collections.abc import AsyncIterator
+from typing import Any, Optional, TypeVar
 
 from ..types import (
     ConfigDict,
@@ -38,7 +39,7 @@ class LLMProvider(MonitorableComponent[RequestT, ResponseT]):
         self,
         provider_id: ProviderId,
         provider_name: str,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the LLM provider.
@@ -51,7 +52,7 @@ class LLMProvider(MonitorableComponent[RequestT, ResponseT]):
         super().__init__(provider_id, provider_name, config)
         self._provider_id = provider_id
         self._provider_name = provider_name
-        self._models: Dict[ModelId, "LLMModel"] = {}
+        self._models: dict[ModelId, LLMModel] = {}
         self._rate_limits = {}
         self._cost_tracking = {}
 
@@ -66,12 +67,12 @@ class LLMProvider(MonitorableComponent[RequestT, ResponseT]):
         return self._provider_name
 
     @property
-    def models(self) -> Dict[ModelId, "LLMModel"]:
+    def models(self) -> dict[ModelId, "LLMModel"]:
         """Get available models."""
         return self._models.copy()
 
     @abstractmethod
-    def get_models(self) -> List["LLMModel"]:
+    def get_models(self) -> list["LLMModel"]:
         """
         Get all available models.
 
@@ -139,7 +140,7 @@ class LLMProvider(MonitorableComponent[RequestT, ResponseT]):
         if model_id in self._models:
             del self._models[model_id]
 
-    def get_rate_limit(self, model_id: ModelId) -> Dict[str, Any]:
+    def get_rate_limit(self, model_id: ModelId) -> dict[str, Any]:
         """
         Get rate limit information for a model.
 
@@ -151,7 +152,7 @@ class LLMProvider(MonitorableComponent[RequestT, ResponseT]):
         """
         return self._rate_limits.get(model_id, {})
 
-    def update_rate_limit(self, model_id: ModelId, limit_info: Dict[str, Any]) -> None:
+    def update_rate_limit(self, model_id: ModelId, limit_info: dict[str, Any]) -> None:
         """
         Update rate limit information for a model.
 
@@ -173,7 +174,7 @@ class LLMProvider(MonitorableComponent[RequestT, ResponseT]):
             self._cost_tracking[model_id] = 0.0
         self._cost_tracking[model_id] += cost
 
-    def get_total_cost(self, model_id: Optional[ModelId] = None) -> TotalCost:
+    def get_total_cost(self, model_id: ModelId | None = None) -> TotalCost:
         """
         Get total cost for a model or all models.
 
@@ -201,7 +202,7 @@ class LLMModel(MonitorableComponent[RequestT, ResponseT]):
         model_id: ModelId,
         model_name: str,
         provider_id: ProviderId,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the LLM model.
@@ -236,7 +237,7 @@ class LLMModel(MonitorableComponent[RequestT, ResponseT]):
         return self._provider_id
 
     @property
-    def capabilities(self) -> List[str]:
+    def capabilities(self) -> list[str]:
         """Get model capabilities."""
         return self._capabilities.copy()
 
@@ -368,7 +369,7 @@ class ChatModel(LLMModel[RequestT, ResponseT]):
         model_id: ModelId,
         model_name: str,
         provider_id: ProviderId,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the chat model.
@@ -385,7 +386,7 @@ class ChatModel(LLMModel[RequestT, ResponseT]):
 
     @abstractmethod
     def chat_completion(
-        self, messages: List[Dict[str, Any]], **kwargs: Any
+        self, messages: list[dict[str, Any]], **kwargs: Any
     ) -> ResponseT:
         """
         Generate a chat completion.
@@ -401,7 +402,7 @@ class ChatModel(LLMModel[RequestT, ResponseT]):
 
     @abstractmethod
     def chat_completion_stream(
-        self, messages: List[Dict[str, Any]], **kwargs: Any
+        self, messages: list[dict[str, Any]], **kwargs: Any
     ) -> AsyncIterator[ResponseT]:
         """
         Generate a streaming chat completion.
@@ -428,7 +429,7 @@ class CompletionModel(LLMModel[RequestT, ResponseT]):
         model_id: ModelId,
         model_name: str,
         provider_id: ProviderId,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the completion model.
@@ -486,7 +487,7 @@ class EmbeddingModel(LLMModel[RequestT, ResponseT]):
         model_id: ModelId,
         model_name: str,
         provider_id: ProviderId,
-        config: Optional[ConfigDict] = None,
+        config: ConfigDict | None = None,
     ) -> None:
         """
         Initialize the embedding model.
@@ -522,7 +523,7 @@ class EmbeddingModel(LLMModel[RequestT, ResponseT]):
         pass
 
     @abstractmethod
-    def create_embeddings_batch(self, texts: List[Content], **kwargs: Any) -> ResponseT:
+    def create_embeddings_batch(self, texts: list[Content], **kwargs: Any) -> ResponseT:
         """
         Create embeddings for multiple texts.
 
@@ -554,7 +555,7 @@ class LLMManager(MonitorableComponent[RequestT, ResponseT]):
     """
 
     def __init__(
-        self, manager_id: str, name: str, config: Optional[ConfigDict] = None
+        self, manager_id: str, name: str, config: ConfigDict | None = None
     ) -> None:
         """
         Initialize the LLM manager.
@@ -565,17 +566,17 @@ class LLMManager(MonitorableComponent[RequestT, ResponseT]):
             config: Optional initial configuration
         """
         super().__init__(manager_id, name, config)
-        self._providers: Dict[ProviderId, LLMProvider] = {}
-        self._model_registry: Dict[ModelId, LLMModel] = {}
+        self._providers: dict[ProviderId, LLMProvider] = {}
+        self._model_registry: dict[ModelId, LLMModel] = {}
         self._routing_strategy = "round_robin"
 
     @property
-    def providers(self) -> Dict[ProviderId, LLMProvider]:
+    def providers(self) -> dict[ProviderId, LLMProvider]:
         """Get registered providers."""
         return self._providers.copy()
 
     @property
-    def model_registry(self) -> Dict[ModelId, LLMModel]:
+    def model_registry(self) -> dict[ModelId, LLMModel]:
         """Get model registry."""
         return self._model_registry.copy()
 
@@ -600,7 +601,7 @@ class LLMManager(MonitorableComponent[RequestT, ResponseT]):
         pass
 
     @abstractmethod
-    def get_model(self, model_id: ModelId) -> Optional[LLMModel]:
+    def get_model(self, model_id: ModelId) -> LLMModel | None:
         """
         Get a model by ID.
 
@@ -614,7 +615,7 @@ class LLMManager(MonitorableComponent[RequestT, ResponseT]):
 
     @abstractmethod
     def route_request(
-        self, request: RequestT, preferred_model: Optional[ModelId] = None
+        self, request: RequestT, preferred_model: ModelId | None = None
     ) -> ResponseT:
         """
         Route a request to an appropriate model.
@@ -646,7 +647,7 @@ class LLMManager(MonitorableComponent[RequestT, ResponseT]):
         """
         return self._routing_strategy
 
-    def get_available_models(self) -> List[LLMModel]:
+    def get_available_models(self) -> list[LLMModel]:
         """
         Get all available models.
 
@@ -655,7 +656,7 @@ class LLMManager(MonitorableComponent[RequestT, ResponseT]):
         """
         return list(self._model_registry.values())
 
-    def get_models_by_capability(self, capability: str) -> List[LLMModel]:
+    def get_models_by_capability(self, capability: str) -> list[LLMModel]:
         """
         Get models with a specific capability.
 

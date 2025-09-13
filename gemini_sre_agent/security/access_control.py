@@ -2,10 +2,10 @@
 
 """Role-based access control system for provider configuration."""
 
-import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+import logging
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -51,7 +51,7 @@ class Role(BaseModel):
 
     name: str = Field(..., description="Role name")
     description: str = Field(..., description="Role description")
-    permissions: Set[Permission] = Field(
+    permissions: set[Permission] = Field(
         default_factory=set, description="Role permissions"
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -64,11 +64,11 @@ class User(BaseModel):
     user_id: str = Field(..., description="Unique user identifier")
     username: str = Field(..., description="Username")
     email: str = Field(..., description="User email")
-    roles: Set[str] = Field(default_factory=set, description="User roles")
+    roles: set[str] = Field(default_factory=set, description="User roles")
     is_active: bool = Field(default=True, description="Whether user is active")
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_login: Optional[datetime] = Field(default=None)
-    metadata: Dict[str, Any] = Field(
+    last_login: datetime | None = Field(default=None)
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional user metadata"
     )
 
@@ -80,9 +80,9 @@ class AccessRequest(BaseModel):
     resource: str = Field(..., description="Resource being accessed")
     action: str = Field(..., description="Action being performed")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    ip_address: Optional[str] = Field(default=None, description="Client IP address")
-    user_agent: Optional[str] = Field(default=None, description="Client user agent")
-    metadata: Dict[str, Any] = Field(
+    ip_address: str | None = Field(default=None, description="Client IP address")
+    user_agent: str | None = Field(default=None, description="Client user agent")
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional request metadata"
     )
 
@@ -92,9 +92,9 @@ class AccessController:
 
     def __init__(self) -> None:
         """Initialize the access controller."""
-        self._users: Dict[str, User] = {}
-        self._roles: Dict[str, Role] = {}
-        self._access_log: List[AccessRequest] = []
+        self._users: dict[str, User] = {}
+        self._roles: dict[str, Role] = {}
+        self._access_log: list[AccessRequest] = []
 
         # Initialize default roles
         self._initialize_default_roles()
@@ -175,8 +175,8 @@ class AccessController:
         user_id: str,
         username: str,
         email: str,
-        roles: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        roles: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> User:
         """Create a new user.
 
@@ -215,19 +215,19 @@ class AccessController:
 
         return user
 
-    def get_user(self, user_id: str) -> Optional[User]:
+    def get_user(self, user_id: str) -> User | None:
         """Get a user by ID."""
         return self._users.get(user_id)
 
     def update_user(
         self,
         user_id: str,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-        roles: Optional[List[str]] = None,
-        is_active: Optional[bool] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Optional[User]:
+        username: str | None = None,
+        email: str | None = None,
+        roles: list[str] | None = None,
+        is_active: bool | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> User | None:
         """Update a user.
 
         Args:
@@ -275,7 +275,7 @@ class AccessController:
         self,
         name: str,
         description: str,
-        permissions: Optional[List[Permission]] = None,
+        permissions: list[Permission] | None = None,
     ) -> Role:
         """Create a new role.
 
@@ -304,16 +304,16 @@ class AccessController:
 
         return role
 
-    def get_role(self, name: str) -> Optional[Role]:
+    def get_role(self, name: str) -> Role | None:
         """Get a role by name."""
         return self._roles.get(name)
 
     def update_role(
         self,
         name: str,
-        description: Optional[str] = None,
-        permissions: Optional[List[Permission]] = None,
-    ) -> Optional[Role]:
+        description: str | None = None,
+        permissions: list[Permission] | None = None,
+    ) -> Role | None:
         """Update a role.
 
         Args:
@@ -368,10 +368,10 @@ class AccessController:
         self,
         user_id: str,
         permission: Permission,
-        resource: Optional[str] = None,
-        action: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        resource: str | None = None,
+        action: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> bool:
         """Check if a user has a specific permission.
 
@@ -425,7 +425,7 @@ class AccessController:
 
         return has_permission
 
-    def _get_user_permissions(self, user: User) -> Set[Permission]:
+    def _get_user_permissions(self, user: User) -> set[Permission]:
         """Get all permissions for a user."""
         permissions = set()
 
@@ -442,8 +442,8 @@ class AccessController:
         resource: str,
         action: str,
         granted: bool,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> None:
         """Log an access attempt."""
         access_request = AccessRequest(
@@ -461,7 +461,7 @@ class AccessController:
         if len(self._access_log) > 1000:
             self._access_log = self._access_log[-1000:]
 
-    def get_user_permissions(self, user_id: str) -> Set[Permission]:
+    def get_user_permissions(self, user_id: str) -> set[Permission]:
         """Get all permissions for a user."""
         user = self._users.get(user_id)
         if not user or not user.is_active:
@@ -469,7 +469,7 @@ class AccessController:
 
         return self._get_user_permissions(user)
 
-    def get_users_with_permission(self, permission: Permission) -> List[User]:
+    def get_users_with_permission(self, permission: Permission) -> list[User]:
         """Get all users who have a specific permission."""
         users = []
 
@@ -481,12 +481,12 @@ class AccessController:
 
     def get_access_log(
         self,
-        user_id: Optional[str] = None,
-        resource: Optional[str] = None,
-        action: Optional[str] = None,
-        granted: Optional[bool] = None,
+        user_id: str | None = None,
+        resource: str | None = None,
+        action: str | None = None,
+        granted: bool | None = None,
         limit: int = 100,
-    ) -> List[AccessRequest]:
+    ) -> list[AccessRequest]:
         """Get access log entries with optional filtering."""
         entries = self._access_log.copy()
 
@@ -505,7 +505,7 @@ class AccessController:
 
         return entries[:limit]
 
-    def get_access_statistics(self) -> Dict[str, Any]:
+    def get_access_statistics(self) -> dict[str, Any]:
         """Get access control statistics."""
         if not self._access_log:
             return {}
@@ -546,11 +546,11 @@ class AccessController:
             "total_roles": len(self._roles),
         }
 
-    def list_users(self) -> List[User]:
+    def list_users(self) -> list[User]:
         """List all users."""
         return list(self._users.values())
 
-    def list_roles(self) -> List[Role]:
+    def list_roles(self) -> list[Role]:
         """List all roles."""
         return list(self._roles.values())
 
@@ -580,7 +580,7 @@ class AccessController:
 
         return False
 
-    def get_role_users(self, role_name: str) -> List[User]:
+    def get_role_users(self, role_name: str) -> list[User]:
         """Get all users with a specific role."""
         if role_name not in self._roles:
             return []

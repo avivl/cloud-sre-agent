@@ -5,10 +5,9 @@ This module tests few-shot learning example storage, retrieval,
 validation, and statistics for Gemini prompt engineering.
 """
 
-import json
-import tempfile
 from datetime import datetime
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest

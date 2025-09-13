@@ -16,12 +16,12 @@ Author: Gemini SRE Agent
 Created: 2024
 """
 
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+import time
+from typing import Any, TypeVar
 
 from .base import ModelType
 from .config import LLMConfig
@@ -49,17 +49,17 @@ class ServiceContext:
     """Context data for service operations."""
 
     operation: ServiceOperation
-    model: Optional[str] = None
-    model_type: Optional[ModelType] = None
-    provider: Optional[str] = None
+    model: str | None = None
+    model_type: ModelType | None = None
+    provider: str | None = None
     selection_strategy: SelectionStrategy = SelectionStrategy.BEST_SCORE
-    custom_weights: Optional[ScoringWeights] = None
-    max_cost: Optional[float] = None
-    min_performance: Optional[float] = None
-    min_reliability: Optional[float] = None
-    required_capabilities: Optional[List[str]] = None
+    custom_weights: ScoringWeights | None = None
+    max_cost: float | None = None
+    min_performance: float | None = None
+    min_reliability: float | None = None
+    required_capabilities: list[str] | None = None
     max_attempts: int = 3
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass
@@ -67,14 +67,14 @@ class ServiceResult:
     """Result data from service operations."""
 
     success: bool
-    content: Union[str, Any]
+    content: str | Any
     model_used: str
     provider_used: str
     execution_time_ms: float
     operation: ServiceOperation
     fallback_used: bool = False
-    error_message: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    error_message: str | None = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.metadata is None:
@@ -91,10 +91,10 @@ class ServiceMetrics:
     average_latency_ms: float = 0.0
     min_latency_ms: float = float("inf")
     max_latency_ms: float = 0.0
-    model_usage_counts: Optional[Dict[str, int]] = None
-    provider_usage_counts: Optional[Dict[str, int]] = None
-    operation_counts: Optional[Dict[ServiceOperation, int]] = None
-    last_updated: Optional[datetime] = None
+    model_usage_counts: dict[str, int] | None = None
+    provider_usage_counts: dict[str, int] | None = None
+    operation_counts: dict[ServiceOperation, int] | None = None
+    last_updated: datetime | None = None
 
     def __post_init__(self) -> None:
         if self.model_usage_counts is None:
@@ -111,8 +111,8 @@ class BaseLLMService(ABC):
     def __init__(
         self,
         config: LLMConfig,
-        model_registry: Optional[ModelInfo] = None,
-        performance_monitor: Optional[PerformanceMonitor] = None,
+        model_registry: ModelInfo | None = None,
+        performance_monitor: PerformanceMonitor | None = None,
     ):
         """Initialize the base LLM service.
 
@@ -128,15 +128,15 @@ class BaseLLMService(ABC):
 
         # Track service metrics
         self._service_metrics = ServiceMetrics()
-        self._selection_stats: Dict[str, int] = {}
-        self._last_selection_time: Dict[str, float] = {}
+        self._selection_stats: dict[str, int] = {}
+        self._last_selection_time: dict[str, float] = {}
 
     @abstractmethod
     async def generate_structured(
         self,
-        prompt: Union[str, Any],
-        response_model: Type[T],
-        context: Optional[ServiceContext] = None,
+        prompt: str | Any,
+        response_model: type[T],
+        context: ServiceContext | None = None,
         **kwargs: Any,
     ) -> T:
         """Generate a structured response with intelligent model selection.
@@ -155,8 +155,8 @@ class BaseLLMService(ABC):
     @abstractmethod
     async def generate_text(
         self,
-        prompt: Union[str, Any],
-        context: Optional[ServiceContext] = None,
+        prompt: str | Any,
+        context: ServiceContext | None = None,
         **kwargs: Any,
     ) -> str:
         """Generate a plain text response with intelligent model selection.
@@ -174,11 +174,11 @@ class BaseLLMService(ABC):
     @abstractmethod
     async def generate_with_fallback(
         self,
-        prompt: Union[str, Any],
-        response_model: Optional[Type[T]] = None,
-        context: Optional[ServiceContext] = None,
+        prompt: str | Any,
+        response_model: type[T] | None = None,
+        context: ServiceContext | None = None,
         **kwargs: Any,
-    ) -> Union[str, T]:
+    ) -> str | T:
         """Generate response with automatic fallback chain execution.
 
         Args:
@@ -266,7 +266,7 @@ class BaseLLMService(ABC):
         """
         return self._service_metrics
 
-    def get_selection_stats(self) -> Dict[str, Any]:
+    def get_selection_stats(self) -> dict[str, Any]:
         """Get model selection statistics.
 
         Returns:
@@ -284,7 +284,7 @@ class BaseLLMService(ABC):
         self._selection_stats.clear()
         self._last_selection_time.clear()
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on the service.
 
         Returns:

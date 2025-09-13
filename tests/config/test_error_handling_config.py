@@ -7,8 +7,8 @@ This module tests the error handling configuration system including
 validation, loading, and provider-specific configurations.
 """
 
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 from gemini_sre_agent.config.source_control_error_handling import (

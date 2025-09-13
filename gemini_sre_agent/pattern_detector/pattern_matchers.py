@@ -12,7 +12,7 @@ PatternMatch objects.
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Protocol, Set
+from typing import Protocol
 
 from ..logger import setup_logging
 from .models import (
@@ -29,15 +29,15 @@ class PatternMatcherConfig:
     """Configuration for pattern matchers."""
 
     min_confidence: float = 0.3
-    keywords: Optional[List[str]] = None
+    keywords: list[str] | None = None
     min_services: int = 2
     min_error_rate: float = 0.05
     single_service_threshold: float = 0.8
     volume_increase_threshold: float = 2.0
     concurrent_error_threshold: int = 10
     rapid_onset_threshold_seconds: int = 60
-    external_service_indicators: Optional[List[str]] = None
-    gradual_onset_indicators: Optional[List[str]] = None
+    external_service_indicators: list[str] | None = None
+    gradual_onset_indicators: list[str] | None = None
 
     def __post_init__(self) -> None:
         """Set default values for optional fields."""
@@ -53,8 +53,8 @@ class PatternMatcher(Protocol):
     """Protocol for pattern matchers."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Match patterns in the given time window and threshold results."""
         ...
 
@@ -62,19 +62,21 @@ class PatternMatcher(Protocol):
 class BasePatternMatcher(ABC):
     """Base class for pattern matchers."""
 
-    def __init__(self, config: PatternMatcherConfig, confidence_scorer: Optional[str] = None) -> None:
+    def __init__(
+        self, config: PatternMatcherConfig, confidence_scorer: str | None = None
+    ) -> None:
         self.config = config
         self.confidence_scorer = confidence_scorer
         self.logger = setup_logging()
 
     @abstractmethod
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Match patterns in the given time window and threshold results."""
         pass
 
-    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+    def _determine_severity_level(self, logs: list[LogEntry]) -> str:
         """Determine the overall severity level from a list of logs."""
         if not logs:
             return "LOW"
@@ -87,7 +89,7 @@ class BasePatternMatcher(ABC):
             return "MEDIUM"
         return "LOW"
 
-    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+    def _identify_primary_service(self, logs: list[LogEntry]) -> str | None:
         """Identify the service with the most errors."""
         if not logs:
             return None
@@ -100,8 +102,8 @@ class BasePatternMatcher(ABC):
         return max(service_counts.keys(), key=lambda x: service_counts[x])
 
     def _group_service_errors(
-        self, threshold_results: List[ThresholdResult]
-    ) -> Dict[str, List[LogEntry]]:
+        self, threshold_results: list[ThresholdResult]
+    ) -> dict[str, list[LogEntry]]:
         """Group error logs by service name."""
         service_errors = defaultdict(list)
         for result in threshold_results:
@@ -116,8 +118,8 @@ class CascadeFailureMatcher(BasePatternMatcher):
     """Pattern matcher for cascade failure detection."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Detect cascade failure patterns."""
         patterns = []
 
@@ -195,8 +197,8 @@ class ServiceDegradationMatcher(BasePatternMatcher):
     """Pattern matcher for service degradation detection."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Detect service degradation patterns."""
         patterns = []
         service_errors = self._group_service_errors(threshold_results)
@@ -213,8 +215,8 @@ class ServiceDegradationMatcher(BasePatternMatcher):
 
     def _should_create_service_pattern(
         self,
-        error_logs: List[LogEntry],
-        service_errors: Dict[str, List[LogEntry]],
+        error_logs: list[LogEntry],
+        service_errors: dict[str, list[LogEntry]],
     ) -> bool:
         """Check if a service degradation pattern should be created."""
         total_errors = sum(len(logs) for logs in service_errors.values())
@@ -226,10 +228,10 @@ class ServiceDegradationMatcher(BasePatternMatcher):
     def _create_service_degradation_pattern(
         self,
         service_name: str,
-        error_logs: List[LogEntry],
+        error_logs: list[LogEntry],
         window: TimeWindow,
-        service_errors: Dict[str, List[LogEntry]],
-    ) -> Optional[PatternMatch]:
+        service_errors: dict[str, list[LogEntry]],
+    ) -> PatternMatch | None:
         """Create a service degradation pattern if confidence threshold is met."""
         total_errors = sum(len(logs) for logs in service_errors.values())
         service_error_ratio = len(error_logs) / total_errors if total_errors > 0 else 0
@@ -277,8 +279,8 @@ class TrafficSpikeMatcher(BasePatternMatcher):
     """Pattern matcher for traffic spike detection."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Detect traffic spike patterns."""
         patterns = []
 
@@ -352,8 +354,8 @@ class ConfigurationIssueMatcher(BasePatternMatcher):
     """Pattern matcher for configuration issue detection."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Detect configuration issue patterns."""
         patterns = []
         config_logs, affected_services = self._filter_config_logs(threshold_results)
@@ -368,8 +370,8 @@ class ConfigurationIssueMatcher(BasePatternMatcher):
         return patterns
 
     def _filter_config_logs(
-        self, threshold_results: List[ThresholdResult]
-    ) -> tuple[List[LogEntry], Set[str]]:
+        self, threshold_results: list[ThresholdResult]
+    ) -> tuple[list[LogEntry], set[str]]:
         """Filter logs for configuration issue patterns."""
         config_logs = []
         affected_services = set()
@@ -384,9 +386,9 @@ class ConfigurationIssueMatcher(BasePatternMatcher):
 
     def _process_config_logs(
         self,
-        logs: List[LogEntry],
-        config_logs: List[LogEntry],
-        affected_services: Set[str],
+        logs: list[LogEntry],
+        config_logs: list[LogEntry],
+        affected_services: set[str],
     ) -> None:
         """Process individual logs for configuration keywords."""
         for log in logs:
@@ -405,11 +407,11 @@ class ConfigurationIssueMatcher(BasePatternMatcher):
 
     def _create_configuration_issue_pattern(
         self,
-        config_logs: List[LogEntry],
-        affected_services: Set[str],
+        config_logs: list[LogEntry],
+        affected_services: set[str],
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-    ) -> Optional[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+    ) -> PatternMatch | None:
         """Create a configuration issue pattern if confidence threshold is met."""
         if self.confidence_scorer:
             rapid_onset = self.confidence_scorer._check_rapid_onset(
@@ -461,8 +463,8 @@ class DependencyFailureMatcher(BasePatternMatcher):
     """Pattern matcher for dependency failure detection."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Detect dependency failure patterns."""
         patterns = []
         dependency_logs, affected_services = self._filter_dependency_logs(
@@ -479,8 +481,8 @@ class DependencyFailureMatcher(BasePatternMatcher):
         return patterns
 
     def _filter_dependency_logs(
-        self, threshold_results: List[ThresholdResult]
-    ) -> tuple[List[LogEntry], Set[str]]:
+        self, threshold_results: list[ThresholdResult]
+    ) -> tuple[list[LogEntry], set[str]]:
         """Filter logs for dependency failure patterns."""
         dependency_logs = []
         affected_services = set()
@@ -495,9 +497,9 @@ class DependencyFailureMatcher(BasePatternMatcher):
 
     def _process_dependency_logs(
         self,
-        logs: List[LogEntry],
-        dependency_logs: List[LogEntry],
-        affected_services: Set[str],
+        logs: list[LogEntry],
+        dependency_logs: list[LogEntry],
+        affected_services: set[str],
     ) -> None:
         """Process individual logs for dependency keywords."""
         for log in logs:
@@ -516,11 +518,11 @@ class DependencyFailureMatcher(BasePatternMatcher):
 
     def _create_dependency_failure_pattern(
         self,
-        dependency_logs: List[LogEntry],
-        affected_services: Set[str],
+        dependency_logs: list[LogEntry],
+        affected_services: set[str],
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-    ) -> Optional[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+    ) -> PatternMatch | None:
         """Create a dependency failure pattern if confidence threshold is met."""
         if self.confidence_scorer:
             external_indicators = any(
@@ -577,8 +579,8 @@ class ResourceExhaustionMatcher(BasePatternMatcher):
     """Pattern matcher for resource exhaustion detection."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Detect resource exhaustion patterns."""
         patterns = []
         resource_logs, affected_services = self._filter_resource_logs(threshold_results)
@@ -593,8 +595,8 @@ class ResourceExhaustionMatcher(BasePatternMatcher):
         return patterns
 
     def _filter_resource_logs(
-        self, threshold_results: List[ThresholdResult]
-    ) -> tuple[List[LogEntry], Set[str]]:
+        self, threshold_results: list[ThresholdResult]
+    ) -> tuple[list[LogEntry], set[str]]:
         """Filter logs for resource exhaustion patterns."""
         resource_logs = []
         affected_services = set()
@@ -609,9 +611,9 @@ class ResourceExhaustionMatcher(BasePatternMatcher):
 
     def _process_resource_logs(
         self,
-        logs: List[LogEntry],
-        resource_logs: List[LogEntry],
-        affected_services: Set[str],
+        logs: list[LogEntry],
+        resource_logs: list[LogEntry],
+        affected_services: set[str],
     ) -> None:
         """Process individual logs for resource keywords."""
         for log in logs:
@@ -630,11 +632,11 @@ class ResourceExhaustionMatcher(BasePatternMatcher):
 
     def _create_resource_exhaustion_pattern(
         self,
-        resource_logs: List[LogEntry],
-        affected_services: Set[str],
+        resource_logs: list[LogEntry],
+        affected_services: set[str],
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-    ) -> Optional[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+    ) -> PatternMatch | None:
         """Create a resource exhaustion pattern if confidence threshold is met."""
         if self.confidence_scorer:
             gradual_onset = self.confidence_scorer._check_gradual_onset(resource_logs)
@@ -685,8 +687,8 @@ class SporadicErrorsMatcher(BasePatternMatcher):
     """Pattern matcher for sporadic error detection."""
 
     def match_patterns(
-        self, window: TimeWindow, threshold_results: List[ThresholdResult]
-    ) -> List[PatternMatch]:
+        self, window: TimeWindow, threshold_results: list[ThresholdResult]
+    ) -> list[PatternMatch]:
         """Detect sporadic error patterns."""
         patterns = []
 
@@ -778,8 +780,8 @@ class PatternMatcherFactory:
 
     @staticmethod
     def create_all_matchers(
-        configs: Dict[str, PatternMatcherConfig], confidence_scorer=None
-    ) -> Dict[str, PatternMatcher]:
+        configs: dict[str, PatternMatcherConfig], confidence_scorer=None
+    ) -> dict[str, PatternMatcher]:
         """Create all pattern matchers with their respective configurations."""
         matchers = {}
         for pattern_type, config in configs.items():

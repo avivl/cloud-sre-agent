@@ -8,12 +8,12 @@ including connectivity tests, performance validation, and status monitoring.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+import time
+from typing import Any
 
 from ..base import LLMRequest, ModelType
 from ..factory import LLMProviderFactory
@@ -40,8 +40,8 @@ class HealthCheckResult:
     message: str
     timestamp: datetime = field(default_factory=datetime.now)
     duration_ms: float = 0.0
-    details: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    details: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
 
 
 @dataclass
@@ -55,8 +55,8 @@ class ProviderHealth:
     success_count: int = 0
     failure_count: int = 0
     avg_response_time_ms: float = 0.0
-    models: Dict[str, HealthCheckResult] = field(default_factory=dict)
-    issues: List[str] = field(default_factory=list)
+    models: dict[str, HealthCheckResult] = field(default_factory=dict)
+    issues: list[str] = field(default_factory=list)
 
 
 class LLMHealthChecker:
@@ -65,11 +65,11 @@ class LLMHealthChecker:
     def __init__(self, provider_factory: LLMProviderFactory) -> None:
         """Initialize the LLM health checker."""
         self.provider_factory = provider_factory
-        self.provider_health: Dict[str, ProviderHealth] = {}
+        self.provider_health: dict[str, ProviderHealth] = {}
         self.health_check_interval = 30  # seconds
         self.health_check_timeout = 10  # seconds
         self._running = False
-        self._health_check_task: Optional[asyncio.Task] = None
+        self._health_check_task: asyncio.Task | None = None
 
         # Simple test prompts for health checks
         self.test_prompts = {
@@ -114,7 +114,7 @@ class LLMHealthChecker:
                 logger.error(f"Error in health check loop: {e}")
                 await asyncio.sleep(self.health_check_interval)
 
-    async def check_all_providers(self) -> Dict[str, ProviderHealth]:
+    async def check_all_providers(self) -> dict[str, ProviderHealth]:
         """Check health of all available providers."""
         providers = self.provider_factory.list_providers()
         results = {}
@@ -129,7 +129,7 @@ class LLMHealthChecker:
                     provider=provider_name,
                     status=HealthStatus.UNKNOWN,
                     last_check=datetime.now(),
-                    issues=[f"Health check failed: {str(e)}"],
+                    issues=[f"Health check failed: {e!s}"],
                 )
 
         return results
@@ -186,7 +186,7 @@ class LLMHealthChecker:
                 except Exception as e:
                     logger.error(f"Error checking model {model_info.name}: {e}")
                     issues.append(
-                        f"Model {model_info.name}: Health check failed - {str(e)}"
+                        f"Model {model_info.name}: Health check failed - {e!s}"
                     )
                     total_checks += 1
 
@@ -240,7 +240,7 @@ class LLMHealthChecker:
                 provider=provider_name,
                 status=HealthStatus.UNHEALTHY,
                 last_check=datetime.now(),
-                issues=[f"Provider check failed: {str(e)}"],
+                issues=[f"Provider check failed: {e!s}"],
             )
 
     async def check_model(
@@ -339,7 +339,7 @@ class LLMHealthChecker:
                         duration_ms=duration_ms,
                     )
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return HealthCheckResult(
                     provider=provider_name,
                     model=model_name,
@@ -355,20 +355,20 @@ class LLMHealthChecker:
                 provider=provider_name,
                 model=model_name,
                 status=HealthStatus.UNHEALTHY,
-                message=f"Health check failed: {str(e)}",
+                message=f"Health check failed: {e!s}",
                 duration_ms=duration_ms,
                 error=str(e),
             )
 
-    def get_provider_health(self, provider_name: str) -> Optional[ProviderHealth]:
+    def get_provider_health(self, provider_name: str) -> ProviderHealth | None:
         """Get health status for a specific provider."""
         return self.provider_health.get(provider_name)
 
-    def get_all_provider_health(self) -> Dict[str, ProviderHealth]:
+    def get_all_provider_health(self) -> dict[str, ProviderHealth]:
         """Get health status for all providers."""
         return self.provider_health.copy()
 
-    def get_health_summary(self) -> Dict[str, Any]:
+    def get_health_summary(self) -> dict[str, Any]:
         """Get a summary of all provider health statuses."""
         if not self.provider_health:
             return {
@@ -410,7 +410,7 @@ class LLMHealthChecker:
             "last_updated": datetime.now().isoformat(),
         }
 
-    def get_unhealthy_providers(self) -> List[str]:
+    def get_unhealthy_providers(self) -> list[str]:
         """Get list of unhealthy providers."""
         return [
             provider
@@ -418,7 +418,7 @@ class LLMHealthChecker:
             if health.status in [HealthStatus.UNHEALTHY, HealthStatus.UNKNOWN]
         ]
 
-    def get_degraded_providers(self) -> List[str]:
+    def get_degraded_providers(self) -> list[str]:
         """Get list of degraded providers."""
         return [
             provider
@@ -431,7 +431,7 @@ class LLMHealthChecker:
         health = self.provider_health.get(provider_name)
         return health is not None and health.status == HealthStatus.HEALTHY
 
-    def get_provider_issues(self, provider_name: str) -> List[str]:
+    def get_provider_issues(self, provider_name: str) -> list[str]:
         """Get issues for a specific provider."""
         health = self.provider_health.get(provider_name)
         return health.issues if health else []
@@ -456,12 +456,12 @@ class CircuitBreakerHealthChecker(LLMHealthChecker):
             recovery_timeout: Time in seconds before attempting recovery
         """
         super().__init__(provider_factory, *args, **kwargs)
-        self.failure_counts: Dict[str, int] = {}
-        self.circuit_states: Dict[str, str] = {}  # closed, open, half-open
+        self.failure_counts: dict[str, int] = {}
+        self.circuit_states: dict[str, str] = {}  # closed, open, half-open
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
-        self.last_failure_times: Dict[str, float] = {}
-        self.last_success_times: Dict[str, float] = {}
+        self.last_failure_times: dict[str, float] = {}
+        self.last_success_times: dict[str, float] = {}
 
     async def check_provider_health(self, provider_name: str) -> ProviderHealth:
         """Check health with circuit breaker logic."""
@@ -542,7 +542,7 @@ class CircuitBreakerHealthChecker(LLMHealthChecker):
                 provider=provider_name,
                 status=HealthStatus.UNHEALTHY,
                 last_check=datetime.now(),
-                issues=[f"Health check failed: {str(e)}"],
+                issues=[f"Health check failed: {e!s}"],
                 avg_response_time_ms=0.0,
             )
 
@@ -554,7 +554,7 @@ class CircuitBreakerHealthChecker(LLMHealthChecker):
         logger.debug(f"Health check success for {provider_name}, circuit closed")
 
     def _on_failure(
-        self, provider_name: str, current_time: float, issues: List[str]
+        self, provider_name: str, current_time: float, issues: list[str]
     ) -> None:
         """Handle failed health check."""
         self.failure_counts[provider_name] = (
@@ -574,7 +574,7 @@ class CircuitBreakerHealthChecker(LLMHealthChecker):
                 f"({self.failure_counts[provider_name]}/{self.failure_threshold})"
             )
 
-    def get_circuit_breaker_state(self, provider_name: str) -> Dict[str, Any]:
+    def get_circuit_breaker_state(self, provider_name: str) -> dict[str, Any]:
         """Get circuit breaker state for a provider."""
         current_time = time.time()
 
@@ -598,7 +598,7 @@ class CircuitBreakerHealthChecker(LLMHealthChecker):
             "recovery_timeout": self.recovery_timeout,
         }
 
-    def get_all_circuit_breaker_states(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_circuit_breaker_states(self) -> dict[str, dict[str, Any]]:
         """Get circuit breaker states for all providers."""
         return {
             provider: self.get_circuit_breaker_state(provider)
@@ -617,7 +617,7 @@ class CircuitBreakerHealthChecker(LLMHealthChecker):
         """Check if circuit breaker is open for a provider."""
         return self.circuit_states.get(provider_name) == "open"
 
-    def get_healthy_providers(self) -> List[str]:
+    def get_healthy_providers(self) -> list[str]:
         """Get list of providers with closed circuit breakers."""
         return [
             provider

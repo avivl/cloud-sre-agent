@@ -1,18 +1,19 @@
 """Retry handler implementation for fault tolerance."""
 
-import random
-import time
-import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+import random
+import threading
+import time
+from typing import Any
 
-from .exceptions import RetryError, MaxRetriesExceededError
+from .exceptions import MaxRetriesExceededError
 
 
 class RetryStrategy(Enum):
     """Retry strategies."""
-    
+
     FIXED = "fixed"
     EXPONENTIAL = "exponential"
     LINEAR = "linear"
@@ -37,7 +38,7 @@ class RetryConfig:
         ignored_exception: Exception types that should not trigger retry
         name: Name of the retry handler
     """
-    
+
     max_attempts: int = 3
     backoff_strategy: RetryStrategy = RetryStrategy.EXPONENTIAL
     base_delay: float = 1.0
@@ -46,9 +47,9 @@ class RetryConfig:
     jitter_range: float = 0.1
     exponential_base: float = 2.0
     linear_increment: float = 1.0
-    custom_delays: List[float] = field(default_factory=list)
-    expected_exception: Union[Type[Exception], tuple[Type[Exception], ...]] = Exception
-    ignored_exception: Union[Type[Exception], tuple[Type[Exception], ...]] = ()
+    custom_delays: list[float] = field(default_factory=list)
+    expected_exception: type[Exception] | tuple[type[Exception], ...] = Exception
+    ignored_exception: type[Exception] | tuple[type[Exception], ...] = ()
     name: str = "default"
 
 
@@ -58,8 +59,8 @@ class RetryHandler:
     Provides configurable retry logic with various backoff strategies
     and exception handling.
     """
-    
-    def __init__(self, config: Optional[RetryConfig] = None):
+
+    def __init__(self, config: RetryConfig | None = None):
         """Initialize the retry handler.
         
         Args:
@@ -68,9 +69,9 @@ class RetryHandler:
         self._config = config or RetryConfig()
         self._lock = threading.RLock()
         self._attempt_count = 0
-        self._retry_history: List[Dict[str, Any]] = []
+        self._retry_history: list[dict[str, Any]] = []
         self._max_history = 100
-    
+
     def execute(self, func: Callable[..., Any], *args, **kwargs) -> Any:
         """Execute a function with retry logic.
         
@@ -89,43 +90,43 @@ class RetryHandler:
         with self._lock:
             self._attempt_count = 0
             last_exception = None
-            
+
             while self._attempt_count < self._config.max_attempts:
                 self._attempt_count += 1
-                
+
                 try:
                     result = func(*args, **kwargs)
                     self._record_attempt(True, None)
                     return result
-                    
+
                 except Exception as e:
                     last_exception = e
                     self._record_attempt(False, str(e))
-                    
+
                     # Check if exception should be ignored
                     if isinstance(e, self._config.ignored_exception):
                         raise
-                    
+
                     # Check if exception is expected for retry
                     if not isinstance(e, self._config.expected_exception):
                         raise
-                    
+
                     # If this was the last attempt, raise the exception
                     if self._attempt_count >= self._config.max_attempts:
                         break
-                    
+
                     # Calculate delay and wait
                     delay = self._calculate_delay()
                     if delay > 0:
                         time.sleep(delay)
-            
+
             # All retries exhausted
             raise MaxRetriesExceededError(
                 self._config.max_attempts,
                 last_exception,
                 {"attempts": self._attempt_count}
             )
-    
+
     def _calculate_delay(self) -> float:
         """Calculate delay for next retry attempt.
         
@@ -134,17 +135,17 @@ class RetryHandler:
         """
         if self._config.backoff_strategy == RetryStrategy.FIXED:
             delay = self._config.base_delay
-            
+
         elif self._config.backoff_strategy == RetryStrategy.EXPONENTIAL:
             delay = self._config.base_delay * (
                 self._config.exponential_base ** (self._attempt_count - 1)
             )
-            
+
         elif self._config.backoff_strategy == RetryStrategy.LINEAR:
             delay = self._config.base_delay + (
                 self._config.linear_increment * (self._attempt_count - 1)
             )
-            
+
         elif self._config.backoff_strategy == RetryStrategy.CUSTOM:
             if self._attempt_count - 1 < len(self._config.custom_delays):
                 delay = self._config.custom_delays[self._attempt_count - 1]
@@ -152,19 +153,19 @@ class RetryHandler:
                 delay = self._config.base_delay
         else:
             delay = self._config.base_delay
-        
+
         # Apply maximum delay limit
         delay = min(delay, self._config.max_delay)
-        
+
         # Apply jitter if enabled
         if self._config.jitter and delay > 0:
             jitter_amount = delay * self._config.jitter_range
             jitter = random.uniform(-jitter_amount, jitter_amount)
             delay = max(0, delay + jitter)
-        
+
         return delay
-    
-    def _record_attempt(self, success: bool, error: Optional[str]) -> None:
+
+    def _record_attempt(self, success: bool, error: str | None) -> None:
         """Record a retry attempt in the history.
         
         Args:
@@ -176,16 +177,20 @@ class RetryHandler:
             "attempt": self._attempt_count,
             "success": success,
             "error": error,
-            "delay": self._calculate_delay() if not success and self._attempt_count < self._config.max_attempts else 0.0
+            "delay": (
+                self._calculate_delay() 
+                if not success and self._attempt_count < self._config.max_attempts 
+                else 0.0
+            )
         }
-        
+
         self._retry_history.append(attempt_record)
-        
+
         # Trim history if needed
         if len(self._retry_history) > self._max_history:
             self._retry_history = self._retry_history[-self._max_history:]
-    
-    def get_stats(self) -> Dict[str, Any]:
+
+    def get_stats(self) -> dict[str, Any]:
         """Get retry handler statistics.
         
         Returns:
@@ -195,13 +200,16 @@ class RetryHandler:
             total_attempts = len(self._retry_history)
             successful_attempts = sum(1 for attempt in self._retry_history if attempt["success"])
             failed_attempts = total_attempts - successful_attempts
-            
-            success_rate = (successful_attempts / total_attempts * 100) if total_attempts > 0 else 0.0
-            
+
+            success_rate = (
+                (successful_attempts / total_attempts * 100) 
+                if total_attempts > 0 else 0.0
+            )
+
             # Calculate average delay
             delays = [attempt["delay"] for attempt in self._retry_history if attempt["delay"] > 0]
             avg_delay = sum(delays) / len(delays) if delays else 0.0
-            
+
             return {
                 "name": self._config.name,
                 "total_attempts": total_attempts,
@@ -217,8 +225,8 @@ class RetryHandler:
                     "jitter": self._config.jitter
                 }
             }
-    
-    def get_retry_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+
+    def get_retry_history(self, limit: int | None = None) -> list[dict[str, Any]]:
         """Get retry history.
         
         Args:
@@ -231,7 +239,7 @@ class RetryHandler:
             if limit is None:
                 return self._retry_history.copy()
             return self._retry_history[-limit:]
-    
+
     def reset(self) -> None:
         """Reset the retry handler.
         
@@ -240,7 +248,7 @@ class RetryHandler:
         with self._lock:
             self._attempt_count = 0
             self._retry_history.clear()
-    
+
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """Make retry handler callable as a decorator.
         
@@ -252,9 +260,9 @@ class RetryHandler:
         """
         def wrapper(*args, **kwargs):
             return self.execute(func, *args, **kwargs)
-        
+
         return wrapper
-    
+
     def __enter__(self):
         """Context manager entry.
         
@@ -262,7 +270,7 @@ class RetryHandler:
             Self
         """
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit.
         

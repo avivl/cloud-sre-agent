@@ -8,15 +8,15 @@ and statistical analysis for the enhanced code generation agent.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 
 class EnhancedCodeGenerationLearning:
     """Handles learning data management and statistics for code generation"""
 
     def __init__(self) -> None:
-        self.generation_history: List[Dict[str, Any]] = []
-        self.learning_data: Dict[str, Any] = {}
+        self.generation_history: list[dict[str, Any]] = []
+        self.learning_data: dict[str, Any] = {}
 
     def record_generation_history(
         self, issue_context, code_generation_result, start_time: float
@@ -62,7 +62,9 @@ class EnhancedCodeGenerationLearning:
         if len(self.generation_history) > 1000:
             self.generation_history = self.generation_history[-1000:]
 
-    def update_learning_data(self, issue_context: str, code_generation_result: str) -> None:
+    def update_learning_data(
+        self, issue_context: str, code_generation_result: str
+    ) -> None:
         """Update learning data based on generation results"""
         domain = issue_context.issue_type.value.split("_")[0]
 
@@ -137,7 +139,7 @@ class EnhancedCodeGenerationLearning:
                 domain_data["failed_patterns"][pattern_key] = 0
             domain_data["failed_patterns"][pattern_key] += 1
 
-    def get_generation_statistics(self) -> Dict[str, Any]:
+    def get_generation_statistics(self) -> dict[str, Any]:
         """Get statistics about code generation performance"""
         if not self.generation_history:
             return {"message": "No generation history available"}
@@ -195,7 +197,7 @@ class EnhancedCodeGenerationLearning:
         self.learning_data = {}
         self.generation_history = []
 
-    def get_learning_insights(self) -> Dict[str, Any]:
+    def get_learning_insights(self) -> dict[str, Any]:
         """Get insights from learning data to improve generation"""
         insights = {
             "improvement_areas": [],
@@ -242,7 +244,7 @@ class EnhancedCodeGenerationLearning:
 
         return insights
 
-    def get_feedback_for_generator(self, generator_type: str) -> Dict[str, Any]:
+    def get_feedback_for_generator(self, generator_type: str) -> dict[str, Any]:
         """Get specific feedback for a generator type"""
         domain = (
             generator_type.split("_")[0] if "_" in generator_type else generator_type
@@ -272,8 +274,8 @@ class EnhancedCodeGenerationLearning:
         }
 
     def _generate_domain_recommendations(
-        self, domain: str, data: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, domain: str, data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate specific recommendations for a domain"""
         recommendations = []
 
@@ -322,7 +324,7 @@ class EnhancedCodeGenerationLearning:
 
         return recommendations
 
-    def export_learning_data(self, generator_info: Dict[str, Any]) -> Dict[str, Any]:
+    def export_learning_data(self, generator_info: dict[str, Any]) -> dict[str, Any]:
         """Export learning data for external analysis"""
         return {
             "learning_data": self.learning_data,

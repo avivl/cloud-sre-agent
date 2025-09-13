@@ -8,7 +8,6 @@ reporting performance metrics from benchmark runs.
 """
 
 import statistics
-from typing import Dict, List, Optional
 
 from .benchmark_models import (
     BenchmarkResult,
@@ -24,13 +23,13 @@ class MetricsCollector:
 
     def __init__(self) -> None:
         """Initialize metrics collector."""
-        self.results: List[BenchmarkResult] = []
+        self.results: list[BenchmarkResult] = []
 
     def add_result(self, result: BenchmarkResult) -> None:
         """Add a benchmark result to the collection."""
         self.results.append(result)
 
-    def calculate_latency_metrics(self, latencies: List[float]) -> LatencyMetrics:
+    def calculate_latency_metrics(self, latencies: list[float]) -> LatencyMetrics:
         """Calculate latency statistics from a list of latency measurements."""
         if not latencies:
             return LatencyMetrics(
@@ -86,8 +85,8 @@ class MetricsCollector:
         self,
         memory_usage_mb: float,
         cpu_usage_percent: float,
-        peak_memory_mb: Optional[float] = None,
-        avg_cpu_percent: Optional[float] = None,
+        peak_memory_mb: float | None = None,
+        avg_cpu_percent: float | None = None,
     ) -> ResourceMetrics:
         """Calculate resource usage metrics."""
         return ResourceMetrics(
@@ -119,7 +118,7 @@ class MetricsCollector:
         test_name: str,
         provider: str,
         model: str,
-        latencies: List[float],
+        latencies: list[float],
         total_requests: int,
         successful_requests: int,
         total_duration_ms: float,
@@ -127,8 +126,8 @@ class MetricsCollector:
         cpu_usage_percent: float,
         cost_per_request: float = 0.0,
         total_cost: float = 0.0,
-        errors: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        errors: list[str] | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> BenchmarkResult:
         """Create a complete benchmark result from collected metrics."""
         latency_metrics = self.calculate_latency_metrics(latencies)
@@ -160,7 +159,7 @@ class MetricsCollector:
             metadata=metadata or {},
         )
 
-    def get_summary_stats(self) -> Dict[str, float]:
+    def get_summary_stats(self) -> dict[str, float]:
         """Get summary statistics across all collected results."""
         if not self.results:
             return {}
@@ -186,18 +185,18 @@ class MetricsCollector:
             "max_success_rate": max(all_success_rates),
         }
 
-    def get_results_by_provider(self) -> Dict[str, List[BenchmarkResult]]:
+    def get_results_by_provider(self) -> dict[str, list[BenchmarkResult]]:
         """Group results by provider."""
-        by_provider: Dict[str, List[BenchmarkResult]] = {}
+        by_provider: dict[str, list[BenchmarkResult]] = {}
         for result in self.results:
             if result.provider not in by_provider:
                 by_provider[result.provider] = []
             by_provider[result.provider].append(result)
         return by_provider
 
-    def get_results_by_model(self) -> Dict[str, List[BenchmarkResult]]:
+    def get_results_by_model(self) -> dict[str, list[BenchmarkResult]]:
         """Group results by model."""
-        by_model: Dict[str, List[BenchmarkResult]] = {}
+        by_model: dict[str, list[BenchmarkResult]] = {}
         for result in self.results:
             if result.model not in by_model:
                 by_model[result.model] = []

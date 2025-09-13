@@ -1,6 +1,5 @@
 # gemini_sre_agent/ml/code_generator_factory.py
 
-from typing import Dict, List, Optional
 
 from .base_code_generator import BaseCodeGenerator
 from .prompt_context_models import IssueType
@@ -10,7 +9,7 @@ class CodeGeneratorFactory:
     """Factory for creating specialized code generators"""
 
     def __init__(self) -> None:
-        self.generators: Dict[IssueType, BaseCodeGenerator] = {}
+        self.generators: dict[IssueType, BaseCodeGenerator] = {}
         self._initialize_generators()
 
     def _initialize_generators(self):
@@ -109,7 +108,7 @@ class CodeGeneratorFactory:
 
         return generator
 
-    def get_supported_issue_types(self) -> List[IssueType]:
+    def get_supported_issue_types(self) -> list[IssueType]:
         """Get list of supported issue types"""
         return list(self.generators.keys())
 
@@ -117,21 +116,23 @@ class CodeGeneratorFactory:
         """Check if an issue type is supported"""
         return issue_type in self.generators
 
-    def get_generator_info(self, issue_type: IssueType) -> Optional[Dict]:
+    def get_generator_info(self, issue_type: IssueType) -> dict | None:
         """Get information about a specific generator"""
         generator = self.generators.get(issue_type)
         if generator:
             return generator.get_generator_info()
         return None
 
-    def get_all_generators_info(self) -> Dict[IssueType, Dict]:
+    def get_all_generators_info(self) -> dict[IssueType, dict]:
         """Get information about all generators"""
         return {
             issue_type: generator.get_generator_info()
             for issue_type, generator in self.generators.items()
         }
 
-    def register_generator(self, issue_type: IssueType, generator: BaseCodeGenerator) -> None:
+    def register_generator(
+        self, issue_type: IssueType, generator: BaseCodeGenerator
+    ) -> None:
         """Register a new generator for an issue type"""
         self.generators[issue_type] = generator
 
@@ -146,14 +147,14 @@ class CodeGeneratorFactory:
         """Get the total number of registered generators"""
         return len(self.generators)
 
-    def get_generator_domains(self) -> List[str]:
+    def get_generator_domains(self) -> list[str]:
         """Get list of all generator domains"""
         domains = set()
         for generator in self.generators.values():
             domains.add(generator._get_domain())
         return list(domains)
 
-    def validate_generators(self) -> Dict[str, List[str]]:
+    def validate_generators(self) -> dict[str, list[str]]:
         """Validate all generators and return any issues found"""
         issues = {"errors": [], "warnings": []}
 
@@ -173,7 +174,7 @@ class CodeGeneratorFactory:
 
             except Exception as e:
                 issues["errors"].append(
-                    f"Generator for {issue_type.value} failed validation: {str(e)}"
+                    f"Generator for {issue_type.value} failed validation: {e!s}"
                 )
 
         return issues

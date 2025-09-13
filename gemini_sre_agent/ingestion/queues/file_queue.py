@@ -5,13 +5,12 @@ File-based queue system for persistent log buffering.
 """
 
 import asyncio
+from dataclasses import dataclass
+from datetime import UTC, datetime
 import json
 import logging
 import os
-from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
 
 from ..interfaces.core import LogEntry
 from .memory_queue import QueueConfig, QueueStats
@@ -36,7 +35,7 @@ class FileSystemQueue:
     def __init__(self, config: FileQueueConfig) -> None:
         self.config = config
         self.queue_dir = Path(config.queue_dir)
-        self.current_file: Optional[Path] = None
+        self.current_file: Path | None = None
         self.current_file_size = 0
         self._lock = asyncio.Lock()
         self._stats = QueueStats()
@@ -46,8 +45,8 @@ class FileSystemQueue:
         self.queue_dir.mkdir(parents=True, exist_ok=True)
 
         # Start background tasks
-        self._sync_task: Optional[asyncio.Task] = None
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._sync_task: asyncio.Task | None = None
+        self._cleanup_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Start the file queue and background tasks."""
@@ -119,7 +118,7 @@ class FileSystemQueue:
                 if self.current_file:
                     self.current_file_size = self.current_file.stat().st_size
                 self._stats.total_enqueued += 1
-                self._stats.last_enqueue_time = datetime.now(timezone.utc)
+                self._stats.last_enqueue_time = datetime.now(UTC)
 
                 return True
 
@@ -128,7 +127,7 @@ class FileSystemQueue:
             self._stats.dropped_count += 1
             return False
 
-    async def dequeue(self, max_items: Optional[int] = None) -> List[LogEntry]:
+    async def dequeue(self, max_items: int | None = None) -> list[LogEntry]:
         """
         Dequeue log entries from files.
 
@@ -169,14 +168,14 @@ class FileSystemQueue:
 
                 if entries:
                     self._stats.total_dequeued += len(entries)
-                    self._stats.last_dequeue_time = datetime.now(timezone.utc)
+                    self._stats.last_dequeue_time = datetime.now(UTC)
 
         except Exception as e:
             logger.error(f"Error dequeuing log entries: {e}")
 
         return entries
 
-    async def peek(self, count: int = 1) -> List[LogEntry]:
+    async def peek(self, count: int = 1) -> list[LogEntry]:
         """Peek at the next items without removing them."""
         # For file queue, this is expensive, so we'll just return empty
         # In a production system, you might want to implement a more efficient peek
@@ -232,7 +231,7 @@ class FileSystemQueue:
     async def _get_current_file(self) -> None:
         """Get or create the current queue file."""
         if not self.current_file or not self.current_file.exists():
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             self.current_file = self.queue_dir / f"queue_{timestamp}.jsonl"
             self.current_file_size = 0
 
@@ -248,12 +247,12 @@ class FileSystemQueue:
 
     async def _read_file_entries(
         self, file_path: Path, max_entries: int
-    ) -> List[LogEntry]:
+    ) -> list[LogEntry]:
         """Read log entries from a file."""
         entries = []
 
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 for line_num, line in enumerate(f):
                     if len(entries) >= max_entries:
                         break
@@ -307,7 +306,7 @@ class FileSystemQueue:
                 await asyncio.sleep(60.0)  # Cleanup every minute
 
                 # Remove processed files older than 1 hour
-                cutoff_time = datetime.now(timezone.utc).timestamp() - 3600
+                cutoff_time = datetime.now(UTC).timestamp() - 3600
 
                 for processed_file in self.queue_dir.glob("queue_*.processed"):
                     if processed_file.stat().st_mtime < cutoff_time:

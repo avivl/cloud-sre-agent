@@ -8,9 +8,9 @@ execution state, workflow context, and persistent data structures needed for
 multi-step agent operations.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Generic, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
@@ -85,13 +85,13 @@ class StateSnapshot(BaseModel, Generic[T]):
         default_factory=lambda: str(uuid4()), description="Unique state identifier"
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Snapshot timestamp",
     )
     state_type: str = Field(..., description="Type of state being captured")
     data: T = Field(..., description="State data")
     version: str = Field("1.0", description="State schema version")
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
 
@@ -109,14 +109,14 @@ class StateTransition(BaseModel):
     from_state: str = Field(..., description="Previous state")
     to_state: str = Field(..., description="New state")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Transition timestamp",
     )
-    reason: Optional[str] = Field(None, description="Reason for transition")
-    triggered_by: Optional[str] = Field(
+    reason: str | None = Field(None, description="Reason for transition")
+    triggered_by: str | None = Field(
         None, description="What triggered the transition"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Transition metadata"
     )
 
@@ -141,11 +141,11 @@ class AgentExecutionContext(BaseModel):
     )
     agent_id: str = Field(..., description="Agent identifier")
     agent_type: str = Field(..., description="Type of agent")
-    user_id: Optional[str] = Field(None, description="User identifier")
-    tenant_id: Optional[str] = Field(None, description="Tenant identifier")
+    user_id: str | None = Field(None, description="User identifier")
+    tenant_id: str | None = Field(None, description="Tenant identifier")
     environment: str = Field("production", description="Execution environment")
     priority: int = Field(1, ge=1, le=10, description="Execution priority")
-    timeout_seconds: Optional[int] = Field(None, description="Execution timeout")
+    timeout_seconds: int | None = Field(None, description="Execution timeout")
     retry_count: int = Field(0, ge=0, description="Number of retries attempted")
     max_retries: int = Field(3, ge=0, description="Maximum retries allowed")
 
@@ -154,19 +154,19 @@ class AgentExecutionMetrics(BaseModel):
     """Metrics for agent execution."""
 
     start_time: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Execution start time",
     )
-    end_time: Optional[datetime] = Field(None, description="Execution end time")
-    duration_ms: Optional[float] = Field(
+    end_time: datetime | None = Field(None, description="Execution end time")
+    duration_ms: float | None = Field(
         None, description="Execution duration in milliseconds"
     )
     tokens_used: int = Field(0, ge=0, description="Number of tokens used")
-    cost_usd: Optional[float] = Field(None, ge=0.0, description="Cost in USD")
-    memory_usage_mb: Optional[float] = Field(
+    cost_usd: float | None = Field(None, ge=0.0, description="Cost in USD")
+    memory_usage_mb: float | None = Field(
         None, ge=0.0, description="Memory usage in MB"
     )
-    cpu_usage_percent: Optional[float] = Field(
+    cpu_usage_percent: float | None = Field(
         None, ge=0.0, le=100.0, description="CPU usage percentage"
     )
     api_calls_made: int = Field(0, ge=0, description="Number of API calls made")
@@ -200,22 +200,22 @@ class AgentExecutionState(BaseModel):
     metrics: AgentExecutionMetrics = Field(
         default_factory=AgentExecutionMetrics, description="Execution metrics"
     )
-    state_history: List[StateTransition] = Field(
+    state_history: list[StateTransition] = Field(
         default_factory=list, description="History of state transitions"
     )
-    error_history: List[Dict[str, Any]] = Field(
+    error_history: list[dict[str, Any]] = Field(
         default_factory=list, description="History of errors encountered"
     )
-    warnings: List[str] = Field(default_factory=list, description="Current warnings")
-    data: Dict[str, Any] = Field(
+    warnings: list[str] = Field(default_factory=list, description="Current warnings")
+    data: dict[str, Any] = Field(
         default_factory=dict, description="Agent-specific data"
     )
     last_updated: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Last update timestamp",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp",
     )
 
@@ -224,7 +224,7 @@ class AgentExecutionState(BaseModel):
         json_encoders = {datetime: lambda v: v.isoformat()}
 
     def transition_to(
-        self, new_state: AgentState, reason: Optional[str] = None
+        self, new_state: AgentState, reason: str | None = None
     ) -> "AgentExecutionState":
         """Create a new state with transition to new_state."""
         transition = StateTransition(
@@ -245,11 +245,11 @@ class AgentExecutionState(BaseModel):
             error_history=self.error_history,
             warnings=self.warnings,
             data=self.data,
-            last_updated=datetime.now(timezone.utc),
+            last_updated=datetime.now(UTC),
             created_at=self.created_at,
         )
 
-    def add_error(self, error: Dict[str, Any]) -> "AgentExecutionState":
+    def add_error(self, error: dict[str, Any]) -> "AgentExecutionState":
         """Add an error to the state."""
         new_error_history = self.error_history + [error]
         return AgentExecutionState(
@@ -261,7 +261,7 @@ class AgentExecutionState(BaseModel):
             error_history=new_error_history,
             warnings=self.warnings,
             data=self.data,
-            last_updated=datetime.now(timezone.utc),
+            last_updated=datetime.now(UTC),
             created_at=self.created_at,
         )
 
@@ -277,7 +277,7 @@ class AgentExecutionState(BaseModel):
             error_history=self.error_history,
             warnings=new_warnings,
             data=self.data,
-            last_updated=datetime.now(timezone.utc),
+            last_updated=datetime.now(UTC),
             created_at=self.created_at,
         )
 
@@ -295,22 +295,22 @@ class WorkflowStep(BaseModel):
     )
     step_name: str = Field(..., description="Name of the step")
     step_type: str = Field(..., description="Type of step")
-    agent_id: Optional[str] = Field(None, description="Agent responsible for this step")
+    agent_id: str | None = Field(None, description="Agent responsible for this step")
     status: AgentState = Field(AgentState.IDLE, description="Step status")
-    input_data: Dict[str, Any] = Field(
+    input_data: dict[str, Any] = Field(
         default_factory=dict, description="Input data for the step"
     )
-    output_data: Dict[str, Any] = Field(
+    output_data: dict[str, Any] = Field(
         default_factory=dict, description="Output data from the step"
     )
-    dependencies: List[str] = Field(
+    dependencies: list[str] = Field(
         default_factory=list, description="Step IDs this step depends on"
     )
-    started_at: Optional[datetime] = Field(None, description="Step start time")
-    completed_at: Optional[datetime] = Field(None, description="Step completion time")
-    error_message: Optional[str] = Field(None, description="Error message if failed")
+    started_at: datetime | None = Field(None, description="Step start time")
+    completed_at: datetime | None = Field(None, description="Step completion time")
+    error_message: str | None = Field(None, description="Error message if failed")
     retry_count: int = Field(0, ge=0, description="Number of retries for this step")
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Step-specific metadata"
     )
 
@@ -329,33 +329,33 @@ class WorkflowContext(BaseModel):
     current_state: WorkflowState = Field(
         WorkflowState.CREATED, description="Current workflow state"
     )
-    steps: List[WorkflowStep] = Field(
+    steps: list[WorkflowStep] = Field(
         default_factory=list, description="Workflow steps"
     )
-    global_data: Dict[str, Any] = Field(
+    global_data: dict[str, Any] = Field(
         default_factory=dict, description="Global workflow data"
     )
-    variables: Dict[str, Any] = Field(
+    variables: dict[str, Any] = Field(
         default_factory=dict, description="Workflow variables"
     )
-    created_by: Optional[str] = Field(None, description="User who created the workflow")
+    created_by: str | None = Field(None, description="User who created the workflow")
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp",
     )
-    started_at: Optional[datetime] = Field(None, description="Workflow start time")
-    completed_at: Optional[datetime] = Field(
+    started_at: datetime | None = Field(None, description="Workflow start time")
+    completed_at: datetime | None = Field(
         None, description="Workflow completion time"
     )
     last_updated: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Last update timestamp",
     )
-    error_message: Optional[str] = Field(None, description="Error message if failed")
+    error_message: str | None = Field(None, description="Error message if failed")
     retry_count: int = Field(0, ge=0, description="Number of workflow retries")
     max_retries: int = Field(3, ge=0, description="Maximum workflow retries")
-    timeout_seconds: Optional[int] = Field(None, description="Workflow timeout")
-    metadata: Dict[str, Any] = Field(
+    timeout_seconds: int | None = Field(None, description="Workflow timeout")
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Workflow metadata"
     )
 
@@ -363,7 +363,7 @@ class WorkflowContext(BaseModel):
         json_encoders = {datetime: lambda v: v.isoformat()}
 
     def transition_to(
-        self, new_state: WorkflowState, reason: Optional[str] = None
+        self, new_state: WorkflowState, reason: str | None = None
     ) -> "WorkflowContext":
         """Create a new workflow context with transition to new_state."""
         return WorkflowContext(
@@ -378,7 +378,7 @@ class WorkflowContext(BaseModel):
             created_at=self.created_at,
             started_at=self.started_at,
             completed_at=self.completed_at,
-            last_updated=datetime.now(timezone.utc),
+            last_updated=datetime.now(UTC),
             error_message=self.error_message,
             retry_count=self.retry_count,
             max_retries=self.max_retries,
@@ -401,7 +401,7 @@ class WorkflowContext(BaseModel):
             created_at=self.created_at,
             started_at=self.started_at,
             completed_at=self.completed_at,
-            last_updated=datetime.now(timezone.utc),
+            last_updated=datetime.now(UTC),
             error_message=self.error_message,
             retry_count=self.retry_count,
             max_retries=self.max_retries,
@@ -409,7 +409,7 @@ class WorkflowContext(BaseModel):
             metadata=self.metadata,
         )
 
-    def update_step(self, step_id: str, updates: Dict[str, Any]) -> "WorkflowContext":
+    def update_step(self, step_id: str, updates: dict[str, Any]) -> "WorkflowContext":
         """Update a specific step in the workflow."""
         updated_steps = []
         for step in self.steps:
@@ -431,7 +431,7 @@ class WorkflowContext(BaseModel):
             created_at=self.created_at,
             started_at=self.started_at,
             completed_at=self.completed_at,
-            last_updated=datetime.now(timezone.utc),
+            last_updated=datetime.now(UTC),
             error_message=self.error_message,
             retry_count=self.retry_count,
             max_retries=self.max_retries,
@@ -453,27 +453,27 @@ class ConversationHistory(BaseModel):
         description="Unique conversation identifier",
     )
     agent_id: str = Field(..., description="Agent identifier")
-    user_id: Optional[str] = Field(None, description="User identifier")
-    messages: List[Dict[str, Any]] = Field(
+    user_id: str | None = Field(None, description="User identifier")
+    messages: list[dict[str, Any]] = Field(
         default_factory=list, description="Conversation messages"
     )
     started_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Conversation start time",
     )
-    last_message_at: Optional[datetime] = Field(
+    last_message_at: datetime | None = Field(
         None, description="Last message timestamp"
     )
     total_messages: int = Field(0, ge=0, description="Total number of messages")
     total_tokens: int = Field(0, ge=0, description="Total tokens used")
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Conversation metadata"
     )
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
 
-    def add_message(self, message: Dict[str, Any]) -> "ConversationHistory":
+    def add_message(self, message: dict[str, Any]) -> "ConversationHistory":
         """Add a message to the conversation history."""
         new_messages = self.messages + [message]
         return ConversationHistory(
@@ -482,7 +482,7 @@ class ConversationHistory(BaseModel):
             user_id=self.user_id,
             messages=new_messages,
             started_at=self.started_at,
-            last_message_at=datetime.now(timezone.utc),
+            last_message_at=datetime.now(UTC),
             total_messages=self.total_messages + 1,
             total_tokens=self.total_tokens + message.get("tokens", 0),
             metadata=self.metadata,
@@ -495,25 +495,25 @@ class PersistentAgentData(BaseModel):
     agent_id: str = Field(..., description="Agent identifier")
     agent_type: str = Field(..., description="Type of agent")
     data_type: str = Field(..., description="Type of persistent data")
-    data: Dict[str, Any] = Field(..., description="Persistent data")
+    data: dict[str, Any] = Field(..., description="Persistent data")
     version: str = Field("1.0", description="Data schema version")
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp",
     )
     last_updated: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Last update timestamp",
     )
-    expires_at: Optional[datetime] = Field(None, description="Expiration timestamp")
+    expires_at: datetime | None = Field(None, description="Expiration timestamp")
     access_count: int = Field(0, ge=0, description="Number of times accessed")
-    last_accessed: Optional[datetime] = Field(None, description="Last access timestamp")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Data metadata")
+    last_accessed: datetime | None = Field(None, description="Last access timestamp")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Data metadata")
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
 
-    def update_data(self, new_data: Dict[str, Any]) -> "PersistentAgentData":
+    def update_data(self, new_data: dict[str, Any]) -> "PersistentAgentData":
         """Update the persistent data."""
         return PersistentAgentData(
             agent_id=self.agent_id,
@@ -522,7 +522,7 @@ class PersistentAgentData(BaseModel):
             data=new_data,
             version=self.version,
             created_at=self.created_at,
-            last_updated=datetime.now(timezone.utc),
+            last_updated=datetime.now(UTC),
             expires_at=self.expires_at,
             access_count=self.access_count,
             last_accessed=self.last_accessed,
@@ -541,7 +541,7 @@ class PersistentAgentData(BaseModel):
             last_updated=self.last_updated,
             expires_at=self.expires_at,
             access_count=self.access_count + 1,
-            last_accessed=datetime.now(timezone.utc),
+            last_accessed=datetime.now(UTC),
             metadata=self.metadata,
         )
 
@@ -556,8 +556,8 @@ class StateManager(BaseModel):
 
     @staticmethod
     def validate_state_transition(
-        from_state: Union[AgentState, WorkflowState],
-        to_state: Union[AgentState, WorkflowState],
+        from_state: AgentState | WorkflowState,
+        to_state: AgentState | WorkflowState,
     ) -> bool:
         """Validate if a state transition is allowed."""
         # Define valid transitions
@@ -587,7 +587,7 @@ class StateManager(BaseModel):
 
     @staticmethod
     def create_state_snapshot(
-        state: Union[AgentExecutionState, WorkflowContext],
+        state: AgentExecutionState | WorkflowContext,
     ) -> StateSnapshot:
         """Create a snapshot of the current state."""
         if isinstance(state, AgentExecutionState):
@@ -608,7 +608,7 @@ class StateManager(BaseModel):
     @staticmethod
     def restore_state_from_snapshot(
         snapshot: StateSnapshot,
-    ) -> Union[AgentExecutionState, WorkflowContext]:
+    ) -> AgentExecutionState | WorkflowContext:
         """Restore state from a snapshot."""
         if snapshot.state_type == "agent_execution":
             return AgentExecutionState.model_validate(snapshot.data)

@@ -320,7 +320,9 @@ class TestEnhancedSpecializedAgents:
         assert call_args[1]["optimization_goal"] == OptimizationGoal.QUALITY
 
     @patch("gemini_sre_agent.agents.enhanced_specialized.EnhancedBaseAgent.__init__")
-    def test_enhanced_analysis_agent(self, mock_init: str, mock_llm_config: str) -> None:
+    def test_enhanced_analysis_agent(
+        self, mock_init: str, mock_llm_config: str
+    ) -> None:
         """Test EnhancedAnalysisAgent initialization."""
         mock_init.return_value = None
 
@@ -365,7 +367,9 @@ class TestEnhancedSpecializedAgents:
         assert call_args[1]["optimization_goal"] == OptimizationGoal.PERFORMANCE
 
     @patch("gemini_sre_agent.agents.enhanced_specialized.EnhancedBaseAgent.__init__")
-    def test_enhanced_remediation_agent(self, mock_init: str, mock_llm_config: str) -> None:
+    def test_enhanced_remediation_agent(
+        self, mock_init: str, mock_llm_config: str
+    ) -> None:
         """Test EnhancedRemediationAgent initialization."""
         mock_init.return_value = None
 
@@ -563,11 +567,11 @@ class TestAgentMigrationHelper:
         # Missing required attributes
 
         # Cast to proper type for testing
-        from typing import List, cast
+        from typing import cast
 
         from gemini_sre_agent.agents.base import BaseAgent
 
-        agents = cast(List[BaseAgent], [compatible_agent, incompatible_agent])
+        agents = cast("list[BaseAgent]", [compatible_agent, incompatible_agent])
 
         report = AgentMigrationHelper.generate_migration_report(agents, mock_llm_config)
 

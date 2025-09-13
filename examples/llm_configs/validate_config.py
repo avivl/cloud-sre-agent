@@ -14,9 +14,9 @@ Usage:
 import argparse
 import json
 import logging
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import sys
+from typing import Any
 
 import yaml
 
@@ -35,12 +35,12 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
-def load_config_file(config_path: Path) -> Dict[str, Any]:
+def load_config_file(config_path: Path) -> dict[str, Any]:
     """Load configuration from YAML or JSON file."""
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         if config_path.suffix.lower() in [".yaml", ".yml"]:
             return yaml.safe_load(f)
         elif config_path.suffix.lower() == ".json":
@@ -49,7 +49,7 @@ def load_config_file(config_path: Path) -> Dict[str, Any]:
             raise ValueError(f"Unsupported file format: {config_path.suffix}")
 
 
-def validate_config_structure(config_data: Dict[str, Any]) -> List[str]:
+def validate_config_structure(config_data: dict[str, Any]) -> list[str]:
     """Validate the basic structure of the configuration."""
     errors = []
 
@@ -91,7 +91,8 @@ def validate_config_structure(config_data: Dict[str, Any]) -> List[str]:
                         for model_name, model_config in models.items():
                             if not isinstance(model_config, dict):
                                 errors.append(
-                                    f"Model '{model_name}' in provider '{provider_name}' must be a dictionary"
+                                    f"Model '{model_name}' in provider '{provider_name}' "
+                                    f"must be a dictionary"
                                 )
                                 continue
 
@@ -104,7 +105,8 @@ def validate_config_structure(config_data: Dict[str, Any]) -> List[str]:
                             for field in required_model_fields:
                                 if field not in model_config:
                                     errors.append(
-                                        f"Model '{model_name}' in provider '{provider_name}' missing required field: {field}"
+                                        f"Model '{model_name}' in provider '{provider_name}' "
+                                        f"missing required field: {field}"
                                     )
 
     # Validate agents
@@ -131,7 +133,7 @@ def validate_config_structure(config_data: Dict[str, Any]) -> List[str]:
     return errors
 
 
-def validate_with_pydantic(config_data: Dict[str, Any]) -> List[str]:
+def validate_with_pydantic(config_data: dict[str, Any]) -> list[str]:
     """Validate configuration using Pydantic models."""
     errors = []
 
@@ -149,7 +151,8 @@ def validate_with_pydantic(config_data: Dict[str, Any]) -> List[str]:
         for agent_name, agent_config in config.agents.items():
             if agent_config.primary_provider not in config.providers:
                 errors.append(
-                    f"Agent '{agent_name}' primary provider '{agent_config.primary_provider}' not found in providers"
+                    f"Agent '{agent_name}' primary provider "
+                    f"'{agent_config.primary_provider}' not found in providers"
                 )
 
             # Check if fallback_providers attribute exists and is not None
@@ -158,16 +161,17 @@ def validate_with_pydantic(config_data: Dict[str, Any]) -> List[str]:
                 for fallback_provider in fallback_providers:
                     if fallback_provider not in config.providers:
                         errors.append(
-                            f"Agent '{agent_name}' fallback provider '{fallback_provider}' not found in providers"
+                            f"Agent '{agent_name}' fallback provider "
+                            f"'{fallback_provider}' not found in providers"
                         )
 
     except Exception as e:
-        errors.append(f"Pydantic validation error: {str(e)}")
+        errors.append(f"Pydantic validation error: {e!s}")
 
     return errors
 
 
-def test_provider_connections(config: LLMConfig) -> Dict[str, Any]:
+def test_provider_connections(config: LLMConfig) -> dict[str, Any]:
     """Test connections to all configured providers."""
     results = {}
 
@@ -190,7 +194,7 @@ def test_provider_connections(config: LLMConfig) -> Dict[str, Any]:
         except Exception as e:
             results[provider_name] = {
                 "status": "error",
-                "message": f"Connection test failed: {str(e)}",
+                "message": f"Connection test failed: {e!s}",
                 "capabilities": None,
             }
 
@@ -198,7 +202,7 @@ def test_provider_connections(config: LLMConfig) -> Dict[str, Any]:
 
 
 def print_validation_results(
-    errors: List[str], warnings: Optional[List[str]] = None
+    errors: list[str], warnings: list[str] | None = None
 ) -> None:
     """Print validation results in a formatted way."""
     if warnings is None:
@@ -219,7 +223,7 @@ def print_validation_results(
             print(f"  • {warning}")
 
 
-def print_provider_test_results(results: Dict[str, Any]) -> None:
+def print_provider_test_results(results: dict[str, Any]) -> None:
     """Print provider connection test results."""
     print("\n🔌 Provider Connection Tests:")
 
@@ -303,8 +307,8 @@ def main() -> None:
         sys.exit(1 if all_errors else 0)
 
     except Exception as e:
-        logger.error(f"Validation failed: {str(e)}")
-        print(f"❌ Validation failed: {str(e)}")
+        logger.error(f"Validation failed: {e!s}")
+        print(f"❌ Validation failed: {e!s}")
         sys.exit(1)
 
 

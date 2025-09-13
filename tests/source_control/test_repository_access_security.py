@@ -4,12 +4,12 @@
 Security tests for repository access permissions and controls.
 """
 
-import os
 from datetime import datetime
+import os
 from unittest.mock import MagicMock, patch
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from gemini_sre_agent.config.source_control_credentials import CredentialConfig
 from gemini_sre_agent.config.source_control_repositories import GitHubRepositoryConfig
@@ -52,7 +52,9 @@ class TestRepositoryAccessSecurity:
         assert protected_branch.is_protected is True
         assert unprotected_branch.is_protected is False
 
-    def test_repository_access_permission_validation(self, mock_github_provider: str) -> None:
+    def test_repository_access_permission_validation(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access permissions are properly validated."""
         # Mock repository info with access permissions
         repo_info = RepositoryInfo(
@@ -73,7 +75,9 @@ class TestRepositoryAccessSecurity:
         assert repo_info.additional_info["permissions"]["push"] is True
         assert repo_info.additional_info["permissions"]["pull"] is True
 
-    def test_credential_validation_for_repository_access(self, mock_github_provider: str) -> None:
+    def test_credential_validation_for_repository_access(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that credentials are properly validated for repository access."""
         with patch.dict("os.environ", {"GITHUB_TOKEN": "valid_token"}):
             credentials = CredentialConfig(token_env="GITHUB_TOKEN")
@@ -90,7 +94,9 @@ class TestRepositoryAccessSecurity:
                 ):
                     CredentialConfig()
 
-    def test_repository_url_security_validation(self, mock_github_provider: str) -> None:
+    def test_repository_url_security_validation(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository URLs are properly validated for security."""
         # Test valid GitHub URLs
         valid_urls = [
@@ -132,7 +138,9 @@ class TestRepositoryAccessSecurity:
         assert branch_access["develop"]["required_status_checks"] is True
         assert branch_access["develop"]["enforce_admins"] is False
 
-    def test_code_review_requirement_validation(self, mock_github_provider: str) -> None:
+    def test_code_review_requirement_validation(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that code review requirements are properly validated."""
         # Mock code review requirements
         review_requirements = {
@@ -206,7 +214,9 @@ class TestRepositoryAccessSecurity:
             with pytest.raises(Exception, match="Access denied"):
                 await mock_github_provider.test_connection()
 
-    def test_repository_access_timeout_handling(self, mock_github_provider: str) -> None:
+    def test_repository_access_timeout_handling(
+        self, mock_github_provider: str
+    ) -> None:
         """Test timeout handling for repository access."""
         # Test that access operations have proper timeout handling
         import time
@@ -247,7 +257,9 @@ class TestRepositoryAccessSecurity:
             assert result is True
             assert retry_count == 3
 
-    def test_repository_access_compression_security(self, mock_github_provider: str) -> None:
+    def test_repository_access_compression_security(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access doesn't expose sensitive data through compression."""
         # Test that access data is not exposed in compressed form
         access_data = "sensitive_repository_data"
@@ -257,7 +269,9 @@ class TestRepositoryAccessSecurity:
         compressed = zlib.compress(access_data.encode())
         assert b"sensitive_repository_data" not in compressed
 
-    def test_repository_access_encryption_validation(self, mock_github_provider: str) -> None:
+    def test_repository_access_encryption_validation(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access uses proper encryption."""
         # Test that access operations use encrypted connections
         with patch.dict("os.environ", {"GITHUB_TOKEN": "encrypted_token"}):
@@ -267,7 +281,9 @@ class TestRepositoryAccessSecurity:
             assert token == "encrypted_token"
             # In a real implementation, this would be used with encryption
 
-    def test_repository_access_authentication_validation(self, mock_github_provider: str) -> None:
+    def test_repository_access_authentication_validation(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access uses proper authentication."""
         # Test that access operations use proper authentication
         with patch.dict("os.environ", {"GITHUB_TOKEN": "auth_token"}):
@@ -277,7 +293,9 @@ class TestRepositoryAccessSecurity:
             assert token == "auth_token"
             # In a real implementation, this would be used with authentication
 
-    def test_repository_access_permission_escalation(self, mock_github_provider: str) -> None:
+    def test_repository_access_permission_escalation(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access doesn't allow permission escalation."""
         # Test that access permissions are properly enforced
         repo_info = RepositoryInfo(
@@ -317,7 +335,9 @@ class TestRepositoryAccessSecurity:
         assert access_log["action"] == "repository_access"
         assert access_log["success"] is True
 
-    def test_repository_access_security_headers(self, mock_github_provider: str) -> None:
+    def test_repository_access_security_headers(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access uses proper security headers."""
         # Test that security headers are properly set
         security_headers = {
@@ -360,7 +380,9 @@ class TestRepositoryAccessSecurity:
         assert rate_limit["requests_per_minute"] == 100
         assert rate_limit["current_usage"] == 0
 
-    def test_repository_access_compression_security_final(self, mock_github_provider: str) -> None:
+    def test_repository_access_compression_security_final(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access doesn't expose sensitive data through compression."""
         # Test that access data is not exposed in compressed form
         access_data = "sensitive_repository_access_data"
@@ -370,7 +392,9 @@ class TestRepositoryAccessSecurity:
         compressed = gzip.compress(access_data.encode())
         assert b"sensitive_repository_access_data" not in compressed
 
-    def test_repository_access_encryption_validation_final(self, mock_github_provider: str) -> None:
+    def test_repository_access_encryption_validation_final(
+        self, mock_github_provider: str
+    ) -> None:
         """Test that repository access uses proper encryption."""
         # Test that access operations use encrypted connections
         with patch.dict("os.environ", {"GITHUB_TOKEN": "encrypted_access_token"}):

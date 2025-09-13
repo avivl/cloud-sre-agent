@@ -7,7 +7,6 @@ This example shows how to create a new provider with minimal code using the fram
 This provider can be implemented in less than 50 lines of code.
 """
 
-from typing import Dict
 
 from ...base import ModelType
 from ...config import LLMProviderConfig
@@ -26,14 +25,14 @@ class SimpleProvider(HTTPAPITemplate):
         """Override to set the default base URL for this provider."""
         return "https://api.simple-llm.com/v1"
 
-    def _get_model_mapping(self) -> Dict[ModelType, str]:
+    def _get_model_mapping(self) -> dict[ModelType, str]:
         """Define the model mapping for this provider."""
         return {
             ModelType.FAST: "simple-fast",
             ModelType.SMART: "simple-smart",
         }
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Override to use custom headers for this provider."""
         return {
             "Authorization": f"Bearer {self.api_key}",

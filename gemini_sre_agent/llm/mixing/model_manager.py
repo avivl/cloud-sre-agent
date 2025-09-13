@@ -8,11 +8,11 @@ configuration management, health monitoring, and circuit breaker patterns.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+import time
+from typing import Any
 
 from ..base import ModelType
 from ..constants import MAX_MODEL_CONFIGS
@@ -47,8 +47,8 @@ class ModelConfig:
     temperature: float = 0.7
     timeout: int = 30
     retry_attempts: int = 2
-    specialized_for: Optional[TaskType] = None
-    cost_limit: Optional[float] = None
+    specialized_for: TaskType | None = None
+    cost_limit: float | None = None
 
 
 @dataclass
@@ -60,7 +60,7 @@ class ModelHealth:
     is_healthy: bool
     last_check: float
     consecutive_failures: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
     response_time_avg: float = 0.0
     success_rate: float = 100.0
 
@@ -101,15 +101,15 @@ class ModelManager:
         self._semaphore = asyncio.Semaphore(max_concurrent_requests)
 
         # Model health tracking
-        self.model_health: Dict[str, ModelHealth] = {}
-        self.circuit_breakers: Dict[str, CircuitBreakerState] = {}
+        self.model_health: dict[str, ModelHealth] = {}
+        self.circuit_breakers: dict[str, CircuitBreakerState] = {}
 
         # Specialized model configurations
-        self.specialized_configs: Dict[TaskType, List[ModelConfig]] = {}
+        self.specialized_configs: dict[TaskType, list[ModelConfig]] = {}
         self._initialize_specialized_configs()
 
         # Performance tracking
-        self.performance_metrics: Dict[str, Dict[str, Any]] = {}
+        self.performance_metrics: dict[str, dict[str, Any]] = {}
 
         logger.info("ModelManager initialized with specialized configurations")
 
@@ -126,7 +126,7 @@ class ModelManager:
             TaskType.DATA_PROCESSING: self._create_data_processing_configs(),
         }
 
-    def _create_code_generation_configs(self) -> List[ModelConfig]:
+    def _create_code_generation_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for code generation tasks."""
         return [
             ModelConfig(
@@ -152,7 +152,7 @@ class ModelManager:
             ),
         ]
 
-    def _create_analysis_configs(self) -> List[ModelConfig]:
+    def _create_analysis_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for analysis tasks."""
         return [
             ModelConfig(
@@ -178,7 +178,7 @@ class ModelManager:
             ),
         ]
 
-    def _create_creative_writing_configs(self) -> List[ModelConfig]:
+    def _create_creative_writing_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for creative writing tasks."""
         return [
             ModelConfig(
@@ -207,7 +207,7 @@ class ModelManager:
             ),
         ]
 
-    def _create_translation_configs(self) -> List[ModelConfig]:
+    def _create_translation_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for translation tasks."""
         return [
             ModelConfig(
@@ -233,7 +233,7 @@ class ModelManager:
             ),
         ]
 
-    def _create_summarization_configs(self) -> List[ModelConfig]:
+    def _create_summarization_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for summarization tasks."""
         return [
             ModelConfig(
@@ -259,7 +259,7 @@ class ModelManager:
             ),
         ]
 
-    def _create_qa_configs(self) -> List[ModelConfig]:
+    def _create_qa_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for question answering tasks."""
         return [
             ModelConfig(
@@ -285,7 +285,7 @@ class ModelManager:
             ),
         ]
 
-    def _create_problem_solving_configs(self) -> List[ModelConfig]:
+    def _create_problem_solving_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for problem solving tasks."""
         return [
             ModelConfig(
@@ -311,7 +311,7 @@ class ModelManager:
             ),
         ]
 
-    def _create_data_processing_configs(self) -> List[ModelConfig]:
+    def _create_data_processing_configs(self) -> list[ModelConfig]:
         """Create specialized configurations for data processing tasks."""
         return [
             ModelConfig(
@@ -337,7 +337,7 @@ class ModelManager:
             ),
         ]
 
-    def get_specialized_configs(self, task_type: TaskType) -> List[ModelConfig]:
+    def get_specialized_configs(self, task_type: TaskType) -> list[ModelConfig]:
         """
         Get specialized model configurations for a task type.
 
@@ -350,8 +350,8 @@ class ModelManager:
         return self.specialized_configs.get(task_type, []).copy()
 
     def get_available_models(
-        self, task_type: Optional[TaskType] = None
-    ) -> List[ModelConfig]:
+        self, task_type: TaskType | None = None
+    ) -> list[ModelConfig]:
         """
         Get available model configurations.
 
@@ -371,7 +371,7 @@ class ModelManager:
 
         return all_configs
 
-    def validate_configs(self, configs: List[ModelConfig]) -> None:
+    def validate_configs(self, configs: list[ModelConfig]) -> None:
         """
         Validate model configuration list.
 
@@ -446,7 +446,7 @@ class ModelManager:
         model: str,
         success: bool,
         response_time: float,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """
         Update model health status.
@@ -555,8 +555,8 @@ class ModelManager:
             breaker.is_open = False
 
     def get_healthy_models(
-        self, task_type: Optional[TaskType] = None
-    ) -> List[ModelConfig]:
+        self, task_type: TaskType | None = None
+    ) -> list[ModelConfig]:
         """
         Get healthy model configurations.
 
@@ -583,7 +583,7 @@ class ModelManager:
 
         return healthy_configs
 
-    def get_performance_metrics(self, provider: str, model: str) -> Dict[str, Any]:
+    def get_performance_metrics(self, provider: str, model: str) -> dict[str, Any]:
         """
         Get performance metrics for a model.
 
@@ -651,7 +651,7 @@ class ModelManager:
         """
         return self._semaphore
 
-    def get_all_health_status(self) -> Dict[str, ModelHealth]:
+    def get_all_health_status(self) -> dict[str, ModelHealth]:
         """
         Get health status for all models.
 
@@ -660,7 +660,7 @@ class ModelManager:
         """
         return self.model_health.copy()
 
-    def get_all_circuit_breaker_status(self) -> Dict[str, CircuitBreakerState]:
+    def get_all_circuit_breaker_status(self) -> dict[str, CircuitBreakerState]:
         """
         Get circuit breaker status for all models.
 

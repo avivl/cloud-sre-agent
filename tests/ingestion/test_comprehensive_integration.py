@@ -5,8 +5,8 @@ Comprehensive integration tests for the log ingestion system.
 """
 
 import asyncio
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 

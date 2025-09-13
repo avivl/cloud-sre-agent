@@ -7,7 +7,6 @@ This module defines exceptions specific to LLM operations, including
 provider errors, model errors, and response processing errors.
 """
 
-from typing import Optional
 
 from .base import LLMError
 
@@ -65,7 +64,7 @@ class LLMRateLimitError(LLMProviderError):
     """
 
     def __init__(
-        self, message: str, retry_after: Optional[int] = None, **kwargs
+        self, message: str, retry_after: int | None = None, **kwargs
     ) -> None:
         """
         Initialize the rate limit error.

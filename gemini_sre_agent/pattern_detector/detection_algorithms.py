@@ -8,10 +8,10 @@ various patterns in system logs using Protocol-based interfaces and
 Generic typing for extensibility.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, List, Optional, Protocol, Set, TypeVar
+import logging
+from typing import Any, Generic, Protocol, TypeVar
 
 from .models import LogEntry, PatternMatch, PatternType, ThresholdResult, TimeWindow
 
@@ -29,7 +29,7 @@ class DetectionAlgorithmConfig:
     min_confidence: float = 0.3
     enabled: bool = True
     weight: float = 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -38,7 +38,7 @@ class CascadeFailureConfig(DetectionAlgorithmConfig):
 
     min_services: int = 2
     error_correlation_window_seconds: int = 300
-    severity_threshold: List[str] = field(default_factory=lambda: ["ERROR", "CRITICAL"])
+    severity_threshold: list[str] = field(default_factory=lambda: ["ERROR", "CRITICAL"])
 
 
 @dataclass
@@ -61,7 +61,7 @@ class TrafficSpikeConfig(DetectionAlgorithmConfig):
 class ConfigurationIssueConfig(DetectionAlgorithmConfig):
     """Configuration for configuration issue detection."""
 
-    config_keywords: List[str] = field(
+    config_keywords: list[str] = field(
         default_factory=lambda: [
             "config",
             "configuration",
@@ -77,7 +77,7 @@ class ConfigurationIssueConfig(DetectionAlgorithmConfig):
 class DependencyFailureConfig(DetectionAlgorithmConfig):
     """Configuration for dependency failure detection."""
 
-    dependency_keywords: List[str] = field(
+    dependency_keywords: list[str] = field(
         default_factory=lambda: [
             "timeout",
             "connection",
@@ -87,7 +87,7 @@ class DependencyFailureConfig(DetectionAlgorithmConfig):
             "network",
         ]
     )
-    external_service_indicators: List[str] = field(
+    external_service_indicators: list[str] = field(
         default_factory=lambda: ["api", "external", "third-party"]
     )
 
@@ -96,7 +96,7 @@ class DependencyFailureConfig(DetectionAlgorithmConfig):
 class ResourceExhaustionConfig(DetectionAlgorithmConfig):
     """Configuration for resource exhaustion detection."""
 
-    resource_keywords: List[str] = field(
+    resource_keywords: list[str] = field(
         default_factory=lambda: [
             "memory",
             "cpu",
@@ -107,7 +107,7 @@ class ResourceExhaustionConfig(DetectionAlgorithmConfig):
             "throttle",
         ]
     )
-    gradual_onset_indicators: List[str] = field(
+    gradual_onset_indicators: list[str] = field(
         default_factory=lambda: ["slow", "degraded", "performance"]
     )
 
@@ -118,9 +118,9 @@ class DetectionAlgorithm(Protocol[T]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[T]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[T]:
         """Detect patterns in the given data."""
         ...
 
@@ -137,9 +137,9 @@ class BaseDetectionAlgorithm(ABC, Generic[T]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[T]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[T]:
         """Detect patterns in the given data."""
         pass
 
@@ -155,7 +155,7 @@ class BaseDetectionAlgorithm(ABC, Generic[T]):
 class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects cascade failure patterns in system logs."""
 
-    def __init__(self, config: Optional[CascadeFailureConfig] = None) -> None:
+    def __init__(self, config: CascadeFailureConfig | None = None) -> None:
         """Initialize the cascade failure detector."""
         super().__init__(config or CascadeFailureConfig())
         self.cascade_config: CascadeFailureConfig = self.config  # type: ignore
@@ -163,9 +163,9 @@ class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[PatternMatch]:
         """Detect cascade failure patterns."""
         if not self.is_enabled():
             return []
@@ -243,8 +243,8 @@ class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     def _calculate_confidence(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
-        affected_services: Set[str],
+        logs: list[LogEntry],
+        affected_services: set[str],
     ) -> float:
         """Calculate confidence score for cascade failure detection."""
         if not logs or not affected_services:
@@ -266,7 +266,7 @@ class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return min(confidence, 1.0)
 
-    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+    def _determine_severity_level(self, logs: list[LogEntry]) -> str:
         """Determine severity level based on log entries."""
         if not logs:
             return "LOW"
@@ -289,7 +289,7 @@ class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
         else:
             return "LOW"
 
-    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+    def _identify_primary_service(self, logs: list[LogEntry]) -> str | None:
         """Identify the primary service causing the cascade failure."""
         if not logs:
             return None
@@ -309,7 +309,7 @@ class CascadeFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects service degradation patterns in system logs."""
 
-    def __init__(self, config: Optional[ServiceDegradationConfig] = None) -> None:
+    def __init__(self, config: ServiceDegradationConfig | None = None) -> None:
         """Initialize the service degradation detector."""
         super().__init__(config or ServiceDegradationConfig())
         self.degradation_config: ServiceDegradationConfig = self.config  # type: ignore
@@ -317,9 +317,9 @@ class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[PatternMatch]:
         """Detect service degradation patterns."""
         if not self.is_enabled():
             return []
@@ -396,7 +396,7 @@ class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
     def _calculate_confidence(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
+        logs: list[LogEntry],
         error_rate: float,
     ) -> float:
         """Calculate confidence score for service degradation detection."""
@@ -419,7 +419,7 @@ class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return min(confidence, 1.0)
 
-    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+    def _determine_severity_level(self, logs: list[LogEntry]) -> str:
         """Determine severity level based on log entries."""
         if not logs:
             return "LOW"
@@ -442,7 +442,7 @@ class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
         else:
             return "LOW"
 
-    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+    def _identify_primary_service(self, logs: list[LogEntry]) -> str | None:
         """Identify the primary service experiencing degradation."""
         if not logs:
             return None
@@ -462,7 +462,7 @@ class ServiceDegradationDetector(BaseDetectionAlgorithm[PatternMatch]):
 class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects traffic spike patterns in system logs."""
 
-    def __init__(self, config: Optional[TrafficSpikeConfig] = None) -> None:
+    def __init__(self, config: TrafficSpikeConfig | None = None) -> None:
         """Initialize the traffic spike detector."""
         super().__init__(config or TrafficSpikeConfig())
         self.spike_config = self.config
@@ -470,9 +470,9 @@ class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[PatternMatch]:
         """Detect traffic spike patterns."""
         if not self.is_enabled():
             return []
@@ -534,7 +534,7 @@ class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
     def _calculate_confidence(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
+        logs: list[LogEntry],
     ) -> float:
         """Calculate confidence score for traffic spike detection."""
         if not logs:
@@ -556,7 +556,7 @@ class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
     def _calculate_volume_increase(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
+        logs: list[LogEntry],
     ) -> float:
         """Calculate the volume increase factor."""
         # This is a simplified calculation
@@ -568,7 +568,7 @@ class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
         normal_rate = 100
         return logs_per_hour / normal_rate if normal_rate > 0 else 1.0
 
-    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+    def _determine_severity_level(self, logs: list[LogEntry]) -> str:
         """Determine severity level based on log entries."""
         if not logs:
             return "LOW"
@@ -584,7 +584,7 @@ class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
         else:
             return "LOW"
 
-    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+    def _identify_primary_service(self, logs: list[LogEntry]) -> str | None:
         """Identify the primary service experiencing traffic spike."""
         if not logs:
             return None
@@ -604,7 +604,7 @@ class TrafficSpikeDetector(BaseDetectionAlgorithm[PatternMatch]):
 class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects configuration issue patterns in system logs."""
 
-    def __init__(self, config: Optional[ConfigurationIssueConfig] = None) -> None:
+    def __init__(self, config: ConfigurationIssueConfig | None = None) -> None:
         """Initialize the configuration issue detector."""
         super().__init__(config or ConfigurationIssueConfig())
         self.config_issue_config: ConfigurationIssueConfig = self.config  # type: ignore
@@ -612,9 +612,9 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[PatternMatch]:
         """Detect configuration issue patterns."""
         if not self.is_enabled():
             return []
@@ -659,7 +659,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return patterns
 
-    def _filter_config_logs(self, logs: List[LogEntry]) -> List[LogEntry]:
+    def _filter_config_logs(self, logs: list[LogEntry]) -> list[LogEntry]:
         """Filter logs for configuration-related errors."""
         config_logs = []
 
@@ -676,7 +676,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
     def _calculate_confidence(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
+        logs: list[LogEntry],
     ) -> float:
         """Calculate confidence score for configuration issue detection."""
         if not logs:
@@ -708,7 +708,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return min(confidence, 1.0)
 
-    def _extract_keywords(self, logs: List[LogEntry]) -> List[str]:
+    def _extract_keywords(self, logs: list[LogEntry]) -> list[str]:
         """Extract configuration keywords found in logs."""
         found_keywords = set()
 
@@ -720,7 +720,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return list(found_keywords)
 
-    def _check_rapid_onset(self, logs: List[LogEntry], window: TimeWindow) -> bool:
+    def _check_rapid_onset(self, logs: list[LogEntry], window: TimeWindow) -> bool:
         """Check if configuration errors started rapidly."""
         if not logs:
             return False
@@ -736,7 +736,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
             time_since_start <= self.config_issue_config.rapid_onset_threshold_seconds
         )
 
-    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+    def _determine_severity_level(self, logs: list[LogEntry]) -> str:
         """Determine severity level based on log entries."""
         if not logs:
             return "LOW"
@@ -759,7 +759,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
         else:
             return "LOW"
 
-    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+    def _identify_primary_service(self, logs: list[LogEntry]) -> str | None:
         """Identify the primary service with configuration issues."""
         if not logs:
             return None
@@ -779,7 +779,7 @@ class ConfigurationIssueDetector(BaseDetectionAlgorithm[PatternMatch]):
 class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects dependency failure patterns in system logs."""
 
-    def __init__(self, config: Optional[DependencyFailureConfig] = None) -> None:
+    def __init__(self, config: DependencyFailureConfig | None = None) -> None:
         """Initialize the dependency failure detector."""
         super().__init__(config or DependencyFailureConfig())
         self.dependency_config: DependencyFailureConfig = self.config  # type: ignore
@@ -787,9 +787,9 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[PatternMatch]:
         """Detect dependency failure patterns."""
         if not self.is_enabled():
             return []
@@ -836,7 +836,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return patterns
 
-    def _filter_dependency_logs(self, logs: List[LogEntry]) -> List[LogEntry]:
+    def _filter_dependency_logs(self, logs: list[LogEntry]) -> list[LogEntry]:
         """Filter logs for dependency-related errors."""
         dependency_logs = []
 
@@ -853,7 +853,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
     def _calculate_confidence(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
+        logs: list[LogEntry],
     ) -> float:
         """Calculate confidence score for dependency failure detection."""
         if not logs:
@@ -884,7 +884,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return min(confidence, 1.0)
 
-    def _extract_keywords(self, logs: List[LogEntry]) -> List[str]:
+    def _extract_keywords(self, logs: list[LogEntry]) -> list[str]:
         """Extract dependency keywords found in logs."""
         found_keywords = set()
 
@@ -896,7 +896,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return list(found_keywords)
 
-    def _has_external_services(self, logs: List[LogEntry]) -> bool:
+    def _has_external_services(self, logs: list[LogEntry]) -> bool:
         """Check if logs mention external services."""
         for log in logs:
             log_message = (log.error_message or "").lower()
@@ -907,7 +907,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
                 return True
         return False
 
-    def _identify_external_services(self, logs: List[LogEntry]) -> List[str]:
+    def _identify_external_services(self, logs: list[LogEntry]) -> list[str]:
         """Identify external services mentioned in logs."""
         external_services = set()
 
@@ -919,7 +919,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return list(external_services)
 
-    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+    def _determine_severity_level(self, logs: list[LogEntry]) -> str:
         """Determine severity level based on log entries."""
         if not logs:
             return "LOW"
@@ -942,7 +942,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
         else:
             return "LOW"
 
-    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+    def _identify_primary_service(self, logs: list[LogEntry]) -> str | None:
         """Identify the primary service experiencing dependency failures."""
         if not logs:
             return None
@@ -962,7 +962,7 @@ class DependencyFailureDetector(BaseDetectionAlgorithm[PatternMatch]):
 class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
     """Detects resource exhaustion patterns in system logs."""
 
-    def __init__(self, config: Optional[ResourceExhaustionConfig] = None) -> None:
+    def __init__(self, config: ResourceExhaustionConfig | None = None) -> None:
         """Initialize the resource exhaustion detector."""
         super().__init__(config or ResourceExhaustionConfig())
         self.resource_config: ResourceExhaustionConfig = self.config  # type: ignore
@@ -970,9 +970,9 @@ class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
     def detect(
         self,
         window: TimeWindow,
-        threshold_results: List[ThresholdResult],
-        logs: List[LogEntry],
-    ) -> List[PatternMatch]:
+        threshold_results: list[ThresholdResult],
+        logs: list[LogEntry],
+    ) -> list[PatternMatch]:
         """Detect resource exhaustion patterns."""
         if not self.is_enabled():
             return []
@@ -1019,7 +1019,7 @@ class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return patterns
 
-    def _filter_resource_logs(self, logs: List[LogEntry]) -> List[LogEntry]:
+    def _filter_resource_logs(self, logs: list[LogEntry]) -> list[LogEntry]:
         """Filter logs for resource-related errors."""
         resource_logs = []
 
@@ -1036,7 +1036,7 @@ class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
     def _calculate_confidence(
         self,
         window: TimeWindow,
-        logs: List[LogEntry],
+        logs: list[LogEntry],
     ) -> float:
         """Calculate confidence score for resource exhaustion detection."""
         if not logs:
@@ -1067,7 +1067,7 @@ class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return min(confidence, 1.0)
 
-    def _extract_keywords(self, logs: List[LogEntry]) -> List[str]:
+    def _extract_keywords(self, logs: list[LogEntry]) -> list[str]:
         """Extract resource keywords found in logs."""
         found_keywords = set()
 
@@ -1079,7 +1079,7 @@ class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
 
         return list(found_keywords)
 
-    def _check_gradual_onset(self, logs: List[LogEntry], window: TimeWindow) -> bool:
+    def _check_gradual_onset(self, logs: list[LogEntry], window: TimeWindow) -> bool:
         """Check if resource errors started gradually."""
         if not logs:
             return False
@@ -1105,7 +1105,7 @@ class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
         quarter_counts = [len(quarter) for quarter in quarters]
         return quarter_counts[-1] > quarter_counts[0]
 
-    def _determine_severity_level(self, logs: List[LogEntry]) -> str:
+    def _determine_severity_level(self, logs: list[LogEntry]) -> str:
         """Determine severity level based on log entries."""
         if not logs:
             return "LOW"
@@ -1128,7 +1128,7 @@ class ResourceExhaustionDetector(BaseDetectionAlgorithm[PatternMatch]):
         else:
             return "LOW"
 
-    def _identify_primary_service(self, logs: List[LogEntry]) -> Optional[str]:
+    def _identify_primary_service(self, logs: list[LogEntry]) -> str | None:
         """Identify the primary service experiencing resource exhaustion."""
         if not logs:
             return None
@@ -1150,7 +1150,7 @@ class DetectionAlgorithmFactory:
 
     @staticmethod
     def create_algorithm(
-        algorithm_type: str, config: Optional[DetectionAlgorithmConfig] = None
+        algorithm_type: str, config: DetectionAlgorithmConfig | None = None
     ) -> BaseDetectionAlgorithm[PatternMatch]:
         """Create a detection algorithm instance."""
         algorithm_map = {
@@ -1182,7 +1182,7 @@ class DetectionAlgorithmFactory:
         return algorithm_class(config)
 
     @staticmethod
-    def get_available_algorithms() -> List[str]:
+    def get_available_algorithms() -> list[str]:
         """Get list of available algorithm types."""
         return [
             "cascade_failure",

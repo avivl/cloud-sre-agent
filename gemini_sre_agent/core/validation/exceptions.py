@@ -1,14 +1,16 @@
 """Exceptions for the configuration validation system."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ValidationError(Exception):
     """Base exception for validation errors."""
-    
-    def __init__(self, message: str, field: Optional[str] = None, value: Optional[Any] = None):
+
+    def __init__(
+        self, message: str, field: str | None = None, value: Any | None = None
+    ):
         """Initialize the validation error.
-        
+
         Args:
             message: Error message
             field: Field that caused the error
@@ -22,17 +24,17 @@ class ValidationError(Exception):
 
 class ValidationRuleError(ValidationError):
     """Raised when a validation rule fails."""
-    
+
     def __init__(
         self,
         rule_name: str,
         message: str,
-        field: Optional[str] = None,
-        value: Optional[Any] = None,
-        context: Optional[Dict[str, Any]] = None
+        field: str | None = None,
+        value: Any | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the validation rule error.
-        
+
         Args:
             rule_name: Name of the rule that failed
             message: Error message
@@ -47,16 +49,16 @@ class ValidationRuleError(ValidationError):
 
 class SchemaValidationError(ValidationError):
     """Raised when schema validation fails."""
-    
+
     def __init__(
         self,
         schema_name: str,
-        errors: List[Dict[str, Any]],
-        field: Optional[str] = None,
-        value: Optional[Any] = None
+        errors: list[dict[str, Any]],
+        field: str | None = None,
+        value: Any | None = None,
     ):
         """Initialize the schema validation error.
-        
+
         Args:
             schema_name: Name of the schema that failed
             errors: List of validation errors from Pydantic
@@ -70,16 +72,16 @@ class SchemaValidationError(ValidationError):
 
 class CrossFieldValidationError(ValidationError):
     """Raised when cross-field validation fails."""
-    
+
     def __init__(
         self,
-        fields: List[str],
+        fields: list[str],
         message: str,
-        values: Optional[Dict[str, Any]] = None,
-        context: Optional[Dict[str, Any]] = None
+        values: dict[str, Any] | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the cross-field validation error.
-        
+
         Args:
             fields: List of fields involved in the validation
             message: Error message
@@ -94,17 +96,17 @@ class CrossFieldValidationError(ValidationError):
 
 class EnvironmentValidationError(ValidationError):
     """Raised when environment-specific validation fails."""
-    
+
     def __init__(
         self,
         environment: str,
         message: str,
-        field: Optional[str] = None,
-        value: Optional[Any] = None,
-        required_for_env: Optional[List[str]] = None
+        field: str | None = None,
+        value: Any | None = None,
+        required_for_env: list[str] | None = None,
     ):
         """Initialize the environment validation error.
-        
+
         Args:
             environment: Environment that failed validation
             message: Error message
@@ -119,10 +121,10 @@ class EnvironmentValidationError(ValidationError):
 
 class ValidationTimeoutError(ValidationError):
     """Raised when validation times out."""
-    
-    def __init__(self, timeout_seconds: float, message: Optional[str] = None):
+
+    def __init__(self, timeout_seconds: float, message: str | None = None):
         """Initialize the validation timeout error.
-        
+
         Args:
             timeout_seconds: Timeout in seconds
             message: Optional custom error message
@@ -135,15 +137,15 @@ class ValidationTimeoutError(ValidationError):
 
 class ValidationDependencyError(ValidationError):
     """Raised when a validation dependency is missing."""
-    
+
     def __init__(
         self,
         dependency: str,
-        message: Optional[str] = None,
-        field: Optional[str] = None
+        message: str | None = None,
+        field: str | None = None,
     ):
         """Initialize the validation dependency error.
-        
+
         Args:
             dependency: Name of the missing dependency
             message: Optional custom error message
@@ -157,15 +159,15 @@ class ValidationDependencyError(ValidationError):
 
 class ValidationCacheError(ValidationError):
     """Raised when validation caching fails."""
-    
+
     def __init__(
         self,
         cache_key: str,
-        message: Optional[str] = None,
-        operation: Optional[str] = None
+        message: str | None = None,
+        operation: str | None = None,
     ):
         """Initialize the validation cache error.
-        
+
         Args:
             cache_key: Cache key that failed
             message: Optional custom error message

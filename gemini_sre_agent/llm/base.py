@@ -7,19 +7,19 @@ This module defines the abstract base classes, data models, and core
 functionality that all LLM providers must implement.
 """
 
-import asyncio
-import logging
-import time
 from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+import time
+from typing import Any
 
 from gemini_sre_agent.metrics import get_metrics_manager
 from gemini_sre_agent.metrics.enums import ErrorCategory
 
-from .common.enums import ModelType
 from .capabilities.models import ModelCapability
+from .common.enums import ModelType
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class LLMProviderError(Exception):
         self,
         message: str,
         severity: ErrorSeverity = ErrorSeverity.TRANSIENT,
-        retry_after: Optional[int] = None,
+        retry_after: int | None = None,
     ):
         super().__init__(message)
         self.severity = severity
@@ -51,15 +51,15 @@ class LLMProviderError(Exception):
 class LLMRequest:
     """Request model for LLM generation."""
 
-    prompt: Optional[str] = None
-    messages: Optional[List[Dict[str, str]]] = None
+    prompt: str | None = None
+    messages: list[dict[str, str]] | None = None
     temperature: float = 0.7
     max_tokens: int = 1000
     stream: bool = False
-    tools: Optional[List[Dict[str, Any]]] = None
-    provider_specific: Dict[str, Any] = field(default_factory=dict)
-    request_id: Optional[str] = None
-    model_type: Optional[ModelType] = None  # Semantic model selection
+    tools: list[dict[str, Any]] | None = None
+    provider_specific: dict[str, Any] = field(default_factory=dict)
+    request_id: str | None = None
+    model_type: ModelType | None = None  # Semantic model selection
 
 
 @dataclass
@@ -67,15 +67,15 @@ class LLMResponse:
     """Response model for LLM generation."""
 
     content: str
-    usage: Optional[Dict[str, int]] = None
-    finish_reason: Optional[str] = None
-    tool_calls: Optional[List[Dict[str, Any]]] = None
+    usage: dict[str, int] | None = None
+    finish_reason: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
     provider: str = ""
     model: str = ""
-    model_type: Optional[ModelType] = None
-    request_id: Optional[str] = None
-    latency_ms: Optional[float] = None
-    cost_usd: Optional[float] = None
+    model_type: ModelType | None = None
+    request_id: str | None = None
+    latency_ms: float | None = None
+    cost_usd: float | None = None
 
 
 class CircuitBreaker:
@@ -216,12 +216,12 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available models mapped to semantic types."""
         pass
 
     @abstractmethod
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings for the given text."""
         pass
 
@@ -242,7 +242,7 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
-    def get_custom_capabilities(self) -> List[ModelCapability]:
+    def get_custom_capabilities(self) -> list[ModelCapability]:
         """
         Get provider-specific custom capabilities.
 

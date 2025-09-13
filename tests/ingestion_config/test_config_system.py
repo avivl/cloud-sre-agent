@@ -7,8 +7,8 @@ functionality without requiring the full ingestion system to be implemented.
 """
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 from gemini_sre_agent.config.ingestion_config import (
     BufferStrategy,

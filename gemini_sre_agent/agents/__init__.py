@@ -18,7 +18,9 @@ from .enhanced_specialized import (
     EnhancedTriageAgent,
 )
 from .response_models import AnalysisResponse, CodeResponse, TextResponse
-from .specialized import AnalysisAgent, CodeAgent, TextAgent
+from .specialized.analysis_agent import AnalysisAgent
+from .specialized.code_agent import CodeAgent
+from .specialized.text_agent import TextAgent
 
 __all__ = [
     # Base agents

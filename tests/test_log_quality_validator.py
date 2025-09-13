@@ -6,7 +6,6 @@ noise detection, consistency checking, and duplicate analysis.
 """
 
 from datetime import datetime, timedelta
-from typing import List
 
 import pytest
 
@@ -45,7 +44,7 @@ class TestLogQualityValidator:
             span_id="span-456",
         )
 
-    def create_test_window(self, logs: List[LogEntry]) -> TimeWindow:
+    def create_test_window(self, logs: list[LogEntry]) -> TimeWindow:
         """Create a test time window with specified logs."""
         return TimeWindow(
             start_time=self.base_time,

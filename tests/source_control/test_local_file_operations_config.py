@@ -8,8 +8,8 @@ system to ensure proper error handling and configuration management.
 """
 
 import asyncio
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -70,13 +70,17 @@ class TestLocalFileOperationsConfig:
             config=default_config,
         )
 
-    def test_initialization_with_config(self, file_operations: str, default_config: str) -> None:
+    def test_initialization_with_config(
+        self, file_operations: str, default_config: str
+    ) -> None:
         """Test initialization with configuration."""
         assert file_operations.config == default_config
         assert file_operations.provider_type == "local"
         assert file_operations.operation_name == "file_operations"
 
-    def test_initialization_without_config(self, temp_dir: str, mock_logger: str) -> None:
+    def test_initialization_without_config(
+        self, temp_dir: str, mock_logger: str
+    ) -> None:
         """Test initialization without configuration (should create default)."""
         file_ops = LocalFileOperations(
             root_path=temp_dir,

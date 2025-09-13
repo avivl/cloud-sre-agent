@@ -6,8 +6,8 @@ Unit tests for OllamaProvider.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from pydantic import HttpUrl
+import pytest
 
 from gemini_sre_agent.llm.base import LLMRequest, LLMResponse, ModelType
 from gemini_sre_agent.llm.config import LLMProviderConfig

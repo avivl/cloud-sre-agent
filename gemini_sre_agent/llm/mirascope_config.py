@@ -7,12 +7,12 @@ This module provides configuration management for Mirascope integration,
 including provider settings, prompt templates, and integration parameters.
 """
 
-import json
-import logging
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -53,17 +53,17 @@ class ProviderConfig:
 
     provider_type: ProviderType
     api_key: str
-    base_url: Optional[str] = None
+    base_url: str | None = None
     model: str = "gpt-3.5-turbo"
     temperature: float = 0.7
     max_tokens: int = 1000
     timeout: int = 30
     retry_attempts: int = 3
     retry_delay: float = 1.0
-    custom_headers: Dict[str, str] = field(default_factory=dict)
-    additional_params: Dict[str, Any] = field(default_factory=dict)
+    custom_headers: dict[str, str] = field(default_factory=dict)
+    additional_params: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "provider_type": self.provider_type.value,
@@ -80,7 +80,7 @@ class ProviderConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ProviderConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "ProviderConfig":
         """Create from dictionary."""
         return cls(
             provider_type=ProviderType(data["provider_type"]),
@@ -103,19 +103,19 @@ class PromptTemplateConfig:
 
     template_id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     prompt_type: PromptType = PromptType.CHAT
     template: str = ""
-    variables: List[str] = field(default_factory=list)
-    validation_rules: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    variables: list[str] = field(default_factory=list)
+    validation_rules: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def validate_variables(self, provided_vars: Dict[str, Any]) -> bool:
+    def validate_variables(self, provided_vars: dict[str, Any]) -> bool:
         """Validate that all required variables are provided."""
         missing_vars = set(self.variables) - set(provided_vars.keys())
         return len(missing_vars) == 0
 
-    def get_missing_variables(self, provided_vars: Dict[str, Any]) -> List[str]:
+    def get_missing_variables(self, provided_vars: dict[str, Any]) -> list[str]:
         """Get list of missing required variables."""
         return list(set(self.variables) - set(provided_vars.keys()))
 
@@ -130,8 +130,8 @@ class MirascopeIntegrationConfig(BaseModel):
     cache_file: str = "cache.json"
 
     # Provider configurations
-    providers: Dict[str, ProviderConfig] = Field(default_factory=dict)
-    default_provider: Optional[str] = None
+    providers: dict[str, ProviderConfig] = Field(default_factory=dict)
+    default_provider: str | None = None
 
     # Prompt management
     enable_versioning: bool = True
@@ -151,7 +151,7 @@ class MirascopeIntegrationConfig(BaseModel):
 
     # Security
     enable_encryption: bool = False
-    encryption_key: Optional[str] = None
+    encryption_key: str | None = None
 
     # Logging
     log_level: str = "INFO"
@@ -168,12 +168,12 @@ class MirascopeIntegrationConfig(BaseModel):
 class ConfigurationManager:
     """Manages Mirascope integration configuration."""
 
-    def __init__(self, config_path: Optional[str] = None) -> None:
+    def __init__(self, config_path: str | None = None) -> None:
         """Initialize configuration manager."""
         self.config_path = (
             Path(config_path) if config_path else Path("./mirascope_config.json")
         )
-        self.config: Optional[MirascopeIntegrationConfig] = None
+        self.config: MirascopeIntegrationConfig | None = None
         self.logger = logging.getLogger(__name__)
         self._load_config()
 
@@ -181,7 +181,7 @@ class ConfigurationManager:
         """Load configuration from file or create default."""
         if self.config_path.exists():
             try:
-                with open(self.config_path, "r") as f:
+                with open(self.config_path) as f:
                     data = json.load(f)
                     self.config = MirascopeIntegrationConfig(**data)
                 self.logger.info(f"Loaded configuration from {self.config_path}")
@@ -239,19 +239,19 @@ class ConfigurationManager:
             return True
         return False
 
-    def get_provider_config(self, name: str) -> Optional[ProviderConfig]:
+    def get_provider_config(self, name: str) -> ProviderConfig | None:
         """Get provider configuration by name."""
         if self.config:
             return self.config.providers.get(name)
         return None
 
-    def get_default_provider_config(self) -> Optional[ProviderConfig]:
+    def get_default_provider_config(self) -> ProviderConfig | None:
         """Get default provider configuration."""
         if self.config and self.config.default_provider:
             return self.get_provider_config(self.config.default_provider)
         return None
 
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         """Validate current configuration and return any errors."""
         errors = []
 
@@ -319,7 +319,7 @@ class ConfigurationManager:
     def import_config(self, file_path: str) -> bool:
         """Import configuration from a file."""
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 data = json.load(f)
                 self.config = MirascopeIntegrationConfig(**data)
             self.save_config()
@@ -331,10 +331,10 @@ class ConfigurationManager:
 
 
 # Global configuration manager instance
-_config_manager: Optional[ConfigurationManager] = None
+_config_manager: ConfigurationManager | None = None
 
 
-def get_config_manager(config_path: Optional[str] = None) -> ConfigurationManager:
+def get_config_manager(config_path: str | None = None) -> ConfigurationManager:
     """Get the global configuration manager instance."""
     global _config_manager
     if _config_manager is None:

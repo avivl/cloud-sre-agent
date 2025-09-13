@@ -8,7 +8,7 @@ coordination for the unified workflow orchestrator.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
 from .prompt_context_models import IssueType, PromptContext
@@ -37,7 +37,7 @@ class WorkflowCodeGenerator:
 
     async def generate_enhanced_code(
         self,
-        analysis_result: Dict[str, Any],
+        analysis_result: dict[str, Any],
         prompt_context: PromptContext,
         enable_specialized_generators: bool,
     ) -> str:
@@ -167,7 +167,7 @@ class WorkflowCodeGenerator:
         except Exception:
             return False
 
-    async def generate_basic_code_patch(self, analysis_result: Dict[str, Any]) -> str:
+    async def generate_basic_code_patch(self, analysis_result: dict[str, Any]) -> str:
         """
         Generate basic code patch from analysis result.
 

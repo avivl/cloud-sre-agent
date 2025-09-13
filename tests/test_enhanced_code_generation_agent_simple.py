@@ -13,7 +13,9 @@ class TestEnhancedCodeGenerationConfig:
 
         # Mock the config class
         class MockConfig:
-            def __init__(self, project_id: str, location: str, main_model: str, **kwargs: str) -> None:
+            def __init__(
+                self, project_id: str, location: str, main_model: str, **kwargs: str
+            ) -> None:
                 self.project_id = project_id
                 self.location = location
                 self.main_model = main_model
@@ -43,7 +45,9 @@ class TestEnhancedCodeGenerationConfig:
 
         # Mock the config class
         class MockConfig:
-            def __init__(self, project_id: str, location: str, main_model: str, **kwargs: str) -> None:
+            def __init__(
+                self, project_id: str, location: str, main_model: str, **kwargs: str
+            ) -> None:
                 self.project_id = project_id
                 self.location = location
                 self.main_model = main_model
@@ -164,7 +168,9 @@ class TestEnhancedCodeGenerationAgent:
             def __init__(self) -> None:
                 self.learning_data = {}
 
-            def update_learning_data(self, domain: str, success: str, quality_score: str) -> None:
+            def update_learning_data(
+                self, domain: str, success: str, quality_score: str
+            ) -> None:
                 """
                 Update Learning Data.
 
@@ -239,7 +245,9 @@ class TestEnhancedCodeGenerationAgent:
                 self.config = Mock()
                 self.config.human_review_threshold = human_review_threshold
 
-            def check_requires_human_review(self, quality_score: str, critical_issues_count: str) -> None:
+            def check_requires_human_review(
+                self, quality_score: str, critical_issues_count: str
+            ) -> None:
                 """
                 Check Requires Human Review.
 

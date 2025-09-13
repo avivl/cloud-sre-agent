@@ -8,10 +8,9 @@ LLM provider with provider-specific validation, credential testing, and
 capability detection.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+import logging
 
 from .base import ErrorSeverity, LLMProviderError, ModelType
 from .config import LLMProviderConfig, ModelConfig
@@ -28,8 +27,8 @@ class ProviderCapabilities:
     supports_vision: bool
     supports_function_calling: bool
     max_context_length: int
-    supported_model_types: List[ModelType]
-    cost_per_1k_tokens: Dict[str, float]  # Model name -> cost
+    supported_model_types: list[ModelType]
+    cost_per_1k_tokens: dict[str, float]  # Model name -> cost
 
 
 class BaseProviderHandler(ABC):
@@ -40,12 +39,12 @@ class BaseProviderHandler(ABC):
         self.provider_name = config.provider
 
     @abstractmethod
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         """Validate provider-specific configuration."""
         pass
 
     @abstractmethod
-    def validate_credentials(self) -> Tuple[bool, Optional[str]]:
+    def validate_credentials(self) -> tuple[bool, str | None]:
         """Validate provider credentials. Returns (is_valid, error_message)."""
         pass
 
@@ -55,7 +54,7 @@ class BaseProviderHandler(ABC):
         pass
 
     @abstractmethod
-    def map_models(self) -> Dict[ModelType, str]:
+    def map_models(self) -> dict[ModelType, str]:
         """Map semantic model types to provider-specific model names."""
         pass
 
@@ -66,7 +65,7 @@ class BaseProviderHandler(ABC):
         """Calculate cost for a specific model and token usage."""
         pass
 
-    def get_model_config(self, model_type: ModelType) -> Optional[ModelConfig]:
+    def get_model_config(self, model_type: ModelType) -> ModelConfig | None:
         """Get model configuration for a specific model type."""
         model_mapping = self.map_models()
         if model_type not in model_mapping:
@@ -79,7 +78,7 @@ class BaseProviderHandler(ABC):
 class OpenAIProviderHandler(BaseProviderHandler):
     """OpenAI provider configuration handler."""
 
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         """Validate OpenAI-specific configuration."""
         errors = []
 
@@ -103,7 +102,7 @@ class OpenAIProviderHandler(BaseProviderHandler):
 
         return errors
 
-    def validate_credentials(self) -> Tuple[bool, Optional[str]]:
+    def validate_credentials(self) -> tuple[bool, str | None]:
         """Validate OpenAI credentials."""
         if not self.config.api_key:
             return False, "OpenAI API key is required"
@@ -142,7 +141,7 @@ class OpenAIProviderHandler(BaseProviderHandler):
             },
         )
 
-    def map_models(self) -> Dict[ModelType, str]:
+    def map_models(self) -> dict[ModelType, str]:
         """Map semantic model types to OpenAI model names."""
         return {
             ModelType.FAST: "gpt-3.5-turbo",
@@ -170,7 +169,7 @@ class OpenAIProviderHandler(BaseProviderHandler):
 class AnthropicProviderHandler(BaseProviderHandler):
     """Anthropic provider configuration handler."""
 
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         """Validate Anthropic-specific configuration."""
         errors = []
 
@@ -194,7 +193,7 @@ class AnthropicProviderHandler(BaseProviderHandler):
 
         return errors
 
-    def validate_credentials(self) -> Tuple[bool, Optional[str]]:
+    def validate_credentials(self) -> tuple[bool, str | None]:
         """Validate Anthropic credentials."""
         if not self.config.api_key:
             return False, "Anthropic API key is required"
@@ -232,7 +231,7 @@ class AnthropicProviderHandler(BaseProviderHandler):
             },
         )
 
-    def map_models(self) -> Dict[ModelType, str]:
+    def map_models(self) -> dict[ModelType, str]:
         """Map semantic model types to Anthropic model names."""
         return {
             ModelType.FAST: "claude-3-haiku-20240307",
@@ -260,7 +259,7 @@ class AnthropicProviderHandler(BaseProviderHandler):
 class OllamaProviderHandler(BaseProviderHandler):
     """Ollama provider configuration handler."""
 
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         """Validate Ollama-specific configuration."""
         errors = []
 
@@ -288,7 +287,7 @@ class OllamaProviderHandler(BaseProviderHandler):
 
         return errors
 
-    def validate_credentials(self) -> Tuple[bool, Optional[str]]:
+    def validate_credentials(self) -> tuple[bool, str | None]:
         """Validate Ollama credentials."""
         # Ollama doesn't require credentials
         return True, None
@@ -311,7 +310,7 @@ class OllamaProviderHandler(BaseProviderHandler):
             cost_per_1k_tokens={},  # Free to use
         )
 
-    def map_models(self) -> Dict[ModelType, str]:
+    def map_models(self) -> dict[ModelType, str]:
         """Map semantic model types to Ollama model names."""
         return {
             ModelType.FAST: "llama3.2:1b",
@@ -331,7 +330,7 @@ class OllamaProviderHandler(BaseProviderHandler):
 class GrokProviderHandler(BaseProviderHandler):
     """Grok (xAI) provider configuration handler."""
 
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         """Validate Grok-specific configuration."""
         errors = []
 
@@ -350,7 +349,7 @@ class GrokProviderHandler(BaseProviderHandler):
 
         return errors
 
-    def validate_credentials(self) -> Tuple[bool, Optional[str]]:
+    def validate_credentials(self) -> tuple[bool, str | None]:
         """Validate Grok credentials."""
         if not self.config.api_key:
             return False, "Grok API key is required"
@@ -377,7 +376,7 @@ class GrokProviderHandler(BaseProviderHandler):
             cost_per_1k_tokens={"grok-beta": 0.001, "grok-2": 0.001},
         )
 
-    def map_models(self) -> Dict[ModelType, str]:
+    def map_models(self) -> dict[ModelType, str]:
         """Map semantic model types to Grok model names."""
         return {
             ModelType.FAST: "grok-beta",
@@ -401,7 +400,7 @@ class GrokProviderHandler(BaseProviderHandler):
 class BedrockProviderHandler(BaseProviderHandler):
     """AWS Bedrock provider configuration handler."""
 
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         """Validate Bedrock-specific configuration."""
         errors = []
 
@@ -421,7 +420,7 @@ class BedrockProviderHandler(BaseProviderHandler):
 
         return errors
 
-    def validate_credentials(self) -> Tuple[bool, Optional[str]]:
+    def validate_credentials(self) -> tuple[bool, str | None]:
         """Validate Bedrock credentials."""
         if not self.config.api_key:
             return False, "AWS Access Key is required for Bedrock"
@@ -459,7 +458,7 @@ class BedrockProviderHandler(BaseProviderHandler):
             },
         )
 
-    def map_models(self) -> Dict[ModelType, str]:
+    def map_models(self) -> dict[ModelType, str]:
         """Map semantic model types to Bedrock model names."""
         return {
             ModelType.FAST: "claude-3-5-haiku-20241022-v1:0",
@@ -506,12 +505,12 @@ class ProviderHandlerFactory:
         return handler_class(config)
 
     @classmethod
-    def get_supported_providers(cls) -> List[str]:
+    def get_supported_providers(cls) -> list[str]:
         """Get list of supported providers."""
         return list(cls._handlers.keys())
 
     @classmethod
-    def validate_provider_config(cls, config: LLMProviderConfig) -> List[str]:
+    def validate_provider_config(cls, config: LLMProviderConfig) -> list[str]:
         """Validate provider configuration using appropriate handler."""
         try:
             handler = cls.create_handler(config)
@@ -522,7 +521,7 @@ class ProviderHandlerFactory:
     @classmethod
     def validate_provider_credentials(
         cls, config: LLMProviderConfig
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """Validate provider credentials using appropriate handler."""
         try:
             handler = cls.create_handler(config)

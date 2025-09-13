@@ -9,7 +9,7 @@ This module contains cloud-based credential storage backend implementations.
 import json
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 from .backends import CredentialBackend
 
@@ -20,7 +20,7 @@ class VaultBackend(CredentialBackend):
     def __init__(
         self,
         vault_url: str,
-        vault_token: Optional[str] = None,
+        vault_token: str | None = None,
         mount_point: str = "secret",
     ):
         self.vault_url = vault_url.rstrip("/")
@@ -33,7 +33,7 @@ class VaultBackend(CredentialBackend):
                 "Vault token is required. Set VAULT_TOKEN environment variable or pass vault_token parameter."
             )
 
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         """Retrieve a credential from Vault."""
         try:
             import hvac
@@ -109,13 +109,13 @@ class AWSSecretsBackend(CredentialBackend):
     """Credential backend using AWS Secrets Manager."""
 
     def __init__(
-        self, region_name: Optional[str] = None, profile_name: Optional[str] = None
+        self, region_name: str | None = None, profile_name: str | None = None
     ):
         self.region_name = region_name or os.getenv("AWS_DEFAULT_REGION", "us-east-1")
         self.profile_name = profile_name
         self.logger = logging.getLogger("AWSSecretsBackend")
 
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         """Retrieve a credential from AWS Secrets Manager."""
         try:
             import boto3
@@ -184,12 +184,12 @@ class AWSSecretsBackend(CredentialBackend):
 class AzureKeyVaultBackend(CredentialBackend):
     """Credential backend using Azure Key Vault."""
 
-    def __init__(self, vault_url: str, credential: Optional[Any] = None) -> None:
+    def __init__(self, vault_url: str, credential: Any | None = None) -> None:
         self.vault_url = vault_url
         self.credential = credential
         self.logger = logging.getLogger("AzureKeyVaultBackend")
 
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         """Retrieve a credential from Azure Key Vault."""
         try:
             from azure.identity import DefaultAzureCredential  # type: ignore

@@ -8,7 +8,7 @@ Extracted from unified_workflow_orchestrator_original.py.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .caching import ContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
@@ -25,7 +25,7 @@ class WorkflowAnalysisEngine:
     and retry logic using existing resilience patterns.
     """
 
-    def __init__(self, performance_config: Optional[PerformanceConfig]) -> None:
+    def __init__(self, performance_config: PerformanceConfig | None) -> None:
         """
         Initialize the workflow analysis engine.
 
@@ -36,8 +36,8 @@ class WorkflowAnalysisEngine:
         self.logger = logging.getLogger(__name__)
 
         # Initialize enhanced agent (will be injected)
-        self.enhanced_agent: Optional[EnhancedAnalysisAgent] = None
-        self.cache: Optional[ContextCache] = None
+        self.enhanced_agent: EnhancedAnalysisAgent | None = None
+        self.cache: ContextCache | None = None
 
     def set_enhanced_agent(self, enhanced_agent: EnhancedAnalysisAgent) -> None:
         """Set the enhanced analysis agent."""
@@ -49,12 +49,12 @@ class WorkflowAnalysisEngine:
 
     async def execute_enhanced_analysis(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         prompt_context: PromptContext,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute enhanced analysis with the enhanced analysis agent.
 
@@ -96,11 +96,11 @@ class WorkflowAnalysisEngine:
 
     async def execute_fallback_analysis(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute fallback analysis when enhanced analysis fails.
 
@@ -150,7 +150,7 @@ class WorkflowAnalysisEngine:
             return {"success": False, "error": str(e), "fallback": True}
 
     def _analyze_root_cause_basic(
-        self, triage_packet: Dict[str, Any], historical_logs: List[str]
+        self, triage_packet: dict[str, Any], historical_logs: list[str]
     ) -> str:
         """Basic root cause analysis for fallback scenarios."""
         error_patterns = triage_packet.get("error_patterns", [])
@@ -201,7 +201,7 @@ except Exception as e:
         else:
             return f"# Basic error handling for {file_ext} files\n# TODO: Implement based on: {proposed_fix}"
 
-    async def get_cached_analysis(self, flow_id: str) -> Optional[Dict[str, Any]]:
+    async def get_cached_analysis(self, flow_id: str) -> dict[str, Any] | None:
         """
         Get cached analysis result for a specific flow.
 
@@ -221,7 +221,7 @@ except Exception as e:
             self.logger.warning(f"Failed to get cached analysis: {e}")
             return None
 
-    async def clear_analysis_cache(self, flow_id: Optional[str] = None) -> None:
+    async def clear_analysis_cache(self, flow_id: str | None = None) -> None:
         """
         Clear analysis cache for a specific flow or all flows.
 
@@ -242,7 +242,7 @@ except Exception as e:
         except Exception as e:
             self.logger.error(f"Failed to clear analysis cache: {e}")
 
-    async def get_analysis_statistics(self) -> Dict[str, Any]:
+    async def get_analysis_statistics(self) -> dict[str, Any]:
         """
         Get analysis statistics for monitoring.
 
@@ -289,10 +289,10 @@ except Exception as e:
                     return "unhealthy - root cause analysis failed"
 
             except Exception as e:
-                return f"unhealthy - analysis test failed: {str(e)}"
+                return f"unhealthy - analysis test failed: {e!s}"
 
             return "healthy"
 
         except Exception as e:
             self.logger.error(f"Health check failed: {e}")
-            return f"unhealthy - {str(e)}"
+            return f"unhealthy - {e!s}"

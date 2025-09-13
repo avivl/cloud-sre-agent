@@ -8,7 +8,6 @@ including budget enforcement, cost tracking accuracy, and cost optimization.
 """
 
 import logging
-from typing import Dict
 
 from ..cost_management_integration import IntegratedCostManager
 
@@ -391,7 +390,7 @@ class CostAnalysisTester:
             logger.error(f"Cost aggregation test failed: {e}")
             return False
 
-    async def run_all_cost_analysis_tests(self) -> Dict[str, bool]:
+    async def run_all_cost_analysis_tests(self) -> dict[str, bool]:
         """Run all cost analysis tests."""
         logger.info("Running all cost analysis tests")
 

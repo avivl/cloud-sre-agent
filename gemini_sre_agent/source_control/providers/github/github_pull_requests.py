@@ -8,7 +8,7 @@ This module handles pull request and merge request operations for the GitHub pro
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from github import Github, GithubException
 from github.Repository import Repository
@@ -19,7 +19,9 @@ from ...models import ProviderCapabilities
 class GitHubPullRequests:
     """Handles pull request operations for GitHub."""
 
-    def __init__(self, client: Github, repo: Repository, logger: logging.Logger) -> None:
+    def __init__(
+        self, client: Github, repo: Repository, logger: logging.Logger
+    ) -> None:
         """Initialize pull request operations with GitHub client and repository."""
         self.client = client
         self.repo = repo
@@ -44,7 +46,7 @@ class GitHubPullRequests:
         head_branch: str,
         base_branch: str,
         draft: bool = False,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Create a pull request."""
         try:
 
@@ -93,7 +95,7 @@ class GitHubPullRequests:
         description: str,
         source_branch: str,
         target_branch: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Create a merge request (GitHub uses pull requests)."""
         # GitHub doesn't have merge requests, redirect to pull request
         return await self.create_pull_request(
@@ -103,7 +105,7 @@ class GitHubPullRequests:
             base_branch=target_branch,
         )
 
-    async def get_pull_request(self, number: int) -> Optional[Dict[str, Any]]:
+    async def get_pull_request(self, number: int) -> dict[str, Any] | None:
         """Get a pull request by number."""
         try:
 
@@ -147,10 +149,10 @@ class GitHubPullRequests:
     async def list_pull_requests(
         self,
         state: str = "open",
-        head: Optional[str] = None,
-        base: Optional[str] = None,
+        head: str | None = None,
+        base: str | None = None,
         limit: int = 30,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List pull requests."""
         try:
 
@@ -200,8 +202,8 @@ class GitHubPullRequests:
         self,
         number: int,
         merge_method: str = "merge",
-        commit_title: Optional[str] = None,
-        commit_message: Optional[str] = None,
+        commit_title: str | None = None,
+        commit_message: str | None = None,
     ) -> bool:
         """Merge a pull request."""
         try:
@@ -262,7 +264,7 @@ class GitHubPullRequests:
             self.logger.error(f"Failed to add comment to PR {number}: {e}")
             return False
 
-    async def get_pull_request_files(self, number: int) -> List[Dict[str, Any]]:
+    async def get_pull_request_files(self, number: int) -> list[dict[str, Any]]:
         """Get files changed in a pull request."""
         try:
 
@@ -294,7 +296,7 @@ class GitHubPullRequests:
             self.logger.error(f"Failed to get PR files for {number}: {e}")
             return []
 
-    async def get_pull_request_commits(self, number: int) -> List[Dict[str, Any]]:
+    async def get_pull_request_commits(self, number: int) -> list[dict[str, Any]]:
         """Get commits in a pull request."""
         try:
 

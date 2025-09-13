@@ -1,9 +1,9 @@
 # gemini_sre_agent/ml/base_code_generator.py
 
-import time
-import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any
+import uuid
 
 from .code_generation_models import (
     CodeFix,
@@ -21,9 +21,9 @@ class BaseCodeGenerator(ABC):
     """Base class for all code generators"""
 
     def __init__(self) -> None:
-        self.context: Optional[PromptContext] = None
-        self.validation_rules: List[ValidationRule] = []
-        self.code_patterns: List[CodePattern] = []
+        self.context: PromptContext | None = None
+        self.validation_rules: list[ValidationRule] = []
+        self.code_patterns: list[CodePattern] = []
         self.generator_id: str = str(uuid.uuid4())
         self.generation_count: int = 0
 
@@ -254,7 +254,7 @@ def fix_{domain}_issue():
 
         return code
 
-    def _get_pattern_context(self) -> Dict[str, Any]:
+    def _get_pattern_context(self) -> dict[str, Any]:
         """Get context for pattern application"""
         if not self.context:
             return {}
@@ -303,7 +303,7 @@ def fix_{domain}_issue():
                     issue_id=f"validation_error_{rule.rule_id}",
                     severity=ValidationSeverity.CRITICAL,
                     category="validation_error",
-                    message=f"Validation rule '{rule.name}' failed: {str(e)}",
+                    message=f"Validation rule '{rule.name}' failed: {e!s}",
                 )
                 validation_result.add_issue(error_issue)
                 validation_result.is_valid = False
@@ -312,7 +312,7 @@ def fix_{domain}_issue():
 
     async def _execute_validation_rule(
         self, rule: ValidationRule, code: str
-    ) -> tuple[bool, List[ValidationIssue]]:
+    ) -> tuple[bool, list[ValidationIssue]]:
         """Execute a validation rule and return results"""
         # This is a simplified implementation
         # In practice, this would call actual validation functions based on rule.validation_function
@@ -327,7 +327,7 @@ def fix_{domain}_issue():
         else:
             return True, []
 
-    def _validate_syntax(self, code: str) -> tuple[bool, List[ValidationIssue]]:
+    def _validate_syntax(self, code: str) -> tuple[bool, list[ValidationIssue]]:
         """Basic syntax validation"""
         issues = []
 
@@ -355,7 +355,7 @@ def fix_{domain}_issue():
 
         return len(issues) == 0, issues
 
-    def _validate_security(self, code: str) -> tuple[bool, List[ValidationIssue]]:
+    def _validate_security(self, code: str) -> tuple[bool, list[ValidationIssue]]:
         """Basic security validation"""
         issues = []
 
@@ -379,7 +379,7 @@ def fix_{domain}_issue():
 
         return len(issues) == 0, issues
 
-    def _validate_performance(self, code: str) -> tuple[bool, List[ValidationIssue]]:
+    def _validate_performance(self, code: str) -> tuple[bool, list[ValidationIssue]]:
         """Basic performance validation"""
         issues = []
 
@@ -422,7 +422,7 @@ def fix_{domain}_issue():
         else:
             return "unknown"
 
-    def get_generator_info(self) -> Dict[str, Any]:
+    def get_generator_info(self) -> dict[str, Any]:
         """Get information about this generator"""
         return {
             "generator_id": self.generator_id,

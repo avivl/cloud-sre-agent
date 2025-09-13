@@ -9,7 +9,7 @@ advanced prompt management through Mirascope.
 """
 
 import logging
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -52,10 +52,10 @@ class LLMService(Generic[T]):
     async def generate_structured(
         self,
         prompt: str,
-        response_model: Type[T],
-        model: Optional[str] = None,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[str] = None,
+        response_model: type[T],
+        model: str | None = None,
+        model_type: ModelType | None = None,
+        provider: str | None = None,
         **kwargs: Any,
     ) -> T:
         """Generate a structured response using the specified model and prompt."""
@@ -72,22 +72,22 @@ class LLMService(Generic[T]):
             request = LLMRequest(
                 prompt=prompt,
                 model_type=ModelType.SMART,  # Default model type
-                **kwargs
+                **kwargs,
             )
             response = await provider_instance.generate(request)
             # For structured output, we need to parse the response content
             # This is a simplified approach - in practice, you'd want proper structured parsing
             return response.content  # type: ignore
         except Exception as e:
-            self.logger.error(f"Error generating structured response: {str(e)}")
+            self.logger.error(f"Error generating structured response: {e!s}")
             raise
 
     async def generate_text(
         self,
         prompt: str,
-        model: Optional[str] = None,
-        model_type: Optional[ModelType] = None,
-        provider: Optional[str] = None,
+        model: str | None = None,
+        model_type: ModelType | None = None,
+        provider: str | None = None,
         **kwargs: Any,
     ) -> str:
         """Generate a plain text response."""
@@ -104,15 +104,15 @@ class LLMService(Generic[T]):
             request = LLMRequest(
                 prompt=prompt,
                 model_type=ModelType.SMART,  # Default model type
-                **kwargs
+                **kwargs,
             )
             response = await provider_instance.generate(request)
             return response.content
         except Exception as e:
-            self.logger.error(f"Error generating text response: {str(e)}")
+            self.logger.error(f"Error generating text response: {e!s}")
             raise
 
-    async def health_check(self, provider: Optional[str] = None) -> bool:
+    async def health_check(self, provider: str | None = None) -> bool:
         """Check if the specified provider is healthy and accessible."""
         try:
             provider_name = provider or self.config.default_provider
@@ -124,23 +124,29 @@ class LLMService(Generic[T]):
             return await provider_instance.health_check()
 
         except Exception as e:
-            self.logger.error(f"Health check failed for provider {provider}: {str(e)}")
+            self.logger.error(f"Health check failed for provider {provider}: {e!s}")
             return False
 
     def get_available_models(
-        self, provider: Optional[str] = None
-    ) -> Dict[str, List[str]]:
+        self, provider: str | None = None
+    ) -> dict[str, list[str]]:
         """Get available models for the specified provider or all providers."""
         if provider:
             if provider in self.providers:
                 models = self.providers[provider].get_available_models()
-                return {provider: list(models.values()) if isinstance(models, dict) else models}
+                return {
+                    provider: (
+                        list(models.values()) if isinstance(models, dict) else models
+                    )
+                }
             return {}
 
         result = {}
         for provider_name, provider_instance in self.providers.items():
             models = provider_instance.get_available_models()
-            result[provider_name] = list(models.values()) if isinstance(models, dict) else models
+            result[provider_name] = (
+                list(models.values()) if isinstance(models, dict) else models
+            )
         return result
 
 

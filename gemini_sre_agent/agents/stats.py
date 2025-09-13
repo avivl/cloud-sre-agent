@@ -9,7 +9,7 @@ agent performance metrics, including success rates, latencies, and error trackin
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -22,15 +22,15 @@ class AgentStats:
     error_count: int = 0
 
     # Detailed metrics
-    latencies_ms: Dict[str, List[int]] = field(
+    latencies_ms: dict[str, list[int]] = field(
         default_factory=lambda: defaultdict(list)
     )
-    errors: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
-    prompt_usage: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
-    model_usage: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    errors: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))
+    prompt_usage: dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    model_usage: dict[str, int] = field(default_factory=lambda: defaultdict(int))
 
     def record_success(
-        self, model: str, latency_ms: int, prompt_name: Optional[str] = None
+        self, model: str, latency_ms: int, prompt_name: str | None = None
     ):
         """Record a successful agent execution."""
         self.request_count += 1
@@ -40,7 +40,9 @@ class AgentStats:
         if prompt_name:
             self.prompt_usage[prompt_name] += 1
 
-    def record_error(self, model: str, error: str, prompt_name: Optional[str] = None) -> None:
+    def record_error(
+        self, model: str, error: str, prompt_name: str | None = None
+    ) -> None:
         """Record a failed agent execution."""
         self.request_count += 1
         self.error_count += 1
@@ -49,7 +51,7 @@ class AgentStats:
         if prompt_name:
             self.prompt_usage[prompt_name] += 1
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of agent statistics."""
         return {
             "agent_name": self.agent_name,

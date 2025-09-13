@@ -8,13 +8,13 @@ for Anthropic's Claude models.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import anthropic
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
-from ..config import LLMProviderConfig
 from ..capabilities.models import ModelCapability
+from ..config import LLMProviderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ class AnthropicProvider(LLMProvider):
         """Check if Anthropic supports tool calling."""
         return True
 
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available Anthropic models mapped to semantic types."""
         # Default mappings
         default_mappings = {
@@ -165,7 +165,7 @@ class AnthropicProvider(LLMProvider):
 
         return default_mappings
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings using Anthropic API."""
         try:
             logger.info(f"Generating embeddings for text of length: {len(text)}")
@@ -198,8 +198,8 @@ class AnthropicProvider(LLMProvider):
         return input_cost + output_cost
 
     def _convert_messages_to_anthropic_format(
-        self, messages: List[Dict[str, str]]
-    ) -> List[Dict[str, str]]:
+        self, messages: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
         """Convert messages to Anthropic format."""
         anthropic_messages = []
         for message in messages:
@@ -224,7 +224,7 @@ class AnthropicProvider(LLMProvider):
 
         return anthropic_messages
 
-    def _extract_usage(self, response: Any) -> Dict[str, int]:
+    def _extract_usage(self, response: Any) -> dict[str, int]:
         """Extract usage information from Anthropic response."""
         usage = {"input_tokens": 0, "output_tokens": 0}
 
@@ -243,7 +243,7 @@ class AnthropicProvider(LLMProvider):
         if not config.api_key.startswith("sk-ant-"):
             raise ValueError("Anthropic API key must start with 'sk-ant-'")
 
-    def get_custom_capabilities(self) -> List[ModelCapability]:
+    def get_custom_capabilities(self) -> list[ModelCapability]:
         """
         Get provider-specific custom capabilities for Anthropic.
         For now, Anthropic does not have specific custom capabilities beyond standard ones.

@@ -8,7 +8,7 @@ This module contains utility functions and helper methods for the GitHub provide
 
 import asyncio
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from github import Github, GithubException
 from github.Repository import Repository
@@ -19,7 +19,9 @@ from ...models import ProviderHealth
 class GitHubUtils:
     """Utility functions for GitHub operations."""
 
-    def __init__(self, client: Github, repo: Repository, logger: logging.Logger) -> None:
+    def __init__(
+        self, client: Github, repo: Repository, logger: logging.Logger
+    ) -> None:
         """Initialize utilities with GitHub client and repository."""
         self.client = client
         self.repo = repo
@@ -102,7 +104,7 @@ class GitHubUtils:
                 additional_info={"error": str(e)},
             )
 
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         """Get current status of the GitHub provider."""
         try:
             status = {
@@ -147,7 +149,7 @@ class GitHubUtils:
                 "status": "error",
             }
 
-    async def execute_git_command(self, command: str, **kwargs) -> Dict[str, Any]:
+    async def execute_git_command(self, command: str, **kwargs) -> dict[str, Any]:
         """Execute a git command (placeholder for GitHub API operations)."""
         try:
             # GitHub provider doesn't execute git commands directly

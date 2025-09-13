@@ -8,7 +8,7 @@ parallel processing, and other performance-related settings.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 
 @dataclass
@@ -34,9 +34,9 @@ class AnalysisConfig:
     """Configuration for repository analysis performance."""
 
     # Analysis depth configurations
-    basic_analysis: Dict[str, Any]
-    standard_analysis: Dict[str, Any]
-    comprehensive_analysis: Dict[str, Any]
+    basic_analysis: dict[str, Any]
+    standard_analysis: dict[str, Any]
+    comprehensive_analysis: dict[str, Any]
 
     # Parallel processing settings
     max_parallel_workers: int = 8
@@ -125,7 +125,7 @@ class PerformanceConfig:
         # This method is no longer needed since all fields are required
         pass
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
             "cache": self.cache.__dict__,
@@ -140,7 +140,7 @@ class PerformanceConfig:
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "PerformanceConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "PerformanceConfig":
         """Create configuration from dictionary."""
         cache_config = CacheConfig(**config_dict.get("cache", {}))
         analysis_config = AnalysisConfig(**config_dict.get("analysis", {}))
@@ -164,7 +164,7 @@ class PerformanceConfig:
             ),
         )
 
-    def get_analysis_config(self, depth: str) -> Dict[str, Any]:
+    def get_analysis_config(self, depth: str) -> dict[str, Any]:
         """Get analysis configuration for a specific depth."""
         depth_mapping = {
             "basic": self.analysis.basic_analysis,

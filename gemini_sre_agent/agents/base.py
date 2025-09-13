@@ -10,7 +10,7 @@ integration with Mirascope for prompt management.
 
 import logging
 import time
-from typing import Any, Dict, Generic, Optional, Type, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -32,9 +32,9 @@ class BaseAgent(Generic[T]):
     def __init__(
         self,
         llm_service: LLMService,
-        response_model: Type[T],
+        response_model: type[T],
         primary_model: str = "smart",
-        fallback_model: Optional[str] = "fast",
+        fallback_model: str | None = "fast",
         max_retries: int = 2,
         collect_stats: bool = True,
     ):
@@ -50,8 +50,8 @@ class BaseAgent(Generic[T]):
     async def execute(
         self,
         prompt_name: str,
-        prompt_args: Dict[str, Any],
-        model: Optional[str] = None,
+        prompt_args: dict[str, Any],
+        model: str | None = None,
         temperature: float = 0.7,
         use_fallback: bool = True,
     ) -> T:
@@ -115,7 +115,7 @@ class BaseAgent(Generic[T]):
         }
         return templates.get(prompt_name, "{input}")
 
-    def get_stats_summary(self) -> Dict[str, Any]:
+    def get_stats_summary(self) -> dict[str, Any]:
         """Get a summary of agent statistics."""
         return self.stats.get_summary()
 

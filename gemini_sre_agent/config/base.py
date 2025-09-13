@@ -4,10 +4,9 @@
 Base configuration classes with environment support and schema versioning.
 """
 
+from enum import Enum
 import hashlib
 import json
-from enum import Enum
-from typing import Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -37,10 +36,10 @@ class BaseConfig(BaseSettings):
     schema_version: str = Field(
         default="1.0.0", description="Configuration schema version"
     )
-    last_validated: Optional[str] = Field(
+    last_validated: str | None = Field(
         default=None, description="Last validation timestamp"
     )
-    validation_checksum: Optional[str] = Field(
+    validation_checksum: str | None = Field(
         default=None, description="Configuration validation checksum"
     )
 

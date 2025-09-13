@@ -8,7 +8,6 @@ while using the new enhanced source control system under the hood.
 """
 
 import logging
-from typing import Optional
 
 from .analysis_agent import RemediationPlan
 from .config.source_control_global import SourceControlGlobalConfig
@@ -31,7 +30,7 @@ class RemediationAgentAdapter:
         repo_name: str,
         use_local_patches: bool = False,
         patch_dir: str = "/tmp/real_patches",
-        encryption_key: Optional[str] = None,
+        encryption_key: str | None = None,
         auto_discovery: bool = True,
     ):
         """
@@ -53,7 +52,7 @@ class RemediationAgentAdapter:
         self.auto_discovery = auto_discovery
 
         # Initialize the enhanced agent
-        self.enhanced_agent: Optional[EnhancedRemediationAgent] = None
+        self.enhanced_agent: EnhancedRemediationAgent | None = None
         self._initialized = False
 
         logger.info(
@@ -251,7 +250,7 @@ class RemediationAgentAdapter:
             )
             raise RuntimeError(f"Failed to create local patch: {e}") from e
 
-    def _extract_file_path_from_patch(self, patch_content: str) -> Optional[str]:
+    def _extract_file_path_from_patch(self, patch_content: str) -> str | None:
         """
         Extracts the target file path from a special comment in the patch content.
         Supports multiple comment formats (e.g., # FILE:, // FILE:, /* FILE: */).

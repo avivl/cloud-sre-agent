@@ -9,8 +9,8 @@ components, including structured output, fallback logic, and statistics collecti
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from pydantic import BaseModel
+import pytest
 
 from gemini_sre_agent.agents.base import BaseAgent
 from gemini_sre_agent.agents.stats import AgentStats

@@ -5,7 +5,6 @@ Enhanced secrets management with validation and secure handling.
 """
 
 import os
-from typing import Dict, Optional
 
 from pydantic import Field, SecretStr, field_validator
 
@@ -17,14 +16,14 @@ class SecretsConfig(BaseConfig):
 
     # API Keys
     gemini_api_key: SecretStr = Field(..., description="Gemini API key")
-    github_token: Optional[SecretStr] = None
-    gcp_service_account_key: Optional[SecretStr] = None
+    github_token: SecretStr | None = None
+    gcp_service_account_key: SecretStr | None = None
 
     # Database credentials
-    database_password: Optional[SecretStr] = None
+    database_password: SecretStr | None = None
 
     # External service credentials
-    external_api_keys: Dict[str, SecretStr] = Field(default_factory=dict)
+    external_api_keys: dict[str, SecretStr] = Field(default_factory=dict)
 
     @field_validator("gemini_api_key")
     @classmethod
@@ -99,7 +98,7 @@ class SecretsConfig(BaseConfig):
             database_password=SecretStr(db_password) if db_password else None,
         )
 
-    def mask_for_logging(self) -> Dict[str, str]:
+    def mask_for_logging(self) -> dict[str, str]:
         """Return masked versions of secrets for safe logging."""
         return {
             "gemini_api_key": f"{self.gemini_api_key.get_secret_value()[:8]}...",

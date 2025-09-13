@@ -9,7 +9,7 @@ implementations are correct and complete.
 
 import inspect
 import logging
-from typing import Any, Dict, List, Type
+from typing import Any
 
 from ..base import LLMProvider
 from ..config import LLMProviderConfig
@@ -36,7 +36,7 @@ class ProviderValidator:
             "documentation": self._validate_documentation,
         }
 
-    def validate_provider_class(self, provider_class: Type[LLMProvider]) -> List[str]:
+    def validate_provider_class(self, provider_class: type[LLMProvider]) -> list[str]:
         """
         Validate a provider class implementation.
 
@@ -57,7 +57,7 @@ class ProviderValidator:
 
         return errors
 
-    def _validate_inheritance(self, provider_class: Type[LLMProvider]) -> List[str]:
+    def _validate_inheritance(self, provider_class: type[LLMProvider]) -> list[str]:
         """Validate that the class properly inherits from LLMProvider."""
         errors = []
 
@@ -70,8 +70,8 @@ class ProviderValidator:
         return errors
 
     def _validate_abstract_methods(
-        self, provider_class: Type[LLMProvider]
-    ) -> List[str]:
+        self, provider_class: type[LLMProvider]
+    ) -> list[str]:
         """Validate that all abstract methods are implemented."""
         errors = []
 
@@ -95,7 +95,7 @@ class ProviderValidator:
 
         return errors
 
-    def _validate_constructor(self, provider_class: Type[LLMProvider]) -> List[str]:
+    def _validate_constructor(self, provider_class: type[LLMProvider]) -> list[str]:
         """Validate the constructor signature and implementation."""
         errors = []
 
@@ -127,8 +127,8 @@ class ProviderValidator:
         return errors
 
     def _validate_config_validation(
-        self, provider_class: Type[LLMProvider]
-    ) -> List[str]:
+        self, provider_class: type[LLMProvider]
+    ) -> list[str]:
         """Validate that config validation is implemented."""
         errors = []
 
@@ -154,8 +154,8 @@ class ProviderValidator:
         return errors
 
     def _validate_method_signatures(
-        self, provider_class: Type[LLMProvider]
-    ) -> List[str]:
+        self, provider_class: type[LLMProvider]
+    ) -> list[str]:
         """Validate method signatures match the interface."""
         errors = []
 
@@ -186,7 +186,7 @@ class ProviderValidator:
 
         return errors
 
-    def _validate_error_handling(self, provider_class: Type[LLMProvider]) -> List[str]:
+    def _validate_error_handling(self, provider_class: type[LLMProvider]) -> list[str]:
         """Validate that proper error handling is implemented."""
         errors = []
 
@@ -204,7 +204,7 @@ class ProviderValidator:
 
         return errors
 
-    def _validate_documentation(self, provider_class: Type[LLMProvider]) -> List[str]:
+    def _validate_documentation(self, provider_class: type[LLMProvider]) -> list[str]:
         """Validate that the class has proper documentation."""
         errors = []
 
@@ -230,7 +230,7 @@ class ProviderValidator:
 
         return errors
 
-    def validate_provider_instance(self, provider: LLMProvider) -> List[str]:
+    def validate_provider_instance(self, provider: LLMProvider) -> list[str]:
         """
         Validate a provider instance.
 
@@ -285,8 +285,8 @@ class ProviderValidator:
         return errors
 
     def validate_config(
-        self, config: LLMProviderConfig, provider_class: Type[LLMProvider]
-    ) -> List[str]:
+        self, config: LLMProviderConfig, provider_class: type[LLMProvider]
+    ) -> list[str]:
         """
         Validate a configuration against a provider class.
 
@@ -323,8 +323,8 @@ class ProviderValidator:
         return errors
 
     def generate_validation_report(
-        self, provider_class: Type[LLMProvider]
-    ) -> Dict[str, Any]:
+        self, provider_class: type[LLMProvider]
+    ) -> dict[str, Any]:
         """
         Generate a comprehensive validation report.
 
@@ -367,7 +367,7 @@ class ProviderValidator:
 
         return report
 
-    def validate_provider_file(self, file_path: str) -> Dict[str, Any]:
+    def validate_provider_file(self, file_path: str) -> dict[str, Any]:
         """
         Validate a provider implementation file.
 

@@ -7,10 +7,10 @@ This module contains the main CredentialManager class and encryption utilities.
 """
 
 import base64
+from datetime import datetime, timedelta
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -29,13 +29,13 @@ class CredentialManager:
     """Manages secure credential storage and retrieval."""
 
     def __init__(
-        self, encryption_key: Optional[str] = None, enable_rotation: bool = True
+        self, encryption_key: str | None = None, enable_rotation: bool = True
     ):
-        self.backends: Dict[str, CredentialBackend] = {}
-        self.default_backend: Optional[str] = None
+        self.backends: dict[str, CredentialBackend] = {}
+        self.default_backend: str | None = None
         self.logger = logging.getLogger(__name__)
-        self.credential_cache: Dict[str, Dict[str, Any]] = {}
-        self.cache_expiry: Dict[str, datetime] = {}
+        self.credential_cache: dict[str, dict[str, Any]] = {}
+        self.cache_expiry: dict[str, datetime] = {}
         self.rotation_manager = (
             CredentialRotationManager(self) if enable_rotation else None
         )
@@ -69,7 +69,7 @@ class CredentialManager:
         self,
         name: str,
         vault_url: str,
-        vault_token: Optional[str] = None,
+        vault_token: str | None = None,
         mount_point: str = "secret",
         set_as_default: bool = False,
     ):
@@ -80,8 +80,8 @@ class CredentialManager:
     def add_aws_secrets_backend(
         self,
         name: str,
-        region_name: Optional[str] = None,
-        profile_name: Optional[str] = None,
+        region_name: str | None = None,
+        profile_name: str | None = None,
         set_as_default: bool = False,
     ):
         """Add an AWS Secrets Manager backend."""
@@ -92,7 +92,7 @@ class CredentialManager:
         self,
         name: str,
         vault_url: str,
-        credential: Optional[Any] = None,
+        credential: Any | None = None,
         set_as_default: bool = False,
     ):
         """Add an Azure Key Vault backend."""
@@ -101,7 +101,7 @@ class CredentialManager:
 
     async def get_credentials(
         self, credential_id: str, provider_type: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Retrieve credentials for a specific provider."""
         # Check cache first
         cache_key = f"{credential_id}:{provider_type}"
@@ -146,7 +146,7 @@ class CredentialManager:
             raise ValueError(f"Invalid credential format for {credential_id}") from e
 
     async def store_credentials(
-        self, credential_id: str, credential_data: Dict[str, Any]
+        self, credential_id: str, credential_data: dict[str, Any]
     ) -> None:
         """Store credentials in the specified backend."""
         backend_name, actual_key = self._parse_credential_id(credential_id)
@@ -173,7 +173,7 @@ class CredentialManager:
             self.cache_expiry[cache_key] = datetime.now() + timedelta(minutes=15)
 
     async def rotate_credentials(
-        self, credential_id: str, new_value: Dict[str, Any]
+        self, credential_id: str, new_value: dict[str, Any]
     ) -> None:
         """Rotate credentials with a new value."""
         # Store new credentials
@@ -222,7 +222,7 @@ class CredentialManager:
         else:
             return self.default_backend, credential_id
 
-    def _encrypt(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _encrypt(self, data: dict[str, Any]) -> dict[str, Any]:
         """Encrypt sensitive data if encryption is enabled."""
         if self.cipher:
             # Convert dict to JSON string, encrypt, then convert back to dict
@@ -231,7 +231,7 @@ class CredentialManager:
             return {"encrypted": encrypted_str}
         return data
 
-    def _decrypt(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _decrypt(self, data: dict[str, Any]) -> dict[str, Any]:
         """Decrypt sensitive data if encryption is enabled."""
         if self.cipher and "encrypted" in data:
             # Decrypt the encrypted string and parse back to dict

@@ -8,7 +8,7 @@ options to ensure they are valid and reasonable.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from .core import (
     CircuitBreakerConfig,
@@ -22,13 +22,13 @@ from .core import (
 class ErrorHandlingConfigValidator:
     """Validates error handling configuration options."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize the validator."""
         self.logger = logger or logging.getLogger(__name__)
 
     def validate_circuit_breaker_config(
         self, config: CircuitBreakerConfig
-    ) -> Tuple[bool, List[str]]:
+    ) -> tuple[bool, list[str]]:
         """
         Validate circuit breaker configuration.
 
@@ -82,7 +82,7 @@ class ErrorHandlingConfigValidator:
 
     def validate_operation_circuit_breaker_config(
         self, config: OperationCircuitBreakerConfig
-    ) -> Tuple[bool, List[str]]:
+    ) -> tuple[bool, list[str]]:
         """
         Validate operation-specific circuit breaker configuration.
 
@@ -117,7 +117,7 @@ class ErrorHandlingConfigValidator:
 
         return len(errors) == 0, errors
 
-    def validate_retry_config(self, config: RetryConfig) -> Tuple[bool, List[str]]:
+    def validate_retry_config(self, config: RetryConfig) -> tuple[bool, list[str]]:
         """
         Validate retry configuration.
 
@@ -186,8 +186,8 @@ class ErrorHandlingConfigValidator:
         return len(errors) == 0, errors
 
     def validate_error_type(
-        self, error_type: Union[str, ErrorType]
-    ) -> Tuple[bool, List[str]]:
+        self, error_type: str | ErrorType
+    ) -> tuple[bool, list[str]]:
         """
         Validate error type.
 
@@ -210,8 +210,8 @@ class ErrorHandlingConfigValidator:
         return len(errors) == 0, errors
 
     def validate_circuit_state(
-        self, state: Union[str, CircuitState]
-    ) -> Tuple[bool, List[str]]:
+        self, state: str | CircuitState
+    ) -> tuple[bool, list[str]]:
         """
         Validate circuit state.
 
@@ -234,8 +234,8 @@ class ErrorHandlingConfigValidator:
         return len(errors) == 0, errors
 
     def validate_health_check_config(
-        self, config: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
+        self, config: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """
         Validate health check configuration.
 
@@ -289,7 +289,7 @@ class ErrorHandlingConfigValidator:
 
         return len(errors) == 0, errors
 
-    def validate_metrics_config(self, config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_metrics_config(self, config: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         Validate metrics configuration.
 
@@ -333,8 +333,8 @@ class ErrorHandlingConfigValidator:
         return len(errors) == 0, errors
 
     def validate_graceful_degradation_config(
-        self, config: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
+        self, config: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """
         Validate graceful degradation configuration.
 
@@ -387,8 +387,8 @@ class ErrorHandlingConfigValidator:
         return len(errors) == 0, errors
 
     def validate_error_handling_config(
-        self, config: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
+        self, config: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """
         Validate complete error handling configuration.
 
@@ -469,7 +469,7 @@ class ErrorHandlingConfigValidator:
 
         return len(errors) == 0, errors
 
-    def get_default_config(self) -> Dict[str, Any]:
+    def get_default_config(self) -> dict[str, Any]:
         """
         Get default error handling configuration.
 
@@ -541,8 +541,8 @@ class ErrorHandlingConfigValidator:
         }
 
     def validate_and_fix_config(
-        self, config: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], List[str]]:
+        self, config: dict[str, Any]
+    ) -> tuple[dict[str, Any], list[str]]:
         """
         Validate configuration and fix common issues.
 

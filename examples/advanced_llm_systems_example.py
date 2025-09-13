@@ -121,7 +121,10 @@ async def model_mixing_example():
 
     # Example 1: Parallel mixing for code generation
     logger.info("\n--- Parallel Code Generation ---")
-    code_prompt = "Write a Python function to calculate the factorial of a number with error handling."
+    code_prompt = (
+        "Write a Python function to calculate the factorial of a number "
+        "with error handling."
+    )
 
     try:
         result = await model_mixer.mix_models(
@@ -145,7 +148,10 @@ async def model_mixing_example():
 
     # Example 2: Sequential mixing for analysis
     logger.info("\n--- Sequential Analysis ---")
-    analysis_prompt = "Analyze the pros and cons of microservices architecture for a large e-commerce platform."
+    analysis_prompt = (
+        "Analyze the pros and cons of microservices architecture for a "
+        "large e-commerce platform."
+    )
 
     try:
         result = await model_mixer.mix_models(
@@ -230,7 +236,8 @@ async def model_mixing_example():
         logger.info(f"Decomposed into {len(results)} subtasks")
         for i, result in enumerate(results):
             logger.info(
-                f"Subtask {i+1}: {result.execution_time_ms:.2f}ms, ${result.total_cost:.4f}, confidence: {result.confidence_score:.2f}"
+                f"Subtask {i+1}: {result.execution_time_ms:.2f}ms, "
+                f"${result.total_cost:.4f}, confidence: {result.confidence_score:.2f}"
             )
 
     except Exception as e:
@@ -346,7 +353,8 @@ async def integrated_systems_example():
     logger.info(f"Success Rate: {system_status['metrics']['overall_success_rate']:.1%}")
     logger.info(f"Total Cost: ${system_status['metrics']['total_cost']:.2f}")
     logger.info(
-        f"Alerts: {system_status['alerts']['total']} total, {system_status['alerts']['critical']} critical"
+        f"Alerts: {system_status['alerts']['total']} total, "
+        f"{system_status['alerts']['critical']} critical"
     )
 
     # Stop monitoring

@@ -9,8 +9,8 @@ import tempfile
 from unittest.mock import patch
 from urllib.parse import urlparse
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from gemini_sre_agent.config.source_control_credentials import CredentialConfig
 

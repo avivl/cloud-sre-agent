@@ -37,7 +37,9 @@ class MockProvider(LLMProvider):
     async def generate_structured(self, prompt, response_model, model=None, **kwargs):
         return response_model()
 
-    def generate_stream(self, prompt: str, model: Optional[str] = None, **kwargs: str) -> None:
+    def generate_stream(
+        self, prompt: str, model: Optional[str] = None, **kwargs: str
+    ) -> None:
         """
         Generate Stream.
 
@@ -46,6 +48,7 @@ class MockProvider(LLMProvider):
             model: Description of model.
 
         """
+
         async def _stream():
             yield "Mock"
 

@@ -9,7 +9,6 @@ using the Mirascope library for advanced prompt management.
 
 import logging
 import os
-from typing import Dict, List
 
 # Note: Mirascope integration will be added in a future update
 # For now, we'll use simple string templates
@@ -33,7 +32,7 @@ class PromptManager:
     def __init__(self, prompt_directory: str = "prompts") -> None:
         """Initialize the prompt manager."""
         self.prompt_directory = prompt_directory
-        self.prompts: Dict[str, str] = {}  # Changed from Prompt to str
+        self.prompts: dict[str, str] = {}  # Changed from Prompt to str
         self.logger = logging.getLogger(__name__)
         self._load_prompts()
 
@@ -48,13 +47,13 @@ class PromptManager:
             if filename.endswith((".yaml", ".yml")):
                 try:
                     path = os.path.join(self.prompt_directory, filename)
-                    with open(path, "r") as f:
+                    with open(path) as f:
                         prompt_data = yaml.safe_load(f)
                         prompt_name = os.path.splitext(filename)[0]
                         self.prompts[prompt_name] = prompt_data.get("template", "")
                         self.logger.debug(f"Loaded prompt: {prompt_name}")
                 except Exception as e:
-                    self.logger.error(f"Failed to load prompt {filename}: {str(e)}")
+                    self.logger.error(f"Failed to load prompt {filename}: {e!s}")
 
     def get_prompt(self, name: str) -> str:
         """
@@ -85,7 +84,7 @@ class PromptManager:
         self.prompts[name] = template
         self.logger.info(f"Added prompt: {name}")
 
-    def list_prompts(self) -> List[str]:
+    def list_prompts(self) -> list[str]:
         """Get list of available prompt names."""
         return list(self.prompts.keys())
 

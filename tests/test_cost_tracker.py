@@ -2,7 +2,7 @@
 Unit tests for cost tracking and budget management functionality.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -157,7 +157,7 @@ class TestCostTracker:
         # Add 5 records
         for i in range(5):
             record = UsageRecord(
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 model_name="test-model",
                 input_tokens=100,
                 output_tokens=50,

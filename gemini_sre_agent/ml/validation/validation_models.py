@@ -9,7 +9,7 @@ including validation results, issues, and feedback.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ValidationLevel(Enum):
@@ -42,11 +42,11 @@ class ValidationIssue:
     level: ValidationLevel
     message: str
     description: str
-    line_number: Optional[int] = None
-    column_number: Optional[int] = None
-    file_path: Optional[str] = None
-    suggested_fix: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    line_number: int | None = None
+    column_number: int | None = None
+    file_path: str | None = None
+    suggested_fix: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass
@@ -58,8 +58,8 @@ class ValidationFeedback:
     message: str
     suggestion: str
     priority: int  # 1-10, higher is more important
-    examples: Optional[List[str]] = None
-    references: Optional[List[str]] = None
+    examples: list[str] | None = None
+    references: list[str] | None = None
 
 
 @dataclass
@@ -68,9 +68,9 @@ class ValidationResult:
 
     is_valid: bool
     overall_score: float  # 0.0 to 1.0
-    issues: List[ValidationIssue]
-    feedback: List[ValidationFeedback]
-    validation_metadata: Dict[str, Any]
+    issues: list[ValidationIssue]
+    feedback: list[ValidationFeedback]
+    validation_metadata: dict[str, Any]
 
     # Validation type results
     syntax_valid: bool = True
@@ -84,13 +84,13 @@ class ValidationResult:
     security_score: float = 1.0
     performance_score: float = 1.0
 
-    def get_issues_by_level(self, level: ValidationLevel) -> List[ValidationIssue]:
+    def get_issues_by_level(self, level: ValidationLevel) -> list[ValidationIssue]:
         """Get issues filtered by severity level."""
         return [issue for issue in self.issues if issue.level == level]
 
     def get_issues_by_type(
         self, validation_type: ValidationType
-    ) -> List[ValidationIssue]:
+    ) -> list[ValidationIssue]:
         """Get issues filtered by validation type."""
         return [
             issue for issue in self.issues if issue.validation_type == validation_type
@@ -104,7 +104,7 @@ class ValidationResult:
         """Check if there are any errors."""
         return len(self.get_issues_by_level(ValidationLevel.ERROR)) > 0
 
-    def get_validation_summary(self) -> Dict[str, Any]:
+    def get_validation_summary(self) -> dict[str, Any]:
         """Get a summary of validation results."""
         return {
             "is_valid": self.is_valid,

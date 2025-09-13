@@ -1,32 +1,28 @@
 """Fault tolerance implementation for resilience patterns."""
 
 import asyncio
-import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
+from .bulkhead_isolator import BulkheadConfig, BulkheadIsolator
+from .circuit_breaker import CircuitBreaker, CircuitState
 from .exceptions import (
     CircuitBreakerError,
-    RetryExhaustedError,
-    TimeoutError,
-    BulkheadError,
-    RateLimitError,
-    HealthCheckError
+    HealthCheckError,
 )
-from .circuit_breaker import CircuitBreaker, CircuitState
-from .retry_handler import RetryHandler, RetryConfig
-from .timeout_manager import TimeoutManager, TimeoutConfig
-from .bulkhead_isolator import BulkheadIsolator, BulkheadConfig
-from .rate_limiter import RateLimiter, RateLimitConfig
-from .health_checker import HealthChecker, HealthCheck, HealthStatus
+from .health_checker import HealthCheck, HealthChecker
+from .rate_limiter import RateLimitConfig, RateLimiter
+from .retry_handler import RetryConfig, RetryHandler
+from .timeout_manager import TimeoutConfig, TimeoutManager
 
 T = TypeVar("T")
 
 
 class FaultToleranceStrategy(Enum):
     """Fault tolerance strategies."""
-    
+
     NONE = "none"
     RETRY_ONLY = "retry_only"
     CIRCUIT_BREAKER_ONLY = "circuit_breaker_only"
@@ -54,15 +50,15 @@ class FaultToleranceConfig:
         enable_metrics: Whether to enable metrics collection
         enable_logging: Whether to enable logging
     """
-    
+
     strategy: FaultToleranceStrategy = FaultToleranceStrategy.FULL_PROTECTION
-    retry_config: Optional[RetryConfig] = None
-    circuit_breaker_config: Optional[Dict[str, Any]] = None
-    timeout_config: Optional[TimeoutConfig] = None
-    bulkhead_config: Optional[BulkheadConfig] = None
-    rate_limit_config: Optional[RateLimitConfig] = None
-    health_checks: List[Dict[str, Any]] = field(default_factory=list)
-    fallback_func: Optional[Callable[[], T]] = None
+    retry_config: RetryConfig | None = None
+    circuit_breaker_config: dict[str, Any] | None = None
+    timeout_config: TimeoutConfig | None = None
+    bulkhead_config: BulkheadConfig | None = None
+    rate_limit_config: RateLimitConfig | None = None
+    health_checks: list[dict[str, Any]] = field(default_factory=list)
+    fallback_func: Callable[[], T] | None = None
     enable_metrics: bool = True
     enable_logging: bool = True
 
@@ -73,7 +69,7 @@ class FaultToleranceManager:
     Provides a unified interface for applying multiple
     resilience patterns to operations.
     """
-    
+
     def __init__(self, config: FaultToleranceConfig):
         """Initialize the fault tolerance manager.
         
@@ -81,20 +77,20 @@ class FaultToleranceManager:
             config: Fault tolerance configuration
         """
         self._config = config
-        self._circuit_breaker: Optional[CircuitBreaker] = None
-        self._retry_handler: Optional[RetryHandler] = None
-        self._timeout_manager: Optional[TimeoutManager] = None
-        self._bulkhead_isolator: Optional[BulkheadIsolator] = None
-        self._rate_limiter: Optional[RateLimiter] = None
-        self._health_checker: Optional[HealthChecker] = None
-        self._metrics: Dict[str, Any] = {}
+        self._circuit_breaker: CircuitBreaker | None = None
+        self._retry_handler: RetryHandler | None = None
+        self._timeout_manager: TimeoutManager | None = None
+        self._bulkhead_isolator: BulkheadIsolator | None = None
+        self._rate_limiter: RateLimiter | None = None
+        self._health_checker: HealthChecker | None = None
+        self._metrics: dict[str, Any] = {}
         self._setup_resilience_patterns()
-    
+
     def _setup_resilience_patterns(self) -> None:
         """Setup resilience patterns based on configuration."""
         if self._config.strategy == FaultToleranceStrategy.NONE:
             return
-        
+
         # Setup retry handler
         if (self._config.strategy in [
             FaultToleranceStrategy.RETRY_ONLY,
@@ -102,7 +98,7 @@ class FaultToleranceManager:
             FaultToleranceStrategy.CUSTOM
         ] and self._config.retry_config):
             self._retry_handler = RetryHandler(self._config.retry_config)
-        
+
         # Setup circuit breaker
         if (self._config.strategy in [
             FaultToleranceStrategy.CIRCUIT_BREAKER_ONLY,
@@ -110,7 +106,7 @@ class FaultToleranceManager:
             FaultToleranceStrategy.CUSTOM
         ] and self._config.circuit_breaker_config):
             self._circuit_breaker = CircuitBreaker(**self._config.circuit_breaker_config)
-        
+
         # Setup timeout manager
         if (self._config.strategy in [
             FaultToleranceStrategy.TIMEOUT_ONLY,
@@ -118,7 +114,7 @@ class FaultToleranceManager:
             FaultToleranceStrategy.CUSTOM
         ] and self._config.timeout_config):
             self._timeout_manager = TimeoutManager(self._config.timeout_config)
-        
+
         # Setup bulkhead isolator
         if (self._config.strategy in [
             FaultToleranceStrategy.BULKHEAD_ONLY,
@@ -126,7 +122,7 @@ class FaultToleranceManager:
             FaultToleranceStrategy.CUSTOM
         ] and self._config.bulkhead_config):
             self._bulkhead_isolator = BulkheadIsolator(self._config.bulkhead_config)
-        
+
         # Setup rate limiter
         if (self._config.strategy in [
             FaultToleranceStrategy.RATE_LIMIT_ONLY,
@@ -134,7 +130,7 @@ class FaultToleranceManager:
             FaultToleranceStrategy.CUSTOM
         ] and self._config.rate_limit_config):
             self._rate_limiter = RateLimiter(self._config.rate_limit_config)
-        
+
         # Setup health checker
         if (self._config.strategy in [
             FaultToleranceStrategy.HEALTH_CHECK_ONLY,
@@ -145,7 +141,7 @@ class FaultToleranceManager:
             for health_check_config in self._config.health_checks:
                 health_check = HealthCheck(**health_check_config)
                 self._health_checker.add_health_check(health_check)
-    
+
     async def execute_with_fault_tolerance(
         self,
         func: Callable[..., T],
@@ -175,15 +171,15 @@ class FaultToleranceManager:
             if self._config.fallback_func:
                 return self._config.fallback_func()
             raise HealthCheckError("System is unhealthy")
-        
+
         # Apply rate limiting
         if self._rate_limiter:
             await self._rate_limiter.acquire()
-        
+
         # Apply bulkhead isolation
         if self._bulkhead_isolator:
             await self._bulkhead_isolator.acquire()
-        
+
         try:
             # Apply timeout
             if self._timeout_manager:
@@ -199,30 +195,30 @@ class FaultToleranceManager:
                     *args,
                     **kwargs
                 )
-            
+
             # Update metrics
             if self._config.enable_metrics:
                 self._update_metrics("success", 1)
-            
+
             return result
-            
+
         except Exception as e:
             # Update metrics
             if self._config.enable_metrics:
                 self._update_metrics("failure", 1)
                 self._update_metrics(f"failure_{type(e).__name__}", 1)
-            
+
             # Use fallback if available
             if self._config.fallback_func:
                 return self._config.fallback_func()
-            
+
             raise
-        
+
         finally:
             # Release bulkhead
             if self._bulkhead_isolator:
                 self._bulkhead_isolator.release()
-    
+
     async def _execute_with_retry_and_circuit_breaker(
         self,
         func: Callable[..., T],
@@ -242,7 +238,7 @@ class FaultToleranceManager:
         # Check circuit breaker
         if self._circuit_breaker and self._circuit_breaker.state == CircuitState.OPEN:
             raise CircuitBreakerError("Circuit breaker is open")
-        
+
         # Execute with retry if configured
         if self._retry_handler:
             return await self._retry_handler.execute_with_retry(
@@ -253,7 +249,7 @@ class FaultToleranceManager:
             )
         else:
             return await self._execute_with_circuit_breaker(func, *args, **kwargs)
-    
+
     async def _execute_with_circuit_breaker(
         self,
         func: Callable[..., T],
@@ -277,8 +273,8 @@ class FaultToleranceManager:
                 return await func(*args, **kwargs)
             else:
                 return func(*args, **kwargs)
-    
-    def _update_metrics(self, metric_name: str, value: Union[int, float]) -> None:
+
+    def _update_metrics(self, metric_name: str, value: int | float) -> None:
         """Update metrics.
         
         Args:
@@ -288,20 +284,20 @@ class FaultToleranceManager:
         if metric_name not in self._metrics:
             self._metrics[metric_name] = 0
         self._metrics[metric_name] += value
-    
-    def get_metrics(self) -> Dict[str, Any]:
+
+    def get_metrics(self) -> dict[str, Any]:
         """Get current metrics.
         
         Returns:
             Current metrics
         """
         return self._metrics.copy()
-    
+
     def reset_metrics(self) -> None:
         """Reset metrics."""
         self._metrics.clear()
-    
-    def get_health_status(self) -> Dict[str, Any]:
+
+    def get_health_status(self) -> dict[str, Any]:
         """Get health status.
         
         Returns:
@@ -310,7 +306,7 @@ class FaultToleranceManager:
         if self._health_checker:
             return self._health_checker.get_health_status()
         return {"status": "unknown", "message": "Health checker not configured"}
-    
+
     def is_healthy(self) -> bool:
         """Check if system is healthy.
         
@@ -335,7 +331,7 @@ def fault_tolerance(
     """
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         manager = FaultToleranceManager(config)
-        
+
         if asyncio.iscoroutinefunction(func):
             async def async_wrapper(*args, **kwargs) -> T:
                 return await manager.execute_with_fault_tolerance(func, *args, **kwargs)
@@ -348,7 +344,10 @@ def fault_tolerance(
                     if loop.is_running():
                         # If we're in an async context, we can't use run_until_complete
                         # This is a limitation of the current implementation
-                        raise RuntimeError("Cannot use fault tolerance decorator on sync functions in async context")
+                        raise RuntimeError(
+                            "Cannot use fault tolerance decorator on sync functions "
+                            "in async context"
+                        )
                     return loop.run_until_complete(
                         manager.execute_with_fault_tolerance(func, *args, **kwargs)
                     )
@@ -358,7 +357,7 @@ def fault_tolerance(
                         manager.execute_with_fault_tolerance(func, *args, **kwargs)
                     )
             return sync_wrapper
-    
+
     return decorator
 
 

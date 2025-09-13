@@ -3,7 +3,6 @@ Unit tests for model performance monitoring and drift detection.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -117,7 +116,9 @@ class TestModelPerformanceMonitor:
         )  # Mean of 0.8, 0.82, 0.84, 0.86, 0.88
         assert monitor.baseline_latency == 120.0  # Mean of 100, 110, 120, 130, 140
 
-    def test_get_performance_metrics_empty(self, monitor: ModelPerformanceMonitor) -> None:
+    def test_get_performance_metrics_empty(
+        self, monitor: ModelPerformanceMonitor
+    ) -> None:
         """Test getting metrics when no data is available."""
         metrics = monitor.get_performance_metrics()
         expected = PerformanceMetrics.empty_metrics()
@@ -146,7 +147,9 @@ class TestModelPerformanceMonitor:
         assert "pattern_accuracy" in metrics
         assert "memory_leak" in metrics["pattern_accuracy"]
 
-    def test_get_drift_summary_no_alerts(self, monitor: ModelPerformanceMonitor) -> None:
+    def test_get_drift_summary_no_alerts(
+        self, monitor: ModelPerformanceMonitor
+    ) -> None:
         """Test drift summary with no alerts."""
         summary = monitor.get_drift_summary()
         assert summary["has_drift"] is False
@@ -154,7 +157,9 @@ class TestModelPerformanceMonitor:
         assert summary["recent_alerts"] == []
         assert summary["severity_counts"] == {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
 
-    def test_get_drift_summary_with_alerts(self, monitor: ModelPerformanceMonitor) -> None:
+    def test_get_drift_summary_with_alerts(
+        self, monitor: ModelPerformanceMonitor
+    ) -> None:
         """Test drift summary with alerts."""
         # Add test alerts
         alert1 = DriftAlert(

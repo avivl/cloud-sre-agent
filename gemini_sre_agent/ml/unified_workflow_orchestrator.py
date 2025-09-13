@@ -10,10 +10,10 @@ optimizations to provide a seamless, high-performance experience.
 Refactored version using modular components for better maintainability.
 """
 
+from dataclasses import dataclass
 import logging
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .caching import ContextCache
 from .enhanced_analysis_agent import EnhancedAnalysisAgent
@@ -44,11 +44,11 @@ class WorkflowResult:
     """Result of the unified workflow execution."""
 
     success: bool
-    analysis_result: Dict[str, Any]
+    analysis_result: dict[str, Any]
     generated_code: str
-    validation_result: Dict[str, Any]
+    validation_result: dict[str, Any]
     metrics: WorkflowMetrics
-    error_message: Optional[str] = None
+    error_message: str | None = None
     fallback_used: bool = False
 
 
@@ -100,13 +100,13 @@ class UnifiedWorkflowOrchestrator:
         self.logger = logging.getLogger(__name__)
 
         # Workflow state
-        self.current_workflow_id: Optional[str] = None
+        self.current_workflow_id: str | None = None
 
     async def execute_workflow(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
         analysis_depth: str = "standard",
         enable_validation: bool = True,
@@ -316,15 +316,15 @@ class UnifiedWorkflowOrchestrator:
             return error_result
 
     # Delegate methods to appropriate components
-    async def get_workflow_history(self) -> List[WorkflowResult]:
+    async def get_workflow_history(self) -> list[WorkflowResult]:
         """Get workflow execution history."""
         return await self.metrics_collector.get_workflow_history()
 
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """Get comprehensive performance metrics."""
         return await self.metrics_collector.get_performance_metrics()
 
-    async def get_performance_insights(self) -> Dict[str, Any]:
+    async def get_performance_insights(self) -> dict[str, Any]:
         """Get comprehensive performance insights from the monitoring system."""
         return await self.metrics_collector.get_performance_insights()
 

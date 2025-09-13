@@ -7,9 +7,9 @@ This module provides REST API endpoints for monitoring dashboards,
 including metrics, health status, performance data, and cost analytics.
 """
 
-import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from ..cost_management_integration import IntegratedCostManager
 from ..monitoring.health_checks import LLMHealthChecker
@@ -24,7 +24,7 @@ class LLMDashboardAPI:
     def __init__(
         self,
         health_checker: LLMHealthChecker,
-        cost_manager: Optional[IntegratedCostManager] = None,
+        cost_manager: IntegratedCostManager | None = None,
     ):
         """Initialize the dashboard API."""
         self.health_checker = health_checker
@@ -33,7 +33,7 @@ class LLMDashboardAPI:
 
         logger.info("LLMDashboardAPI initialized")
 
-    def get_overview(self) -> Dict[str, Any]:
+    def get_overview(self) -> dict[str, Any]:
         """Get system overview for dashboard."""
         health_summary = self.health_checker.get_health_summary()
         metrics_summary = self.metrics_collector.get_metrics_summary()
@@ -59,7 +59,7 @@ class LLMDashboardAPI:
             ),
         }
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get detailed health status for all providers."""
         return {
             "timestamp": datetime.now().isoformat(),
@@ -94,8 +94,8 @@ class LLMDashboardAPI:
         }
 
     def get_metrics(
-        self, provider: Optional[str] = None, model: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, provider: str | None = None, model: str | None = None
+    ) -> dict[str, Any]:
         """Get metrics data for dashboard."""
         if provider and model:
             # Get specific model metrics
@@ -180,8 +180,8 @@ class LLMDashboardAPI:
             }
 
     def get_performance_data(
-        self, provider: Optional[str] = None, hours: int = 24
-    ) -> Dict[str, Any]:
+        self, provider: str | None = None, hours: int = 24
+    ) -> dict[str, Any]:
         """Get performance data for charts and graphs."""
         # This would typically query time-series data
         # For now, we'll return current metrics with some mock historical data
@@ -240,8 +240,8 @@ class LLMDashboardAPI:
             }
 
     def get_cost_analytics(
-        self, provider: Optional[str] = None, days: int = 30
-    ) -> Dict[str, Any]:
+        self, provider: str | None = None, days: int = 30
+    ) -> dict[str, Any]:
         """Get cost analytics data."""
         if not self.cost_manager:
             return {"error": "Cost management not available"}
@@ -266,9 +266,9 @@ class LLMDashboardAPI:
                 }
         except Exception as e:
             logger.error(f"Error getting cost analytics: {e}")
-            return {"error": f"Failed to get cost analytics: {str(e)}"}
+            return {"error": f"Failed to get cost analytics: {e!s}"}
 
-    def get_alerts(self) -> Dict[str, Any]:
+    def get_alerts(self) -> dict[str, Any]:
         """Get current alerts and issues."""
         alerts = []
 
@@ -340,7 +340,7 @@ class LLMDashboardAPI:
             "alerts": alerts,
         }
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get overall system status."""
         health_summary = self.health_checker.get_health_summary()
         metrics_summary = self.metrics_collector.get_metrics_summary()
@@ -379,7 +379,7 @@ class LLMDashboardAPI:
 
     def _generate_mock_historical_data(
         self, provider: str, hours: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Generate mock historical data for charts."""
         # In a real implementation, this would query time-series data
         data_points = []
@@ -399,7 +399,7 @@ class LLMDashboardAPI:
 
         return list(reversed(data_points))  # Return in chronological order
 
-    def _get_provider_cost_data(self, provider: str, days: int) -> Dict[str, Any]:
+    def _get_provider_cost_data(self, provider: str, days: int) -> dict[str, Any]:
         """Get cost data for a specific provider."""
         # In a real implementation, this would query cost data
         return {

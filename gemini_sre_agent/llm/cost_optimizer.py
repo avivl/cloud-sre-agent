@@ -7,10 +7,10 @@ This module provides intelligent cost optimization strategies and model selectio
 based on cost, performance, and budget constraints.
 """
 
+from dataclasses import dataclass
 import logging
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .cost_management import DynamicCostManager, OptimizationStrategy, UsageRecord
 from .model_registry import ModelInfo, ModelRegistry
@@ -26,7 +26,7 @@ class OptimizationResult:
     selected_model: ModelInfo
     estimated_cost: float
     reasoning: str
-    alternatives: List[Tuple[ModelInfo, float]]  # (model, cost) pairs
+    alternatives: list[tuple[ModelInfo, float]]  # (model, cost) pairs
     optimization_strategy: OptimizationStrategy
     execution_time_ms: float
 
@@ -34,7 +34,9 @@ class OptimizationResult:
 class CostOptimizer:
     """Intelligent cost optimization for model selection."""
 
-    def __init__(self, cost_manager: DynamicCostManager, model_registry: ModelRegistry) -> None:
+    def __init__(
+        self, cost_manager: DynamicCostManager, model_registry: ModelRegistry
+    ) -> None:
         self.cost_manager = cost_manager
         self.model_registry = model_registry
 
@@ -49,7 +51,7 @@ class CostOptimizer:
         self,
         context: StrategyContext,
         strategy: OptimizationStrategy = OptimizationStrategy.BALANCED,
-        max_cost: Optional[float] = None,
+        max_cost: float | None = None,
     ) -> OptimizationResult:
         """
         Optimize model selection based on cost and performance requirements.
@@ -103,10 +105,10 @@ class CostOptimizer:
 
     def _filter_models_by_constraints(
         self,
-        models: List[ModelInfo],
+        models: list[ModelInfo],
         context: StrategyContext,
-        max_cost: Optional[float],
-    ) -> List[ModelInfo]:
+        max_cost: float | None,
+    ) -> list[ModelInfo]:
         """Filter models based on constraints."""
         filtered = []
 
@@ -137,8 +139,8 @@ class CostOptimizer:
         return filtered
 
     def _budget_optimized_strategy(
-        self, models: List[ModelInfo], context: StrategyContext
-    ) -> Tuple[ModelInfo, str]:
+        self, models: list[ModelInfo], context: StrategyContext
+    ) -> tuple[ModelInfo, str]:
         """Select the cheapest model that meets requirements."""
         # Sort by cost per 1k tokens
         sorted_models = sorted(models, key=lambda m: m.cost_per_1k_tokens)
@@ -149,8 +151,8 @@ class CostOptimizer:
         return selected, reasoning
 
     def _performance_optimized_strategy(
-        self, models: List[ModelInfo], context: StrategyContext
-    ) -> Tuple[ModelInfo, str]:
+        self, models: list[ModelInfo], context: StrategyContext
+    ) -> tuple[ModelInfo, str]:
         """Select the highest performance model within budget."""
 
         # Sort by performance score (assuming higher is better)
@@ -190,8 +192,8 @@ class CostOptimizer:
         return selected, reasoning
 
     def _balanced_strategy(
-        self, models: List[ModelInfo], context: StrategyContext
-    ) -> Tuple[ModelInfo, str]:
+        self, models: list[ModelInfo], context: StrategyContext
+    ) -> tuple[ModelInfo, str]:
         """Select model with best cost/performance ratio."""
 
         def cost_performance_ratio(model: ModelInfo) -> float:
@@ -242,10 +244,10 @@ class CostOptimizer:
 
     def _get_alternatives(
         self,
-        models: List[ModelInfo],
+        models: list[ModelInfo],
         selected_model: ModelInfo,
         context: StrategyContext,
-    ) -> List[Tuple[ModelInfo, float]]:
+    ) -> list[tuple[ModelInfo, float]]:
         """Get alternative model options with their estimated costs."""
         alternatives = []
 
@@ -262,8 +264,8 @@ class CostOptimizer:
         return alternatives[:3]  # Return top 3 alternatives
 
     def get_cost_comparison(
-        self, models: List[ModelInfo], context: StrategyContext
-    ) -> Dict[str, Any]:
+        self, models: list[ModelInfo], context: StrategyContext
+    ) -> dict[str, Any]:
         """Get cost comparison for multiple models."""
         comparison = {}
 
@@ -287,8 +289,8 @@ class CostOptimizer:
         )
 
     def get_optimization_recommendations(
-        self, usage_records: List[UsageRecord]
-    ) -> Dict[str, Any]:
+        self, usage_records: list[UsageRecord]
+    ) -> dict[str, Any]:
         """Get optimization recommendations based on usage patterns."""
         if not usage_records:
             return {"recommendations": [], "savings_potential": 0.0}

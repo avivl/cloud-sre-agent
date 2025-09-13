@@ -1,11 +1,10 @@
 import asyncio
 from asyncio import TimeoutError  # Added for asyncio.TimeoutError
-from unittest.mock import AsyncMock
 
-import pytest
 from hyx.circuitbreaker.exceptions import BreakerFailing
 from hyx.ratelimit.exceptions import RateLimitExceeded
 from hyx.retry.exceptions import MaxAttemptsExceeded
+import pytest
 
 from gemini_sre_agent.resilience import (
     HyxResilientClient,

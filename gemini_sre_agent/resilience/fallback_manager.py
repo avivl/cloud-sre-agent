@@ -3,8 +3,9 @@
 """Fallback manager for automatic provider switching."""
 
 import asyncio
+from collections.abc import Callable
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from .error_classifier import ErrorClassifier
 
@@ -16,8 +17,8 @@ class FallbackManager:
 
     def __init__(
         self,
-        providers: List[str],
-        error_classifier: Optional[ErrorClassifier] = None,
+        providers: list[str],
+        error_classifier: ErrorClassifier | None = None,
         fallback_timeout: float = 30.0,
     ):
         """Initialize the fallback manager.
@@ -32,26 +33,22 @@ class FallbackManager:
         self.fallback_timeout = fallback_timeout
 
         # Provider health tracking
-        self._provider_health: Dict[str, bool] = {
-            provider: True for provider in providers
-        }
-        self._provider_failures: Dict[str, int] = {
-            provider: 0 for provider in providers
-        }
-        self._provider_last_failure: Dict[str, float] = {}
+        self._provider_health: dict[str, bool] = dict.fromkeys(providers, True)
+        self._provider_failures: dict[str, int] = dict.fromkeys(providers, 0)
+        self._provider_last_failure: dict[str, float] = {}
 
         # Statistics
         self._total_requests = 0
         self._total_fallbacks = 0
-        self._provider_usage: Dict[str, int] = {provider: 0 for provider in providers}
+        self._provider_usage: dict[str, int] = dict.fromkeys(providers, 0)
         self._fallback_successes = 0
 
     async def execute_with_fallback(
         self,
-        provider_funcs: Dict[str, Callable],
+        provider_funcs: dict[str, Callable],
         *args,
         **kwargs,
-    ) -> Tuple[Any, str]:
+    ) -> tuple[Any, str]:
         """Execute a function with automatic fallback between providers.
 
         Args:
@@ -110,7 +107,7 @@ class FallbackManager:
 
                 return result, provider
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     f"Provider {provider} timed out after {self.fallback_timeout}s"
                 )
@@ -153,7 +150,7 @@ class FallbackManager:
         else:
             return func(*args, **kwargs)
 
-    def _get_healthy_providers(self) -> List[str]:
+    def _get_healthy_providers(self) -> list[str]:
         """Get list of healthy providers in order of preference."""
         healthy = []
 
@@ -198,7 +195,7 @@ class FallbackManager:
         """Get health status of a provider."""
         return self._provider_health.get(provider, True)
 
-    def get_provider_stats(self, provider: str) -> Dict[str, Any]:
+    def get_provider_stats(self, provider: str) -> dict[str, Any]:
         """Get statistics for a specific provider."""
         usage = self._provider_usage.get(provider, 0)
         failures = self._provider_failures.get(provider, 0)
@@ -219,7 +216,7 @@ class FallbackManager:
             "last_failure": self._provider_last_failure.get(provider),
         }
 
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """Get statistics for all providers."""
         sum(self._provider_usage.values())
 
@@ -240,7 +237,7 @@ class FallbackManager:
             "total_providers": len(self.providers),
         }
 
-    def reset_provider_stats(self, provider: Optional[str] = None) -> None:
+    def reset_provider_stats(self, provider: str | None = None) -> None:
         """Reset statistics for a provider or all providers."""
         if provider:
             self._provider_failures[provider] = 0
@@ -249,15 +246,15 @@ class FallbackManager:
                 del self._provider_last_failure[provider]
             logger.info(f"Reset stats for provider: {provider}")
         else:
-            self._provider_failures = {p: 0 for p in self.providers}
-            self._provider_usage = {p: 0 for p in self.providers}
+            self._provider_failures = dict.fromkeys(self.providers, 0)
+            self._provider_usage = dict.fromkeys(self.providers, 0)
             self._provider_last_failure = {}
             self._total_requests = 0
             self._total_fallbacks = 0
             self._fallback_successes = 0
             logger.info("Reset stats for all providers")
 
-    def add_provider(self, provider: str, position: Optional[int] = None) -> None:
+    def add_provider(self, provider: str, position: int | None = None) -> None:
         """Add a new provider to the fallback chain.
 
         Args:
@@ -307,7 +304,7 @@ class FallbackManager:
         logger.info(f"Removed provider {provider} from fallback chain")
         return True
 
-    def reorder_providers(self, new_order: List[str]) -> None:
+    def reorder_providers(self, new_order: list[str]) -> None:
         """Reorder providers in the fallback chain.
 
         Args:

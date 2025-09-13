@@ -5,7 +5,6 @@ Tests for the base LLM provider interfaces and data models.
 """
 
 import asyncio
-from typing import List
 from unittest.mock import Mock
 
 import pytest
@@ -71,7 +70,7 @@ class MockProvider(LLMProvider):
         """
         return {ModelType.SMART: "mock-model"}
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         return [0.1] * 768
 
     def token_count(self, text: str) -> int:

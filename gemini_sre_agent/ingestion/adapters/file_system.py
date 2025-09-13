@@ -7,13 +7,14 @@ This adapter implements the LogIngestionInterface for consuming logs
 from local file system files and directories.
 """
 
-import glob
 import asyncio
+from collections.abc import AsyncGenerator, AsyncIterator
+from datetime import datetime
+import glob
 import logging
 import os
-from datetime import datetime
 from pathlib import Path
-from typing import Any, AsyncGenerator, AsyncIterator, Dict, List, Optional, Set
+from typing import Any
 
 from ...config.ingestion_config import FileSystemConfig
 from ..interfaces.core import (
@@ -51,8 +52,8 @@ class FileSystemAdapter(LogIngestionInterface):
 
         # State management
         self._is_running = False
-        self._watched_files: Set[str] = set()
-        self._file_positions: Dict[str, int] = {}
+        self._watched_files: set[str] = set()
+        self._file_positions: dict[str, int] = {}
         self._last_check_time = None
 
         # Health tracking
@@ -151,7 +152,7 @@ class FileSystemAdapter(LogIngestionInterface):
 
                 # Reset failure count on successful processing
                 self._consecutive_failures = 0
-                
+
                 # Wait a bit before checking again
                 await asyncio.sleep(1)
 
@@ -172,7 +173,7 @@ class FileSystemAdapter(LogIngestionInterface):
                 except OSError:
                     self._file_positions[file_path] = 0
 
-    def _get_files_to_process(self) -> List[str]:
+    def _get_files_to_process(self) -> list[str]:
         """Get list of files to process based on path and pattern."""
         file_path = self.config.file_path
         file_pattern = self.config.file_pattern
@@ -201,16 +202,19 @@ class FileSystemAdapter(LogIngestionInterface):
         try:
             current_size = os.path.getsize(file_path)
             last_position = self._file_positions.get(file_path, 0)
-            
-            logger.debug(f"File {file_path}: current_size={current_size}, last_position={last_position}")
+
+            logger.debug(
+                f"File {file_path}: current_size={current_size}, last_position={last_position}"
+            )
 
             # Only read if file has grown
             if current_size > last_position:
                 logger.debug(f"File {file_path} has grown, reading new content")
+
                 # Read new content with resilience
                 async def _read_file():
                     with open(
-                        file_path, "r", encoding=self.encoding, errors="replace"
+                        file_path, encoding=self.encoding, errors="replace"
                     ) as f:
                         f.seek(last_position)
                         content = f.read()
@@ -222,7 +226,7 @@ class FileSystemAdapter(LogIngestionInterface):
                 # Parse content into log entries
                 log_entries = self._parse_file_content(content, file_path)
                 logger.debug(f"Parsed {len(log_entries)} log entries from {file_path}")
-                
+
                 for log_entry in log_entries:
                     yield log_entry
 
@@ -234,7 +238,7 @@ class FileSystemAdapter(LogIngestionInterface):
         except Exception as e:
             raise LogParsingError(f"Failed to read file content: {e}") from e
 
-    def _parse_file_content(self, content: str, file_path: str) -> List[LogEntry]:
+    def _parse_file_content(self, content: str, file_path: str) -> list[LogEntry]:
         """Parse file content into log entries."""
         log_entries = []
 
@@ -246,36 +250,38 @@ class FileSystemAdapter(LogIngestionInterface):
             # Look for JSON objects in the content
             import json
             import re
-            
+
             # Find JSON objects in the content
-            json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+            json_pattern = r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
             json_matches = re.findall(json_pattern, content)
-            
+
             for i, json_str in enumerate(json_matches):
                 try:
                     json_data = json.loads(json_str)
-                    
+
                     # Extract fields from JSON
-                    timestamp_str = json_data.get('timestamp', '')
-                    level = json_data.get('level', 'INFO')
-                    message = json_data.get('message', json_str)
-                    
+                    timestamp_str = json_data.get("timestamp", "")
+                    level = json_data.get("level", "INFO")
+                    message = json_data.get("message", json_str)
+
                     # Parse timestamp
                     try:
-                        timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                        timestamp = datetime.fromisoformat(
+                            timestamp_str.replace("Z", "+00:00")
+                        )
                     except:
                         timestamp = datetime.now()
-                    
+
                     # Map level to LogSeverity
-                    if level.upper() == 'ERROR':
+                    if level.upper() == "ERROR":
                         severity = LogSeverity.ERROR
-                    elif level.upper() == 'WARN':
+                    elif level.upper() == "WARN":
                         severity = LogSeverity.WARN
-                    elif level.upper() == 'DEBUG':
+                    elif level.upper() == "DEBUG":
                         severity = LogSeverity.DEBUG
                     else:
                         severity = LogSeverity.INFO
-                    
+
                     log_entry = LogEntry(
                         id=f"{file_path}:json:{i}:{timestamp.isoformat()}",
                         message=message,
@@ -289,11 +295,11 @@ class FileSystemAdapter(LogIngestionInterface):
                         },
                     )
                     log_entries.append(log_entry)
-                    
+
                 except json.JSONDecodeError:
                     # Not valid JSON, skip
                     continue
-                    
+
         except Exception:
             # Fall back to line-by-line parsing
             pass
@@ -321,7 +327,7 @@ class FileSystemAdapter(LogIngestionInterface):
 
     def _parse_log_line(
         self, line: str, file_path: str, line_num: int
-    ) -> Optional[LogEntry]:
+    ) -> LogEntry | None:
         """Parse a single log line into a LogEntry."""
         try:
             # Basic log parsing - can be enhanced with more sophisticated parsing
@@ -406,13 +412,9 @@ class FileSystemAdapter(LogIngestionInterface):
             pass
 
         # Determine health status
-        if not self._is_running:
+        if not self._is_running or self._consecutive_failures > 5:
             status = "unhealthy"
-        elif self._consecutive_failures > 5:
-            status = "unhealthy"
-        elif error_rate > 0.1:  # 10% error rate
-            status = "degraded"
-        elif files_accessible < total_files:
+        elif error_rate > 0.1 or files_accessible < total_files:  # 10% error rate
             status = "degraded"
         else:
             status = "healthy"
@@ -460,7 +462,7 @@ class FileSystemAdapter(LogIngestionInterface):
         else:
             raise ValueError("Config must be FileSystemConfig")
 
-    async def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
+    async def handle_error(self, error: Exception, context: dict[str, Any]) -> bool:
         """Handle errors with context. Return True if recoverable."""
         logger.error(f"File system adapter error: {error} in context: {context}")
         self._consecutive_failures += 1
@@ -470,7 +472,7 @@ class FileSystemAdapter(LogIngestionInterface):
             return True
         return False
 
-    async def get_health_metrics(self) -> Dict[str, Any]:
+    async def get_health_metrics(self) -> dict[str, Any]:
         """Get detailed health and performance metrics."""
         return {
             "is_running": self._is_running,

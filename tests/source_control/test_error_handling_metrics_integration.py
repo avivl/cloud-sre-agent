@@ -28,7 +28,9 @@ class TestErrorHandlingMetrics:
         """Create an ErrorHandlingMetrics instance for testing."""
         return ErrorHandlingMetrics(mock_metrics_collector)
 
-    def test_error_handling_metrics_initialization(self, mock_metrics_collector: str) -> None:
+    def test_error_handling_metrics_initialization(
+        self, mock_metrics_collector: str
+    ) -> None:
         """Test ErrorHandlingMetrics initialization."""
         metrics = ErrorHandlingMetrics(mock_metrics_collector)
         assert metrics.metrics_collector == mock_metrics_collector

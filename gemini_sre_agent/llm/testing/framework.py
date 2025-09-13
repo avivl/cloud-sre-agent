@@ -9,11 +9,11 @@ integration testing, and cost analysis.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+import time
+from typing import Any
 
 from ..base import LLMRequest, LLMResponse, ModelType
 from ..cost_management_integration import IntegratedCostManager
@@ -46,9 +46,9 @@ class TestReport:
     test_name: str
     result: TestResult
     duration_ms: float
-    details: Dict[str, Any] = field(default_factory=dict)
-    error_message: Optional[str] = None
-    metrics: Dict[str, float] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
+    metrics: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -57,7 +57,7 @@ class TestSuite:
 
     name: str
     description: str
-    tests: List[str]
+    tests: list[str]
     timeout_seconds: int = 300
     parallel: bool = False
     retry_count: int = 0
@@ -70,7 +70,7 @@ class TestingFramework:
         self,
         provider_factory: LLMProviderFactory,
         model_registry: ModelRegistry,
-        cost_manager: Optional[IntegratedCostManager] = None,
+        cost_manager: IntegratedCostManager | None = None,
         enable_mock_testing: bool = True,
         test_timeout_seconds: int = 300,
     ):
@@ -94,8 +94,8 @@ class TestingFramework:
         )
 
         # Test results storage
-        self.test_results: List[TestReport] = []
-        self.test_suites: Dict[str, TestSuite] = {}
+        self.test_results: list[TestReport] = []
+        self.test_suites: dict[str, TestSuite] = {}
 
         # Initialize default test suites
         self._initialize_default_test_suites()
@@ -162,7 +162,7 @@ class TestingFramework:
             ),
         }
 
-    async def run_test_suite(self, suite_name: str) -> List[TestReport]:
+    async def run_test_suite(self, suite_name: str) -> list[TestReport]:
         """Run a specific test suite."""
         if suite_name not in self.test_suites:
             raise ValueError(f"Test suite '{suite_name}' not found")
@@ -208,7 +208,7 @@ class TestingFramework:
         self.test_results.extend(results)
         return results
 
-    async def run_all_test_suites(self) -> Dict[str, List[TestReport]]:
+    async def run_all_test_suites(self) -> dict[str, list[TestReport]]:
         """Run all test suites."""
         logger.info("Running all test suites")
 
@@ -259,7 +259,7 @@ class TestingFramework:
                 details={"result": result} if isinstance(result, dict) else {},
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration_ms = (time.time() - start_time) * 1000
             return TestReport(
                 test_name=test_name,
@@ -382,7 +382,7 @@ class TestingFramework:
             return False
 
     # Performance Benchmarking Tests
-    async def test_latency_benchmarks(self) -> Dict[str, Any]:
+    async def test_latency_benchmarks(self) -> dict[str, Any]:
         """Test latency benchmarks across providers."""
         try:
             return await self.performance_benchmark.run_latency_benchmarks()
@@ -390,7 +390,7 @@ class TestingFramework:
             logger.error(f"Latency benchmark test failed: {e}")
             return {}
 
-    async def test_throughput_benchmarks(self) -> Dict[str, Any]:
+    async def test_throughput_benchmarks(self) -> dict[str, Any]:
         """Test throughput benchmarks across providers."""
         try:
             return await self.performance_benchmark.run_throughput_benchmarks()
@@ -398,7 +398,7 @@ class TestingFramework:
             logger.error(f"Throughput benchmark test failed: {e}")
             return {}
 
-    async def test_memory_usage(self) -> Dict[str, Any]:
+    async def test_memory_usage(self) -> dict[str, Any]:
         """Test memory usage across providers."""
         try:
             return await self.performance_benchmark.run_memory_benchmarks()
@@ -406,7 +406,7 @@ class TestingFramework:
             logger.error(f"Memory usage test failed: {e}")
             return {}
 
-    async def test_concurrent_requests(self) -> Dict[str, Any]:
+    async def test_concurrent_requests(self) -> dict[str, Any]:
         """Test concurrent request handling."""
         try:
             return await self.performance_benchmark.run_concurrency_benchmarks()
@@ -555,7 +555,7 @@ class TestingFramework:
             logger.error(f"Authentication test failed: {e}")
             return False
 
-    def generate_test_report(self) -> Dict[str, Any]:
+    def generate_test_report(self) -> dict[str, Any]:
         """Generate a comprehensive test report."""
         total_tests = len(self.test_results)
         passed_tests = len(

@@ -9,17 +9,17 @@ system health.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
-from ..metrics.core import MetricType
 from ..metrics.collectors import MetricsCollector
-from .core import ErrorType, CircuitState
+from ..metrics.core import MetricType
+from .core import CircuitState, ErrorType
 
 
 class ErrorHandlingMetrics:
     """Metrics collector for error handling and resilience patterns."""
 
-    def __init__(self, metrics_collector: Optional[MetricsCollector] = None) -> None:
+    def __init__(self, metrics_collector: MetricsCollector | None = None) -> None:
         """Initialize error handling metrics."""
         self.metrics_collector = metrics_collector or MetricsCollector()
         self.logger = logging.getLogger("ErrorHandlingMetrics")
@@ -31,7 +31,7 @@ class ErrorHandlingMetrics:
         provider: str,
         is_retryable: bool,
         retry_count: int = 0,
-        error_details: Optional[Dict[str, Any]] = None,
+        error_details: dict[str, Any] | None = None,
     ) -> None:
         """Record an error occurrence."""
         try:
@@ -293,7 +293,7 @@ class ErrorHandlingMetrics:
         provider: str,
         is_healthy: bool,
         response_time_ms: float,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """Record health check results."""
         try:
@@ -330,7 +330,9 @@ class ErrorHandlingMetrics:
         except Exception as e:
             self.logger.error(f"Failed to record health check metrics: {e}")
 
-    def get_error_rate_by_provider(self, provider: str, time_window_minutes: int = 5) -> float:
+    def get_error_rate_by_provider(
+        self, provider: str, time_window_minutes: int = 5
+    ) -> float:
         """Get error rate for a specific provider over a time window."""
         try:
             # This would need to be implemented based on the metrics collector's query capabilities
@@ -340,24 +342,28 @@ class ErrorHandlingMetrics:
             self.logger.error(f"Failed to get error rate for provider {provider}: {e}")
             return 0.0
 
-    def get_circuit_breaker_health(self, circuit_name: str) -> Dict[str, Any]:
+    def get_circuit_breaker_health(self, circuit_name: str) -> dict[str, Any]:
         """Get health information for a specific circuit breaker."""
         try:
             # This would need to be implemented based on the metrics collector's query capabilities
             # For now, return empty dict as a placeholder
             return {}
         except Exception as e:
-            self.logger.error(f"Failed to get circuit breaker health for {circuit_name}: {e}")
+            self.logger.error(
+                f"Failed to get circuit breaker health for {circuit_name}: {e}"
+            )
             return {}
 
     def get_operation_metrics(
         self, operation_name: str, provider: str, time_window_minutes: int = 5
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get metrics for a specific operation."""
         try:
             # This would need to be implemented based on the metrics collector's query capabilities
             # For now, return empty dict as a placeholder
             return {}
         except Exception as e:
-            self.logger.error(f"Failed to get operation metrics for {operation_name}: {e}")
+            self.logger.error(
+                f"Failed to get operation metrics for {operation_name}: {e}"
+            )
             return {}

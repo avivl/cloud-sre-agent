@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .model_registry import ModelInfo
 from .model_scorer import ModelScore, ModelScorer, ScoringWeights
@@ -44,13 +44,13 @@ class StrategyContext:
     """Context data for strategy execution."""
 
     task_type: str
-    max_cost: Optional[float] = None
-    min_performance: Optional[float] = None
-    min_quality: Optional[float] = None
-    provider_preference: Optional[List[str]] = None
+    max_cost: float | None = None
+    min_performance: float | None = None
+    min_quality: float | None = None
+    provider_preference: list[str] | None = None
     business_hours_only: bool = False
     custom_weights: Optional["ScoringWeights"] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass
@@ -61,9 +61,9 @@ class StrategyResult:
     score: "ModelScore"
     strategy_used: str
     execution_time_ms: float
-    fallback_models: List[ModelInfo]
+    fallback_models: list[ModelInfo]
     reasoning: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 # Use the types from model_scorer module
@@ -72,7 +72,7 @@ class StrategyResult:
 class ModelSelectionStrategy(ABC):
     """Abstract base class for model selection strategies."""
 
-    def __init__(self, name: str, model_scorer: Optional[ModelScorer] = None) -> None:
+    def __init__(self, name: str, model_scorer: ModelScorer | None = None) -> None:
         """Initialize the strategy.
 
         Args:
@@ -81,8 +81,8 @@ class ModelSelectionStrategy(ABC):
         """
         self.name = name
         self.model_scorer = model_scorer or ModelScorer()
-        self._selection_history: List[Dict[str, Any]] = []
-        self._performance_metrics: Dict[str, float] = {
+        self._selection_history: list[dict[str, Any]] = []
+        self._performance_metrics: dict[str, float] = {
             "total_selections": 0.0,
             "successful_selections": 0.0,
             "average_score": 0.0,
@@ -91,7 +91,7 @@ class ModelSelectionStrategy(ABC):
 
     @abstractmethod
     def select_model(
-        self, candidates: List[ModelInfo], context: StrategyContext
+        self, candidates: list[ModelInfo], context: StrategyContext
     ) -> StrategyResult:
         """Select the best model from candidates based on strategy.
 
@@ -108,8 +108,8 @@ class ModelSelectionStrategy(ABC):
         pass
 
     def _filter_candidates(
-        self, candidates: List[ModelInfo], context: StrategyContext
-    ) -> List[ModelInfo]:
+        self, candidates: list[ModelInfo], context: StrategyContext
+    ) -> list[ModelInfo]:
         """Filter candidates based on context constraints.
 
         Args:
@@ -147,7 +147,7 @@ class ModelSelectionStrategy(ABC):
 
     def update_performance(
         self,
-        selected_model: Optional[ModelInfo],
+        selected_model: ModelInfo | None,
         score: float,
         success: bool,
         latency_ms: float,
@@ -193,7 +193,7 @@ class ModelSelectionStrategy(ABC):
         if len(self._selection_history) > 100:
             self._selection_history = self._selection_history[-100:]
 
-    def get_performance_metrics(self) -> Dict[str, float]:
+    def get_performance_metrics(self) -> dict[str, float]:
         """Get current performance metrics.
 
         Returns:
@@ -201,7 +201,7 @@ class ModelSelectionStrategy(ABC):
         """
         return self._performance_metrics.copy()
 
-    def get_selection_history(self) -> List[Dict[str, Any]]:
+    def get_selection_history(self) -> list[dict[str, Any]]:
         """Get selection history.
 
         Returns:
@@ -219,7 +219,7 @@ class ModelSelectionStrategy(ABC):
         }
         self._selection_history.clear()
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on the strategy.
 
         Returns:

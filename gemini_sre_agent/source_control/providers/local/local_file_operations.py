@@ -6,11 +6,11 @@ Local file operations module.
 This module handles file-specific operations for the local provider.
 """
 
-import logging
-import shutil
 from datetime import datetime
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import shutil
+from typing import Any
 
 import chardet
 
@@ -30,10 +30,10 @@ class LocalFileOperations(BaseSubOperation):
         root_path: Path,
         default_encoding: str,
         backup_files: bool,
-        backup_directory: Optional[str],
+        backup_directory: str | None,
         logger: logging.Logger,
-        error_handling_components: Optional[Dict[str, Any]] = None,
-        config: Optional[SubOperationConfig] = None,
+        error_handling_components: dict[str, Any] | None = None,
+        config: SubOperationConfig | None = None,
     ):
         """Initialize file operations."""
         super().__init__(
@@ -64,7 +64,7 @@ class LocalFileOperations(BaseSubOperation):
                     encoding = detected.get("encoding", self.default_encoding)
 
                 # Read file with detected encoding
-                with open(file_path, "r", encoding=encoding) as f:
+                with open(file_path, encoding=encoding) as f:
                     return f.read()
             except Exception as e:
                 self.logger.error(f"Failed to read file {path}: {e}")
@@ -172,7 +172,7 @@ class LocalFileOperations(BaseSubOperation):
             "get_file_info", _get_info, "file"
         )
 
-    async def list_files(self, path: str = "") -> List[FileInfo]:
+    async def list_files(self, path: str = "") -> list[FileInfo]:
         """List files in a directory."""
 
         async def _list():

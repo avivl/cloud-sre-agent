@@ -40,19 +40,25 @@ def github_provider(github_credentials: str, repository_config: str) -> None:
 class TestGitHubProviderInitialization:
     """Test GitHub provider initialization."""
 
-    def test_init_with_credentials(self, github_credentials: str, repository_config: str) -> None:
+    def test_init_with_credentials(
+        self, github_credentials: str, repository_config: str
+    ) -> None:
         """Test initialization with credentials."""
         provider = GitHubProvider(repository_config, github_credentials)
         assert provider.repo_config == repository_config
         assert provider.credentials == github_credentials
         assert provider.base_url == repository_config.api_base_url
 
-    def test_init_without_credentials_raises_error(self, repository_config: str) -> None:
+    def test_init_without_credentials_raises_error(
+        self, repository_config: str
+    ) -> None:
         """Test initialization without credentials raises error."""
         with pytest.raises(ValueError, match="GitHub credentials are required"):
             GitHubProvider(repository_config, None)
 
-    def test_init_with_invalid_credentials_raises_error(self, repository_config: str) -> None:
+    def test_init_with_invalid_credentials_raises_error(
+        self, repository_config: str
+    ) -> None:
         """Test initialization with invalid credentials raises error."""
         invalid_creds = CredentialConfig()  # No token provided
         GitHubProvider(repository_config, invalid_creds)

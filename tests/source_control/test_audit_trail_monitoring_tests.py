@@ -5,9 +5,9 @@ Comprehensive tests for audit trail functionality and security monitoring includ
 logging validation, security event tracking, and compliance testing.
 """
 
+from datetime import datetime
 import hashlib
 import json
-from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
@@ -86,7 +86,9 @@ class TestAuditTrailMonitoringTests:
             assert isinstance(operation["success"], bool)
             assert isinstance(operation["details"], dict)
 
-    def test_security_event_tracking_comprehensive(self, mock_github_provider: str) -> None:
+    def test_security_event_tracking_comprehensive(
+        self, mock_github_provider: str
+    ) -> None:
         """Test comprehensive security event tracking."""
         # Test different types of security events
         security_events = [

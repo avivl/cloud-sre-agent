@@ -12,11 +12,12 @@ This module provides an enhanced circuit breaker with:
 """
 
 import asyncio
+from collections import deque
+from collections.abc import Callable
+from datetime import datetime, timedelta
 import logging
 import time
-from collections import deque
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from .core import (
     CircuitBreakerConfig,
@@ -101,7 +102,7 @@ class StateTransitionCallback:
     """Handles custom state transition callbacks."""
 
     def __init__(self) -> None:
-        self.callbacks: Dict[Tuple[CircuitState, CircuitState], List[Callable]] = {}
+        self.callbacks: dict[tuple[CircuitState, CircuitState], list[Callable]] = {}
 
     def register_callback(
         self,
@@ -147,7 +148,7 @@ class MultiDimensionalFailureAnalyzer:
 
     def analyze_failure(
         self, error_type: ErrorType, response_time: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze a failure and return insights."""
         now = datetime.now()
 
@@ -173,7 +174,7 @@ class MultiDimensionalFailureAnalyzer:
 
         return analysis
 
-    def _analyze_patterns(self) -> Dict[str, Any]:
+    def _analyze_patterns(self) -> dict[str, Any]:
         """Analyze failure patterns across dimensions."""
         now = datetime.now()
         recent_window = timedelta(minutes=5)
@@ -205,7 +206,7 @@ class MultiDimensionalFailureAnalyzer:
         else:
             return "stable"
 
-    def _get_recommendations(self) -> List[str]:
+    def _get_recommendations(self) -> list[str]:
         """Get recommendations based on failure analysis."""
         recommendations = []
         patterns = self._analyze_patterns()
@@ -232,7 +233,7 @@ class AdvancedCircuitBreaker:
         self,
         config: CircuitBreakerConfig,
         name: str = "default",
-        metrics: Optional[ErrorHandlingMetrics] = None,
+        metrics: ErrorHandlingMetrics | None = None,
     ):
         self.config = config
         self.name = name
@@ -243,8 +244,8 @@ class AdvancedCircuitBreaker:
         self.state = CircuitState.CLOSED
         self.failure_count = 0
         self.success_count = 0
-        self.last_failure_time: Optional[datetime] = None
-        self.last_success_time: Optional[datetime] = None
+        self.last_failure_time: datetime | None = None
+        self.last_success_time: datetime | None = None
 
         # Advanced features
         self.adaptive_thresholds = AdaptiveThresholds(
@@ -422,7 +423,7 @@ class AdvancedCircuitBreaker:
 
             return result
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             response_time = time.time() - start_time
             await self._record_failure(ErrorType.TIMEOUT_ERROR, response_time)
 
@@ -475,7 +476,7 @@ class AdvancedCircuitBreaker:
         else:
             return ErrorType.UNKNOWN_ERROR
 
-    def get_advanced_stats(self) -> Dict[str, Any]:
+    def get_advanced_stats(self) -> dict[str, Any]:
         """Get comprehensive circuit breaker statistics."""
         patterns = self.failure_analyzer._analyze_patterns()
 
@@ -507,7 +508,7 @@ class AdvancedCircuitBreaker:
             "failure_rate": self.total_failures / max(self.total_requests, 1),
         }
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get health status with recommendations."""
         stats = self.get_advanced_stats()
         patterns = stats["failure_patterns"]

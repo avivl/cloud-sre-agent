@@ -8,7 +8,7 @@ with multi-provider support and intelligent model selection.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...llm.base import ModelType
 from ...llm.common.enums import ProviderType
@@ -33,9 +33,9 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         llm_config: LLMConfig,
         agent_name: str = "analysis_agent",
         optimization_goal: OptimizationGoal = OptimizationGoal.QUALITY,
-        provider_preference: Optional[List[ProviderType]] = None,
-        max_cost: Optional[float] = None,
-        min_quality: Optional[float] = 0.8,
+        provider_preference: list[ProviderType] | None = None,
+        max_cost: float | None = None,
+        min_quality: float | None = 0.8,
         **kwargs: Any,
     ):
         """
@@ -69,7 +69,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     async def analyze(
         self,
         content: str,
-        criteria: List[str],
+        criteria: list[str],
         analysis_type: str = "general",
         depth: str = "detailed",
         **kwargs: Any,
@@ -103,8 +103,8 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
 
     async def compare_analysis(
         self,
-        items: List[str],
-        comparison_criteria: List[str],
+        items: list[str],
+        comparison_criteria: list[str],
         **kwargs: Any,
     ) -> AnalysisResponse:
         """
@@ -133,9 +133,9 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
 
     async def trend_analysis(
         self,
-        data: List[Dict[str, Any]],
+        data: list[dict[str, Any]],
         time_period: str,
-        metrics: List[str],
+        metrics: list[str],
         **kwargs: Any,
     ) -> AnalysisResponse:
         """
@@ -167,7 +167,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     async def root_cause_analysis(
         self,
         issue_description: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         **kwargs: Any,
     ) -> AnalysisResponse:
         """
@@ -197,7 +197,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
     async def impact_analysis(
         self,
         change_description: str,
-        affected_systems: List[str],
+        affected_systems: list[str],
         **kwargs: Any,
     ) -> AnalysisResponse:
         """
@@ -224,7 +224,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             optimization_goal=OptimizationGoal.QUALITY,
         )
 
-    def get_agent_capabilities(self) -> Dict[str, Any]:
+    def get_agent_capabilities(self) -> dict[str, Any]:
         """
         Get the capabilities and configuration of this analysis agent.
 

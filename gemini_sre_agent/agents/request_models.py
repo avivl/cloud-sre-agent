@@ -9,9 +9,9 @@ support validation, serialization, and integration with the multi-provider
 LLM system.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
@@ -92,17 +92,17 @@ class BaseAgentRequest(BaseModel):
         default_factory=lambda: str(uuid4()), description="Unique request identifier"
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Request timestamp",
     )
     agent_type: str = Field(..., description="Type of agent handling the request")
     priority: SeverityLevel = Field(
         SeverityLevel.MEDIUM, description="Request priority level"
     )
-    timeout_seconds: Optional[int] = Field(
+    timeout_seconds: int | None = Field(
         None, description="Request timeout in seconds"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional request metadata"
     )
 
@@ -121,20 +121,20 @@ class TriageRequest(BaseAgentRequest):
     issue_description: str = Field(
         ..., description="Description of the issue to triage"
     )
-    context: Dict[str, Any] = Field(
+    context: dict[str, Any] = Field(
         default_factory=dict, description="Additional context information"
     )
     urgency_level: SeverityLevel = Field(
         SeverityLevel.MEDIUM, description="Urgency level of the issue"
     )
-    affected_systems: List[str] = Field(
+    affected_systems: list[str] = Field(
         default_factory=list, description="List of affected systems"
     )
-    user_impact: Optional[str] = Field(None, description="Description of user impact")
-    business_impact: Optional[str] = Field(
+    user_impact: str | None = Field(None, description="Description of user impact")
+    business_impact: str | None = Field(
         None, description="Description of business impact"
     )
-    historical_data: Optional[Dict[str, Any]] = Field(
+    historical_data: dict[str, Any] | None = Field(
         None, description="Historical data for context"
     )
 
@@ -151,13 +151,13 @@ class AnalysisRequest(BaseAgentRequest):
     """Request model for analysis operations."""
 
     content: str = Field(..., description="Content to analyze")
-    criteria: List[str] = Field(..., description="Analysis criteria")
+    criteria: list[str] = Field(..., description="Analysis criteria")
     analysis_type: str = Field("general", description="Type of analysis to perform")
     depth: str = Field("detailed", description="Analysis depth level")
-    context: Dict[str, Any] = Field(
+    context: dict[str, Any] = Field(
         default_factory=dict, description="Additional analysis context"
     )
-    historical_data: Optional[Dict[str, Any]] = Field(
+    historical_data: dict[str, Any] | None = Field(
         None, description="Historical data for comparison"
     )
     quality_threshold: float = Field(
@@ -166,7 +166,7 @@ class AnalysisRequest(BaseAgentRequest):
 
     @field_validator("criteria")
     @classmethod
-    def validate_criteria(cls, v: List[str]) -> List[str]:
+    def validate_criteria(cls, v: list[str]) -> list[str]:
         """Validate criteria list is not empty."""
         if not v:
             raise ValueError("Analysis criteria cannot be empty")
@@ -179,22 +179,22 @@ class RemediationRequest(BaseAgentRequest):
     problem_description: str = Field(
         ..., description="Description of the problem to remediate"
     )
-    context: Dict[str, Any] = Field(
+    context: dict[str, Any] = Field(
         default_factory=dict, description="Additional context information"
     )
     remediation_type: str = Field(
         "general", description="Type of remediation to perform"
     )
-    constraints: List[str] = Field(
+    constraints: list[str] = Field(
         default_factory=list, description="Constraints to consider"
     )
-    target_systems: List[str] = Field(
+    target_systems: list[str] = Field(
         default_factory=list, description="Target systems for remediation"
     )
     urgency: SeverityLevel = Field(
         SeverityLevel.MEDIUM, description="Urgency of the remediation"
     )
-    expected_outcome: Optional[str] = Field(
+    expected_outcome: str | None = Field(
         None, description="Expected outcome of remediation"
     )
 
@@ -212,12 +212,12 @@ class CodeGenerationRequest(BaseAgentRequest):
 
     description: str = Field(..., description="Description of code to generate")
     language: str = Field(..., description="Programming language")
-    framework: Optional[str] = Field(None, description="Framework to use")
-    style_guide: Optional[str] = Field(None, description="Coding style guide to follow")
-    requirements: List[str] = Field(
+    framework: str | None = Field(None, description="Framework to use")
+    style_guide: str | None = Field(None, description="Coding style guide to follow")
+    requirements: list[str] = Field(
         default_factory=list, description="Functional requirements"
     )
-    constraints: List[str] = Field(
+    constraints: list[str] = Field(
         default_factory=list, description="Technical constraints"
     )
     quality_level: str = Field("high", description="Code quality level required")
@@ -249,7 +249,7 @@ class TextGenerationRequest(BaseAgentRequest):
     """Request model for text generation operations."""
 
     prompt: str = Field(..., description="Text generation prompt")
-    context: Optional[Dict[str, Any]] = Field(
+    context: dict[str, Any] | None = Field(
         None, description="Additional context for generation"
     )
     max_length: int = Field(
@@ -261,8 +261,8 @@ class TextGenerationRequest(BaseAgentRequest):
     creativity_level: str = Field(
         "balanced", description="Creativity level for generation"
     )
-    style: Optional[str] = Field(None, description="Writing style to follow")
-    audience: Optional[str] = Field(None, description="Target audience")
+    style: str | None = Field(None, description="Writing style to follow")
+    audience: str | None = Field(None, description="Target audience")
 
     @field_validator("prompt")
     @classmethod
@@ -276,7 +276,7 @@ class TextGenerationRequest(BaseAgentRequest):
 class HealthCheckRequest(BaseAgentRequest):
     """Request model for health check operations."""
 
-    component_name: Optional[str] = Field(
+    component_name: str | None = Field(
         None, description="Specific component to check"
     )
     check_type: str = Field(
@@ -299,7 +299,7 @@ class HealthCheckRequest(BaseAgentRequest):
 class BatchRequest(BaseAgentRequest):
     """Request model for batch operations."""
 
-    requests: List[BaseAgentRequest] = Field(
+    requests: list[BaseAgentRequest] = Field(
         ..., description="List of requests to process"
     )
     max_concurrent: int = Field(
@@ -310,7 +310,7 @@ class BatchRequest(BaseAgentRequest):
 
     @field_validator("requests")
     @classmethod
-    def validate_requests(cls, v: List[BaseAgentRequest]) -> List[BaseAgentRequest]:
+    def validate_requests(cls, v: list[BaseAgentRequest]) -> list[BaseAgentRequest]:
         """Validate requests list is not empty."""
         if not v:
             raise ValueError("Requests list cannot be empty")
@@ -322,10 +322,10 @@ class ValidationRequest(BaseAgentRequest):
 
     content: str = Field(..., description="Content to validate")
     validation_type: str = Field(..., description="Type of validation to perform")
-    rules: List[str] = Field(
+    rules: list[str] = Field(
         default_factory=list, description="Validation rules to apply"
     )
-    context: Dict[str, Any] = Field(
+    context: dict[str, Any] = Field(
         default_factory=dict, description="Validation context"
     )
     strict_mode: bool = Field(False, description="Enable strict validation mode")

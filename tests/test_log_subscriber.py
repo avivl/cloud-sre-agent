@@ -1,9 +1,8 @@
-import asyncio
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from google.cloud.pubsub_v1.subscriber.message import Message
+import pytest
 
 from gemini_sre_agent.log_subscriber import LogSubscriber
 

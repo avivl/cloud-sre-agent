@@ -8,7 +8,7 @@ and the existing LLM service for executing managed prompts.
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
@@ -24,7 +24,7 @@ class LLMPromptService:
         self,
         llm_service,
         prompt_manager: PromptManager,
-        environment: Optional[PromptEnvironment] = None,
+        environment: PromptEnvironment | None = None,
     ):
         """Initialize the LLM prompt service."""
         self.llm_service = llm_service
@@ -36,8 +36,8 @@ class LLMPromptService:
     async def execute_prompt(
         self,
         prompt_id: str,
-        inputs: Dict[str, Any],
-        response_model: Type[T],
+        inputs: dict[str, Any],
+        response_model: type[T],
         record_metrics: bool = True,
     ) -> T:
         """Execute a prompt and parse the response with structured output."""
@@ -122,7 +122,7 @@ class LLMPromptService:
             raise
 
     async def execute_prompt_text(
-        self, prompt_id: str, inputs: Dict[str, Any], record_metrics: bool = True
+        self, prompt_id: str, inputs: dict[str, Any], record_metrics: bool = True
     ) -> str:
         """Execute a prompt and return raw text response."""
         start_time = datetime.now()
@@ -202,7 +202,7 @@ class MirascopeIntegratedLLMService:
         self.prompt_service = LLMPromptService(llm_service, prompt_manager)
 
     async def execute_managed_prompt(
-        self, prompt_id: str, inputs: Dict[str, Any], response_model: Type[BaseModel]
+        self, prompt_id: str, inputs: dict[str, Any], response_model: type[BaseModel]
     ) -> BaseModel:
         """Execute a managed prompt with full tracking and metrics."""
         return await self.prompt_service.execute_prompt(

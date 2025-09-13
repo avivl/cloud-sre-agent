@@ -1,7 +1,6 @@
 # gemini_sre_agent/log_ingestion.py
 
 import logging
-from typing import List
 
 from google.cloud.logging_v2.services.logging_service_v2 import LoggingServiceV2Client
 
@@ -24,7 +23,7 @@ class LogIngestor:
         self.project_id = project_id
         logger.info(f"LogIngestor initialized for project: {project_id}")
 
-    def get_logs(self, filter_str: str, limit: int = 100) -> List[str]:
+    def get_logs(self, filter_str: str, limit: int = 100) -> list[str]:
         """
         Gets logs from Google Cloud Logging based on a filter string.
 

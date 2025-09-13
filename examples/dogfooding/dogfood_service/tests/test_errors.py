@@ -117,7 +117,7 @@ class TestErrorEndpoints(unittest.TestCase):
 
     def _verify_error_logged(self, expected_error_type: str, expected_endpoint: str):
         """Verify that an error was logged with correct structure."""
-        with open(self.temp_log.name, "r") as f:
+        with open(self.temp_log.name) as f:
             log_content = f.read()
 
         # Find the last log entry
@@ -169,7 +169,7 @@ class TestUtilityFunctions(unittest.TestCase):
                 test_error = ValueError("Test error")
                 log_error("ValueError", "/test", test_error, {"test": "context"})
 
-                with open(temp_log.name, "r") as f:
+                with open(temp_log.name) as f:
                     log_content = f.read()
 
                 log_data = json.loads(log_content.strip())

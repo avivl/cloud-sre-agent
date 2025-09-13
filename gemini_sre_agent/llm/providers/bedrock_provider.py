@@ -10,13 +10,13 @@ for AWS Bedrock models.
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import boto3
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
-from ..config import LLMProviderConfig
 from ..capabilities.models import ModelCapability
+from ..config import LLMProviderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ class BedrockProvider(LLMProvider):
         """Check if Bedrock supports tool calling."""
         return True
 
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available Bedrock models mapped to semantic types."""
         default_mappings = {
             ModelType.FAST: "anthropic.claude-3-5-haiku-20241022-v1:0",
@@ -165,7 +165,7 @@ class BedrockProvider(LLMProvider):
 
         return default_mappings
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings using Bedrock API."""
         logger.info(f"Generating embeddings for text of length: {len(text)}")
 
@@ -207,8 +207,8 @@ class BedrockProvider(LLMProvider):
         return input_cost + output_cost
 
     def _convert_messages_to_bedrock_format(
-        self, messages: List[Dict[str, str]]
-    ) -> List[Dict[str, str]]:
+        self, messages: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
         """Convert generic message format to Bedrock format."""
         bedrock_messages = []
         for message in messages:
@@ -222,15 +222,15 @@ class BedrockProvider(LLMProvider):
 
         return bedrock_messages
 
-    def _extract_content_from_response(self, response_body: Dict[str, Any]) -> str:
+    def _extract_content_from_response(self, response_body: dict[str, Any]) -> str:
         """Extract content from Bedrock response."""
-        if "content" in response_body and response_body["content"]:
+        if response_body.get("content"):
             return response_body["content"][0]["text"]
         return ""
 
     def _extract_usage_from_response(
-        self, response_body: Dict[str, Any]
-    ) -> Dict[str, int]:
+        self, response_body: dict[str, Any]
+    ) -> dict[str, int]:
         """Extract usage information from Bedrock response."""
         usage = response_body.get("usage", {})
         return {
@@ -247,7 +247,7 @@ class BedrockProvider(LLMProvider):
         if not provider_specific.get("aws_region"):
             raise ValueError("AWS region is required for Bedrock")
 
-    def get_custom_capabilities(self) -> List[ModelCapability]:
+    def get_custom_capabilities(self) -> list[ModelCapability]:
         """
         Get provider-specific custom capabilities for Bedrock.
         For now, Bedrock does not have specific custom capabilities beyond standard ones.

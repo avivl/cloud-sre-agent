@@ -1,6 +1,6 @@
 # gemini_sre_agent/metrics/config.py
 
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -8,6 +8,6 @@ from pydantic import BaseModel, Field
 class MetricsConfig(BaseModel):
     """Configuration for the metrics system."""
 
-    alert_thresholds: Dict[str, Any] = Field(
+    alert_thresholds: dict[str, Any] = Field(
         default_factory=dict, description="Thresholds for triggering alerts."
     )

@@ -5,7 +5,6 @@ Unified ML configuration consolidating all ML-related settings.
 """
 
 from enum import Enum
-from typing import Dict
 
 from pydantic import Field, field_validator
 
@@ -82,7 +81,7 @@ class CostTrackingConfig(BaseConfig):
     enable_daily_reset: bool = True
     enable_monthly_reset: bool = True
     currency: str = "USD"
-    model_costs: Dict[str, Dict[str, float]] = Field(default_factory=dict)
+    model_costs: dict[str, dict[str, float]] = Field(default_factory=dict)
 
 
 class RateLimitingConfig(BaseConfig):
@@ -110,7 +109,7 @@ class MLConfig(BaseConfig):
     """Unified ML configuration."""
 
     # Model configurations
-    models: Dict[ModelType, ModelConfig] = Field(default_factory=dict)
+    models: dict[ModelType, ModelConfig] = Field(default_factory=dict)
 
     # Code generation
     code_generation: CodeGenerationConfig = Field(default_factory=CodeGenerationConfig)

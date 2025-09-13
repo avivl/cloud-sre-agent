@@ -8,9 +8,9 @@ including structured output support, error handling, cost tracking,
 and rate limiting.
 """
 
-import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from .adaptive_rate_limiter import AdaptiveRateLimiter
 from .cost_tracker import CostTracker
@@ -27,17 +27,17 @@ class GeminiRequest:
     """
 
     model: str
-    messages: List[Dict[str, str]]
+    messages: list[dict[str, str]]
     temperature: float = 0.7
-    max_tokens: Optional[int] = None
+    max_tokens: int | None = None
     top_p: float = 0.9
     top_k: int = 40
-    stop_sequences: Optional[List[str]] = None
-    safety_settings: Optional[Dict[str, Any]] = None
-    generation_config: Optional[Dict[str, Any]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    stop_sequences: list[str] | None = None
+    safety_settings: dict[str, Any] | None = None
+    generation_config: dict[str, Any] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert request to dictionary for API call."""
         config = {
             "model": self.model,
@@ -85,12 +85,12 @@ class GeminiResponse:
     content: str
     model: str
     finish_reason: str
-    usage: Dict[str, int]
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    usage: dict[str, int]
+    metadata: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
     success: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert response to dictionary."""
         return {
             "content": self.content,
@@ -129,8 +129,8 @@ class GeminiAPIClient:
     def __init__(
         self,
         api_key: str,
-        rate_limiter: Optional[AdaptiveRateLimiter] = None,
-        cost_tracker: Optional[CostTracker] = None,
+        rate_limiter: AdaptiveRateLimiter | None = None,
+        cost_tracker: CostTracker | None = None,
         base_url: str = "https://generativelanguage.googleapis.com/v1beta",
     ):
         """
@@ -291,7 +291,7 @@ class GeminiAPIClient:
             usage=response_data["usage"],
         )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get client statistics."""
         return {
             "total_requests": self.total_requests,

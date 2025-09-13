@@ -1,8 +1,9 @@
 """Main dependency injection container implementation."""
 
+from collections.abc import Callable
 import inspect
 import threading
-from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union
+from typing import Any, TypeVar
 
 from .exceptions import (
     CircularDependencyError,
@@ -28,15 +29,15 @@ class DIContainer(ServiceRegistry):
 
     def __init__(self):
         """Initialize the container."""
-        self._services: Dict[Type, ServiceProvider] = {}
-        self._singletons: Dict[Type, Any] = {}
-        self._scopes: Dict[threading.Thread, ServiceScope] = {}
+        self._services: dict[type, ServiceProvider] = {}
+        self._singletons: dict[type, Any] = {}
+        self._scopes: dict[threading.Thread, ServiceScope] = {}
         self._lock = threading.RLock()
 
     def register(
         self,
-        service_type: Type[T],
-        implementation: Union[Type[T], Callable[[], T], T],
+        service_type: type[T],
+        implementation: type[T] | Callable[[], T] | T,
         lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
     ) -> None:
         """Register a service.
@@ -58,11 +59,11 @@ class DIContainer(ServiceRegistry):
                 self._services[service_type] = provider
             except Exception as e:
                 raise ServiceRegistrationError(
-                    service_type, f"Failed to register service: {str(e)}"
+                    service_type, f"Failed to register service: {e!s}"
                 ) from e
 
     def register_singleton(
-        self, service_type: Type[T], implementation: Union[Type[T], Callable[[], T], T]
+        self, service_type: type[T], implementation: type[T] | Callable[[], T] | T
     ) -> None:
         """Register a singleton service.
 
@@ -73,7 +74,7 @@ class DIContainer(ServiceRegistry):
         self.register(service_type, implementation, ServiceLifetime.SINGLETON)
 
     def register_transient(
-        self, service_type: Type[T], implementation: Union[Type[T], Callable[[], T], T]
+        self, service_type: type[T], implementation: type[T] | Callable[[], T] | T
     ) -> None:
         """Register a transient service.
 
@@ -84,7 +85,7 @@ class DIContainer(ServiceRegistry):
         self.register(service_type, implementation, ServiceLifetime.TRANSIENT)
 
     def register_scoped(
-        self, service_type: Type[T], implementation: Union[Type[T], Callable[[], T], T]
+        self, service_type: type[T], implementation: type[T] | Callable[[], T] | T
     ) -> None:
         """Register a scoped service.
 
@@ -94,7 +95,7 @@ class DIContainer(ServiceRegistry):
         """
         self.register(service_type, implementation, ServiceLifetime.SCOPED)
 
-    def is_registered(self, service_type: Type[T]) -> bool:
+    def is_registered(self, service_type: type[T]) -> bool:
         """Check if a service is registered.
 
         Args:
@@ -105,7 +106,7 @@ class DIContainer(ServiceRegistry):
         """
         return service_type in self._services
 
-    def get_provider(self, service_type: Type[T]) -> ServiceProvider[T]:
+    def get_provider(self, service_type: type[T]) -> ServiceProvider[T]:
         """Get the service provider for a type.
 
         Args:
@@ -121,7 +122,7 @@ class DIContainer(ServiceRegistry):
             raise ServiceNotFoundError(service_type)
         return self._services[service_type]
 
-    def get_service(self, service_type: Type[T]) -> T:
+    def get_service(self, service_type: type[T]) -> T:
         """Get a service instance.
 
         Args:
@@ -150,7 +151,7 @@ class DIContainer(ServiceRegistry):
             raise
         except Exception as e:
             raise ServiceResolutionError(
-                service_type, f"Failed to resolve service: {str(e)}"
+                service_type, f"Failed to resolve service: {e!s}"
             ) from e
 
     def create_scope(self) -> ServiceScope:
@@ -161,7 +162,7 @@ class DIContainer(ServiceRegistry):
         """
         return DIContainerScope(self)
 
-    def _get_scoped_service(self, service_type: Type[T]) -> T:
+    def _get_scoped_service(self, service_type: type[T]) -> T:
         """Get a scoped service.
 
         Args:
@@ -201,9 +202,9 @@ class DIContainerScope(ServiceScope):
             container: The parent container
         """
         self._container = container
-        self._scoped_instances: Dict[Type, Any] = {}
+        self._scoped_instances: dict[type, Any] = {}
 
-    def get_service(self, service_type: Type[T]) -> T:
+    def get_service(self, service_type: type[T]) -> T:
         """Get a service from the scope.
 
         Args:
@@ -233,8 +234,8 @@ class DIContainerScope(ServiceScope):
 
 def resolve_dependencies(
     container: DIContainer,
-    service_type: Type[T],
-    dependency_chain: Optional[list[Type]] = None,
+    service_type: type[T],
+    dependency_chain: list[type] | None = None,
 ) -> T:
     """Resolve dependencies for a service type.
 
@@ -302,12 +303,12 @@ def resolve_dependencies(
             return service_type()
     except Exception as e:
         raise ServiceResolutionError(
-            service_type, f"Failed to create service instance: {str(e)}"
+            service_type, f"Failed to create service instance: {e!s}"
         ) from e
 
 
 # Global container instance
-_container: Optional[DIContainer] = None
+_container: DIContainer | None = None
 _container_lock = threading.Lock()
 
 

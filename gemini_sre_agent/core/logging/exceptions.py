@@ -1,6 +1,6 @@
 """Exceptions for the logging system."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class LoggingError(Exception):
@@ -9,8 +9,8 @@ class LoggingError(Exception):
     def __init__(
         self,
         message: str,
-        logger_name: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        logger_name: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the logging error.
 
@@ -31,9 +31,9 @@ class ConfigurationError(LoggingError):
     def __init__(
         self,
         message: str,
-        config_key: Optional[str] = None,
-        config_value: Optional[Any] = None,
-        context: Optional[Dict[str, Any]] = None,
+        config_key: str | None = None,
+        config_value: Any | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the configuration error.
 
@@ -54,9 +54,9 @@ class FlowTrackingError(LoggingError):
     def __init__(
         self,
         message: str,
-        flow_id: Optional[str] = None,
-        operation: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        flow_id: str | None = None,
+        operation: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the flow tracking error.
 
@@ -77,9 +77,9 @@ class MetricsError(LoggingError):
     def __init__(
         self,
         message: str,
-        metric_name: Optional[str] = None,
-        metric_value: Optional[Any] = None,
-        context: Optional[Dict[str, Any]] = None,
+        metric_name: str | None = None,
+        metric_value: Any | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the metrics error.
 
@@ -100,9 +100,9 @@ class HandlerError(LoggingError):
     def __init__(
         self,
         message: str,
-        handler_name: Optional[str] = None,
-        handler_type: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        handler_name: str | None = None,
+        handler_type: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the handler error.
 
@@ -123,9 +123,9 @@ class FormatterError(LoggingError):
     def __init__(
         self,
         message: str,
-        formatter_name: Optional[str] = None,
-        formatter_type: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        formatter_name: str | None = None,
+        formatter_type: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the formatter error.
 
@@ -146,9 +146,9 @@ class FilterError(LoggingError):
     def __init__(
         self,
         message: str,
-        filter_name: Optional[str] = None,
-        filter_type: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        filter_name: str | None = None,
+        filter_type: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         """Initialize the filter error.
 
@@ -160,4 +160,50 @@ class FilterError(LoggingError):
         """
         self.filter_name = filter_name
         self.filter_type = filter_type
+        super().__init__(message, context=context)
+
+
+class AlertingError(LoggingError):
+    """Raised when alerting operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        alert_name: str | None = None,
+        alert_type: str | None = None,
+        context: dict[str, Any] | None = None,
+    ):
+        """Initialize the alerting error.
+
+        Args:
+            message: Error message
+            alert_name: Name of the alert that caused the error
+            alert_type: Type of the alert that caused the error
+            context: Additional context information
+        """
+        self.alert_name = alert_name
+        self.alert_type = alert_type
+        super().__init__(message, context=context)
+
+
+class PerformanceMonitoringError(LoggingError):
+    """Raised when performance monitoring operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        metric_name: str | None = None,
+        operation: str | None = None,
+        context: dict[str, Any] | None = None,
+    ):
+        """Initialize the performance monitoring error.
+
+        Args:
+            message: Error message
+            metric_name: Name of the metric that caused the error
+            operation: Operation that caused the error
+            context: Additional context information
+        """
+        self.metric_name = metric_name
+        self.operation = operation
         super().__init__(message, context=context)

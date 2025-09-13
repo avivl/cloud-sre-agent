@@ -6,16 +6,15 @@ Credential storage backends module.
 This module contains all credential storage backend implementations.
 """
 
-import os
 from abc import ABC, abstractmethod
-from typing import Optional
+import os
 
 
 class CredentialBackend(ABC):
     """Abstract base class for credential storage backends."""
 
     @abstractmethod
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         """Retrieve a credential value by key."""
         pass
 
@@ -33,7 +32,7 @@ class CredentialBackend(ABC):
 class EnvironmentBackend(CredentialBackend):
     """Credential backend using environment variables."""
 
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         return os.environ.get(key)
 
     async def set(self, key: str, value: str) -> None:
@@ -57,15 +56,15 @@ class FileBackend(CredentialBackend):
         safe_key = "".join(c for c in key if c.isalnum() or c in "._-")
         return os.path.join(self.base_path, f"{safe_key}.json")
 
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         file_path = self._get_file_path(key)
         if not os.path.exists(file_path):
             return None
 
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 return f.read()
-        except (IOError, OSError):
+        except OSError:
             return None
 
     async def set(self, key: str, value: str) -> None:
@@ -73,7 +72,7 @@ class FileBackend(CredentialBackend):
         try:
             with open(file_path, "w") as f:
                 f.write(value)
-        except (IOError, OSError) as e:
+        except OSError as e:
             raise RuntimeError(
                 f"Failed to write credential file {file_path}: {e}"
             ) from e
@@ -83,7 +82,5 @@ class FileBackend(CredentialBackend):
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
-            except (IOError, OSError):
+            except OSError:
                 pass
-
-

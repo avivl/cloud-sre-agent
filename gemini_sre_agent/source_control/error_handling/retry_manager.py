@@ -8,8 +8,9 @@ and error-based retry decisions.
 """
 
 import asyncio
+from collections.abc import Callable
 import logging
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .core import RetryConfig
 from .error_classification import ErrorClassifier
@@ -19,7 +20,9 @@ from .metrics_integration import ErrorHandlingMetrics
 class RetryManager:
     """Manages retry logic with exponential backoff and jitter."""
 
-    def __init__(self, config: RetryConfig, metrics: Optional[ErrorHandlingMetrics] = None) -> None:
+    def __init__(
+        self, config: RetryConfig, metrics: ErrorHandlingMetrics | None = None
+    ) -> None:
         self.config = config
         self.logger = logging.getLogger("RetryManager")
         self.error_classifier = ErrorClassifier()

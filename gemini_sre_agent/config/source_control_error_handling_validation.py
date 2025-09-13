@@ -8,7 +8,7 @@ are properly set up and have sensible values.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .source_control_error_handling import ErrorHandlingConfig
 
@@ -16,11 +16,11 @@ from .source_control_error_handling import ErrorHandlingConfig
 class ErrorHandlingConfigValidator:
     """Validator for error handling configuration."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize the validator."""
         self.logger = logger or logging.getLogger(__name__)
 
-    def validate_config(self, config: ErrorHandlingConfig) -> List[str]:
+    def validate_config(self, config: ErrorHandlingConfig) -> list[str]:
         """Validate error handling configuration and return list of issues."""
         issues = []
 
@@ -46,7 +46,7 @@ class ErrorHandlingConfigValidator:
 
     def _validate_circuit_breaker_config(
         self, config: ErrorHandlingConfig
-    ) -> List[str]:
+    ) -> list[str]:
         """Validate circuit breaker configuration."""
         issues = []
 
@@ -76,7 +76,8 @@ class ErrorHandlingConfigValidator:
                 )
             if cb.success_threshold > cb.failure_threshold:
                 issues.append(
-                    f"Circuit breaker success_threshold for {operation} should not exceed failure_threshold"
+                    f"Circuit breaker success_threshold for {operation} should not "
+                    f"exceed failure_threshold"
                 )
 
             if cb.recovery_timeout <= 0:
@@ -99,7 +100,7 @@ class ErrorHandlingConfigValidator:
 
         return issues
 
-    def _validate_retry_config(self, config: ErrorHandlingConfig) -> List[str]:
+    def _validate_retry_config(self, config: ErrorHandlingConfig) -> list[str]:
         """Validate retry configuration."""
         issues = []
 
@@ -132,7 +133,7 @@ class ErrorHandlingConfigValidator:
 
     def _validate_graceful_degradation_config(
         self, config: ErrorHandlingConfig
-    ) -> List[str]:
+    ) -> list[str]:
         """Validate graceful degradation configuration."""
         issues = []
 
@@ -159,7 +160,7 @@ class ErrorHandlingConfigValidator:
 
         return issues
 
-    def _validate_health_check_config(self, config: ErrorHandlingConfig) -> List[str]:
+    def _validate_health_check_config(self, config: ErrorHandlingConfig) -> list[str]:
         """Validate health check configuration."""
         issues = []
 
@@ -189,7 +190,7 @@ class ErrorHandlingConfigValidator:
 
         return issues
 
-    def _validate_metrics_config(self, config: ErrorHandlingConfig) -> List[str]:
+    def _validate_metrics_config(self, config: ErrorHandlingConfig) -> list[str]:
         """Validate metrics configuration."""
         issues = []
 
@@ -217,7 +218,7 @@ class ErrorHandlingConfigValidator:
 
         return issues
 
-    def _validate_provider_overrides(self, config: ErrorHandlingConfig) -> List[str]:
+    def _validate_provider_overrides(self, config: ErrorHandlingConfig) -> list[str]:
         """Validate provider-specific overrides."""
         issues = []
 
@@ -265,8 +266,8 @@ class ErrorHandlingConfigValidator:
         return issues
 
     def validate_provider_config(
-        self, provider_name: str, config: Dict[str, Any]
-    ) -> List[str]:
+        self, provider_name: str, config: dict[str, Any]
+    ) -> list[str]:
         """Validate a specific provider's error handling configuration."""
         issues = []
 
@@ -311,7 +312,7 @@ class ErrorHandlingConfigValidator:
 
     def get_configuration_recommendations(
         self, config: ErrorHandlingConfig
-    ) -> List[str]:
+    ) -> list[str]:
         """Get recommendations for improving the configuration."""
         recommendations = []
 

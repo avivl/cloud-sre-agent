@@ -7,9 +7,9 @@ This module implements cost tracking functionality to monitor API usage costs,
 manage budgets, and provide cost-related insights and alerts.
 """
 
+from datetime import UTC, date, datetime, timedelta
 import logging
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .cost_config import BudgetConfig, BudgetStatus, CostSummary, UsageRecord
 
@@ -23,7 +23,7 @@ class CostTracker:
     """
 
     def __init__(
-        self, budget_config: Optional[BudgetConfig] = None, max_records: int = 10000
+        self, budget_config: BudgetConfig | None = None, max_records: int = 10000
     ):
         """
         Initialize the cost tracker.
@@ -38,23 +38,23 @@ class CostTracker:
         self.logger = logging.getLogger(__name__)
 
         # Usage records storage
-        self.usage_records: List[UsageRecord] = []
+        self.usage_records: list[UsageRecord] = []
 
         # Daily and monthly tracking
         self.daily_usage = 0.0
         self.daily_cost = 0.0  # Alias for compatibility
         self.monthly_usage = 0.0
         self.monthly_cost = 0.0  # Alias for compatibility
-        self.last_daily_reset = datetime.now(timezone.utc).date()
-        self.last_monthly_reset = datetime.now(timezone.utc).replace(day=1).date()
+        self.last_daily_reset = datetime.now(UTC).date()
+        self.last_monthly_reset = datetime.now(UTC).replace(day=1).date()
 
         # Cost tracking by model and operation
-        self.cost_by_model: Dict[str, float] = {}
-        self.cost_by_operation: Dict[str, float] = {}
+        self.cost_by_model: dict[str, float] = {}
+        self.cost_by_operation: dict[str, float] = {}
 
         # Current date for testing
-        self.current_date: Optional[date] = None
-        self.current_month: Optional[tuple] = None
+        self.current_date: date | None = None
+        self.current_month: tuple | None = None
 
         # Model pricing (simplified)
         self.model_pricing = {
@@ -116,8 +116,8 @@ class CostTracker:
         output_tokens: int,
         cost_usd: float,
         success: bool = True,
-        error_message: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        error_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> UsageRecord:
         """
         Record API usage and associated costs.
@@ -137,7 +137,7 @@ class CostTracker:
         """
         # Create usage record
         record = UsageRecord(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             operation=operation,
             model=model,
             input_tokens=input_tokens,
@@ -231,8 +231,8 @@ class CostTracker:
 
     async def get_cost_summary(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> CostSummary:
         """
         Get cost summary for a specific time period.
@@ -245,11 +245,11 @@ class CostTracker:
             Cost summary for the specified period
         """
         if start_date is None:
-            start_date = datetime.now(timezone.utc).replace(
+            start_date = datetime.now(UTC).replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0
             )
         if end_date is None:
-            end_date = datetime.now(timezone.utc)
+            end_date = datetime.now(UTC)
 
         # Filter records by date range
         period_records = [
@@ -295,10 +295,10 @@ class CostTracker:
 
     async def get_usage_records(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        limit: Optional[int] = None,
-    ) -> List[UsageRecord]:
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int | None = None,
+    ) -> list[UsageRecord]:
         """
         Get usage records for a specific time period.
 
@@ -348,13 +348,13 @@ class CostTracker:
         if reset_type in ["daily", "all"]:
             self.daily_usage = 0.0
             self.daily_cost = 0.0
-            self.last_daily_reset = datetime.now(timezone.utc).date()
+            self.last_daily_reset = datetime.now(UTC).date()
             self.logger.info("Daily budget reset")
 
         if reset_type in ["monthly", "all"]:
             self.monthly_usage = 0.0
             self.monthly_cost = 0.0
-            self.last_monthly_reset = datetime.now(timezone.utc).replace(day=1).date()
+            self.last_monthly_reset = datetime.now(UTC).replace(day=1).date()
             self.logger.info("Monthly budget reset")
 
         if reset_type == "all":
@@ -384,7 +384,7 @@ class CostTracker:
         """Reset usage if needed (alias for _reset_periodic_costs)."""
         await self._reset_periodic_costs()
 
-    def get_usage_stats(self) -> Dict[str, Any]:
+    def get_usage_stats(self) -> dict[str, Any]:
         """Get usage statistics."""
         return {
             "daily_usage": self.daily_usage,
@@ -396,7 +396,7 @@ class CostTracker:
             "cost_by_operation": self.cost_by_operation.copy(),
         }
 
-    def get_cost_breakdown(self, days: Optional[int] = None) -> Dict[str, Any]:
+    def get_cost_breakdown(self, days: int | None = None) -> dict[str, Any]:
         """Get cost breakdown by category."""
         result = {
             "by_model": self.cost_by_model.copy(),
@@ -407,7 +407,7 @@ class CostTracker:
 
         if days is not None:
             # Filter records by days
-            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            cutoff_date = datetime.now(UTC) - timedelta(days=days)
             period_records = [
                 r for r in self.usage_records if r.timestamp >= cutoff_date
             ]
@@ -426,7 +426,7 @@ class CostTracker:
 
     async def _reset_periodic_costs(self):
         """Reset daily/monthly costs if needed."""
-        current_date = datetime.now(timezone.utc).date()
+        current_date = datetime.now(UTC).date()
 
         # Reset daily cost if needed
         if (
@@ -473,7 +473,7 @@ class CostTracker:
             self.total_requests = 0
             self.successful_requests = 0
 
-        def get_base_stats(self) -> Dict[str, Any]:
+        def get_base_stats(self) -> dict[str, Any]:
             """Get base statistics."""
             return {
                 "budget_violations": self.budget_violations,

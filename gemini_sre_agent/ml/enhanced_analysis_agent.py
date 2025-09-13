@@ -7,10 +7,10 @@ This module integrates the enhanced prompt generation system with specialized co
 generators to provide context-aware, adaptive code generation capabilities.
 """
 
+from dataclasses import dataclass
 import json
 import logging
-from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from google.generativeai.generative_models import GenerativeModel
 
@@ -90,11 +90,11 @@ class EnhancedAnalysisAgent:
 
     async def analyze_issue(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze an issue using enhanced prompt generation and specialized code generation.
 
@@ -144,8 +144,8 @@ class EnhancedAnalysisAgent:
             )
 
     async def _enhance_with_specialized_generator(
-        self, analysis_result: Dict[str, Any], context: PromptContext
-    ) -> Dict[str, Any]:
+        self, analysis_result: dict[str, Any], context: PromptContext
+    ) -> dict[str, Any]:
         """
         Enhance the analysis result using specialized code generators.
 
@@ -214,9 +214,9 @@ class EnhancedAnalysisAgent:
 
     async def _build_analysis_context(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
         flow_id: str,
     ) -> PromptContext:
         """Build comprehensive context for analysis."""
@@ -238,7 +238,7 @@ class EnhancedAnalysisAgent:
 
         return context
 
-    def _extract_issue_context(self, triage_packet: Dict[str, Any]) -> IssueContext:
+    def _extract_issue_context(self, triage_packet: dict[str, Any]) -> IssueContext:
         """Extract issue context from triage packet."""
 
         # Determine issue type from triage packet
@@ -282,7 +282,7 @@ class EnhancedAnalysisAgent:
             context_richness=self._calculate_context_richness(triage_packet),
         )
 
-    def _extract_repository_context(self, configs: Dict[str, Any]) -> RepositoryContext:
+    def _extract_repository_context(self, configs: dict[str, Any]) -> RepositoryContext:
         """Extract repository context from configuration."""
 
         return RepositoryContext(
@@ -297,7 +297,7 @@ class EnhancedAnalysisAgent:
             code_quality_metrics=configs.get("code_quality_metrics", {}),
         )
 
-    def _classify_issue_type(self, triage_packet: Dict[str, Any]) -> IssueType:
+    def _classify_issue_type(self, triage_packet: dict[str, Any]) -> IssueType:
         """Classify the issue type from triage packet."""
 
         error_patterns = triage_packet.get("error_patterns", [])
@@ -338,7 +338,7 @@ class EnhancedAnalysisAgent:
 
         return issue_type_mapping.get(issue_context.issue_type, "generic_error")
 
-    def _calculate_complexity_score(self, triage_packet: Dict[str, Any]) -> int:
+    def _calculate_complexity_score(self, triage_packet: dict[str, Any]) -> int:
         """Calculate complexity score for the issue."""
 
         score = 1  # Base score
@@ -355,7 +355,7 @@ class EnhancedAnalysisAgent:
 
         return min(score, 10)  # Cap at 10
 
-    def _calculate_context_richness(self, triage_packet: Dict[str, Any]) -> float:
+    def _calculate_context_richness(self, triage_packet: dict[str, Any]) -> float:
         """Calculate context richness score."""
 
         richness = 0.0
@@ -418,7 +418,7 @@ class EnhancedAnalysisAgent:
 
     async def _execute_analysis(
         self, prompt: str, context: PromptContext
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute the analysis with the generated prompt."""
 
         try:
@@ -447,8 +447,8 @@ class EnhancedAnalysisAgent:
             }
 
     async def _validate_and_refine(
-        self, analysis_result: Dict[str, Any], context: PromptContext
-    ) -> Dict[str, Any]:
+        self, analysis_result: dict[str, Any], context: PromptContext
+    ) -> dict[str, Any]:
         """Validate and refine the analysis result."""
 
         if not analysis_result.get("success", False):
@@ -476,10 +476,10 @@ class EnhancedAnalysisAgent:
 
     async def _fallback_analysis(
         self,
-        triage_packet: Dict[str, Any],
-        historical_logs: List[str],
-        configs: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        triage_packet: dict[str, Any],
+        historical_logs: list[str],
+        configs: dict[str, Any],
+    ) -> dict[str, Any]:
         """Fallback analysis using simple prompt."""
 
         self.logger.info("Using fallback analysis")

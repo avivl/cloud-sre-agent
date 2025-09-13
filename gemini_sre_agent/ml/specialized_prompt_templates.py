@@ -8,7 +8,7 @@ for specific types of issues like database errors, API errors, etc.
 """
 
 import json
-from typing import Any, Dict
+from typing import Any
 
 from .base_prompt_template import BasePromptTemplate
 from .prompt_context_models import PromptContext
@@ -79,7 +79,7 @@ Historical Context:
 
 Please provide a comprehensive analysis and code fix following the repository's established database patterns."""
 
-    def _get_context_variables(self, context: PromptContext) -> Dict[str, Any]:
+    def _get_context_variables(self, context: PromptContext) -> dict[str, Any]:
         """Extract database-specific context variables."""
         repo_ctx = context.repository_context
         issue_ctx = context.issue_context
@@ -184,7 +184,7 @@ Historical Context:
 
 Please provide a comprehensive analysis and code fix following the repository's established API patterns."""
 
-    def _get_context_variables(self, context: PromptContext) -> Dict[str, Any]:
+    def _get_context_variables(self, context: PromptContext) -> dict[str, Any]:
         """Extract API-specific context variables."""
         repo_ctx = context.repository_context
         issue_ctx = context.issue_context
@@ -291,7 +291,7 @@ Historical Context:
 
 Please provide a comprehensive security analysis and code fix following security best practices."""
 
-    def _get_context_variables(self, context: PromptContext) -> Dict[str, Any]:
+    def _get_context_variables(self, context: PromptContext) -> dict[str, Any]:
         """Extract security-specific context variables."""
         repo_ctx = context.repository_context
         issue_ctx = context.issue_context

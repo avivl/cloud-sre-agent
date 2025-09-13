@@ -8,12 +8,12 @@ including parallel execution, sequential execution, cascade execution,
 voting, weighted aggregation, and hierarchical approaches.
 """
 
-import asyncio
-import logging
 from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from ..base import LLMRequest, LLMResponse, ModelType
 
@@ -43,8 +43,8 @@ class ModelConfig:
     temperature: float = 0.7
     timeout: int = 30
     retry_attempts: int = 2
-    specialized_for: Optional[str] = None
-    cost_limit: Optional[float] = None
+    specialized_for: str | None = None
+    cost_limit: float | None = None
 
 
 class MixingStrategyExecutor(ABC):
@@ -53,12 +53,12 @@ class MixingStrategyExecutor(ABC):
     @abstractmethod
     async def execute(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
-    ) -> List[Optional[LLMResponse]]:
+    ) -> list[LLMResponse | None]:
         """
         Execute models using the specific strategy.
 
@@ -80,12 +80,12 @@ class ParallelStrategyExecutor(MixingStrategyExecutor):
 
     async def execute(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
-    ) -> List[Optional[LLMResponse]]:
+    ) -> list[LLMResponse | None]:
         """Execute models in parallel."""
         tasks = []
         for config in model_configs:
@@ -97,7 +97,7 @@ class ParallelStrategyExecutor(MixingStrategyExecutor):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Preserve alignment between results and model_configs
-        aligned_results: List[Optional[LLMResponse]] = []
+        aligned_results: list[LLMResponse | None] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(
@@ -113,7 +113,7 @@ class ParallelStrategyExecutor(MixingStrategyExecutor):
         self,
         config: ModelConfig,
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
     ) -> LLMResponse:
@@ -136,7 +136,7 @@ class ParallelStrategyExecutor(MixingStrategyExecutor):
                     provider.generate(request), timeout=config.timeout
                 )
                 return response
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 raise TimeoutError(
                     f"Model {config.provider}:{config.model} timed out after {config.timeout}s"
                 ) from e
@@ -147,12 +147,12 @@ class SequentialStrategyExecutor(MixingStrategyExecutor):
 
     async def execute(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
-    ) -> List[Optional[LLMResponse]]:
+    ) -> list[LLMResponse | None]:
         """Execute models sequentially."""
         results = []
         for config in model_configs:
@@ -171,7 +171,7 @@ class SequentialStrategyExecutor(MixingStrategyExecutor):
         self,
         config: ModelConfig,
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
     ) -> LLMResponse:
@@ -194,7 +194,7 @@ class SequentialStrategyExecutor(MixingStrategyExecutor):
                     provider.generate(request), timeout=config.timeout
                 )
                 return response
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 raise TimeoutError(
                     f"Model {config.provider}:{config.model} timed out after {config.timeout}s"
                 ) from e
@@ -205,12 +205,12 @@ class CascadeStrategyExecutor(MixingStrategyExecutor):
 
     async def execute(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
-    ) -> List[Optional[LLMResponse]]:
+    ) -> list[LLMResponse | None]:
         """Execute models in cascade (results feed into next model)."""
         results = []
         current_prompt = prompt
@@ -238,7 +238,7 @@ class CascadeStrategyExecutor(MixingStrategyExecutor):
         self,
         config: ModelConfig,
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
     ) -> LLMResponse:
@@ -261,7 +261,7 @@ class CascadeStrategyExecutor(MixingStrategyExecutor):
                     provider.generate(request), timeout=config.timeout
                 )
                 return response
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 raise TimeoutError(
                     f"Model {config.provider}:{config.model} timed out after {config.timeout}s"
                 ) from e
@@ -272,12 +272,12 @@ class VotingStrategyExecutor(MixingStrategyExecutor):
 
     async def execute(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
-    ) -> List[Optional[LLMResponse]]:
+    ) -> list[LLMResponse | None]:
         """Execute models in parallel and use voting for aggregation."""
         # Use parallel execution for voting
         parallel_executor = ParallelStrategyExecutor()
@@ -291,12 +291,12 @@ class WeightedStrategyExecutor(MixingStrategyExecutor):
 
     async def execute(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
-    ) -> List[Optional[LLMResponse]]:
+    ) -> list[LLMResponse | None]:
         """Execute models in parallel and use weighted aggregation."""
         # Use parallel execution for weighted strategy
         parallel_executor = ParallelStrategyExecutor()
@@ -310,12 +310,12 @@ class HierarchicalStrategyExecutor(MixingStrategyExecutor):
 
     async def execute(
         self,
-        model_configs: List[ModelConfig],
+        model_configs: list[ModelConfig],
         prompt: str,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
         provider_factory: Any,
         semaphore: asyncio.Semaphore,
-    ) -> List[Optional[LLMResponse]]:
+    ) -> list[LLMResponse | None]:
         """Execute models hierarchically based on their specialization."""
         # Group models by specialization
         specialized_groups = self._group_by_specialization(model_configs)
@@ -340,10 +340,10 @@ class HierarchicalStrategyExecutor(MixingStrategyExecutor):
         return results
 
     def _group_by_specialization(
-        self, model_configs: List[ModelConfig]
-    ) -> Dict[Optional[str], List[ModelConfig]]:
+        self, model_configs: list[ModelConfig]
+    ) -> dict[str | None, list[ModelConfig]]:
         """Group model configurations by their specialization."""
-        groups: Dict[Optional[str], List[ModelConfig]] = {}
+        groups: dict[str | None, list[ModelConfig]] = {}
 
         for config in model_configs:
             specialization = config.specialized_for
@@ -387,7 +387,7 @@ class MixingStrategyFactory:
         return executor_class()
 
     @classmethod
-    def get_supported_strategies(cls) -> List[MixingStrategy]:
+    def get_supported_strategies(cls) -> list[MixingStrategy]:
         """
         Get list of supported mixing strategies.
 
@@ -402,7 +402,7 @@ class StrategyPerformanceMonitor:
 
     def __init__(self) -> None:
         """Initialize the performance monitor."""
-        self.strategy_metrics: Dict[MixingStrategy, Dict[str, Any]] = {}
+        self.strategy_metrics: dict[MixingStrategy, dict[str, Any]] = {}
         self.reset_metrics()
 
     def reset_metrics(self) -> None:
@@ -448,7 +448,7 @@ class StrategyPerformanceMonitor:
             metrics["successful_executions"] / metrics["total_executions"] * 100
         )
 
-    def get_strategy_metrics(self, strategy: MixingStrategy) -> Dict[str, Any]:
+    def get_strategy_metrics(self, strategy: MixingStrategy) -> dict[str, Any]:
         """
         Get metrics for a specific strategy.
 
@@ -460,7 +460,7 @@ class StrategyPerformanceMonitor:
         """
         return self.strategy_metrics[strategy].copy()
 
-    def get_all_metrics(self) -> Dict[MixingStrategy, Dict[str, Any]]:
+    def get_all_metrics(self) -> dict[MixingStrategy, dict[str, Any]]:
         """
         Get metrics for all strategies.
 
@@ -472,7 +472,7 @@ class StrategyPerformanceMonitor:
             for strategy, metrics in self.strategy_metrics.items()
         }
 
-    def get_best_strategy(self) -> Optional[MixingStrategy]:
+    def get_best_strategy(self) -> MixingStrategy | None:
         """
         Get the best performing strategy based on success rate and execution time.
 

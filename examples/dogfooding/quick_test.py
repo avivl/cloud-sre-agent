@@ -6,10 +6,10 @@ This script quickly tests if the SRE agents are working properly.
 """
 
 import argparse
+from pathlib import Path
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 
 def test_sre_agent(single_agent: bool = False) -> None:
@@ -65,7 +65,7 @@ def test_sre_agent(single_agent: bool = False) -> None:
         # Check agent logs
         agent_log = Path("/tmp/sre-dogfooding/sre_agent_1.log")
         if agent_log.exists():
-            with open(agent_log, "r") as f:
+            with open(agent_log) as f:
                 content = f.read()
 
             # Count different types of log entries

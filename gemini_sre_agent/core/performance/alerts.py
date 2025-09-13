@@ -1,12 +1,13 @@
 """Performance alerting and threshold management system."""
 
 import asyncio
-import time
-import threading
+from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, Union
-from collections import deque
+import threading
+import time
+from typing import Any
 
 from ..logging import get_logger
 
@@ -15,7 +16,7 @@ logger = get_logger(__name__)
 
 class AlertSeverity(Enum):
     """Alert severity levels."""
-    
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -34,9 +35,9 @@ class AlertThreshold:
         duration: Duration in seconds before triggering alert
         cooldown: Cooldown period in seconds between alerts
     """
-    
+
     metric_name: str
-    threshold_value: Union[int, float]
+    threshold_value: int | float
     comparison_operator: str = "gt"  # gt, lt, eq, gte, lte
     severity: AlertSeverity = AlertSeverity.WARNING
     duration: float = 0.0  # Duration before triggering
@@ -54,12 +55,12 @@ class AlertRule:
         enabled: Whether the rule is enabled
         tags: Additional metadata tags
     """
-    
+
     name: str
     description: str
-    thresholds: List[AlertThreshold] = field(default_factory=list)
+    thresholds: list[AlertThreshold] = field(default_factory=list)
     enabled: bool = True
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -76,15 +77,15 @@ class Alert:
         message: Alert message
         tags: Additional metadata tags
     """
-    
+
     rule_name: str
     metric_name: str
-    current_value: Union[int, float]
-    threshold_value: Union[int, float]
+    current_value: int | float
+    threshold_value: int | float
     severity: AlertSeverity
     timestamp: float = field(default_factory=time.time)
     message: str = ""
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -99,7 +100,7 @@ class AlertConfig:
         escalation_delay: Delay before escalating alerts in seconds
         max_escalation_levels: Maximum number of escalation levels
     """
-    
+
     max_alerts: int = 1000
     alert_retention: float = 86400.0  # 24 hours
     enable_alert_deduplication: bool = True
@@ -114,8 +115,8 @@ class PerformanceAlerts:
     Monitors performance metrics against configurable thresholds
     and triggers alerts when thresholds are exceeded.
     """
-    
-    def __init__(self, config: Optional[AlertConfig] = None):
+
+    def __init__(self, config: AlertConfig | None = None):
         """Initialize the performance alerts system.
         
         Args:
@@ -123,37 +124,37 @@ class PerformanceAlerts:
         """
         self._config = config or AlertConfig()
         self._lock = threading.RLock()
-        self._rules: Dict[str, AlertRule] = {}
+        self._rules: dict[str, AlertRule] = {}
         self._alerts: deque = deque(maxlen=self._config.max_alerts)
-        self._alert_history: Dict[str, float] = {}  # Rule name -> last alert time
-        self._escalation_levels: Dict[str, int] = {}  # Rule name -> escalation level
-        self._alert_handlers: List[Callable[[Alert], None]] = []
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._alert_history: dict[str, float] = {}  # Rule name -> last alert time
+        self._escalation_levels: dict[str, int] = {}  # Rule name -> escalation level
+        self._alert_handlers: list[Callable[[Alert], None]] = []
+        self._cleanup_task: asyncio.Task | None = None
         self._start_cleanup_task()
-    
+
     def _start_cleanup_task(self) -> None:
         """Start the background cleanup task."""
         if self._cleanup_task is None or self._cleanup_task.done():
             self._cleanup_task = asyncio.create_task(self._cleanup_old_alerts())
-    
+
     async def _cleanup_old_alerts(self) -> None:
         """Clean up old alerts based on retention period."""
         while True:
             try:
                 current_time = time.time()
                 cutoff_time = current_time - self._config.alert_retention
-                
+
                 with self._lock:
                     # Remove old alerts
                     while self._alerts and self._alerts[0].timestamp < cutoff_time:
                         self._alerts.popleft()
-                
+
                 await asyncio.sleep(60)  # Check every minute
-                
+
             except Exception as e:
                 logger.error(f"Error in alert cleanup task: {e}")
                 await asyncio.sleep(60)
-    
+
     def add_alert_rule(self, rule: AlertRule) -> None:
         """Add an alert rule.
         
@@ -163,7 +164,7 @@ class PerformanceAlerts:
         with self._lock:
             self._rules[rule.name] = rule
             self._escalation_levels[rule.name] = 0
-    
+
     def remove_alert_rule(self, rule_name: str) -> None:
         """Remove an alert rule.
         
@@ -174,7 +175,7 @@ class PerformanceAlerts:
             self._rules.pop(rule_name, None)
             self._alert_history.pop(rule_name, None)
             self._escalation_levels.pop(rule_name, None)
-    
+
     def add_alert_handler(self, handler: Callable[[Alert], None]) -> None:
         """Add an alert handler.
         
@@ -183,7 +184,7 @@ class PerformanceAlerts:
         """
         with self._lock:
             self._alert_handlers.append(handler)
-    
+
     def remove_alert_handler(self, handler: Callable[[Alert], None]) -> None:
         """Remove an alert handler.
         
@@ -193,14 +194,14 @@ class PerformanceAlerts:
         with self._lock:
             if handler in self._alert_handlers:
                 self._alert_handlers.remove(handler)
-    
+
     def check_metric(
         self,
         metric_name: str,
-        value: Union[int, float],
-        operation: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None
-    ) -> List[Alert]:
+        value: int | float,
+        operation: str | None = None,
+        tags: dict[str, str] | None = None
+    ) -> list[Alert]:
         """Check a metric value against all applicable rules.
         
         Args:
@@ -214,21 +215,21 @@ class PerformanceAlerts:
         """
         triggered_alerts = []
         current_time = time.time()
-        
+
         with self._lock:
             for rule_name, rule in self._rules.items():
                 if not rule.enabled:
                     continue
-                
+
                 # Check if rule applies to this metric
                 applicable_thresholds = [
                     threshold for threshold in rule.thresholds
                     if threshold.metric_name == metric_name
                 ]
-                
+
                 if not applicable_thresholds:
                     continue
-                
+
                 # Check each threshold
                 for threshold in applicable_thresholds:
                     if self._should_trigger_alert(rule_name, threshold, value, current_time):
@@ -242,7 +243,7 @@ class PerformanceAlerts:
                         triggered_alerts.append(alert)
                         self._alerts.append(alert)
                         self._alert_history[rule_name] = current_time
-        
+
         # Notify handlers
         for alert in triggered_alerts:
             for handler in self._alert_handlers:
@@ -250,14 +251,14 @@ class PerformanceAlerts:
                     handler(alert)
                 except Exception as e:
                     logger.error(f"Error in alert handler: {e}")
-        
+
         return triggered_alerts
-    
+
     def _should_trigger_alert(
         self,
         rule_name: str,
         threshold: AlertThreshold,
-        value: Union[int, float],
+        value: int | float,
         current_time: float
     ) -> bool:
         """Check if an alert should be triggered.
@@ -275,7 +276,7 @@ class PerformanceAlerts:
         last_alert_time = self._alert_history.get(rule_name, 0)
         if current_time - last_alert_time < threshold.cooldown:
             return False
-        
+
         # Check threshold condition
         if threshold.comparison_operator == "gt":
             condition_met = value > threshold.threshold_value
@@ -289,16 +290,16 @@ class PerformanceAlerts:
             condition_met = value <= threshold.threshold_value
         else:
             condition_met = False
-        
+
         return condition_met
-    
+
     def _create_alert(
         self,
         rule_name: str,
         threshold: AlertThreshold,
-        value: Union[int, float],
-        operation: Optional[str],
-        tags: Optional[Dict[str, str]]
+        value: int | float,
+        operation: str | None,
+        tags: dict[str, str] | None
     ) -> Alert:
         """Create an alert instance.
         
@@ -316,10 +317,10 @@ class PerformanceAlerts:
             f"Alert: {threshold.metric_name} {threshold.comparison_operator} "
             f"{threshold.threshold_value} (current: {value})"
         )
-        
+
         if operation:
             message += f" for operation: {operation}"
-        
+
         return Alert(
             rule_name=rule_name,
             metric_name=threshold.metric_name,
@@ -329,13 +330,13 @@ class PerformanceAlerts:
             message=message,
             tags={**(tags or {}), "operation": operation or "unknown"}
         )
-    
+
     def get_alerts(
         self,
-        rule_name: Optional[str] = None,
-        severity: Optional[AlertSeverity] = None,
-        since: Optional[float] = None
-    ) -> List[Alert]:
+        rule_name: str | None = None,
+        severity: AlertSeverity | None = None,
+        since: float | None = None
+    ) -> list[Alert]:
         """Get alerts matching the specified criteria.
         
         Args:
@@ -348,19 +349,19 @@ class PerformanceAlerts:
         """
         with self._lock:
             alerts = list(self._alerts)
-        
+
         if rule_name:
             alerts = [alert for alert in alerts if alert.rule_name == rule_name]
-        
+
         if severity:
             alerts = [alert for alert in alerts if alert.severity == severity]
-        
+
         if since:
             alerts = [alert for alert in alerts if alert.timestamp >= since]
-        
+
         return sorted(alerts, key=lambda x: x.timestamp, reverse=True)
-    
-    def get_alert_summary(self) -> Dict[str, Any]:
+
+    def get_alert_summary(self) -> dict[str, Any]:
         """Get a summary of alerts.
         
         Returns:
@@ -370,16 +371,16 @@ class PerformanceAlerts:
             total_alerts = len(self._alerts)
             alerts_by_severity = {}
             alerts_by_rule = {}
-            
+
             for alert in self._alerts:
                 # Count by severity
                 severity = alert.severity.value
                 alerts_by_severity[severity] = alerts_by_severity.get(severity, 0) + 1
-                
+
                 # Count by rule
                 rule_name = alert.rule_name
                 alerts_by_rule[rule_name] = alerts_by_rule.get(rule_name, 0) + 1
-            
+
             return {
                 "total_alerts": total_alerts,
                 "alerts_by_severity": alerts_by_severity,
@@ -393,8 +394,8 @@ class PerformanceAlerts:
                     "enable_alert_escalation": self._config.enable_alert_escalation
                 }
             }
-    
-    def clear_alerts(self, rule_name: Optional[str] = None) -> None:
+
+    def clear_alerts(self, rule_name: str | None = None) -> None:
         """Clear alerts.
         
         Args:
@@ -408,7 +409,7 @@ class PerformanceAlerts:
                 )
             else:
                 self._alerts.clear()
-    
+
     def enable_rule(self, rule_name: str) -> None:
         """Enable an alert rule.
         
@@ -418,7 +419,7 @@ class PerformanceAlerts:
         with self._lock:
             if rule_name in self._rules:
                 self._rules[rule_name].enabled = True
-    
+
     def disable_rule(self, rule_name: str) -> None:
         """Disable an alert rule.
         
@@ -428,8 +429,8 @@ class PerformanceAlerts:
         with self._lock:
             if rule_name in self._rules:
                 self._rules[rule_name].enabled = False
-    
-    def get_rules(self) -> Dict[str, AlertRule]:
+
+    def get_rules(self) -> dict[str, AlertRule]:
         """Get all alert rules.
         
         Returns:
@@ -437,7 +438,7 @@ class PerformanceAlerts:
         """
         with self._lock:
             return dict(self._rules)
-    
+
     def __enter__(self):
         """Context manager entry.
         
@@ -445,7 +446,7 @@ class PerformanceAlerts:
             Self
         """
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit.
         

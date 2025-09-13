@@ -8,10 +8,10 @@ and improve system resilience when dealing with unreliable LLM providers.
 """
 
 import asyncio
-import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict
+import time
+from typing import Any
 
 from .error_config import CircuitBreakerConfig
 
@@ -40,7 +40,7 @@ class CircuitBreaker:
 
     def __init__(self, config: CircuitBreakerConfig) -> None:
         self.config = config
-        self._states: Dict[str, CircuitState] = {}
+        self._states: dict[str, CircuitState] = {}
         self._lock = asyncio.Lock()
 
     async def allow_request(self, provider_id: str) -> bool:
@@ -112,7 +112,7 @@ class CircuitBreaker:
         async with self._lock:
             return self._get_state(provider_id).status
 
-    async def get_stats(self, provider_id: str) -> Dict[str, Any]:
+    async def get_stats(self, provider_id: str) -> dict[str, Any]:
         """Get circuit breaker statistics for provider."""
         async with self._lock:
             state = self._get_state(provider_id)

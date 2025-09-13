@@ -6,8 +6,8 @@ Unit tests for the Enhanced LLM Service with intelligent model selection.
 
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 from pydantic import BaseModel
+import pytest
 
 # Mock external dependencies
 with patch.dict(

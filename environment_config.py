@@ -5,12 +5,13 @@ Environment-Specific Configuration Management
 This script provides environment-specific configuration management for the enhanced LLM system.
 """
 
-import os
 import json
-import yaml
-from typing import Dict, Any, Optional
-from pathlib import Path
 import logging
+import os
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import yaml
 
 from gemini_sre_agent.llm.config import LLMConfig
 
@@ -26,7 +27,7 @@ class EnvironmentConfigManager:
         self.config_dir.mkdir(exist_ok=True)
         self.current_env = os.getenv('ENVIRONMENT', 'development')
         
-    def get_environment_config(self, environment: str : Optional[str] = None) -> Dict[str, Any]:
+    def get_environment_config(self, environment: Optional[str] = None) -> Dict[str, Any]:
         """Get configuration for a specific environment."""
         if environment is None:
             environment = self.current_env
@@ -278,7 +279,7 @@ class EnvironmentConfigManager:
             logger.error(f"Configuration validation failed: {e}")
             return False
     
-    def get_llm_config(self, environment: str : Optional[str] = None) -> LLMConfig:
+    def get_llm_config(self, environment: Optional[str] = None) -> LLMConfig:
         """Get LLM configuration for a specific environment."""
         env_config = self.get_environment_config(environment)
         
@@ -287,7 +288,7 @@ class EnvironmentConfigManager:
         
         return LLMConfig(**env_config['llm'])
     
-    def print_environment_summary(self, environment: str : Optional[str] = None) -> None:
+    def print_environment_summary(self, environment: Optional[str] = None) -> None:
         """Print a summary of environment configuration."""
         if environment is None:
             environment = self.current_env

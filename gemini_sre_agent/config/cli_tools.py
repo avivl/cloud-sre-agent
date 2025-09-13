@@ -64,7 +64,7 @@ def migrate(old_config_file: str, new_config_file: str, backup: bool) -> None:
     """Migrate old configuration format to new format."""
     try:
         # Load old configuration
-        with open(old_config_file, "r") as f:
+        with open(old_config_file) as f:
             old_config = yaml.safe_load(f)
 
         # Migrate to new format
@@ -125,23 +125,25 @@ def diff(config_file1: str, config_file2: str, output_format: str) -> None:
     """Compare two configuration files and show differences."""
     try:
         # Load and validate first configuration file
-        with open(config_file1, "r") as f:
+        with open(config_file1) as f:
             config1_data = yaml.safe_load(f)
             if config1_data is None:
                 config1_data = {}
             if not isinstance(config1_data, dict):
                 raise click.ClickException(
-                    f"Configuration file {config_file1} must contain a YAML mapping (dict), got {type(config1_data).__name__}"
+                    f"Configuration file {config_file1} must contain a YAML mapping "
+                    f"(dict), got {type(config1_data).__name__}"
                 )
 
         # Load and validate second configuration file
-        with open(config_file2, "r") as f:
+        with open(config_file2) as f:
             config2_data = yaml.safe_load(f)
             if config2_data is None:
                 config2_data = {}
             if not isinstance(config2_data, dict):
                 raise click.ClickException(
-                    f"Configuration file {config_file2} must contain a YAML mapping (dict), got {type(config2_data).__name__}"
+                    f"Configuration file {config_file2} must contain a YAML mapping "
+                    f"(dict), got {type(config2_data).__name__}"
                 )
 
         diff_result = ConfigDevUtils.diff_configs(

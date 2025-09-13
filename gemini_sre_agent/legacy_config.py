@@ -1,10 +1,9 @@
 # gemini_sre_agent/legacy_config.py
 
 import re  # Added for regex validation
-from typing import List, Optional
 
-import yaml
 from pydantic import BaseModel, Field, field_validator
+import yaml
 
 
 class ModelSelection(BaseModel):
@@ -33,7 +32,7 @@ class LoggingConfig(BaseModel):
 
     log_level: str = "INFO"
     json_format: bool = False
-    log_file: Optional[str] = None
+    log_file: str | None = None
 
 
 class ServiceMonitorConfig(BaseModel):
@@ -45,8 +44,8 @@ class ServiceMonitorConfig(BaseModel):
     project_id: str = Field(pattern=r"^[a-z][a-z0-9-]*[a-z0-9]$")
     location: str = Field(pattern=r"^[a-z0-9-]+$")
     subscription_id: str = Field(min_length=1)
-    model_selection: Optional[ModelSelection] = None
-    github: Optional[GitHubConfig] = None
+    model_selection: ModelSelection | None = None
+    github: GitHubConfig | None = None
 
     @field_validator("project_id")
     @classmethod
@@ -104,7 +103,7 @@ class GlobalConfig(BaseModel):
     default_model_selection: ModelSelection
     default_github_config: GitHubConfig
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
-    services: List[ServiceMonitorConfig]
+    services: list[ServiceMonitorConfig]
 
 
 class Config(BaseModel):
@@ -125,7 +124,7 @@ def load_config(path: str = "config/config.yaml") -> Config:
     Returns:
         Config: The loaded configuration object.
     """
-    with open(path, "r") as f:
+    with open(path) as f:
         config_data = yaml.safe_load(f)
     return Config(**config_data)
 

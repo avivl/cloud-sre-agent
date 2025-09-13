@@ -8,10 +8,10 @@ a specialized Gemini model analyzes context and generates optimized prompts
 for the main code generation model.
 """
 
+from dataclasses import dataclass
 import json
 import logging
-from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from google.cloud import aiplatform
 from google.generativeai.generative_models import GenerativeModel
@@ -288,7 +288,7 @@ The generated prompt should be ready to use immediately without any additional f
     async def _refine_prompt_with_validation(
         self,
         prompt: str,
-        validation_results: List[ValidationResult],
+        validation_results: list[ValidationResult],
         context: MetaPromptContext,
     ) -> str:
         """Refine prompt based on validation feedback."""
@@ -330,7 +330,7 @@ Triage Information: {json.dumps(context.triage_packet, indent=2)}
 
 Provide a JSON response with root_cause_analysis, proposed_fix, and code_patch."""
 
-    def _load_optimization_strategies(self) -> Dict[str, Any]:
+    def _load_optimization_strategies(self) -> dict[str, Any]:
         """Load prompt optimization strategies."""
         return {
             "database_issues": {

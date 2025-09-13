@@ -8,7 +8,7 @@ including different analysis depths and technology stack information.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .context_cache import CacheEntry, ContextCache
 
@@ -41,15 +41,15 @@ class RepositoryContextCache(ContextCache):
         self.logger = logging.getLogger(__name__)
 
         # Repository-specific metadata
-        self.repo_analysis_depths: Dict[str, List[str]] = (
+        self.repo_analysis_depths: dict[str, list[str]] = (
             {}
         )  # repo_path -> analysis_depths
-        self.tech_stack_cache: Dict[str, Dict[str, Any]] = {}  # repo_path -> tech_stack
-        self.last_commit_cache: Dict[str, str] = {}  # repo_path -> last_commit_hash
+        self.tech_stack_cache: dict[str, dict[str, Any]] = {}  # repo_path -> tech_stack
+        self.last_commit_cache: dict[str, str] = {}  # repo_path -> last_commit_hash
 
     async def get_repository_context(
         self, repo_path: str, analysis_depth: str = "standard"
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Get cached repository context for specific analysis depth.
 
@@ -84,10 +84,10 @@ class RepositoryContextCache(ContextCache):
         self,
         repo_path: str,
         analysis_depth: str,
-        context_data: Dict[str, Any],
-        tech_stack: Optional[Dict[str, Any]] = None,
-        last_commit: Optional[str] = None,
-        ttl_seconds: Optional[int] = None,
+        context_data: dict[str, Any],
+        tech_stack: dict[str, Any] | None = None,
+        last_commit: str | None = None,
+        ttl_seconds: int | None = None,
     ) -> None:
         """
         Cache repository context with metadata.
@@ -135,7 +135,7 @@ class RepositoryContextCache(ContextCache):
             f"[REPO-CACHE] Stored {repo_path}:{analysis_depth} (TTL: {effective_ttl}s)"
         )
 
-    async def get_technology_stack(self, repo_path: str) -> Optional[Dict[str, Any]]:
+    async def get_technology_stack(self, repo_path: str) -> dict[str, Any] | None:
         """
         Get cached technology stack for repository.
 
@@ -147,7 +147,7 @@ class RepositoryContextCache(ContextCache):
         """
         return self.tech_stack_cache.get(repo_path)
 
-    async def get_last_commit(self, repo_path: str) -> Optional[str]:
+    async def get_last_commit(self, repo_path: str) -> str | None:
         """
         Get cached last commit hash for repository.
 
@@ -177,7 +177,7 @@ class RepositoryContextCache(ContextCache):
         return cached_commit != current_commit
 
     async def invalidate_repository_context(
-        self, repo_path: str, analysis_depth: Optional[str] = None
+        self, repo_path: str, analysis_depth: str | None = None
     ) -> int:
         """
         Invalidate repository context cache.
@@ -225,7 +225,7 @@ class RepositoryContextCache(ContextCache):
         )
         return invalidated_count
 
-    async def get_available_analysis_depths(self, repo_path: str) -> List[str]:
+    async def get_available_analysis_depths(self, repo_path: str) -> list[str]:
         """
         Get list of available analysis depths for repository.
 
@@ -237,7 +237,7 @@ class RepositoryContextCache(ContextCache):
         """
         return self.repo_analysis_depths.get(repo_path, [])
 
-    async def get_repository_summary(self, repo_path: str) -> Dict[str, Any]:
+    async def get_repository_summary(self, repo_path: str) -> dict[str, Any]:
         """
         Get summary of cached repository information.
 
@@ -277,7 +277,7 @@ class RepositoryContextCache(ContextCache):
         return f"repo_context:{repo_path}:{analysis_depth}"
 
     def _calculate_repo_ttl(
-        self, analysis_depth: str, custom_ttl: Optional[int] = None
+        self, analysis_depth: str, custom_ttl: int | None = None
     ) -> int:
         """Calculate TTL for repository context based on analysis depth."""
         if custom_ttl:
@@ -305,7 +305,7 @@ class RepositoryContextCache(ContextCache):
         """Check if cache entry is expired."""
         return self._get_current_time() > entry.expires_at
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics for monitoring."""
         total_size = sum(entry.size_bytes for entry in self.cache.values())
         repo_counts = {

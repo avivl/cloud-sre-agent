@@ -325,7 +325,9 @@ class TestCircuitBreaker:
         assert circuit_breaker._failure_count == 1
         assert circuit_breaker._state == CircuitState.CLOSED
 
-    def test_on_failure_closed_state_threshold_reached(self, circuit_breaker: str) -> None:
+    def test_on_failure_closed_state_threshold_reached(
+        self, circuit_breaker: str
+    ) -> None:
         """Test _on_failure in CLOSED state reaching threshold."""
         circuit_breaker._failure_count = 2  # One less than threshold
 

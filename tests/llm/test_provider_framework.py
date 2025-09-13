@@ -5,8 +5,8 @@ Tests the provider framework components including templates, auto-registry,
 validation, plugin loading, and capability discovery.
 """
 
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -625,7 +625,9 @@ class TestProviderCapabilityDiscovery:
         assert "provider1" not in tools_providers
         assert "provider2" in tools_providers
 
-    def test_find_providers_matching_requirements(self, capability_discovery: str) -> None:
+    def test_find_providers_matching_requirements(
+        self, capability_discovery: str
+    ) -> None:
         """Test finding providers matching requirements."""
         # Mock capability registry
         capability_discovery.capability_registry = {
@@ -645,7 +647,9 @@ class TestProviderCapabilityDiscovery:
         assert "provider1" in matching
         assert "provider2" not in matching
 
-    def test_get_capability_compatibility_matrix(self, capability_discovery: str) -> None:
+    def test_get_capability_compatibility_matrix(
+        self, capability_discovery: str
+    ) -> None:
         """Test getting compatibility matrix."""
         # Mock capability registry
         capability_discovery.capability_registry = {
@@ -758,7 +762,7 @@ class TestProviderFrameworkIntegration:
         )
 
         if simple_provider_path.exists():
-            with open(simple_provider_path, "r") as f:
+            with open(simple_provider_path) as f:
                 lines = f.readlines()
 
             # Count non-empty, non-comment lines

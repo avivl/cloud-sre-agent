@@ -10,7 +10,7 @@ overhead requirement.
 
 import logging
 import time
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -38,18 +38,18 @@ class OptimizedBaseAgent(Generic[T]):
         self,
         llm_config: LLMConfig,
         response_model: type[T],
-        primary_model: Optional[str] = None,
-        fallback_model: Optional[str] = None,
+        primary_model: str | None = None,
+        fallback_model: str | None = None,
         optimization_goal: OptimizationGoal = OptimizationGoal.HYBRID,
         max_retries: int = 2,
         collect_stats: bool = True,
-        provider_preference: Optional[List[ProviderType]] = None,
-        model_type_preference: Optional[ModelType] = None,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_quality: Optional[float] = None,
+        provider_preference: list[ProviderType] | None = None,
+        model_type_preference: ModelType | None = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_quality: float | None = None,
         business_hours_only: bool = False,
-        custom_weights: Optional[Dict[str, float]] = None,
+        custom_weights: dict[str, float] | None = None,
         enable_optimizations: bool = True,
         batch_size: int = 10,
         max_wait_ms: float = 5.0,
@@ -112,11 +112,12 @@ class OptimizedBaseAgent(Generic[T]):
         self._conversation_context = []
 
         # Performance tracking
-        self._operation_times: Dict[str, List[float]] = {}
+        self._operation_times: dict[str, list[float]] = {}
         self._total_operations = 0
 
         logger.info(
-            f"OptimizedBaseAgent '{self.__class__.__name__}' initialized with performance optimizations"
+            f"OptimizedBaseAgent '{self.__class__.__name__}' initialized with "
+            f"performance optimizations"
         )
 
     async def _get_strategy_manager(self) -> StrategyManager:
@@ -133,10 +134,10 @@ class OptimizedBaseAgent(Generic[T]):
     async def execute(
         self,
         prompt_name: str,
-        prompt_args: Dict[str, Any],
-        model: Optional[str] = None,
-        provider: Optional[ProviderType] = None,
-        optimization_goal: Optional[OptimizationGoal] = None,
+        prompt_args: dict[str, Any],
+        model: str | None = None,
+        provider: ProviderType | None = None,
+        optimization_goal: OptimizationGoal | None = None,
         temperature: float = 0.7,
         use_fallback: bool = True,
         force_model_selection: bool = False,
@@ -237,7 +238,8 @@ class OptimizedBaseAgent(Generic[T]):
                 ]
                 if alternative_providers:
                     logger.warning(
-                        f"Provider {provider} failed, trying alternative provider {alternative_providers[0]}"
+                        f"Provider {provider} failed, trying alternative provider "
+                        f"{alternative_providers[0]}"
                     )
                     return await self.execute(
                         prompt_name=prompt_name,
@@ -257,9 +259,9 @@ class OptimizedBaseAgent(Generic[T]):
 
     async def batch_execute(
         self,
-        requests: List[Dict[str, Any]],
+        requests: list[dict[str, Any]],
         **kwargs: Any,
-    ) -> List[T]:
+    ) -> list[T]:
         """
         Execute multiple prompts in batch with optimizations.
 
@@ -332,7 +334,7 @@ class OptimizedBaseAgent(Generic[T]):
     def _update_conversation_context(
         self,
         prompt_name: str,
-        prompt_args: Dict[str, Any],
+        prompt_args: dict[str, Any],
         model: str,
         response: T,
     ) -> None:
@@ -363,7 +365,7 @@ class OptimizedBaseAgent(Generic[T]):
         if len(self._operation_times[operation]) > 100:
             self._operation_times[operation] = self._operation_times[operation][-100:]
 
-    def get_conversation_context(self) -> List[Dict[str, Any]]:
+    def get_conversation_context(self) -> list[dict[str, Any]]:
         """Get the current conversation context."""
         return self._conversation_context.copy()
 
@@ -371,13 +373,13 @@ class OptimizedBaseAgent(Generic[T]):
         """Clear the conversation context."""
         self._conversation_context.clear()
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         """Get list of available models from the registry (cached)."""
         return await self.llm_service.get_available_models(
             model_type=self.model_type_preference,
         )
 
-    async def get_available_providers(self) -> List[ProviderType]:
+    async def get_available_providers(self) -> list[ProviderType]:
         """Get list of available providers."""
         # This would need to be implemented in the optimized service
         return [ProviderType.GEMINI, ProviderType.OPENAI, ProviderType.CLAUDE]
@@ -387,7 +389,7 @@ class OptimizedBaseAgent(Generic[T]):
         self.optimization_goal = goal
         logger.info(f"Updated optimization goal to {goal}")
 
-    def update_provider_preference(self, providers: List[ProviderType]) -> None:
+    def update_provider_preference(self, providers: list[ProviderType]) -> None:
         """Update the provider preference list."""
         self.provider_preference = providers
         # Clear model cache to force re-selection with new preferences
@@ -396,9 +398,9 @@ class OptimizedBaseAgent(Generic[T]):
 
     def update_cost_constraints(
         self,
-        max_cost: Optional[float] = None,
-        min_performance: Optional[float] = None,
-        min_quality: Optional[float] = None,
+        max_cost: float | None = None,
+        min_performance: float | None = None,
+        min_quality: float | None = None,
     ) -> None:
         """Update cost and quality constraints."""
         self.max_cost = max_cost
@@ -407,10 +409,11 @@ class OptimizedBaseAgent(Generic[T]):
         # Clear model cache to force re-selection with new constraints
         self._model_cache.clear()
         logger.info(
-            f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, min_quality={min_quality}"
+            f"Updated constraints: max_cost={max_cost}, min_performance={min_performance}, "
+            f"min_quality={min_quality}"
         )
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get comprehensive performance statistics."""
         base_stats = self.stats.get_summary()
         llm_stats = self.llm_service.get_performance_stats()
@@ -453,7 +456,7 @@ class OptimizedBaseAgent(Generic[T]):
         await self.llm_service.warmup()
         logger.info(f"OptimizedBaseAgent '{self.__class__.__name__}' warmup completed")
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform health check with performance metrics."""
         llm_health = await self.llm_service.health_check()
 

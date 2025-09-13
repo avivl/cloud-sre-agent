@@ -8,7 +8,6 @@ import pytest
 
 from gemini_sre_agent.pattern_detector.models import (
     LogEntry,
-    PatternType,
     ThresholdResult,
     ThresholdType,
     TimeWindow,

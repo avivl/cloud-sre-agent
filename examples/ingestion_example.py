@@ -13,12 +13,14 @@ This script shows how to:
 import asyncio
 import json
 import logging
-import sys
 from pathlib import Path
-from typing import Any, Dict
+import sys
+from typing import Any
 
 # Add the parent directory to the path so we can import the modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from datetime import UTC
 
 from gemini_sre_agent.config.ingestion_config import (
     FileSystemConfig,
@@ -30,11 +32,11 @@ from gemini_sre_agent.ingestion.adapters import (
     FileSystemAdapter,
     GCPPubSubAdapter,
 )
+from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity
 from gemini_sre_agent.ingestion.interfaces.resilience import (
     HyxResilientClient,
     create_resilience_config,
 )
-from gemini_sre_agent.ingestion.interfaces.core import LogEntry, LogSeverity
 
 # Set up logging
 logging.basicConfig(
@@ -93,7 +95,7 @@ class LogProcessor:
         # Simulate some processing time
         await asyncio.sleep(0.001)
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """Get processing statistics."""
         return {
             "processed": self.processed_count,
@@ -101,7 +103,7 @@ class LogProcessor:
             "pii_detected": self.pii_detected_count,
         }
 
-    def get_resilience_stats(self) -> Dict[str, Any]:
+    def get_resilience_stats(self) -> dict[str, Any]:
         """Get resilience statistics from Hyx client."""
         return self.resilient_client.get_health_stats()
 
@@ -381,12 +383,13 @@ async def example_hyx_resilience():
     logger.info(f"Resilience stats: {json.dumps(resilience_stats, indent=2)}")
 
     # Create some test log entries
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     test_logs = [
         LogEntry(
             id="test-1",
             message="User login successful",
-            timestamp=datetime.fromtimestamp(1234567890.0, tz=timezone.utc),
+            timestamp=datetime.fromtimestamp(1234567890.0, tz=UTC),
             source="auth-service",
             severity=LogSeverity.INFO,
             flow_id="flow-1",
@@ -394,15 +397,15 @@ async def example_hyx_resilience():
         LogEntry(
             id="test-2",
             message="Database connection failed",
-            timestamp=datetime.fromtimestamp(1234567891.0, tz=timezone.utc),
+            timestamp=datetime.fromtimestamp(1234567891.0, tz=UTC),
             source="db-service",
             severity=LogSeverity.ERROR,
-            flow_id="flow-2"
+            flow_id="flow-2",
         ),
         LogEntry(
             id="test-3",
             message="Billing transaction processed",
-            timestamp=datetime.fromtimestamp(1234567892.0, tz=timezone.utc),
+            timestamp=datetime.fromtimestamp(1234567892.0, tz=UTC),
             source="billing-service",
             severity=LogSeverity.INFO,
             flow_id="flow-3",

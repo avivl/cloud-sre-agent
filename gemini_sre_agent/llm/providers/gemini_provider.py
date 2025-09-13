@@ -5,13 +5,13 @@ Google Gemini provider implementation using the official google-generativeai SDK
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from google import genai
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
-from ..config import LLMProviderConfig
 from ..capabilities.models import ModelCapability
+from ..config import LLMProviderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class GeminiProvider(LLMProvider):
         """Check if Gemini supports tool calling."""
         return True
 
-    def get_available_models(self) -> Dict[ModelType, str]:
+    def get_available_models(self) -> dict[ModelType, str]:
         """Get available Gemini models mapped to semantic types."""
         default_mappings = {
             ModelType.FAST: "gemini-1.5-flash",
@@ -158,7 +158,7 @@ class GeminiProvider(LLMProvider):
 
         return default_mappings
 
-    async def embeddings(self, text: str) -> List[float]:
+    async def embeddings(self, text: str) -> list[float]:
         """Generate embeddings using Gemini API."""
         try:
             # Use the embedding model with new SDK
@@ -207,7 +207,7 @@ class GeminiProvider(LLMProvider):
 
         return input_cost + output_cost
 
-    def _convert_messages_to_prompt(self, messages: List[Dict[str, str]]) -> str:
+    def _convert_messages_to_prompt(self, messages: list[dict[str, str]]) -> str:
         """Convert LLMRequest messages to Gemini prompt format."""
         prompt_parts = []
         for message in messages:
@@ -223,7 +223,7 @@ class GeminiProvider(LLMProvider):
 
         return "\n\n".join(prompt_parts)
 
-    def _extract_usage(self, response: Any) -> Dict[str, int]:
+    def _extract_usage(self, response: Any) -> dict[str, int]:
         """Extract usage information from Gemini response."""
         usage = {"input_tokens": 0, "output_tokens": 0}
 
@@ -262,7 +262,7 @@ class GeminiProvider(LLMProvider):
             if config.model not in valid_models:
                 logger.warning(f"Model {config.model} may not be supported by Gemini")
 
-    def get_custom_capabilities(self) -> List[ModelCapability]:
+    def get_custom_capabilities(self) -> list[ModelCapability]:
         """
         Get provider-specific custom capabilities for Gemini.
         For now, Gemini does not have specific custom capabilities beyond standard ones.

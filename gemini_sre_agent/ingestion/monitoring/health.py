@@ -11,12 +11,13 @@ Provides comprehensive health monitoring including:
 """
 
 import asyncio
-import logging
-import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+import logging
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,9 @@ class HealthCheckResult:
     status: HealthStatus
     message: str
     timestamp: datetime = field(default_factory=datetime.now)
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -50,12 +51,12 @@ class ComponentHealth:
     name: str
     status: HealthStatus
     last_check: datetime
-    last_success: Optional[datetime] = None
+    last_success: datetime | None = None
     consecutive_failures: int = 0
     total_checks: int = 0
     success_rate: float = 0.0
     average_response_time_ms: float = 0.0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class HealthChecker:
@@ -77,10 +78,10 @@ class HealthChecker:
             check_interval: How often to run health checks
         """
         self.check_interval = check_interval
-        self._health_checks: Dict[str, Callable[[], Awaitable[HealthCheckResult]]] = {}
-        self._component_health: Dict[str, ComponentHealth] = {}
+        self._health_checks: dict[str, Callable[[], Awaitable[HealthCheckResult]]] = {}
+        self._component_health: dict[str, ComponentHealth] = {}
         self._running = False
-        self._check_task: Optional[asyncio.Task] = None
+        self._check_task: asyncio.Task | None = None
 
         logger.info("HealthChecker initialized")
 
@@ -128,7 +129,7 @@ class HealthChecker:
             del self._component_health[name]
         logger.info(f"Unregistered health check: {name}")
 
-    async def run_health_check(self, name: str) -> Optional[HealthCheckResult]:
+    async def run_health_check(self, name: str) -> HealthCheckResult | None:
         """
         Run a specific health check.
 
@@ -161,14 +162,14 @@ class HealthChecker:
             result = HealthCheckResult(
                 name=name,
                 status=HealthStatus.UNHEALTHY,
-                message=f"Health check failed: {str(e)}",
+                message=f"Health check failed: {e!s}",
                 duration_ms=(time.time() - start_time) * 1000,
             )
 
             await self._update_component_health(name, result)
             return result
 
-    async def run_all_health_checks(self) -> Dict[str, HealthCheckResult]:
+    async def run_all_health_checks(self) -> dict[str, HealthCheckResult]:
         """
         Run all registered health checks.
 
@@ -193,16 +194,16 @@ class HealthChecker:
                 results[name] = HealthCheckResult(
                     name=name,
                     status=HealthStatus.UNHEALTHY,
-                    message=f"Health check execution failed: {str(e)}",
+                    message=f"Health check execution failed: {e!s}",
                 )
 
         return results
 
-    def get_component_health(self, name: str) -> Optional[ComponentHealth]:
+    def get_component_health(self, name: str) -> ComponentHealth | None:
         """Get health information for a specific component."""
         return self._component_health.get(name)
 
-    def get_all_component_health(self) -> Dict[str, ComponentHealth]:
+    def get_all_component_health(self) -> dict[str, ComponentHealth]:
         """Get health information for all components."""
         return dict(self._component_health)
 
@@ -227,7 +228,7 @@ class HealthChecker:
         else:
             return HealthStatus.UNKNOWN
 
-    def get_health_summary(self) -> Dict[str, Any]:
+    def get_health_summary(self) -> dict[str, Any]:
         """
         Get a comprehensive health summary.
 
@@ -337,7 +338,7 @@ class HealthChecker:
 
 
 # Global health checker instance
-_global_health_checker: Optional[HealthChecker] = None
+_global_health_checker: HealthChecker | None = None
 
 
 def get_global_health_checker() -> HealthChecker:
@@ -399,7 +400,7 @@ async def create_adapter_health_check(adapter) -> HealthCheckResult:
         return HealthCheckResult(
             name=f"adapter_{adapter.name}",
             status=HealthStatus.UNHEALTHY,
-            message=f"Health check failed: {str(e)}",
+            message=f"Health check failed: {e!s}",
         )
 
 
@@ -443,7 +444,7 @@ async def create_queue_health_check(queue) -> HealthCheckResult:
         return HealthCheckResult(
             name=f"queue_{queue.name}",
             status=HealthStatus.UNHEALTHY,
-            message=f"Queue health check failed: {str(e)}",
+            message=f"Queue health check failed: {e!s}",
         )
 
 
@@ -468,13 +469,22 @@ async def create_system_health_check() -> HealthCheckResult:
         # Determine overall system health
         if memory_usage_percent > 90 or disk_usage_percent > 90:
             status = HealthStatus.UNHEALTHY
-            message = f"System resources critically low: Memory {memory_usage_percent:.1f}%, Disk {disk_usage_percent:.1f}%"
+            message = (
+                f"System resources critically low: Memory {memory_usage_percent:.1f}%, "
+                f"Disk {disk_usage_percent:.1f}%"
+            )
         elif memory_usage_percent > 80 or disk_usage_percent > 80:
             status = HealthStatus.DEGRADED
-            message = f"System resources high: Memory {memory_usage_percent:.1f}%, Disk {disk_usage_percent:.1f}%"
+            message = (
+                f"System resources high: Memory {memory_usage_percent:.1f}%, "
+                f"Disk {disk_usage_percent:.1f}%"
+            )
         else:
             status = HealthStatus.HEALTHY
-            message = f"System resources normal: Memory {memory_usage_percent:.1f}%, Disk {disk_usage_percent:.1f}%"
+            message = (
+                f"System resources normal: Memory {memory_usage_percent:.1f}%, "
+                f"Disk {disk_usage_percent:.1f}%"
+            )
 
         return HealthCheckResult(
             name="system",
@@ -500,5 +510,5 @@ async def create_system_health_check() -> HealthCheckResult:
         return HealthCheckResult(
             name="system",
             status=HealthStatus.UNHEALTHY,
-            message=f"System health check failed: {str(e)}",
+            message=f"System health check failed: {e!s}",
         )

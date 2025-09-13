@@ -5,8 +5,8 @@ This module tests utility functions for building context arguments
 and evidence metrics for Gemini prompt templates.
 """
 
-import json
 from datetime import datetime
+import json
 
 import pytest
 
@@ -149,7 +149,7 @@ class TestBuildContextKwargs:
 
         assert kwargs["primary_service"] == "测试服务"
         assert "émojis" in kwargs["code_changes_context"]
-        assert "测试.py, spéciàl_file.js" == kwargs["error_related_files"]
+        assert kwargs["error_related_files"] == "测试.py, spéciàl_file.js"
 
 
 class TestBuildEvidenceKwargs:

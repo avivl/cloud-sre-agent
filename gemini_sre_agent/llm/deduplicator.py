@@ -8,10 +8,10 @@ LLM calls and reduce costs while improving performance.
 """
 
 import asyncio
+from dataclasses import dataclass
 import hashlib
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .error_config import DeduplicationConfig
 
@@ -29,10 +29,10 @@ class RequestDeduplicator:
 
     def __init__(self, config: DeduplicationConfig) -> None:
         self.config = config
-        self.cache: Dict[str, CachedResponse] = {}
+        self.cache: dict[str, CachedResponse] = {}
         self._lock = asyncio.Lock()
 
-    async def get_cached_response(self, request: Dict[str, Any]) -> Optional[Any]:
+    async def get_cached_response(self, request: dict[str, Any]) -> Any | None:
         """Get cached response if available."""
         if not self.config.enabled:
             return None
@@ -44,7 +44,7 @@ class RequestDeduplicator:
                 return cached.response
             return None
 
-    async def cache_response(self, request: Dict[str, Any], response: Any) -> None:
+    async def cache_response(self, request: dict[str, Any], response: Any) -> None:
         """Cache response for future requests."""
         if not self.config.enabled:
             return
@@ -55,7 +55,7 @@ class RequestDeduplicator:
                 response=response, timestamp=time.time()
             )
 
-    def _generate_request_hash(self, request: Dict[str, Any]) -> str:
+    def _generate_request_hash(self, request: dict[str, Any]) -> str:
         """Generate deterministic hash for request."""
         # Include relevant request parameters
         key_data = {
@@ -81,7 +81,7 @@ class RequestDeduplicator:
             for key in expired_keys:
                 del self.cache[key]
 
-    async def get_cache_stats(self) -> Dict[str, Any]:
+    async def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         async with self._lock:
             return {

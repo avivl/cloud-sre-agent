@@ -2,11 +2,11 @@
 
 """Audit logging system for all provider interactions."""
 
-import json
-import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import json
+import logging
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -34,22 +34,22 @@ class AuditEvent(BaseModel):
     event_id: str = Field(..., description="Unique event identifier")
     event_type: AuditEventType = Field(..., description="Type of audit event")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    user_id: Optional[str] = Field(
+    user_id: str | None = Field(
         default=None, description="User who triggered the event"
     )
-    session_id: Optional[str] = Field(default=None, description="Session identifier")
-    provider: Optional[str] = Field(default=None, description="Provider involved")
-    model: Optional[str] = Field(default=None, description="Model used")
-    request_id: Optional[str] = Field(default=None, description="Request identifier")
+    session_id: str | None = Field(default=None, description="Session identifier")
+    provider: str | None = Field(default=None, description="Provider involved")
+    model: str | None = Field(default=None, description="Model used")
+    request_id: str | None = Field(default=None, description="Request identifier")
     success: bool = Field(default=True, description="Whether the operation succeeded")
-    error_message: Optional[str] = Field(
+    error_message: str | None = Field(
         default=None, description="Error message if failed"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
-    ip_address: Optional[str] = Field(default=None, description="Client IP address")
-    user_agent: Optional[str] = Field(default=None, description="Client user agent")
+    ip_address: str | None = Field(default=None, description="Client IP address")
+    user_agent: str | None = Field(default=None, description="Client user agent")
 
 
 class AuditLogger:
@@ -57,7 +57,7 @@ class AuditLogger:
 
     def __init__(
         self,
-        log_file: Optional[str] = None,
+        log_file: str | None = None,
         max_file_size: int = 100 * 1024 * 1024,  # 100MB
         backup_count: int = 5,
         enable_console: bool = False,
@@ -109,22 +109,22 @@ class AuditLogger:
             self.logger.addHandler(console_handler)
 
         # In-memory buffer for recent events
-        self._event_buffer: List[AuditEvent] = []
+        self._event_buffer: list[AuditEvent] = []
         self._buffer_size = 1000
 
     async def log_event(
         self,
         event_type: AuditEventType,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        request_id: Optional[str] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        provider: str | None = None,
+        model: str | None = None,
+        request_id: str | None = None,
         success: bool = True,
-        error_message: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        error_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log an audit event.
 
@@ -193,11 +193,11 @@ class AuditLogger:
         provider: str,
         model: str,
         request_id: str,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log a provider request."""
         return await self.log_event(
@@ -218,10 +218,10 @@ class AuditLogger:
         model: str,
         request_id: str,
         success: bool = True,
-        error_message: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        error_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
     ) -> str:
         """Log a provider response."""
         return await self.log_event(
@@ -241,8 +241,8 @@ class AuditLogger:
         change_type: str,
         old_value: Any,
         new_value: Any,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
     ) -> str:
         """Log a configuration change."""
         metadata = {
@@ -262,8 +262,8 @@ class AuditLogger:
         self,
         provider: str,
         key_id: str,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
     ) -> str:
         """Log a key rotation event."""
         metadata = {
@@ -284,10 +284,10 @@ class AuditLogger:
         resource: str,
         action: str,
         granted: bool,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> str:
         """Log an access attempt."""
         event_type = (
@@ -311,11 +311,11 @@ class AuditLogger:
 
     def get_recent_events(
         self,
-        event_type: Optional[AuditEventType] = None,
-        provider: Optional[str] = None,
-        user_id: Optional[str] = None,
+        event_type: AuditEventType | None = None,
+        provider: str | None = None,
+        user_id: str | None = None,
         limit: int = 100,
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Get recent audit events from the buffer."""
         events = self._event_buffer.copy()
 
@@ -334,12 +334,12 @@ class AuditLogger:
 
     async def export_events(
         self,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        event_types: Optional[List[AuditEventType]] = None,
-        providers: Optional[List[str]] = None,
-        user_ids: Optional[List[str]] = None,
-    ) -> List[AuditEvent]:
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        event_types: list[AuditEventType] | None = None,
+        providers: list[str] | None = None,
+        user_ids: list[str] | None = None,
+    ) -> list[AuditEvent]:
         """Export audit events for compliance reporting.
 
         Note: This is a simplified implementation. In production, this would
@@ -366,7 +366,7 @@ class AuditLogger:
 
         return events
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get audit log statistics."""
         if not self._event_buffer:
             return {}
