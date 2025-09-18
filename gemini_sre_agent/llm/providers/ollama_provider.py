@@ -15,6 +15,7 @@ import ollama
 
 from ..base import LLMProvider, LLMRequest, LLMResponse, ModelType
 from ..config import LLMProviderConfig
+from ..capabilities.models import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -56,11 +57,25 @@ class OllamaProvider(LLMProvider):
                 self.client.chat, model=self.model, messages=messages, options=options
             )
 
+            # Debug logging
+            logger.debug(f"Ollama response: {response}")
+            logger.debug(f"Response type: {type(response)}")
+            logger.debug(f"Response keys: {response.keys() if isinstance(response, dict) else 'Not a dict'}")
+
             # Extract usage information
             usage = self._extract_usage(response)
 
+            # Extract content safely
+            content = ""
+            if isinstance(response, dict) and "message" in response:
+                content = response["message"].get("content", "")
+            elif hasattr(response, "message") and hasattr(response.message, "content"):
+                content = response.message.content
+
+            logger.debug(f"Extracted content: '{content}'")
+
             return LLMResponse(
-                content=response["message"]["content"],
+                content=content,
                 model=self.model,
                 provider=self.provider_name,
                 usage=usage,
@@ -232,6 +247,29 @@ class OllamaProvider(LLMProvider):
             usage["output_tokens"] = response.get("eval_count", 0)
 
         return usage
+
+    def get_custom_capabilities(self) -> list[ModelCapability]:
+        """Get Ollama-specific custom capabilities."""
+        return [
+            ModelCapability(
+                name="local_inference",
+                description="Local model inference without external API calls",
+                parameters={"offline": True, "privacy": "high"},
+                performance_score=0.8
+            ),
+            ModelCapability(
+                name="custom_models",
+                description="Support for custom Ollama models",
+                parameters={"model_management": True, "custom_training": False},
+                performance_score=0.7
+            ),
+            ModelCapability(
+                name="streaming",
+                description="Real-time streaming responses",
+                parameters={"stream": True, "chunk_size": "variable"},
+                performance_score=0.9
+            )
+        ]
 
     @classmethod
     def validate_config(cls, config: Any) -> None:

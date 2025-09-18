@@ -17,7 +17,7 @@ from gemini_sre_agent.agents.enhanced_specialized import (
     EnhancedRemediationAgentV2,
     EnhancedTriageAgent,
 )
-from gemini_sre_agent.agents.response_models import RemediationResponse
+from gemini_sre_agent.agents.response_models import RemediationPlan
 
 # New ingestion system imports
 from gemini_sre_agent.config.ingestion_config import (
@@ -132,18 +132,14 @@ async def initialize_enhanced_agents(
 
         triage_agent = EnhancedTriageAgent(
             llm_config=llm_config,
-            primary_model="llama3.2:3b",  # Fast model for triage
-            fallback_model="llama3.2:1b",
             optimization_goal=triage_optimization,
             max_cost=0.01,  # Cost limit per 1k tokens
-            min_quality=0.7,
+            min_performance=0.7,
             collect_stats=True,
         )
 
         analysis_agent = EnhancedAnalysisAgent(
             llm_config=llm_config,
-            primary_model="llama3.2:3b",  # Balanced model for analysis
-            fallback_model="llama3.2:1b",
             optimization_goal=analysis_optimization,
             max_cost=0.02,  # Higher cost limit for analysis
             min_quality=0.8,
@@ -152,11 +148,9 @@ async def initialize_enhanced_agents(
 
         remediation_agent = EnhancedRemediationAgentV2(
             llm_config=llm_config,
-            primary_model="llama3.2:3b",  # Quality model for remediation
-            fallback_model="llama3.2:1b",
             optimization_goal=remediation_optimization,
             max_cost=0.03,  # Highest cost limit for remediation
-            min_quality=0.9,
+            min_quality=0.7,  # Lower quality requirement to match available models
             collect_stats=True,
         )
 
@@ -230,9 +224,9 @@ async def process_log_with_enhanced_pipeline(
         )
 
         triage_agent = agents["triage_agent"]
-        if hasattr(triage_agent, "analyze_logs"):
+        if hasattr(triage_agent, "triage_issue"):
             # Direct enhanced agent
-            triage_response = await triage_agent.analyze_logs([log_text], flow_id)
+            triage_response = await triage_agent.triage_issue(log_text, {"flow_id": flow_id})
         else:
             # Legacy adapter
             triage_response = await triage_agent.analyze_logs([log_text], flow_id)
@@ -267,8 +261,8 @@ async def process_log_with_enhanced_pipeline(
 
         analysis_agent = agents["analysis_agent"]
         # Both enhanced agents and legacy adapters use the same interface
-        analysis_response = await analysis_agent.analyze_issue(
-            triage_packet, [log_text], {}, flow_id
+        analysis_response = await analysis_agent.analyze(
+            log_text, {"triage_packet": triage_packet, "flow_id": flow_id}
         )
 
         logger.info(f"[ENHANCED_ANALYSIS] Analysis completed: flow_id={flow_id}")
@@ -298,7 +292,7 @@ async def process_log_with_enhanced_pipeline(
             )
         else:
             # Legacy adapter - create a simple remediation plan
-            remediation_response = RemediationResponse(
+            remediation_response = RemediationPlan(
                 root_cause_analysis=f"Enhanced analysis for issue {flow_id}",
                 proposed_fix=f"Enhanced fix for issue {flow_id}",
                 code_patch=f'# FILE: enhanced_service/app.py\n# Enhanced fix for {flow_id}\nprint("Fixed issue")',

@@ -362,8 +362,56 @@ class EnhancedBaseAgent(Generic[T]):
         default_prompts = {
             "generate_text": "Generate text based on the following input: {input}",
             "analyze": "Analyze the following content: {content}\nCriteria: {criteria}",
+            "analyze_issue": """Analyze the following issue: {issue}
+Context: {context}
+
+Please provide your analysis in the following JSON format:
+{{
+    "agent_id": "analysis-agent-1",
+    "agent_type": "analysis",
+    "status": "success",
+    "analysis_type": "error_analysis",
+    "summary": "Brief summary of the analysis",
+    "key_findings": [
+        {{
+            "finding_type": "error_type",
+            "description": "Description of the finding",
+            "severity": "low|medium|high|critical",
+            "confidence": 0.85,
+            "location": "Where the issue was found",
+            "recommendation": "Recommended action"
+        }}
+    ],
+    "overall_severity": "low|medium|high|critical",
+    "overall_confidence": 0.85,
+    "root_cause": "Analysis of the root cause",
+    "impact_assessment": "Assessment of the impact",
+    "recommended_actions": ["Action 1", "Action 2"]
+}}
+
+Focus on providing detailed analysis and actionable insights.""",
             "generate_code": "Generate {language} code for: {description}",
             "triage": "Triage the following issue: {issue}",
+            "triage_issue": """Triage the following issue: {issue}
+
+Please analyze the issue and provide your response in the following JSON format:
+{{
+    "agent_id": "triage-agent-1",
+    "agent_type": "triage",
+    "status": "success",
+    "issue_type": "error_type_detected",
+    "category": "performance|security|reliability|usability",
+    "severity": "low|medium|high|critical",
+    "confidence": 0.85,
+    "confidence_level": "high",
+    "summary": "Brief summary of the issue",
+    "description": "Detailed description of the issue",
+    "urgency": "immediate|high|medium|low",
+    "impact_assessment": "Assessment of potential impact",
+    "recommended_actions": ["Action 1", "Action 2"]
+}}
+
+Focus on providing accurate classification and actionable recommendations.""",
             "remediate": """Provide a detailed remediation plan for the following problem: {problem}
 
 Please provide your response in the following JSON format:

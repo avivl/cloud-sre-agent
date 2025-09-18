@@ -47,9 +47,8 @@ from .strategy_base import (
     ModelScore,
     ModelSelectionStrategy,
     OptimizationGoal,
-    ScoringContext,
-    ScoringWeights,
     StrategyContext,
+    ScoringWeights,
     StrategyResult,
 )
 from .strategy_implementations import (
@@ -75,7 +74,6 @@ __all__ = [
     "StrategyContext",
     "StrategyResult",
     "ScoringWeights",
-    "ScoringContext",
     "ModelScore",
     "ModelSelectionStrategy",
     # Strategy implementations

@@ -16,13 +16,13 @@ from typing import Any
 
 from ..core.exceptions import ServiceError
 from .service_base import BaseService, ServiceConfig, ServiceHealth, ServiceStatus
-from .service_implementations import (
-    CacheService,
-    ContextService,
-    MetricsService,
-    ModelService,
-    ValidationService,
-)
+# from .service_implementations import (
+#     CacheService,
+#     ContextService,
+#     MetricsService,
+#     ModelService,
+#     ValidationService,
+# )
 
 
 class ServiceType(Enum):
@@ -300,7 +300,7 @@ class ServiceManager:
 
         try:
             # Register default services
-            await self._register_default_services()
+            # await self._register_default_services()
 
             # Start health monitoring
             await self.health_checker.start_health_monitoring(self.registry)

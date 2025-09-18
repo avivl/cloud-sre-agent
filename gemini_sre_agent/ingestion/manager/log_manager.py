@@ -135,7 +135,7 @@ class LogManager:
             try:
                 # Get logs directly from source (resilience handled by source)
                 logger.debug(f"Getting logs from source '{source_name}'")
-                log_iterator = await source.get_logs()
+                log_iterator = source.get_logs()
                 async for log_entry in log_iterator:
                     # Check backpressure
                     if not await self.backpressure_manager.can_accept():

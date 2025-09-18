@@ -17,26 +17,23 @@ from .enhanced_specialized import (
     EnhancedTextAgent,
     EnhancedTriageAgent,
 )
-from .response_models import AnalysisResponse, CodeResponse, TextResponse
-from .specialized.analysis_agent import AnalysisAgent
-from .specialized.code_agent import CodeAgent
-from .specialized.text_agent import TextAgent
+from .response_models import AnalysisResult, CodeResponse, TextResponse
+from .specialized.analysis_agent import EnhancedAnalysisAgent
+from .specialized.code_agent import EnhancedCodeAgent
+from .specialized.text_agent import EnhancedTextAgent
 
 __all__ = [
     # Base agents
     "BaseAgent",
     "AgentStats",
     "TextResponse",
-    "AnalysisResponse",
+    "AnalysisResult",
     "CodeResponse",
-    "TextAgent",
-    "AnalysisAgent",
-    "CodeAgent",
-    # Enhanced agents (multi-provider support)
-    "EnhancedBaseAgent",
     "EnhancedTextAgent",
     "EnhancedAnalysisAgent",
     "EnhancedCodeAgent",
+    # Enhanced agents (multi-provider support)
+    "EnhancedBaseAgent",
     "EnhancedTriageAgent",
     "EnhancedRemediationAgent",
 ]

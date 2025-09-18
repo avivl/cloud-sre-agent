@@ -17,11 +17,11 @@ from ..llm.config import LLMConfig
 from ..llm.strategy_manager import OptimizationGoal
 from .enhanced_base import EnhancedBaseAgent
 from .response_models import (
-    AnalysisResponse,
+    AnalysisResult,
     CodeResponse,
-    RemediationResponse,
+    RemediationPlan,
     TextResponse,
-    TriageResponse,
+    TriageResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -175,7 +175,7 @@ class EnhancedTextAgent(EnhancedBaseAgent[TextResponse]):
         )
 
 
-class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
+class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResult]):
     """
     Enhanced agent specialized for analysis tasks with multi-provider support.
 
@@ -207,11 +207,11 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=AnalysisResponse,
+            response_model=AnalysisResult,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
-            model_type_preference=ModelType.DEEP_THINKING,
+            model_type_preference=ModelType.FAST,
             max_cost=max_cost,
             min_quality=min_quality,
             **kwargs,
@@ -228,7 +228,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         analysis_type: str = "general",
         depth: str = "detailed",
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform analysis with intelligent model selection.
 
@@ -240,7 +240,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with analysis results
+            AnalysisResult with analysis results
         """
         prompt_args = {
             "content": content,
@@ -261,7 +261,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         items: list[str],
         comparison_criteria: list[str],
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform comparative analysis with intelligent model selection.
 
@@ -271,7 +271,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with comparison results
+            AnalysisResult with comparison results
         """
         prompt_args = {
             "items": items,
@@ -292,7 +292,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         time_period: str,
         metrics: list[str],
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform trend analysis with intelligent model selection.
 
@@ -303,7 +303,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with trend analysis results
+            AnalysisResult with trend analysis results
         """
         prompt_args = {
             "data": data,
@@ -356,7 +356,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
-            model_type_preference=ModelType.CODE,
+            model_type_preference=ModelType.FAST,
             max_cost=max_cost,
             min_quality=min_quality,
             **kwargs,
@@ -499,7 +499,7 @@ class EnhancedCodeAgent(EnhancedBaseAgent[CodeResponse]):
         )
 
 
-class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
+class EnhancedTriageAgent(EnhancedBaseAgent[TriageResult]):
     """
     Enhanced agent specialized for triage tasks with multi-provider support.
 
@@ -531,7 +531,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=TriageResponse,
+            response_model=TriageResult,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
@@ -551,7 +551,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         context: dict[str, Any] | None = None,
         urgency_level: str = "medium",
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Triage an issue with intelligent model selection.
 
@@ -562,7 +562,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with triage results
+            AnalysisResult with triage results
         """
         prompt_args = {
             "issue": issue,
@@ -578,34 +578,72 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             optimization_goal=OptimizationGoal.PERFORMANCE,
         )
 
-        # Convert TriageResponse to AnalysisResponse if needed
+        # Convert TriageResult to AnalysisResult if needed
         if hasattr(result, "category") and hasattr(result, "description"):
-            from .response_models import AnalysisResponse
+            from .response_models import AnalysisResult
 
-            return AnalysisResponse(
+            return AnalysisResult(
+                agent_id="analysis-agent-1",
+                agent_type="analysis",
+                status="success",
+                analysis_type="error_analysis",
                 summary=result.description,
-                key_points=[result.category],
-                scores={"urgency": 8 if urgency_level == "high" else 5},
+                key_findings=[
+                    {
+                        "title": "Error Analysis",
+                        "description": result.description,
+                        "severity": "medium",
+                        "confidence": 0.8,
+                        "category": "performance",
+                        "recommendations": ["Investigate the issue further"]
+                    }
+                ],
+                overall_severity="medium",
+                overall_confidence=0.8,
+                root_cause="Analysis pending",
+                impact_assessment="Impact assessment pending",
+                risk_assessment="Risk assessment pending",
+                business_impact="Business impact pending",
                 recommendations=[
                     "Investigate the issue further",
                     "Monitor for similar patterns",
                 ],
+                next_steps=["Investigate further"]
             )
-        # If result is already an AnalysisResponse, return it
-        if hasattr(result, "summary") and hasattr(result, "key_points"):
+        # If result is already an AnalysisResult, return it
+        if hasattr(result, "summary") and hasattr(result, "key_findings"):
             return result  # type: ignore
-        # Fallback: create a basic AnalysisResponse
-        from .response_models import AnalysisResponse
+        # Fallback: create a basic AnalysisResult
+        from .response_models import AnalysisResult
 
-        return AnalysisResponse(
+        return AnalysisResult(
+            agent_id="analysis-agent-1",
+            agent_type="analysis",
+            status="success",
+            analysis_type="error_analysis",
             summary=str(result),
-            key_points=["Unknown issue type"],
-            scores={"urgency": 5},
+            key_findings=[
+                {
+                    "title": "Unknown Issue",
+                    "description": "Unknown issue type",
+                    "severity": "medium",
+                    "confidence": 0.5,
+                    "category": "performance",
+                    "recommendations": ["Manual investigation required"]
+                }
+            ],
+            overall_severity="medium",
+            overall_confidence=0.5,
+            root_cause="Analysis pending",
+            impact_assessment="Impact assessment pending",
+            risk_assessment="Risk assessment pending",
+            business_impact="Business impact pending",
             recommendations=["Manual investigation required"],
+            next_steps=["Investigate further"]
         )
 
 
-class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
+class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResult]):
     """
     Enhanced agent specialized for remediation tasks with multi-provider support.
 
@@ -637,11 +675,11 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=AnalysisResponse,
+            response_model=AnalysisResult,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
-            model_type_preference=ModelType.DEEP_THINKING,
+            model_type_preference=ModelType.FAST,
             max_cost=max_cost,
             min_quality=min_quality,
             **kwargs,
@@ -657,7 +695,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         context: dict[str, Any] | None = None,
         remediation_type: str = "general",
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Provide remediation with intelligent model selection.
 
@@ -668,7 +706,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with remediation recommendations
+            AnalysisResult with remediation recommendations
         """
         prompt_args = {
             "problem": problem,
@@ -685,7 +723,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         )
 
 
-class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
+class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationPlan]):
     """
     Enhanced Remediation Agent for generating code patches and remediation plans.
 
@@ -721,11 +759,11 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=RemediationResponse,
+            response_model=RemediationPlan,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
-            model_type_preference=ModelType.CODE,
+            model_type_preference=ModelType.FAST,
             max_cost=max_cost,
             min_quality=min_quality,
             **kwargs,
@@ -741,7 +779,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         error_context: str,
         target_file: str,
         **kwargs: Any,
-    ) -> RemediationResponse:
+    ) -> RemediationPlan:
         """
         Create a comprehensive remediation plan for an issue.
 
@@ -752,7 +790,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
             **kwargs: Additional context
 
         Returns:
-            RemediationResponse with detailed remediation plan
+            RemediationPlan with detailed remediation plan
         """
         prompt_args = {
             "problem": (

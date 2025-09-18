@@ -17,8 +17,19 @@ providers:
     max_retries: 2
     rate_limit: null
     models:
-      llama3.2:3b:
-        name: "llama3.2:3b"
+      llama3.1:70b:
+        name: "llama3.1:70b"
+        model_type: "smart"
+        cost_per_1k_tokens: 0.0
+        max_tokens: 4000
+        supports_streaming: true
+        supports_tools: false
+        capabilities: ["reasoning", "code_generation", "analysis", "structured_output"]
+        performance_score: 0.6
+        reliability_score: 0.95
+        quality_score: 0.95
+      llama3.1:8b:
+        name: "llama3.1:8b"
         model_type: "fast"
         cost_per_1k_tokens: 0.0
         max_tokens: 4000
@@ -27,16 +38,16 @@ providers:
         capabilities: ["reasoning", "code_generation", "analysis"]
         performance_score: 0.8
         reliability_score: 0.8
-      llama3.2:1b:
-        name: "llama3.2:1b"
+      codellama:13b:
+        name: "codellama:13b"
         model_type: "fast"
         cost_per_1k_tokens: 0.0
-        max_tokens: 2000
+        max_tokens: 4000
         supports_streaming: true
         supports_tools: false
         capabilities: ["reasoning", "code_generation"]
-        performance_score: 0.7
-        reliability_score: 0.7
+        performance_score: 0.8
+        reliability_score: 0.8
     provider_specific:
       host: "localhost"
       port: 11434
@@ -55,8 +66,9 @@ agents:
     enable_streaming: true
     enable_tools: false
     model_preferences:
-      - "llama3.2:3b"
-      - "llama3.2:1b"
+      - "llama3.1:70b"
+      - "llama3.1:8b"
+      - "codellama:13b"
 
   triage_agent:
     primary_provider: "ollama"
@@ -69,8 +81,9 @@ agents:
     enable_streaming: false
     enable_tools: false
     model_preferences:
-      - "llama3.2:3b"
-      - "llama3.2:1b"
+      - "llama3.1:70b"
+      - "llama3.1:8b"
+      - "codellama:13b"
 
   remediation_agent:
     primary_provider: "ollama"
@@ -83,8 +96,9 @@ agents:
     enable_streaming: true
     enable_tools: false
     model_preferences:
-      - "llama3.2:3b"
-      - "llama3.2:1b"
+      - "llama3.1:70b"
+      - "llama3.1:8b"
+      - "codellama:13b"
 
 # Cost management configuration (Dogfooding-friendly)
 cost_config:
@@ -92,7 +106,7 @@ cost_config:
   alert_threshold: 0.8
   enable_tracking: true
   cost_optimization: false
-  optimization_strategy: "speed"
+  optimization_strategy: "performance"
   cost_breakdown:
     by_provider: true
     by_model: true

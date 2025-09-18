@@ -15,12 +15,12 @@ from ...llm.common.enums import ProviderType
 from ...llm.config import LLMConfig
 from ...llm.strategy_manager import OptimizationGoal
 from ..enhanced_base import EnhancedBaseAgent
-from ..response_models import AnalysisResponse, RemediationResponse
+from ..response_models import AnalysisResult, RemediationPlan
 
 logger = logging.getLogger(__name__)
 
 
-class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
+class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResult]):
     """
     Enhanced agent specialized for remediation tasks with multi-provider support.
 
@@ -52,7 +52,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=AnalysisResponse,
+            response_model=AnalysisResult,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
@@ -72,7 +72,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         context: dict[str, Any] | None = None,
         remediation_type: str = "general",
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Provide remediation with intelligent model selection.
 
@@ -83,7 +83,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with remediation recommendations
+            AnalysisResult with remediation recommendations
         """
         prompt_args = {
             "problem": problem,
@@ -104,7 +104,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         problem: str,
         constraints: list[str],
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Create a detailed action plan for remediation.
 
@@ -114,7 +114,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with action plan
+            AnalysisResult with action plan
         """
         prompt_args = {
             "problem": problem,
@@ -151,7 +151,7 @@ class EnhancedRemediationAgent(EnhancedBaseAgent[AnalysisResponse]):
         }
 
 
-class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
+class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationPlan]):
     """
     Enhanced Remediation Agent for generating code patches and remediation plans.
 
@@ -187,7 +187,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=RemediationResponse,
+            response_model=RemediationPlan,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
@@ -207,7 +207,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         error_context: str,
         target_file: str,
         **kwargs: Any,
-    ) -> RemediationResponse:
+    ) -> RemediationPlan:
         """
         Create a comprehensive remediation plan for an issue.
 
@@ -218,7 +218,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
             **kwargs: Additional context
 
         Returns:
-            RemediationResponse with detailed remediation plan
+            RemediationPlan with detailed remediation plan
         """
         prompt_args = {
             "problem": (
@@ -241,7 +241,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         current_code: str,
         target_file: str,
         **kwargs: Any,
-    ) -> RemediationResponse:
+    ) -> RemediationPlan:
         """
         Generate a code patch for a specific issue.
 
@@ -252,7 +252,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
             **kwargs: Additional context
 
         Returns:
-            RemediationResponse with code patch
+            RemediationPlan with code patch
         """
         prompt_args = {
             "issue_description": issue_description,
@@ -273,7 +273,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
         issue_description: str,
         impact_analysis: dict[str, Any],
         **kwargs: Any,
-    ) -> RemediationResponse:
+    ) -> RemediationPlan:
         """
         Assess the priority of a remediation task.
 
@@ -283,7 +283,7 @@ class EnhancedRemediationAgentV2(EnhancedBaseAgent[RemediationResponse]):
             **kwargs: Additional context
 
         Returns:
-            RemediationResponse with priority assessment
+            RemediationPlan with priority assessment
         """
         prompt_args = {
             "issue_description": issue_description,

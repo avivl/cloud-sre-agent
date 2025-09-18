@@ -15,12 +15,12 @@ from ...llm.common.enums import ProviderType
 from ...llm.config import LLMConfig
 from ...llm.strategy_manager import OptimizationGoal
 from ..enhanced_base import EnhancedBaseAgent
-from ..response_models import AnalysisResponse
+from ..response_models import AnalysisResult
 
 logger = logging.getLogger(__name__)
 
 
-class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
+class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResult]):
     """
     Enhanced agent specialized for analysis tasks with multi-provider support.
 
@@ -52,7 +52,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=AnalysisResponse,
+            response_model=AnalysisResult,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
@@ -73,7 +73,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         analysis_type: str = "general",
         depth: str = "detailed",
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform analysis with intelligent model selection.
 
@@ -85,7 +85,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with analysis results
+            AnalysisResult with analysis results
         """
         prompt_args = {
             "content": content,
@@ -106,7 +106,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         items: list[str],
         comparison_criteria: list[str],
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform comparative analysis with intelligent model selection.
 
@@ -116,7 +116,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with comparison results
+            AnalysisResult with comparison results
         """
         prompt_args = {
             "items": items,
@@ -137,7 +137,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         time_period: str,
         metrics: list[str],
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform trend analysis with intelligent model selection.
 
@@ -148,7 +148,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with trend analysis results
+            AnalysisResult with trend analysis results
         """
         prompt_args = {
             "data": data,
@@ -169,7 +169,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         issue_description: str,
         context: dict[str, Any],
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform root cause analysis with intelligent model selection.
 
@@ -179,7 +179,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with root cause analysis results
+            AnalysisResult with root cause analysis results
         """
         prompt_args = {
             "issue_description": issue_description,
@@ -199,7 +199,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
         change_description: str,
         affected_systems: list[str],
         **kwargs: Any,
-    ) -> AnalysisResponse:
+    ) -> AnalysisResult:
         """
         Perform impact analysis with intelligent model selection.
 
@@ -209,7 +209,7 @@ class EnhancedAnalysisAgent(EnhancedBaseAgent[AnalysisResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            AnalysisResponse with impact analysis results
+            AnalysisResult with impact analysis results
         """
         prompt_args = {
             "change_description": change_description,

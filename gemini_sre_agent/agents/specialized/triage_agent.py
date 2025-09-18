@@ -15,12 +15,12 @@ from ...llm.common.enums import ProviderType
 from ...llm.config import LLMConfig
 from ...llm.strategy_manager import OptimizationGoal
 from ..enhanced_base import EnhancedBaseAgent
-from ..response_models import TriageResponse
+from ..response_models import TriageResult
 
 logger = logging.getLogger(__name__)
 
 
-class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
+class EnhancedTriageAgent(EnhancedBaseAgent[TriageResult]):
     """
     Enhanced agent specialized for triage tasks with multi-provider support.
 
@@ -52,7 +52,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         """
         super().__init__(
             llm_config=llm_config,
-            response_model=TriageResponse,
+            response_model=TriageResult,
             agent_name=agent_name,
             optimization_goal=optimization_goal,
             provider_preference=provider_preference,
@@ -72,7 +72,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         context: dict[str, Any] | None = None,
         urgency_level: str = "medium",
         **kwargs: Any,
-    ) -> TriageResponse:
+    ) -> TriageResult:
         """
         Triage an issue with intelligent model selection.
 
@@ -83,7 +83,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            TriageResponse with triage results
+            TriageResult with triage results
         """
         prompt_args = {
             "issue": issue,
@@ -104,7 +104,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         issue: str,
         categories: list[str],
         **kwargs: Any,
-    ) -> TriageResponse:
+    ) -> TriageResult:
         """
         Categorize an issue into predefined categories.
 
@@ -114,7 +114,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            TriageResponse with categorization results
+            TriageResult with categorization results
         """
         prompt_args = {
             "issue": issue,
@@ -134,7 +134,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         issues: list[dict[str, Any]],
         priority_criteria: list[str],
         **kwargs: Any,
-    ) -> TriageResponse:
+    ) -> TriageResult:
         """
         Prioritize a list of issues based on criteria.
 
@@ -144,7 +144,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            TriageResponse with prioritization results
+            TriageResult with prioritization results
         """
         prompt_args = {
             "issues": issues,
@@ -164,7 +164,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
         issue: str,
         affected_systems: list[str],
         **kwargs: Any,
-    ) -> TriageResponse:
+    ) -> TriageResult:
         """
         Assess the impact of an issue on affected systems.
 
@@ -174,7 +174,7 @@ class EnhancedTriageAgent(EnhancedBaseAgent[TriageResponse]):
             **kwargs: Additional arguments
 
         Returns:
-            TriageResponse with impact assessment
+            TriageResult with impact assessment
         """
         prompt_args = {
             "issue": issue,

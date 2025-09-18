@@ -303,3 +303,40 @@ class BaseLLMService(ABC):
                 self._service_metrics.provider_usage_counts or {}
             ),
         }
+
+
+# Additional classes needed for service management
+from enum import Enum
+from typing import Optional
+
+
+class ServiceStatus(Enum):
+    """Service health status enumeration."""
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    UNHEALTHY = "unhealthy"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class ServiceConfig:
+    """Configuration for a service instance."""
+    service_id: str
+    max_connections: int = 100
+    timeout_seconds: float = 30.0
+    retry_attempts: int = 3
+    health_check_interval: float = 60.0
+
+
+@dataclass
+class ServiceHealth:
+    """Health status information for a service."""
+    status: ServiceStatus
+    score: float
+    message: str
+    last_check: Optional[float] = None
+    details: Optional[dict] = None
+
+
+# Type alias for backward compatibility
+BaseService = BaseLLMService
