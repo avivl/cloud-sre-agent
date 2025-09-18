@@ -1,6 +1,6 @@
 # Setup and Installation Guide
 
-This guide provides comprehensive instructions for setting up and installing the Gemini SRE Agent. Follow these steps to get the project up and running in your environment.
+This guide provides comprehensive instructions for setting up and installing the Cloud SRE Agent. Follow these steps to get the project up and running in your environment across multiple cloud platforms and AI providers.
 
 ## Prerequisites
 
@@ -10,31 +10,51 @@ Before you begin, ensure you have the following installed and configured:
     *   [Download Python](https://www.python.org/downloads/)
 *   **`uv` (recommended) or `pip`:** For efficient Python package management.
     *   [Install `uv`](https://astral.sh/blog/uv-a-new-python-package-installer)
-    *   **Note:** Core dependencies including `pyyaml`, `pydantic`, `hyx`, `tenacity`, `PyGithub`, `google-auth`, `google-cloud-logging`, `google-cloud-pubsub`, and `google-cloud-aiplatform` will be installed automatically by `uv sync`.
-*   **Google Cloud Platform (GCP) Project:** You need an active GCP project with the following services enabled:
-    *   **Cloud Logging API:** To collect and export logs.
-    *   **Pub/Sub API:** To stream log data in real-time. Ensure you have Pub/Sub topics and subscriptions configured for your log exports.
-    *   **Vertex AI API:** To access Google's Gemini models for AI analysis.
-    *   **Service Account:** A GCP Service Account with the necessary permissions:
-        *   `Logging Viewer` (roles/logging.viewer): To read log entries.
-        *   `Pub/Sub Subscriber` (roles/pubsub.subscriber): To pull messages from Pub/Sub subscriptions.
-        *   `Vertex AI User` (roles/aiplatform.user): To interact with Vertex AI models.
+    *   **Note:** Core dependencies including `pyyaml`, `pydantic`, `hyx`, `tenacity`, `PyGithub`, `litellm`, and cloud-specific packages will be installed automatically by `uv sync`.
+*   **Cloud Platform Access:** You need access to one or more cloud platforms with the following services enabled:
+    *   **Google Cloud Platform (GCP):**
+        *   **Cloud Logging API:** To collect and export logs.
+        *   **Pub/Sub API:** To stream log data in real-time.
+        *   **Vertex AI API:** To access Google's AI models.
+        *   **Service Account:** A GCP Service Account with the necessary permissions.
+    *   **Amazon Web Services (AWS):**
+        *   **CloudWatch Logs:** To collect and export logs.
+        *   **Kinesis Data Streams:** To stream log data in real-time.
+        *   **IAM Role:** An AWS IAM role with the necessary permissions.
+    *   **Microsoft Azure:**
+        *   **Azure Monitor:** To collect and export logs.
+        *   **Event Hubs:** To stream log data in real-time.
+        *   **Service Principal:** An Azure service principal with the necessary permissions.
+    *   **Kubernetes:**
+        *   **Cluster Access:** Access to Kubernetes cluster for log collection.
+        *   **RBAC Permissions:** Appropriate RBAC permissions for log access.
+*   **AI Provider API Keys:** You need API keys for one or more AI providers:
+    *   **OpenAI:** [Get OpenAI API Key](https://platform.openai.com/api-keys)
+    *   **Anthropic:** [Get Anthropic API Key](https://console.anthropic.com/)
+    *   **Google AI:** [Get Google AI API Key](https://makersuite.google.com/app/apikey)
+    *   **Cohere:** [Get Cohere API Key](https://dashboard.cohere.ai/api-keys)
+    *   **Ollama:** [Install Ollama](https://ollama.ai/) for local models
 *   **GitHub Personal Access Token (PAT):** A GitHub PAT with `repo` scope is required for the `RemediationAgent` to create branches, commit changes, and open pull requests in your repositories.
     *   [Create a GitHub PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
-## GCP Infrastructure Setup
+## Cloud Infrastructure Setup
 
-Before running the agent, you need to set up the necessary Google Cloud infrastructure, particularly for log ingestion via Pub/Sub. Refer to the [GCP Infrastructure Setup Guide](GCP_SETUP.md) for detailed instructions.
+Before running the agent, you need to set up the necessary cloud infrastructure for your chosen platforms. Refer to the following guides for detailed instructions:
+
+*   **Google Cloud Platform:** [GCP Infrastructure Setup Guide](GCP_SETUP.md)
+*   **Amazon Web Services:** [AWS Infrastructure Setup Guide](AWS_SETUP.md) (coming soon)
+*   **Microsoft Azure:** [Azure Infrastructure Setup Guide](AZURE_SETUP.md) (coming soon)
+*   **Kubernetes:** [Kubernetes Setup Guide](K8S_SETUP.md) (coming soon)
 
 ## Local Setup
 
-Follow these steps to set up the Gemini SRE Agent on your local machine:
+Follow these steps to set up the Cloud SRE Agent on your local machine:
 
 1.  **Clone the repository:**
     Begin by cloning the project repository to your local machine:
     ```bash
-    git clone https://github.com/avivl/gemini-sre-agent.git
-    cd gemini-sre-agent
+    git clone https://github.com/avivl/cloud-sre-agent.git
+    cd cloud-sre-agent
     ```
 
 2.  **Install dependencies:**

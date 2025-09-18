@@ -1,6 +1,6 @@
 # Provider Addition Framework
 
-The Provider Addition Framework is a comprehensive system designed to make adding new LLM providers to the Gemini SRE Agent as simple as possible. The framework provides templates, auto-registration, validation, and plugin capabilities to minimize the code required for new provider implementations.
+The Provider Addition Framework is a comprehensive system designed to make adding LLM providers to the Cloud SRE Agent as simple as possible. The framework provides templates, auto-registration, validation, and plugin capabilities to minimize the code required for provider implementations.
 
 ## Overview
 
@@ -16,7 +16,7 @@ The framework consists of several key components:
 
 ### Creating a Simple Provider
 
-The easiest way to add a new provider is to use one of the pre-built templates:
+The easiest way to add a provider is to use one of the pre-built templates:
 
 ```python
 from gemini_sre_agent.llm.provider_framework.templates import HTTPAPITemplate

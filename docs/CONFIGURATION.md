@@ -1,6 +1,6 @@
 # Configuration Guide
 
-The Gemini SRE Agent's behavior is highly configurable through the configuration management system. This guide details the type-safe configuration structure and options available to tailor the agent to your specific monitoring and remediation needs.
+The Cloud SRE Agent's behavior is highly configurable through the configuration management system. This guide details the type-safe configuration structure and options available to tailor the agent to your specific monitoring and remediation needs across multiple cloud platforms and AI providers.
 
 ## Configuration System
 
@@ -10,7 +10,7 @@ The configuration system provides:
 - **Environment variable integration** with `pydantic-settings`
 - **Multiple format support** (YAML, TOML, JSON)
 - **Hot reloading** capabilities for runtime configuration updates
-- **CLI tools** for validation, migration, and management
+- **CLI tools** for validation, configuration, and management
 - **Comprehensive monitoring** and audit logging
 
 ## Configuration Structure
@@ -19,7 +19,7 @@ The main configuration file uses a modern, type-safe structure with schema versi
 
 ```mermaid
 graph TD
-    subgraph "Enhanced Configuration Structure"
+    subgraph "Configuration Structure"
         ROOT[AppConfig]
 
         ROOT --> BASE[BaseConfig]
@@ -27,7 +27,7 @@ graph TD
         BASE --> |environment| ENV[development/production]
         BASE --> |debug| DEBUG[true/false]
         BASE --> |log_level| LL[INFO/DEBUG/WARN/ERROR]
-        BASE --> |app_name| AN[Gemini SRE Agent]
+        BASE --> |app_name| AN[Cloud SRE Agent]
         BASE --> |app_version| AV[0.1.0]
 
         ROOT --> SERVICES[services: List]
@@ -36,13 +36,20 @@ graph TD
         SERVICES --> S3[ServiceConfig N...]
 
         S1 --> |name| SN1[billing-service]
-        S1 --> |project_id| PI1[your-gcp-project]
+        S1 --> |cloud_platform| CP1[gcp/aws/azure/k8s]
+        S1 --> |project_id| PI1[your-project-id]
         S1 --> |location| LOC1[us-central1]
-        S1 --> |subscription_id| SUB1[billing-logs-subscription]
+        S1 --> |subscription_id| SUB1[logs-subscription]
         S1 --> |github| GH1[GitHubConfig]
         S1 --> |model_selection| MS1[ModelSelection]
 
         ROOT --> ML[MLConfig]
+        ML --> |providers| PROVIDERS[ProviderConfig Dict]
+        PROVIDERS --> |openai| OPENAI[OpenAIConfig]
+        PROVIDERS --> |anthropic| ANTHROPIC[AnthropicConfig]
+        PROVIDERS --> |google| GOOGLE[GoogleConfig]
+        PROVIDERS --> |cohere| COHERE[CohereConfig]
+        PROVIDERS --> |ollama| OLLAMA[OllamaConfig]
         ML --> |models| MODELS[ModelConfig Dict]
         MODELS --> |triage| TRIAGE[ModelConfig]
         MODELS --> |analysis| ANALYSIS[ModelConfig]
@@ -66,7 +73,7 @@ graph TD
 
 ### Configuration Hierarchy
 
-The enhanced configuration system follows a modern, type-safe structure with:
+The configuration system follows a modern, type-safe structure with:
 
 - **Schema versioning** for configuration compatibility
 - **Environment-specific settings** for different deployment environments
@@ -79,11 +86,12 @@ schema_version: "1.0.0"
 environment: "development"
 debug: false
 log_level: "INFO"
-app_name: "Gemini SRE Agent"
+app_name: "Cloud SRE Agent"
 app_version: "0.1.0"
 
 services:
   - name: "billing-service"
+    cloud_platform: "gcp"
     project_id: "your-gcp-project"
     location: "us-central1"
     subscription_id: "billing-logs-subscription"
@@ -91,9 +99,9 @@ services:
       repository: "owner/repo"
       base_branch: "main"
     model_selection:
-      triage_model: "gemini-flash"
-      analysis_model: "gemini-pro"
-      classification_model: "gemini-flash-lite"
+      triage_model: "gpt-4o-mini"
+      analysis_model: "claude-3-sonnet"
+      classification_model: "gemini-flash"
 
   - name: "auth-service"
     project_id: "your-gcp-project"
@@ -102,25 +110,43 @@ services:
     # Uses global ML and GitHub settings
 
 ml:
+  providers:
+    openai:
+      api_key: "${OPENAI_API_KEY}"
+      base_url: "https://api.openai.com/v1"
+    anthropic:
+      api_key: "${ANTHROPIC_API_KEY}"
+      base_url: "https://api.anthropic.com"
+    google:
+      api_key: "${GOOGLE_API_KEY}"
+      project_id: "your-gcp-project"
+    cohere:
+      api_key: "${COHERE_API_KEY}"
+      base_url: "https://api.cohere.ai"
+    ollama:
+      base_url: "http://localhost:11434"
   models:
     triage:
-      name: "gemini-flash"
+      provider: "openai"
+      name: "gpt-4o-mini"
       max_tokens: 8192
       temperature: 0.1
-      cost_per_1k_tokens: 0.000075
-      type: "FLASH"
+      cost_per_1k_tokens: 0.00015
+      type: "FAST"
     analysis:
-      name: "gemini-pro"
+      provider: "anthropic"
+      name: "claude-3-sonnet"
       max_tokens: 32768
       temperature: 0.3
-      cost_per_1k_tokens: 0.0005
-      type: "PRO"
+      cost_per_1k_tokens: 0.003
+      type: "BALANCED"
     classification:
-      name: "gemini-flash-lite"
+      provider: "google"
+      name: "gemini-flash"
       max_tokens: 4096
       temperature: 0.1
-      cost_per_1k_tokens: 0.0000375
-      type: "FLASH_LITE"
+      cost_per_1k_tokens: 0.000075
+      type: "FAST"
 
 performance:
   max_concurrent_requests: 10
@@ -169,18 +195,26 @@ The base configuration provides fundamental application settings:
 
 ### Services Configuration
 
-The `services` section defines a list of services to monitor. Each service configuration includes:
+The `services` section defines a list of services to monitor across multiple cloud platforms. Each service configuration includes:
 
 - **`name`** (`str`): Unique service identifier (e.g., `"billing-service"`).
-- **`project_id`** (`str`): GCP project ID where the service logs reside.
-- **`location`** (`str`): GCP region for Vertex AI model access (e.g., `"us-central1"`).
-- **`subscription_id`** (`str`): Pub/Sub subscription ID for log ingestion.
+- **`cloud_platform`** (`str`): Cloud platform (`"gcp"`, `"aws"`, `"azure"`, `"k8s"`).
+- **`project_id`** (`str`): Cloud project ID where the service logs reside.
+- **`location`** (`str`): Cloud region for AI model access (e.g., `"us-central1"`).
+- **`subscription_id`** (`str`): Messaging service subscription ID for log ingestion.
 - **`github`** (`GitHubConfig`): GitHub repository configuration for this service.
 - **`model_selection`** (`ModelSelection`): AI model selection for this service.
 
 ### ML Configuration
 
-The `ml` section consolidates all machine learning and AI model settings:
+The `ml` section consolidates all machine learning and AI model settings across multiple providers:
+
+- **`providers`** (`Dict[str, ProviderConfig]`): Dictionary of AI provider configurations:
+  - **`openai`**: OpenAI API configuration
+  - **`anthropic`**: Anthropic API configuration
+  - **`google`**: Google AI API configuration
+  - **`cohere`**: Cohere API configuration
+  - **`ollama`**: Ollama local model configuration
 
 - **`models`** (`Dict[str, ModelConfig]`): Dictionary of model configurations:
   - **`triage`**: Model for initial log triage (fast, cost-effective)
@@ -189,11 +223,12 @@ The `ml` section consolidates all machine learning and AI model settings:
 
 Each model configuration includes:
 
-- **`name`** (`str`): Model name (e.g., `"gemini-flash"`, `"gemini-pro"`).
+- **`provider`** (`str`): AI provider (e.g., `"openai"`, `"anthropic"`, `"google"`).
+- **`name`** (`str`): Model name (e.g., `"gpt-4o-mini"`, `"claude-3-sonnet"`, `"gemini-flash"`).
 - **`max_tokens`** (`int`): Maximum tokens for model responses.
 - **`temperature`** (`float`): Model temperature for response creativity (0.0-1.0).
 - **`cost_per_1k_tokens`** (`float`): Cost per 1000 tokens for budget tracking.
-- **`type`** (`ModelType`): Model type enum (`"FLASH"`, `"PRO"`, `"FLASH_LITE"`).
+- **`type`** (`ModelType`): Model type enum (`"FAST"`, `"BALANCED"`, `"SPECIALIZED"`).
 
 ### Performance Configuration
 
@@ -243,13 +278,16 @@ The `logging` section controls logging behavior:
 
 ## Environment Variable Integration
 
-The enhanced configuration system supports loading sensitive configuration from environment variables:
+The configuration system supports loading sensitive configuration from environment variables:
 
 ### Setting Environment Variables
 
 ```bash
 # API Keys and Secrets
-export GEMINI_API_KEY="your-gemini-api-key"
+export OPENAI_API_KEY="your-openai-api-key"
+export ANTHROPIC_API_KEY="your-anthropic-api-key"
+export GOOGLE_API_KEY="your-google-api-key"
+export COHERE_API_KEY="your-cohere-api-key"
 export GITHUB_TOKEN="your-github-token"
 export GCP_SERVICE_ACCOUNT_KEY="path/to/service-account.json"
 export DATABASE_PASSWORD="your-database-password"
@@ -267,7 +305,10 @@ Create a `.env` file in your project root:
 
 ```bash
 # .env file
-GEMINI_API_KEY=your-gemini-api-key
+OPENAI_API_KEY=your-openai-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+GOOGLE_API_KEY=your-google-api-key
+COHERE_API_KEY=your-cohere-api-key
 GITHUB_TOKEN=your-github-token
 GCP_SERVICE_ACCOUNT_KEY=path/to/service-account.json
 ENVIRONMENT=production
@@ -277,46 +318,46 @@ LOG_LEVEL=INFO
 
 ## CLI Tools
 
-The enhanced configuration system includes powerful CLI tools for management:
+The configuration system includes powerful CLI tools for management:
 
 ### Configuration Validation
 
 ```bash
 # Validate configuration file
-python -m gemini_sre_agent.config.cli_tools validate config/config.yaml
+python -m cloud_sre_agent.config.cli_tools validate config/config.yaml
 
 # Validate with detailed output
-python -m gemini_sre_agent.config.cli_tools validate config/config.yaml --verbose
+python -m cloud_sre_agent.config.cli_tools validate config/config.yaml --verbose
 ```
 
 ### Template Generation
 
 ```bash
 # Generate configuration template
-python -m gemini_sre_agent.config.cli_tools generate_template --output config/config_template.yaml
+python -m cloud_sre_agent.config.cli_tools generate_template --output config/config_template.yaml
 
 # Generate with environment-specific defaults
-python -m gemini_sre_agent.config.cli_tools generate_template --environment production --output config/production.yaml
+python -m cloud_sre_agent.config.cli_tools generate_template --environment production --output config/production.yaml
 ```
 
-### Configuration Migration
+### Configuration Management
 
 ```bash
-# Migrate from old configuration format
-python -m gemini_sre_agent.config.cli_tools migrate --input config/old_config.yaml --output config/new_config.yaml
+# Convert from old configuration format
+python -m cloud_sre_agent.config.cli_tools migrate --input config/old_config.yaml --output config/updated_config.yaml
 
-# Migrate with validation
-python -m gemini_sre_agent.config.cli_tools migrate --input config/old_config.yaml --output config/new_config.yaml --validate
+# Convert with validation
+python -m cloud_sre_agent.config.cli_tools migrate --input config/old_config.yaml --output config/updated_config.yaml --validate
 ```
 
 ### Configuration Diffing
 
 ```bash
 # Compare two configuration files
-python -m gemini_sre_agent.config.cli_tools diff config/config.yaml config/config_backup.yaml
+python -m cloud_sre_agent.config.cli_tools diff config/config.yaml config/config_backup.yaml
 
 # Compare with environment variables
-python -m gemini_sre_agent.config.cli_tools diff config/config.yaml --env
+python -m cloud_sre_agent.config.cli_tools diff config/config.yaml --env
 ```
 
 ## Example Scenarios
@@ -331,6 +372,7 @@ log_level: "DEBUG"
 
 services:
   - name: "dev-service"
+    cloud_platform: "gcp"
     project_id: "dev-gcp-project"
     location: "us-central1"
     subscription_id: "dev-logs-sub"
@@ -339,13 +381,19 @@ services:
       base_branch: "develop"
 
 ml:
+  providers:
+    openai:
+      api_key: "${OPENAI_API_KEY}"
+    anthropic:
+      api_key: "${ANTHROPIC_API_KEY}"
   models:
     triage:
-      name: "gemini-flash"
+      provider: "openai"
+      name: "gpt-4o-mini"
       max_tokens: 4096
       temperature: 0.1
-      cost_per_1k_tokens: 0.000075
-      type: "FLASH"
+      cost_per_1k_tokens: 0.00015
+      type: "FAST"
 
 performance:
   max_concurrent_requests: 5
@@ -369,6 +417,7 @@ log_level: "INFO"
 
 services:
   - name: "billing-service"
+    cloud_platform: "gcp"
     project_id: "prod-gcp-project"
     location: "us-central1"
     subscription_id: "billing-logs-sub"
@@ -379,9 +428,10 @@ services:
       require_reviews: 2
 
   - name: "auth-service"
-    project_id: "prod-gcp-project"
-    location: "us-central1"
-    subscription_id: "auth-logs-sub"
+    cloud_platform: "aws"
+    project_id: "prod-aws-account"
+    location: "us-east-1"
+    subscription_id: "auth-logs-stream"
     github:
       repository: "prod-org/auth-repo"
       base_branch: "main"
@@ -389,19 +439,29 @@ services:
       require_reviews: 2
 
 ml:
+  providers:
+    openai:
+      api_key: "${OPENAI_API_KEY}"
+    anthropic:
+      api_key: "${ANTHROPIC_API_KEY}"
+    google:
+      api_key: "${GOOGLE_API_KEY}"
+      project_id: "prod-gcp-project"
   models:
     triage:
-      name: "gemini-flash"
+      provider: "openai"
+      name: "gpt-4o-mini"
       max_tokens: 8192
       temperature: 0.1
-      cost_per_1k_tokens: 0.000075
-      type: "FLASH"
+      cost_per_1k_tokens: 0.00015
+      type: "FAST"
     analysis:
-      name: "gemini-pro"
+      provider: "anthropic"
+      name: "claude-3-sonnet"
       max_tokens: 32768
       temperature: 0.3
-      cost_per_1k_tokens: 0.0005
-      type: "PRO"
+      cost_per_1k_tokens: 0.003
+      type: "BALANCED"
 
 performance:
   max_concurrent_requests: 20
@@ -424,7 +484,7 @@ monitoring:
 logging:
   level: "INFO"
   format: "json"
-  file_path: "/var/log/gemini-sre-agent.log"
+  file_path: "/var/log/cloud-sre-agent.log"
   max_file_size_mb: 100
   backup_count: 10
 ```
@@ -457,9 +517,9 @@ config_manager = ConfigManager(config_file)
 config = config_manager.reload_config()
 ```
 
-## Migration from Legacy System
+## Configuration from Legacy System
 
-If you're migrating from the legacy configuration system, refer to the [Configuration Migration Guide](CONFIG_MIGRATION_GUIDE.md) for detailed migration instructions and examples.
+If you're configuring from the legacy configuration system, refer to the [Configuration Guide](CONFIGURATION.md) for detailed configuration instructions and examples.
 
 ## Best Practices
 
@@ -470,4 +530,4 @@ If you're migrating from the legacy configuration system, refer to the [Configur
 5. **Schema Versioning**: Always specify the `schema_version` for compatibility tracking.
 6. **Hot Reloading**: Use the hot reloading feature for development, but restart services in production for configuration changes.
 
-By leveraging these enhanced configuration capabilities, the Gemini SRE Agent provides a robust, type-safe, and flexible solution for managing diverse cloud environments with comprehensive validation and monitoring.
+By leveraging these configuration capabilities, the Cloud SRE Agent provides a robust, type-safe, and flexible solution for managing diverse cloud environments with comprehensive validation and monitoring.

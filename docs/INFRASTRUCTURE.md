@@ -1,6 +1,6 @@
 # Infrastructure as Code Guide
 
-This guide provides comprehensive instructions and examples for provisioning the necessary Google Cloud Platform (GCP) infrastructure for the Gemini SRE Agent using Infrastructure as Code (IaC) tools. Consistent and automated infrastructure deployment is crucial for operational readiness.
+This guide provides comprehensive instructions and examples for provisioning the necessary Google Cloud Platform (GCP) infrastructure for the Cloud SRE Agent using Infrastructure as Code (IaC) tools. Consistent and automated infrastructure deployment is crucial for operational readiness.
 
 ## Prerequisites
 
@@ -16,11 +16,11 @@ Before deploying the infrastructure, ensure you have:
 
 ## Terraform Configuration
 
-Terraform configurations are located in the `infra/terraform/` directory. These files define the GCP resources required for the Gemini SRE Agent.
+Terraform configurations are located in the `infra/terraform/` directory. These files define the GCP resources required for the Cloud SRE Agent.
 
 ### Files Overview
 
-*   `versions.tf`: Specifies the required Terraform and Google Cloud provider versions.
+*   `versions.tf`: Specifies the required Terraform and Google Cloud provider requirements.
 *   `variables.tf`: Defines input variables for the configuration (e.g., `gcp_project_id`, `gcp_region`).
 *   `main.tf`: Contains the core resource definitions for Pub/Sub, Cloud Logging Sinks, Service Accounts, and IAM policies.
 *   `outputs.tf`: Defines output values that can be used by other configurations or for quick reference.
@@ -28,8 +28,8 @@ Terraform configurations are located in the `infra/terraform/` directory. These 
 ### Resources Provisioned
 
 *   **Pub/Sub Topic (`google_pubsub_topic.logs_topic`):** A dedicated topic for receiving log exports from Cloud Logging.
-*   **Pub/Sub Subscription (`google_pubsub_subscription.logs_subscription`):** A subscription to the `logs_topic` that the Gemini SRE Agent will consume messages from.
-*   **Service Account for Agent (`google_service_account.agent_sa`):** A dedicated service account for the Gemini SRE Agent application.
+*   **Pub/Sub Subscription (`google_pubsub_subscription.logs_subscription`):** A subscription to the `logs_topic` that the Cloud SRE Agent will consume messages from.
+*   **Service Account for Agent (`google_service_account.agent_sa`):** A dedicated service account for the Cloud SRE Agent application.
 *   **IAM Permissions for Agent Service Account:** Grants the agent's service account necessary roles:
     *   `roles/pubsub.subscriber`
     *   `roles/aiplatform.user`

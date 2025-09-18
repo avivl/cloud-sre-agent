@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide provides essential information for developers working on the Gemini SRE Agent project. It covers setting up your development environment, running tests, and understanding code quality practices.
+This guide provides essential information for developers working on the Cloud SRE Agent project. It covers setting up your development environment, running tests, and understanding code quality practices.
 
 ## Development Environment Setup
 
@@ -9,7 +9,7 @@ Assuming you have completed the [Setup and Installation Guide](SETUP_INSTALLATIO
 - **Python 3.12+**
 - **`uv`**: For dependency management.
 - **`pytest`**: For running tests.
-- **`gcloud` CLI**: For GCP authentication and interaction.
+- **Cloud CLI tools**: For cloud platform authentication and interaction (e.g., `gcloud`, `aws`, `az`).
 
 ## Running the Agent Locally
 
@@ -19,7 +19,7 @@ To run the agent in your local development environment:
 python main.py
 ```
 
-This will start the agent, which will attempt to load configurations from `config/config.yaml` and set up log monitoring for the defined services. Ensure your GCP credentials and GitHub token are correctly configured as per the [Setup and Installation Guide](SETUP_INSTALLATION.md).
+This will start the agent, which will attempt to load configurations from `config/config.yaml` and set up log monitoring for the defined services. Ensure your cloud platform credentials and GitHub token are correctly configured as per the [Setup and Installation Guide](SETUP_INSTALLATION.md).
 
 ## Testing
 
@@ -41,18 +41,18 @@ pytest
 
 ### Test Structure
 
-Tests are located in the `tests/` directory, mirroring the structure of the `gemini_sre_agent/` package. Each core module (e.g., `triage_agent.py`, `analysis_agent.py`) has a corresponding test file (e.g., `test_triage_agent.py`, `test_analysis_agent.py`).
+Tests are located in the `tests/` directory, mirroring the structure of the `cloud_sre_agent/` package. Each core module (e.g., `triage_agent.py`, `analysis_agent.py`) has a corresponding test file (e.g., `test_triage_agent.py`, `test_analysis_agent.py`).
 
 - **`pytest-asyncio`**: Used for testing asynchronous functions and methods.
-- **Mocking:** `unittest.mock.patch` is used extensively to mock external dependencies (like GCP Vertex AI API calls or GitHub API calls) to ensure tests are isolated, fast, and do not require live credentials.
+- **Mocking:** `unittest.mock.patch` is used extensively to mock external dependencies (like AI provider API calls or GitHub API calls) to ensure tests are isolated, fast, and do not require live credentials.
 
 ### Integration Testing
 
-Integration tests verify the end-to-end functionality of the agent by making live calls to GCP and GitHub services. These tests are located in `tests/integration/`.
+Integration tests verify the end-to-end functionality of the agent by making live calls to cloud platforms and GitHub services. These tests are located in `tests/integration/`.
 
 To run integration tests, you need to:
 
-1.  **Configure your GCP project:** Ensure Vertex AI API is enabled, models are available, and your service account has necessary permissions.
+1.  **Configure your cloud platform:** Ensure AI APIs are enabled, models are available, and your service account has necessary permissions.
 2.  **Configure a dedicated GitHub repository:** For the `RemediationAgent` to create test branches and PRs.
 3.  **Set `GITHUB_TOKEN` environment variable.**
 
@@ -70,7 +70,7 @@ Maintaining high code quality is crucial for the project's long-term maintainabi
 
 ### Type Hinting
 
-The codebase extensively uses [Python type hints](https://docs.python.org/3/library/typing.html) to improve code readability, enable static analysis, and reduce runtime errors. Developers are expected to adhere to existing type hinting conventions when contributing new code or modifying existing sections. Pydantic models are also used for robust data validation and clear data structures, further enhancing type safety and code quality.
+The codebase extensively uses [Python type hints](https://docs.python.org/3/library/typing.html) to improve code readability, enable static analysis, and reduce runtime errors. Developers are expected to adhere to existing type hinting conventions when contributing code or modifying existing sections. Pydantic models are also used for robust data validation and clear data structures, further enhancing type safety and code quality.
 
 ### Configuration System
 
@@ -85,7 +85,7 @@ The project uses a modern, type-safe configuration system built on Pydantic and 
 #### Using the Configuration System
 
 ```python
-from gemini_sre_agent.config import ConfigManager
+from cloud_sre_agent.config import ConfigManager
 
 # Initialize configuration manager
 config_manager = ConfigManager("config/config.yaml")
@@ -105,19 +105,19 @@ The system includes powerful CLI tools for configuration management:
 
 ```bash
 # Validate configuration
-python -m gemini_sre_agent.config.cli_tools validate config/config.yaml
+python -m cloud_sre_agent.config.cli_tools validate config/config.yaml
 
 # Generate configuration template
-python -m gemini_sre_agent.config.cli_tools generate_template --output config/template.yaml
+python -m cloud_sre_agent.config.cli_tools generate_template --output config/template.yaml
 
 # Migrate from legacy format
-python -m gemini_sre_agent.config.cli_tools migrate --input old_config.yaml --output new_config.yaml
+python -m cloud_sre_agent.config.cli_tools migrate --input old_config.yaml --output updated_config.yaml
 
 # Compare configurations
-python -m gemini_sre_agent.config.cli_tools diff config1.yaml config2.yaml
+python -m cloud_sre_agent.config.cli_tools diff config1.yaml config2.yaml
 ```
 
-For more details, see the [Configuration Guide](CONFIGURATION.md) and [Configuration Migration Guide](CONFIG_MIGRATION_GUIDE.md).
+For more details, see the [Configuration Guide](CONFIGURATION.md) and [Configuration Guide](CONFIGURATION.md).
 
 ### Linting and Formatting
 
@@ -147,21 +147,21 @@ The project uses `ruff` for linting and `black` for automatic code formatting to
 
 ### Resilience Implementation
 
-The agent incorporates robust resilience patterns using the `hyx` library (for circuit breakers, retries, bulkheads, rate limiting) and `asyncio.wait_for()` for explicit timeout handling. When developing, consider how new components or external interactions can benefit from these patterns to ensure the agent's stability under adverse conditions. The `tenacity` library is also used for simpler retry mechanisms on specific operations.
+The agent incorporates robust resilience patterns using the `hyx` library (for circuit breakers, retries, bulkheads, rate limiting) and `asyncio.wait_for()` for explicit timeout handling. When developing, consider how components or external interactions can benefit from these patterns to ensure the agent's stability under adverse conditions. The `tenacity` library is also used for simpler retry mechanisms on specific operations.
 
 ## Contributing
 
-We welcome contributions to the Gemini SRE Agent! To contribute:
+We welcome contributions to the Cloud SRE Agent! To contribute:
 
 1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
+2.  Create a branch for your feature or bug fix.
 3.  Implement your changes, ensuring they adhere to the project's code quality standards and include comprehensive tests.
 4.  Submit a Pull Request to the `main` branch of the upstream repository.
 
 When submitting a Pull Request, please ensure:
 
 - Your code passes all existing tests.
-- New features or bug fixes are accompanied by appropriate unit and/or integration tests.
+- Features or bug fixes are accompanied by appropriate unit and/or integration tests.
 - Your code is well-documented with docstrings and comments where necessary.
 - Your commit messages are clear and descriptive.
 
@@ -207,5 +207,5 @@ The agent uses structured logging. When debugging, pay attention to the log leve
 
 ```bash
 # Example of filtering logs for a specific service in a JSON log file
-cat /var/log/gemini-sre-agent.log | grep "billing-service" | jq .
+cat /var/log/cloud-sre-agent.log | grep "billing-service" | jq .
 ```

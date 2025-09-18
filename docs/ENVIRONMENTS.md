@@ -1,6 +1,6 @@
 # Multi-Environment Guide
 
-This guide outlines strategies for managing the Gemini SRE Agent across different environments, such as development, staging, and production. Proper environment management ensures consistency, reduces risks, and streamlines promotion workflows.
+This guide outlines strategies for managing the Cloud SRE Agent across different environments, such as development, staging, and production. Proper environment management ensures consistency, reduces risks, and streamlines promotion workflows.
 
 ## 1. Environment Definitions
 
@@ -14,7 +14,7 @@ This guide outlines strategies for managing the Gemini SRE Agent across differen
 ### Staging Environment
 
 *   **Purpose:** Integration testing, user acceptance testing (UAT), and pre-production validation.
-*   **Configuration:** Mirrors production as closely as possible in terms of GCP resources, model versions, and GitHub repositories. Uses `INFO` level logging.
+*   **Configuration:** Mirrors production as closely as possible in terms of GCP resources, model configurations, and GitHub repositories. Uses `INFO` level logging.
 *   **Deployment:** Automated deployment via CI/CD pipelines (e.g., GitHub Actions) to a dedicated staging GCP project.
 *   **Key Considerations:** Data realism, performance testing, and verifying end-to-end workflows before production.
 
@@ -31,7 +31,7 @@ The `config/config.yaml` file is central to managing environment-specific settin
 
 ### Example: `config.yaml` for Multiple Environments
 
-While the primary `config.yaml` structure supports multiple services, you might manage different versions of this file for different environments or use environment variables to select configurations.
+While the primary `config.yaml` structure supports multiple services, you might manage different configurations of this file for different environments or use environment variables to select configurations.
 
 ```yaml
 # config/config.yaml (example for production)

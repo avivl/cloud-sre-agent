@@ -1,6 +1,6 @@
 # Multi-Provider LLM Configuration Guide
 
-This guide covers the comprehensive multi-provider LLM configuration system that enables the Gemini SRE Agent to work with multiple LLM providers simultaneously, including Google Gemini, OpenAI, Anthropic, xAI (Grok), Amazon Bedrock, and Ollama.
+This guide covers the comprehensive multi-provider LLM configuration system that enables the Cloud SRE Agent to work with multiple LLM providers simultaneously, including Google Gemini, OpenAI, Anthropic, xAI (Grok), Amazon Bedrock, and Ollama.
 
 ## Overview
 
@@ -282,7 +282,7 @@ providers:
         supports_tools: true
         capabilities: ["reasoning", "code_generation", "analysis", "vision"]
     provider_specific:
-      version: "2023-06-01"
+      api_version: "2023-06-01"
 ```
 
 ### xAI (Grok) Provider
@@ -314,7 +314,7 @@ providers:
         supports_tools: true
         capabilities: ["reasoning", "code_generation", "analysis"]
     provider_specific:
-      version: "2024-12-12"
+      api_version: "2024-12-12"
 ```
 
 ### Amazon Bedrock Provider
@@ -526,7 +526,7 @@ providers:
     api_key: "${GEMINI_API_KEY}"
     # Custom ModelType mappings - override the default mappings
     model_type_mappings:
-      FAST: "gemini-1.5-flash-lite" # Use the lite version for fast responses
+      FAST: "gemini-1.5-flash-lite" # Use the lite model for fast responses
       SMART: "gemini-1.5-pro" # Use pro for smart responses
       DEEP_THINKING: "gemini-1.5-pro" # Use pro for deep thinking
     models:
@@ -767,4 +767,4 @@ logging:
 export LLM_LOG_LEVEL="DEBUG"
 ```
 
-This comprehensive configuration system provides the foundation for robust, cost-effective, and reliable multi-provider LLM operations in the Gemini SRE Agent.
+This comprehensive configuration system provides the foundation for robust, cost-effective, and reliable multi-provider LLM operations in the Cloud SRE Agent.

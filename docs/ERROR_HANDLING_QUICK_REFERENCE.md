@@ -1,6 +1,6 @@
 # Error Handling Quick Reference
 
-This is a quick reference guide for using the error handling system in the Gemini SRE Agent.
+This is a quick reference guide for using the error handling system in the Cloud SRE Agent.
 
 ## Quick Start
 
@@ -186,7 +186,7 @@ await metrics.record_operation_success(
 await metrics.record_circuit_breaker_state_change(
     circuit_name="github_operations",
     old_state=CircuitState.CLOSED,
-    new_state=CircuitState.OPEN,
+    state=CircuitState.OPEN,
     operation_type="file_operations"
 )
 ```

@@ -358,8 +358,8 @@ logging.getLogger("gemini_sre_agent.llm.capabilities").setLevel(logging.DEBUG)
 
 The system is designed for easy extension:
 
-- **Custom Capabilities**: Add new capability types
-- **Provider Plugins**: Support for new providers
+- **Custom Capabilities**: Add capability types
+- **Provider Plugins**: Support for additional providers
 - **Validation Rules**: Custom requirement validation
 - **Scoring Algorithms**: Custom performance scoring
 
@@ -368,11 +368,11 @@ The system is designed for easy extension:
 When contributing to the capability system:
 
 1. **Follow the existing patterns** for capability definitions
-2. **Add comprehensive tests** for new functionality
-3. **Update documentation** for new features
+2. **Add comprehensive tests** for functionality
+3. **Update documentation** for features
 4. **Consider backward compatibility** when making changes
 5. **Add appropriate logging** for debugging
 
 ## License
 
-This capability discovery system is part of the Gemini SRE Agent project and follows the same licensing terms.
+This capability discovery system is part of the Cloud SRE Agent project and follows the same licensing terms.

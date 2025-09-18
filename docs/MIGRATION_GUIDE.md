@@ -1,14 +1,14 @@
-# Migration Guide: Enhanced Multi-Provider LLM System
+# Multi-Provider LLM Configuration Guide
 
 ## Overview
 
-This guide helps you migrate from the original Gemini-only SRE Agent to the enhanced multi-provider LLM system while maintaining full backward compatibility.
+This guide helps you configure the Cloud SRE Agent with multi-provider LLM support while maintaining full backward compatibility.
 
-## Migration Strategies
+## Configuration Strategies
 
-### 1. Zero-Code Migration (Recommended for Quick Start)
+### 1. Quick Configuration (Recommended for Quick Start)
 
-Use legacy adapters to migrate without changing any existing code:
+Use legacy adapters to configure without changing any existing code:
 
 ```python
 # Before (Original)
@@ -20,35 +20,35 @@ triage_agent = TriageAgent(project_id, location, model)
 analysis_agent = AnalysisAgent(project_id, location, model)
 remediation_agent = RemediationAgent(github_token, repo_name)
 
-# After (Enhanced with Legacy Adapters)
-from gemini_sre_agent.agents.legacy_adapter import (
-    create_enhanced_triage_agent,
-    create_enhanced_analysis_agent,
-    create_enhanced_remediation_agent,
+# After (Multi-Provider with Legacy Adapters)
+from cloud_sre_agent.agents.legacy_adapter import (
+    create_triage_agent,
+    create_analysis_agent,
+    create_remediation_agent,
 )
 from gemini_sre_agent.llm.config_manager import ConfigManager
 
-# Load enhanced configuration
+# Load multi-provider configuration
 config_manager = ConfigManager("config/llm_config.yaml")
 llm_config = config_manager.get_config()
 
 # Drop-in replacements
-triage_agent = create_enhanced_triage_agent(project_id, location, model, llm_config)
-analysis_agent = create_enhanced_analysis_agent(project_id, location, model, llm_config)
-remediation_agent = create_enhanced_remediation_agent(github_token, repo_name, llm_config)
+triage_agent = create_triage_agent(project_id, location, model, llm_config)
+analysis_agent = create_analysis_agent(project_id, location, model, llm_config)
+remediation_agent = create_remediation_agent(github_token, repo_name, llm_config)
 
 # All existing code works unchanged!
 ```
 
-### 2. Gradual Migration (Recommended for Production)
+### 2. Gradual Configuration (Recommended for Production)
 
-Migrate one agent at a time to enhanced versions:
+Configure one agent at a time to multi-provider configurations:
 
 ```python
-# Step 1: Migrate Triage Agent
-from gemini_sre_agent.agents.enhanced_triage_agent import EnhancedTriageAgent
+# Step 1: Configure Triage Agent
+from cloud_sre_agent.agents.triage_agent import TriageAgent
 
-triage_agent = EnhancedTriageAgent(
+triage_agent = TriageAgent(
     llm_config=llm_config,
     primary_model="llama3.2:3b",
     fallback_model="llama3.2:1b",
@@ -58,9 +58,9 @@ triage_agent = EnhancedTriageAgent(
 )
 
 # Step 2: Migrate Analysis Agent
-from gemini_sre_agent.agents.enhanced_analysis_agent import EnhancedAnalysisAgent
+from gemini_sre_agent.agents.enhanced_analysis_agent import AnalysisAgent
 
-analysis_agent = EnhancedAnalysisAgent(
+analysis_agent = AnalysisAgent(
     llm_config=llm_config,
     optimization_goal=OptimizationGoal.QUALITY,
     max_cost=0.02,
@@ -68,9 +68,9 @@ analysis_agent = EnhancedAnalysisAgent(
 )
 
 # Step 3: Migrate Remediation Agent
-from gemini_sre_agent.agents.enhanced_remediation_agent import EnhancedRemediationAgent
+from gemini_sre_agent.agents.enhanced_remediation_agent import RemediationAgent
 
-remediation_agent = EnhancedRemediationAgent(
+remediation_agent = RemediationAgent(
     llm_config=llm_config,
     optimization_goal=OptimizationGoal.HYBRID,
     max_cost=0.03,
@@ -78,32 +78,32 @@ remediation_agent = EnhancedRemediationAgent(
 )
 ```
 
-### 3. Full Migration (Recommended for New Projects)
+### 3. Full Configuration (Recommended for New Projects)
 
-Use the complete enhanced system with all features:
+Use the complete multi-provider system with all features:
 
 ```python
-from gemini_sre_agent.agents.enhanced_specialized import (
-    EnhancedTriageAgent,
-    EnhancedAnalysisAgent,
-    EnhancedRemediationAgentV2,
+from cloud_sre_agent.agents.specialized import (
+    TriageAgent,
+    AnalysisAgent,
+    RemediationAgentV2,
 )
 
-# Create agents with full enhanced capabilities
+# Create agents with full multi-provider capabilities
 agents = {
-    "triage": EnhancedTriageAgent(
+    "triage": TriageAgent(
         llm_config=llm_config,
         primary_model="llama3.2:3b",
         fallback_model="llama3.2:1b",
         optimization_goal=OptimizationGoal.COST_EFFECTIVE,
         collect_stats=True,
     ),
-    "analysis": EnhancedAnalysisAgent(
+    "analysis": AnalysisAgent(
         llm_config=llm_config,
         optimization_goal=OptimizationGoal.QUALITY,
         collect_stats=True,
     ),
-    "remediation": EnhancedRemediationAgentV2(
+    "remediation": RemediationAgentV2(
         llm_config=llm_config,
         optimization_goal=OptimizationGoal.HYBRID,
         collect_stats=True,
@@ -150,7 +150,7 @@ strategy:
 ### 2. Environment Variables
 
 ```bash
-# Required for enhanced features
+# Required for multi-provider features
 LLM_CONFIG_PATH=config/llm_config.yaml
 
 # Optional provider API keys
@@ -163,12 +163,12 @@ GITHUB_TOKEN=your_github_token
 GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
 ```
 
-## Testing Your Migration
+## Testing Your Configuration
 
 ### 1. Run the Demo
 
 ```bash
-python examples/enhanced_system_demo.py
+python examples/system_demo.py
 ```
 
 ### 2. Test Legacy Compatibility
@@ -218,9 +218,9 @@ export OPENAI_API_KEY=your_key
 
 **Error**: `TypeError: analyze_issue() missing 1 required positional argument`
 
-**Solution**: Use legacy adapters for zero-code migration:
+**Solution**: Use legacy adapters for zero-code compatibility:
 ```python
-from gemini_sre_agent.agents.legacy_adapter import create_enhanced_analysis_agent
+from cloud_sre_agent.agents.legacy_adapter import create_analysis_agent
 ```
 
 ## Performance Optimization
@@ -235,7 +235,7 @@ from gemini_sre_agent.agents.legacy_adapter import create_enhanced_analysis_agen
 
 ```python
 # Set cost limits per agent
-triage_agent = EnhancedTriageAgent(
+triage_agent = TriageAgent(
     max_cost=0.005,  # $0.005 per 1k tokens
     optimization_goal=OptimizationGoal.COST_EFFECTIVE,
 )
@@ -245,7 +245,7 @@ triage_agent = EnhancedTriageAgent(
 
 ```python
 # Set quality thresholds
-analysis_agent = EnhancedAnalysisAgent(
+analysis_agent = AnalysisAgent(
     min_quality=0.8,  # Minimum 80% quality score
     optimization_goal=OptimizationGoal.QUALITY,
 )
@@ -275,8 +275,8 @@ for provider_name, provider in providers.items():
 
 ## Next Steps
 
-1. **Start with Zero-Code Migration**: Use legacy adapters for immediate benefits
-2. **Gradually Enhance**: Move to enhanced agents one by one
+1. **Start with Zero-Code Compatibility**: Use legacy adapters for immediate benefits
+2. **Gradually Configure**: Move to multi-provider agents one by one
 3. **Optimize Configuration**: Tune models and costs for your use case
 4. **Monitor Performance**: Use built-in metrics and monitoring
 5. **Explore Advanced Features**: Try model mixing, A/B testing, and prompt optimization

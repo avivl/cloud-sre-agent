@@ -1,6 +1,6 @@
-# Gemini ML Pattern Refinement System
+# Cloud SRE Agent ML Pattern Refinement System
 
-The Gemini ML Pattern Refinement System is an advanced AI enhancement layer that transforms the traditional 4-layer pattern detection system into an intelligent, context-aware incident analysis pipeline. This system leverages Google's Gemini models to provide sophisticated pattern classification, confidence scoring, and automated code repository integration.
+The Cloud SRE Agent ML Pattern Refinement System is an advanced AI enhancement layer that transforms the traditional 4-layer pattern detection system into an intelligent, context-aware incident analysis pipeline. This system leverages multiple AI providers to provide sophisticated pattern classification, confidence scoring, and automated code repository integration.
 
 ## Overview
 
@@ -22,10 +22,10 @@ graph TB
     end
     
     subgraph "AI Processing Core"
-        PCE --> GPE[Gemini Prompt Engine]
-        GPE --> GEPD[Gemini Enhanced Pattern Detector]
-        GEPD --> |Fast Classification| GF[Gemini Flash]
-        GEPD --> |Deep Analysis| GP[Gemini Pro]
+        PCE --> GPE[AI Prompt Engine]
+        GPE --> GEPD[AI Pattern Detector]
+        GEPD --> |Fast Classification| GF[Fast AI Models]
+        GEPD --> |Deep Analysis| GP[Advanced AI Models]
     end
     
     subgraph "Code Integration"
@@ -35,14 +35,14 @@ graph TB
     end
     
     subgraph "Performance & Cost Management"
-        GF --> GRC[Gemini Response Cache]
+        GF --> GRC[AI Response Cache]
         GP --> GRC
         GRC --> CT[Cost Tracker]
         CT --> MPM[Model Performance Monitor]
         MPM --> ARL[Adaptive Rate Limiter]
     end
     
-    GRC --> |Enhanced Results| OUT[Pattern Detection Output]
+    GRC --> |Results| OUT[Pattern Detection Output]
     
     classDef aiComponent fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef qualityComponent fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
@@ -55,9 +55,9 @@ graph TB
 
 ## Core Components
 
-### 1. GeminiPromptEngine
+### 1. AIPromptEngine
 
-The prompt engine manages structured prompts and templates for Gemini model interactions.
+The prompt engine manages structured prompts and templates for AI model interactions.
 
 **Key Features:**
 - Template-based prompt generation with few-shot learning
@@ -81,7 +81,7 @@ prompt_config = {
 }
 ```
 
-### 2. GeminiEnhancedPatternDetector
+### 2. AIPatternDetector
 
 Ensemble pattern detector combining rule-based and AI-driven classification.
 
@@ -269,11 +269,11 @@ ml_pattern_refinement:
 ### Basic Pattern Detection
 
 ```python
-from gemini_sre_agent.ml.gemini_enhanced_pattern_detector import GeminiEnhancedPatternDetector
+from cloud_sre_agent.ml.ai_pattern_detector import AIPatternDetector
 from gemini_sre_agent.ml.schemas import PatternContext
 
 # Initialize detector
-detector = GeminiEnhancedPatternDetector()
+detector = AIPatternDetector()
 
 # Create pattern context
 context = PatternContext(

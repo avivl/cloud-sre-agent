@@ -1,12 +1,12 @@
-# New Log Ingestion System Migration Guide
+# Log Ingestion System Guide
 
 ## Overview
 
-The Gemini SRE Agent has been enhanced with a new, comprehensive log ingestion system that provides improved monitoring, reliability, and extensibility while maintaining full backward compatibility with the existing system.
+The Cloud SRE Agent features a comprehensive log ingestion system that provides monitoring, reliability, and extensibility for processing logs from multiple cloud platforms.
 
-## New Features
+## Key Features
 
-### 🚀 Enhanced Architecture
+### Architecture
 
 - **Pluggable Adapters**: Support for multiple log sources (GCP Pub/Sub, Kubernetes, File System, AWS CloudWatch, etc.)
 - **Comprehensive Monitoring**: Built-in metrics collection, health checks, performance monitoring, and alerting
@@ -26,15 +26,15 @@ The Gemini SRE Agent has been enhanced with a new, comprehensive log ingestion s
 - **Runtime Updates**: Dynamic configuration changes without restarts
 - **Validation**: Comprehensive configuration validation and error reporting
 
-## Migration Options
+## Configuration Options
 
 ### Option 1: Feature Flag Rollout (Recommended)
 
-Enable the new system gradually using environment variables:
+Enable the system gradually using environment variables:
 
 ```bash
-# Enable new ingestion system for specific services
-export USE_NEW_INGESTION_SYSTEM=true
+# Enable log ingestion system for specific services
+export USE_LOG_INGESTION_SYSTEM=true
 
 # Enable comprehensive monitoring
 export ENABLE_MONITORING=true
@@ -43,17 +43,17 @@ export ENABLE_MONITORING=true
 export ENABLE_LEGACY_FALLBACK=true
 ```
 
-### Option 2: Direct Migration
+### Option 2: Direct Configuration
 
-Update your startup configuration to use the new system by default.
+Update your startup configuration to use the system by default.
 
 ## Environment Variables
 
 | Variable                   | Default | Description                                    |
 | -------------------------- | ------- | ---------------------------------------------- |
-| `USE_NEW_INGESTION_SYSTEM` | `false` | Enable the new log ingestion system            |
+| `USE_LOG_INGESTION_SYSTEM` | `false` | Enable the log ingestion system            |
 | `ENABLE_MONITORING`        | `true`  | Enable comprehensive monitoring features       |
-| `ENABLE_LEGACY_FALLBACK`   | `true`  | Fall back to legacy system if new system fails |
+| `ENABLE_LEGACY_FALLBACK`   | `true`  | Fall back to legacy system if system fails |
 
 ## Key Benefits
 
@@ -64,7 +64,7 @@ Update your startup configuration to use the new system by default.
 - **Automatic Retries**: Resilient error handling
 - **Health Monitoring**: Proactive issue detection
 
-### 📈 Enhanced Observability
+### 📈 Observability
 
 - **Real-time Metrics**: Processing rates, error counts, latencies
 - **Performance Tracking**: Resource utilization and bottleneck identification
@@ -73,9 +73,9 @@ Update your startup configuration to use the new system by default.
 
 ### 🔌 Extensibility
 
-- **Multiple Sources**: Easy addition of new log sources
+- **Multiple Sources**: Easy addition of log sources
 - **Adapter Pattern**: Clean separation of concerns
-- **Configuration Driven**: No code changes for new sources
+- **Configuration Driven**: No code changes for additional sources
 - **Plugin Architecture**: Modular and maintainable design
 
 ## Configuration Examples
@@ -123,9 +123,9 @@ monitoring_manager.record_operation_metrics(
 
 ## Rollback Strategy
 
-If issues occur during migration:
+If issues occur during configuration:
 
-1. **Immediate Rollback**: Set `USE_NEW_INGESTION_SYSTEM=false`
+1. **Immediate Rollback**: Set `USE_LOG_INGESTION_SYSTEM=false`
 2. **Graceful Degradation**: The legacy fallback system will automatically engage
 3. **Monitoring**: Review logs and monitoring data to identify issues
 4. **Iterative Fix**: Address issues and re-enable with feature flags
@@ -134,7 +134,7 @@ If issues occur during migration:
 
 ### 1. Development Environment
 
-- Test with `USE_NEW_INGESTION_SYSTEM=true`
+- Test with `USE_LOG_INGESTION_SYSTEM=true`
 - Verify all log sources are properly ingested
 - Confirm monitoring metrics are collected
 - Test failure scenarios and recovery
@@ -153,7 +153,7 @@ If issues occur during migration:
 - Gradually expand to more services
 - Keep legacy fallback enabled initially
 
-## Monitoring During Migration
+## Monitoring During Configuration
 
 ### Key Metrics to Watch
 
@@ -204,7 +204,7 @@ await monitoring_manager.create_alert(
 
 ## Best Practices
 
-### 1. Gradual Migration
+### 1. Gradual Configuration
 
 - Start with low-volume services
 - Use feature flags for controlled rollout
@@ -220,27 +220,27 @@ await monitoring_manager.create_alert(
 
 ### 3. Configuration Management
 
-- Use version control for configurations
+- Use version control for configuration files
 - Test configuration changes in staging
 - Implement configuration validation
 - Document configuration changes
 
 ### 4. Operational Readiness
 
-- Train team on new monitoring tools
+- Train team on monitoring tools
 - Update runbooks and procedures
 - Establish escalation procedures
 - Plan for rollback scenarios
 
 ## Next Steps
 
-After successful migration:
+After successful configuration:
 
 1. **Performance Optimization**: Tune configuration based on monitoring data
-2. **Additional Sources**: Add new log sources as needed
+2. **Additional Sources**: Add log sources as needed
 3. **Advanced Features**: Implement custom adapters or processors
 4. **Legacy Removal**: Remove legacy system after confidence period
 
 ---
 
-For additional support or questions about the migration, please refer to the system architecture documentation or contact the development team.
+For additional support or questions about the configuration, please refer to the system architecture documentation or contact the development team.

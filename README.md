@@ -1,31 +1,37 @@
-# Gemini SRE Agent: Autonomous Monitoring and Remediation
+# Cloud SRE Agent: Multi-Provider Autonomous Monitoring and Remediation
 
-[![GitHub Stars](https://img.shields.io/github/stars/avivl/gemini-sre-agent.svg?style=for-the-badge&logo=github&color=gold)](https://github.com/avivl/gemini-sre-agent/stargazers)
-[![Last Commit](https://img.shields.io/github/last-commit/avivl/gemini-sre-agent?style=for-the-badge&logo=github)](https://github.com/avivl/gemini-sre-agent)
+[![GitHub Stars](https://img.shields.io/github/stars/avivl/cloud-sre-agent.svg?style=for-the-badge&logo=github&color=gold)](https://github.com/avivl/cloud-sre-agent/stargazers)
+[![Last Commit](https://img.shields.io/github/last-commit/avivl/cloud-sre-agent?style=for-the-badge&logo=github)](https://github.com/avivl/cloud-sre-agent)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-886FBF?style=for-the-badge&logo=googlegemini&logoColor=fff)](https://ai.google.dev/gemini-api)
-![Gemini SRE Agent](static/gemini_agent.png)
+[![Multi-Provider AI](https://img.shields.io/badge/Multi--Provider%20AI-00BCD4?style=for-the-badge&logo=openai&logoColor=fff)](https://github.com/avivl/cloud-sre-agent)
+![Cloud SRE Agent](static/cloud_sre_agent.png)
 
-Welcome to the Gemini SRE Agent, an autonomous system designed to enhance your Google Cloud operations by intelligently monitoring logs and automating incident response. This project leverages the power of Google's Gemini models to bring advanced AI capabilities directly into your Site Reliability Engineering (SRE) workflows.
+Welcome to the Cloud SRE Agent, an autonomous multi-provider system designed to enhance your cloud operations by intelligently monitoring logs and automating incident response. This project leverages the power of 100+ AI providers (OpenAI, Anthropic, Google, Cohere, Ollama, and more) to bring advanced AI capabilities directly into your Site Reliability Engineering (SRE) workflows.
 
-At its core, the Gemini SRE Agent acts as a proactive digital assistant, continuously observing your Google Cloud environment. When anomalies or critical events are detected in your logs, it doesn't just alert you; it initiates a structured process of analysis, generates intelligent code fixes using its unified enhanced code generation system, and proposes concrete remediation steps, culminating in automated GitHub Pull Requests. This approach aims to reduce manual toil, accelerate incident resolution, and improve the overall reliability of your cloud services.
+At its core, the Cloud SRE Agent acts as a proactive digital assistant, continuously observing your cloud environment. When anomalies or critical events are detected in your logs, it doesn't just alert you; it initiates a structured process of analysis, generates intelligent code fixes using its unified code generation system, and proposes concrete remediation steps, culminating in automated GitHub Pull Requests. This approach aims to reduce manual toil, accelerate incident resolution, and improve the overall reliability of your cloud services.
 
-Whether you're looking to streamline your incident management, gain deeper insights from your operational data, or simply explore the practical applications of generative AI in SRE, the Gemini SRE Agent offers a robust and extensible foundation. It's built with an emphasis on configurability, resilience, and clear observability, ensuring it can adapt to diverse cloud environments and operational needs.
+Whether you're looking to streamline your incident management, gain deeper insights from your operational data, or simply explore the practical applications of generative AI in SRE, the Cloud SRE Agent offers a robust and extensible foundation. It's built with an emphasis on configurability, resilience, and clear observability, ensuring it can adapt to diverse cloud environments and operational needs.
 
 Dive in to discover how this agent can transform your cloud log monitoring into an intelligent, automated, and resilient operation.
 
 ## System Architecture
 
-The Gemini SRE Agent employs a sophisticated multi-model AI architecture with **enhanced dynamic prompt generation**, advanced pattern detection, a **unified enhanced code generation system**, and a **comprehensive new log ingestion system** for intelligent log monitoring and automated remediation:
+The Cloud SRE Agent employs a sophisticated multi-provider AI architecture with **dynamic prompt generation**, advanced pattern detection, a **unified code generation system**, and a **comprehensive log ingestion system** for intelligent log monitoring and automated remediation:
 
 ```mermaid
 graph TB
-    subgraph "Google Cloud Platform"
-        CL[Cloud Logging] --> PS[Pub/Sub Topics]
-        PS --> |Log Messages| SUB[Pub/Sub Subscriptions]
+    subgraph "Multi-Cloud Platform"
+        GCP[Google Cloud Platform] --> GCPL[Cloud Logging]
+        AWS[Amazon Web Services] --> AWSL[CloudWatch Logs]
+        AZURE[Microsoft Azure] --> AZUREL[Azure Monitor]
+        K8S[Kubernetes] --> K8SL[Container Logs]
+        GCPL --> PS[Pub/Sub Topics]
+        AWSL --> KDS[Kinesis Data Streams]
+        AZUREL --> EH[Event Hubs]
+        K8SL --> K8SAPI[Kubernetes API]
     end
 
-    subgraph "Gemini SRE Agent - New Log Ingestion System"
+    subgraph "Cloud SRE Agent - Multi-Provider AI System"
         SUB --> LM[Log Manager<br/>Orchestration Layer]
         LM --> |Multi-Source| GCP[GCP Pub/Sub Adapter]
         LM --> |Multi-Source| K8S[Kubernetes Adapter]
@@ -38,13 +44,13 @@ graph TB
         AWS --> |LogEntry| LP
 
         LP --> |Structured Logs| MLPR[ML Pattern Refinement<br/>AI Enhancement Layer]
-        MLPR --> |Enhanced Analysis| PD[Pattern Detection System<br/>Multi-Layer Analysis]
-        PD --> |Pattern Match| TA[Triage Agent<br/>Gemini Flash]
+        MLPR --> |Analysis| PD[Pattern Detection System<br/>Multi-Layer Analysis]
+        PD --> |Pattern Match| TA[Triage Agent<br/>Multi-Provider AI]
         LP --> |Structured Logs| TA
-        TA --> |TriagePacket| AA[Enhanced Analysis Agent<br/>Dynamic Prompt Generation]
+        TA --> |TriagePacket| AA[Analysis Agent<br/>Dynamic Prompt Generation]
         AA --> |ValidationRequest| QA[Quantitative Analyzer<br/>Code Execution]
         QA --> |EmpiricalData| AA
-        AA --> |RemediationPlan| UECG[Unified Enhanced<br/>Code Generation System]
+        AA --> |RemediationPlan| UECG[Unified<br/>Code Generation System]
         UECG --> |Generated Code| RA[Remediation Agent]
     end
 
@@ -68,7 +74,7 @@ graph TB
     subgraph "ML Pattern Refinement Layer"
         MLPR --> LQV[Log Quality<br/>Validator]
         MLPR --> LSan[Log Sanitizer<br/>PII Removal]
-        MLPR --> GEPD[Gemini Enhanced<br/>Pattern Detector]
+        MLPR --> GEPD[AI Pattern<br/>Detector]
         MLPR --> GRC[Response Cache<br/>Cost Optimization]
     end
 
@@ -79,7 +85,7 @@ graph TB
         PD --> CS[Confidence<br/>Scoring]
     end
 
-    subgraph "Unified Enhanced Code Generation System"
+    subgraph "Unified Code Generation System"
         UECG --> UWO[Unified Workflow<br/>Orchestrator]
         UWO --> WCM[Workflow Context<br/>Manager]
         UWO --> WAE[Workflow Analysis<br/>Engine]
@@ -105,6 +111,15 @@ graph TB
         RA --> |Notifications| SLACK[Slack/PagerDuty]
         MLPR --> |Code Context| GH
         UECG --> |Repository Analysis| GH
+    end
+
+    subgraph "Multi-Provider AI System"
+        OAI[OpenAI<br/>GPT-4, GPT-3.5] --> TA
+        ANTH[Anthropic<br/>Claude-3] --> AA
+        GOOG[Google<br/>AI Models] --> QA
+        COH[Cohere<br/>Command] --> UECG
+        OLL[Ollama<br/>Local Models] --> RA
+        LITE[LiteLLM<br/>100+ Providers] --> TA
     end
 
     subgraph "Configuration & Resilience"
@@ -137,31 +152,32 @@ graph TB
     class LS legacyComponent
 ```
 
-### Multi-Model AI Strategy
+### Multi-Provider AI Strategy
 
-The system leverages different Gemini models optimized for specific tasks:
+The system leverages different AI providers optimized for specific tasks:
 
-- **Gemini Flash**: High-speed log triage and classification (cost-optimized)
-- **Gemini Pro**: Deep analysis and code generation (accuracy-optimized)
-- **Code Execution**: Empirical validation and quantitative analysis
+- **Fast Models** (GPT-4o-mini, Claude-3 Haiku, Gemini Flash): High-speed log triage and classification (cost-optimized)
+- **Balanced Models** (GPT-4, Claude-3 Sonnet, Gemini Pro): Deep analysis and code generation (accuracy-optimized)
+- **Specialized Models** (Code-specific models, local Ollama): Empirical validation and quantitative analysis
+- **100+ Providers**: Via LiteLLM integration for maximum flexibility and cost optimization
 
-### Enhanced Dynamic Prompt Generation System
+### Dynamic Prompt Generation System
 
-The Gemini SRE Agent now features a **revolutionary dynamic prompt generation system** that automatically creates context-aware, specialized prompts for optimal code generation:
+The Cloud SRE Agent now features a **revolutionary dynamic prompt generation system** that automatically creates context-aware, specialized prompts for optimal code generation across multiple AI providers:
 
 ```mermaid
 graph TB
-    subgraph "Enhanced Prompt Generation Pipeline"
+    subgraph "Prompt Generation Pipeline"
         TC[Task Context] --> APS[Adaptive Prompt Strategy]
         IC[Issue Context] --> APS
         RC[Repository Context] --> APS
 
-        APS --> |Complex Issues| MPG[Meta-Prompt Generator<br/>Gemini Flash]
+        APS --> |Complex Issues| MPG[Meta-Prompt Generator<br/>Fast AI Models]
         APS --> |Specialized Issues| SPT[Specialized Templates<br/>Database/API/Security]
         APS --> |Simple Issues| GPT[Generic Prompt Template]
 
-        MPG --> |Optimized Prompt| MPG2[Meta-Prompt Generator<br/>Gemini Pro]
-        MPG2 --> |Final Prompt| EAA[Enhanced Analysis Agent]
+        MPG --> |Optimized Prompt| MPG2[Meta-Prompt Generator<br/>Advanced AI Models]
+        MPG2 --> |Final Prompt| EAA[Analysis Agent]
         SPT --> |Specialized Prompt| EAA
         GPT --> |Generic Prompt| EAA
 
@@ -180,11 +196,11 @@ graph TB
 
 **Key Capabilities:**
 
-- **Meta-Prompt Generation**: Uses Gemini Flash to generate optimized prompts for Gemini Pro, creating a "AI teaching AI" approach
+- **Meta-Prompt Generation**: Uses Fast AI models to generate optimized prompts for Advanced AI models, creating an "AI teaching AI" approach across providers
 - **Context-Aware Templates**: Automatically selects specialized prompt templates based on issue type (database errors, API failures, security issues, etc.)
-- **Adaptive Strategy Selection**: Intelligently chooses between meta-prompt, specialized, or generic approaches based on issue complexity
+- **Adaptive Strategy Selection**: Intelligently chooses between meta-prompt, specialized, or generic approaches based on issue complexity and available AI providers
 - **Multi-Stage Validation**: Implements iterative refinement with validation feedback loops
-- **Fallback Mechanisms**: Gracefully degrades to simpler approaches if advanced features fail
+- **Fallback Mechanisms**: Gracefully degrades to simpler approaches or alternative providers if advanced features or primary providers fail
 - **Performance Optimization**: Caching and similarity matching for cost-effective prompt generation
 
 **Issue Type Specialization:**
@@ -195,15 +211,15 @@ graph TB
 - **Service Errors**: Microservice communication, dependency failures, resource exhaustion
 - **Infrastructure Issues**: Deployment problems, configuration errors, scaling issues
 
-## Unified Enhanced Code Generation System
+## Unified Code Generation System
 
-The Gemini SRE Agent now features a **comprehensive unified enhanced code generation system** that provides end-to-end automated remediation capabilities. This system represents a significant advancement in AI-powered incident response, combining specialized code generators, multi-level validation, performance optimization, and adaptive learning.
+The Cloud SRE Agent features a **comprehensive unified code generation system** that provides end-to-end automated remediation capabilities. This system represents a significant advancement in AI-powered incident response, combining specialized code generators, multi-level validation, performance optimization, and adaptive learning.
 
 ### Unified Code Generation Architecture
 
 ```mermaid
 graph TB
-    subgraph "Unified Enhanced Code Generation Pipeline"
+    subgraph "Unified Code Generation Pipeline"
         UWO[Unified Workflow<br/>Orchestrator] --> WCM[Workflow Context<br/>Manager]
         UWO --> WAE[Workflow Analysis<br/>Engine]
         UWO --> WCG[Workflow Code<br/>Generator]
@@ -213,7 +229,7 @@ graph TB
         WCM --> |Context Building| IC[Issue Context<br/>Cache]
         WCM --> |Repository Analysis| RC[Repository Context<br/>Cache]
 
-        WAE --> |Enhanced Analysis| EAA[Enhanced Analysis<br/>Agent]
+        WAE --> |Analysis| EAA[Analysis<br/>Agent]
         EAA --> |Meta-Prompt Generation| MPG[Meta-Prompt<br/>Generator]
         EAA --> |Adaptive Strategy| APS[Adaptive Prompt<br/>Strategy]
 
@@ -231,7 +247,7 @@ graph TB
 
         WMC --> |Performance Monitoring| PM[Performance<br/>Monitor]
         WMC --> |Cost Tracking| CT[Cost<br/>Tracker]
-        WMC --> |Learning System| ECL[Enhanced Code<br/>Generation Learning]
+        WMC --> |Learning System| ECL[Code<br/>Generation Learning]
     end
 
     classDef orchestrator fill:#e1f5fe,stroke:#01579b,stroke-width:3px
@@ -256,17 +272,17 @@ graph TB
 - **Async Optimization**: Concurrent task execution with priority queuing and retry mechanisms
 - **Performance Monitoring**: Real-time metrics collection and trend analysis
 
-**Enhanced Analysis Engine:**
+        **Analysis Engine:**
 
-- **Context-Aware Analysis**: Incorporates repository structure, recent commits, and issue patterns
-- **Meta-Prompt Generation**: Uses AI to generate optimized prompts for better code generation
-- **Adaptive Strategy Selection**: Chooses optimal analysis approach based on issue complexity
-- **Fallback Mechanisms**: Graceful degradation to simpler approaches when needed
+        - **Context-Aware Analysis**: Incorporates repository structure, recent commits, and issue patterns
+        - **Meta-Prompt Generation**: Uses AI to generate optimized prompts for better code generation across multiple providers
+        - **Adaptive Strategy Selection**: Chooses optimal analysis approach based on issue complexity and available AI providers
+        - **Fallback Mechanisms**: Graceful degradation to simpler approaches or alternative providers when needed
 
 **Specialized Code Generators:**
 
 - **API Code Generator**: Handles authentication, rate limiting, endpoint failures, response validation
-- **Database Code Generator**: Manages connection issues, query optimization, deadlocks, migrations
+- **Database Code Generator**: Manages connection issues, query optimization, deadlocks, schema changes
 - **Security Code Generator**: Addresses vulnerability assessment, access control, encryption problems
 - **Factory Pattern**: Dynamic generator selection based on issue type and context
 
@@ -298,7 +314,7 @@ graph TB
 
 - **Context-Aware**: Incorporates repository structure, recent changes, and issue patterns
 - **Specialized Approaches**: Domain-specific generators for different types of issues
-- **Multi-Model Strategy**: Leverages different Gemini models for optimal results
+- **Multi-Provider Strategy**: Leverages different AI models from various providers for optimal results
 - **Iterative Refinement**: Continuous improvement based on validation feedback
 
 **Quality Assurance:**
@@ -324,11 +340,11 @@ graph TB
 
 This unified system represents a significant advancement in AI-powered incident response, providing a complete end-to-end solution for automated code generation, validation, and deployment in SRE workflows.
 
-## New Log Ingestion System
+## Log Ingestion System
 
-The Gemini SRE Agent now features a **comprehensive new log ingestion system** that provides enterprise-grade log processing capabilities with full backward compatibility. This system represents a major architectural advancement, offering pluggable adapters, comprehensive monitoring, and production-ready resilience patterns.
+The Cloud SRE Agent features a **comprehensive log ingestion system** that provides enterprise-grade log processing capabilities with full backward compatibility. This system offers pluggable adapters, comprehensive monitoring, and production-ready resilience patterns.
 
-### Enhanced Log Ingestion Architecture
+### Log Ingestion Architecture
 
 ```mermaid
 graph TB
@@ -388,7 +404,7 @@ graph TB
 - **Kubernetes**: Container log collection with namespace filtering and pod-level granularity
 - **File System**: Local and remote file monitoring with rotation support and pattern matching
 - **AWS CloudWatch**: Amazon CloudWatch Logs integration with log group and stream management
-- **Extensible Architecture**: Easy addition of new log sources through the adapter pattern
+- **Extensible Architecture**: Easy addition of log sources through the adapter pattern
 
 **Enterprise-Grade Monitoring:**
 
@@ -411,15 +427,15 @@ graph TB
 - **Validation**: Comprehensive configuration validation with detailed error reporting
 - **Environment Integration**: Seamless integration with environment variables and secrets management
 
-### Migration Strategy
+### Configuration Strategy
 
-The new log ingestion system is designed for **zero-downtime migration** with full backward compatibility:
+The log ingestion system is designed for **zero-downtime deployment** with full backward compatibility:
 
 **Feature Flag Control:**
 
 ```bash
-# Enable new ingestion system
-export USE_NEW_INGESTION_SYSTEM=true
+# Enable log ingestion system
+export USE_LOG_INGESTION_SYSTEM=true
 
 # Enable comprehensive monitoring
 export ENABLE_MONITORING=true
@@ -428,25 +444,25 @@ export ENABLE_MONITORING=true
 export ENABLE_LEGACY_FALLBACK=true
 ```
 
-**Migration Phases:**
+**Deployment Phases:**
 
-1. **Phase 1**: Deploy with new system disabled, enable monitoring
-2. **Phase 2**: Enable new system for non-critical services
+1. **Phase 1**: Deploy with system disabled, enable monitoring
+2. **Phase 2**: Enable system for non-critical services
 3. **Phase 3**: Gradual expansion based on confidence and metrics
-4. **Phase 4**: Full migration with legacy system deprecation
+4. **Phase 4**: Full deployment with legacy system deprecation
 
 **Safety Features:**
 
-- **Automatic Fallback**: Seamless fallback to legacy system if new system fails
+- **Automatic Fallback**: Seamless fallback to legacy system if system fails
 - **Health Monitoring**: Real-time health checks and status reporting
-- **Performance Tracking**: Comprehensive metrics for migration validation
+- **Performance Tracking**: Comprehensive metrics for deployment validation
 - **Rollback Capability**: Instant rollback via environment variable changes
 
 ### Benefits
 
 **Operational Excellence:**
 
-- **Enhanced Observability**: Real-time monitoring and alerting capabilities
+- **Observability**: Real-time monitoring and alerting capabilities
 - **Improved Reliability**: Circuit breakers, retries, and graceful error handling
 - **Better Performance**: Optimized processing with backpressure management
 - **Simplified Operations**: Unified configuration and monitoring interface
@@ -455,7 +471,7 @@ export ENABLE_LEGACY_FALLBACK=true
 
 - **Multi-Cloud Ready**: Support for GCP, AWS, and hybrid environments
 - **Container Native**: Kubernetes integration with pod and namespace awareness
-- **Extensible Design**: Easy addition of new log sources and processing capabilities
+- **Extensible Design**: Easy addition of log sources and processing capabilities
 - **Scalable Processing**: Horizontal scaling with load balancing and distribution
 
 **Cost Optimization:**
@@ -467,21 +483,21 @@ export ENABLE_LEGACY_FALLBACK=true
 
 ## Key Features
 
-- **🚀 New Log Ingestion System:** Enterprise-grade log processing with pluggable adapters, comprehensive monitoring, and production-ready resilience patterns. Supports GCP Pub/Sub, Kubernetes, File System, and AWS CloudWatch with zero-downtime migration.
+- **🚀 Log Ingestion System:** Enterprise-grade log processing with pluggable adapters, comprehensive monitoring, and production-ready resilience patterns. Supports GCP Pub/Sub, Kubernetes, File System, and AWS CloudWatch with zero-downtime deployment.
 - **📊 Comprehensive Monitoring:** Real-time metrics collection, health checks, performance monitoring, and intelligent alerting with configurable escalation policies and notification channels.
 - **🛡️ Production-Ready Resilience:** Circuit breakers, backpressure management, automatic retries, and graceful degradation with seamless fallback to legacy systems.
-- **🔧 Feature Flag Migration:** Safe, gradual rollout with environment variable controls and automatic fallback capabilities for risk-free deployment.
-- **Unified Enhanced Code Generation System:** Complete AI-powered code generation pipeline with specialized generators, validation, and learning capabilities for automated remediation.
-- **AI-Enhanced Pattern Detection:** Multi-layer analysis engine enhanced with Gemini AI models for intelligent pattern recognition, confidence scoring, and context-aware analysis.
-- **Gemini ML Pattern Refinement:** Advanced AI pipeline with quality validation, PII sanitization, smart caching, and cost optimization for production-ready AI analysis.
-- **Enhanced Dynamic Prompt Generation:** Revolutionary AI-powered prompt generation system with meta-prompt optimization, context-aware templates, and adaptive strategy selection for superior code generation.
+- **🔧 Feature Flag Configuration:** Safe, gradual rollout with environment variable controls and automatic fallback capabilities for risk-free deployment.
+- **Unified Code Generation System:** Complete AI-powered code generation pipeline with specialized generators, validation, and learning capabilities for automated remediation.
+- **AI Pattern Detection:** Multi-layer analysis engine with AI models for intelligent pattern recognition, confidence scoring, and context-aware analysis.
+- **ML Pattern Refinement:** Advanced AI pipeline with quality validation, PII sanitization, smart caching, and cost optimization for production-ready AI analysis.
+- **Dynamic Prompt Generation:** Revolutionary AI-powered prompt generation system with meta-prompt optimization, context-aware templates, and adaptive strategy selection for superior code generation.
 - **Configuration Management:** Modern, type-safe configuration system with Pydantic validation, environment variable integration, hot reloading, and comprehensive CLI tools for validation and management.
-- **Intelligent Log Analysis:** Leverages dual Gemini models (Flash for speed, Pro for accuracy) with enhanced dynamic prompting and few-shot learning capabilities.
+- **Intelligent Log Analysis:** Leverages multiple AI models (fast models for speed, advanced models for accuracy) with dynamic prompting and few-shot learning capabilities.
 - **Proactive Incident Detection:** Identifies 7+ distinct failure patterns with AI-powered classification and confidence scoring across 15+ quantitative factors.
 - **Code-Context Integration:** Automated analysis incorporating recent commits, dependencies, and repository structure for more accurate remediation.
 - **Cost-Optimized AI Operations:** Intelligent response caching with similarity matching, reducing API costs by up to 60% while maintaining accuracy.
 - **Quality Assurance Pipeline:** Pre-processing validation, PII sanitization, and performance monitoring ensuring reliable AI analysis.
-- **Automated Remediation:** Generates and submits GitHub Pull Requests with AI-enhanced context analysis and code repository integration.
+- **Automated Remediation:** Generates and submits GitHub Pull Requests with AI context analysis and code repository integration.
 - **Multi-Service & Multi-Repository Monitoring:** Designed to monitor logs from various services and manage remediation across different GitHub repositories.
 - **Dynamic Baseline Tracking:** Maintains adaptive baselines for anomaly detection with AI-powered threshold evaluation.
 - **Built-in Resilience:** Incorporates robust resilience patterns (circuit breakers, retries, bulkheads, rate limiting) with AI-aware error handling.
@@ -561,17 +577,17 @@ A quantitative confidence assessment system evaluates pattern matches using 15+ 
 
 This multi-layer approach reduces false positives while maintaining high sensitivity to genuine incidents. The confidence scoring system provides transparency into classification decisions, enabling operators to understand and tune detection behavior based on their specific environment characteristics.
 
-## Gemini ML Pattern Refinement System
+## ML Pattern Refinement System
 
-The Gemini ML Pattern Refinement System enhances the 4-layer pattern detection with advanced AI capabilities, providing intelligent analysis of incident patterns and automated code-context integration for more accurate remediation.
+The ML Pattern Refinement System enhances the 4-layer pattern detection with advanced AI capabilities, providing intelligent analysis of incident patterns and automated code-context integration for more accurate remediation.
 
 ### ML Pattern Refinement Components
 
 **AI-Powered Analysis Pipeline:**
 
-- **GeminiPromptEngine**: Advanced prompt management with structured templates and few-shot learning capabilities
-- **GeminiEnhancedPatternDetector**: Ensemble pattern detection combining rule-based and AI-driven classification
-- **GeminiResponseCache**: Intelligent response caching with similarity-based matching to optimize API costs
+- **PromptEngine**: Advanced prompt management with structured templates and few-shot learning capabilities across multiple AI providers
+- **PatternDetector**: Ensemble pattern detection combining rule-based and AI-driven classification using various AI models
+- **ResponseCache**: Intelligent response caching with similarity-based matching to optimize API costs across providers
 - **PatternContextExtractor**: Context extraction from incident data with code repository integration
 
 **Quality Assurance & Performance:**
@@ -595,12 +611,12 @@ graph TB
         LS[Log Stream] --> LQV[Log Quality<br/>Validator]
         LQV --> LSan[Log Sanitizer<br/>PII Removal]
         LSan --> PCE[Pattern Context<br/>Extractor]
-        PCE --> |Context Data| GEPD[Gemini Enhanced<br/>Pattern Detector]
+        PCE --> |Context Data| GEPD[AI Pattern<br/>Detector]
 
         subgraph "AI Processing Layer"
-            GEPD --> GPE[Gemini Prompt<br/>Engine]
-            GPE --> |Structured Prompts| GF[Gemini Flash<br/>Fast Classification]
-            GPE --> |Deep Analysis| GP[Gemini Pro<br/>Detailed Analysis]
+            GEPD --> GPE[AI Prompt<br/>Engine]
+            GPE --> |Structured Prompts| GF[Fast AI Models<br/>Fast Classification]
+            GPE --> |Deep Analysis| GP[Advanced AI Models<br/>Detailed Analysis]
         end
 
         subgraph "Performance & Cost Management"
@@ -625,9 +641,9 @@ graph TB
     class CT,MPM performanceComponent
 ```
 
-**Enhanced Pattern Analysis:**
+**Pattern Analysis:**
 
-- Multi-model AI strategy leveraging both Gemini Flash (speed) and Gemini Pro (accuracy)
+- Multi-provider AI strategy leveraging both Fast AI models (speed) and Balanced AI models (accuracy) from various providers
 - Similarity-based response caching reducing API costs by up to 60% while maintaining accuracy
 - Context-aware analysis incorporating recent code changes, dependencies, and repository structure
 - Structured output schemas ensuring consistent, validated AI responses
@@ -645,21 +661,21 @@ graph TB
 - Pattern-based credential detection and replacement before AI processing
 - Audit logging for all AI interactions and data transformations
 
-This ML enhancement layer transforms raw log analysis into intelligent, context-aware incident detection with automated code repository integration, significantly improving remediation accuracy while optimizing operational costs.
+        This ML enhancement layer transforms raw log analysis into intelligent, context-aware incident detection with automated code repository integration using multiple AI providers, significantly improving remediation accuracy while optimizing operational costs.
 
 ## Documentation
 
-For detailed information on the Gemini SRE Agent, please refer to the following documentation sections:
+For detailed information on the Cloud SRE Agent, please refer to the following documentation sections:
 
 - [**Quick Start Guide**](docs/QUICKSTART.md): Get the agent up and running in 15 minutes.
 - [**Architecture Overview**](docs/ARCHITECTURE.md): Understand the core components and data flow of the agent.
-- [**🚀 New Log Ingestion System Migration Guide**](docs/NEW_INGESTION_SYSTEM_MIGRATION.md): Complete guide to migrating to the new enterprise-grade log ingestion system with feature flags, monitoring, and zero-downtime deployment.
-- [**Unified Enhanced Code Generation System**](docs/UNIFIED_ENHANCED_CODE_GENERATION.md): Comprehensive guide to the complete AI-powered code generation pipeline.
-- [**ML Pattern Refinement System**](docs/ML_PATTERN_REFINEMENT.md): Comprehensive guide to the Gemini AI enhancement layer.
-- [**Enhanced Prompt Generation System**](docs/ENHANCED_PROMPT_GENERATION.md): Deep dive into the revolutionary dynamic prompt generation capabilities.
+- [**🚀 Log Ingestion System Guide**](docs/LOG_INGESTION_SYSTEM_GUIDE.md): Complete guide to the enterprise-grade log ingestion system with feature flags, monitoring, and zero-downtime deployment.
+- [**Unified Code Generation System**](docs/UNIFIED_CODE_GENERATION_SYSTEM.md): Comprehensive guide to the complete AI-powered code generation pipeline.
+- [**ML Pattern Refinement System**](docs/ML_PATTERN_REFINEMENT.md): Comprehensive guide to the AI enhancement layer.
+- [**Dynamic Prompt Generation System**](docs/DYNAMIC_PROMPT_GENERATION_SYSTEM.md): Deep dive into the revolutionary dynamic prompt generation capabilities.
 - [**GCP Infrastructure Setup Guide**](docs/GCP_SETUP.md): Instructions for setting up necessary Google Cloud infrastructure.
 - [**Setup and Installation**](docs/SETUP_INSTALLATION.md): A comprehensive guide to getting the project up and running.
-- [**Configuration Guide**](docs/CONFIGURATION.md): Learn how to customize the agent's behavior with the enhanced type-safe configuration system.
+- [**Configuration Guide**](docs/CONFIGURATION.md): Learn how to customize the agent's behavior with the type-safe configuration system.
 
 - [**Deployment Guide**](docs/DEPLOYMENT.md): Instructions for deploying the agent to Google Cloud Run and other environments.
 - [**Multi-Environment Guide**](docs/ENVIRONMENTS.md): Strategies for managing the agent across different environments.
@@ -676,15 +692,15 @@ For detailed information on the Gemini SRE Agent, please refer to the following 
 
 To quickly get started, ensure you have Python 3.12+ and `uv` installed. Clone the repository, install dependencies with `uv sync`, authenticate your `gcloud` CLI, and set your `GITHUB_TOKEN` environment variable. Then, explore `config/config.yaml` to define your monitoring services.
 
-**New Log Ingestion System:** The agent now features a comprehensive new log ingestion system with enterprise-grade monitoring and resilience. Enable it with:
+**Log Ingestion System:** The agent features a comprehensive log ingestion system with enterprise-grade monitoring and resilience. Enable it with:
 
 ```bash
-export USE_NEW_INGESTION_SYSTEM=true
+export USE_LOG_INGESTION_SYSTEM=true
 export ENABLE_MONITORING=true
 export ENABLE_LEGACY_FALLBACK=true
 ```
 
-You can run the agent locally with `python main.py` or deploy it to Cloud Run using the provided `deploy.sh` script. The new system provides seamless migration with full backward compatibility.
+You can run the agent locally with `python main.py` or deploy it to Cloud Run using the provided `deploy.sh` script. The system provides seamless deployment with full backward compatibility.
 
 ## Contributing
 

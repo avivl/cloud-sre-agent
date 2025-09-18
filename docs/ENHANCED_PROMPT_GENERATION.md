@@ -1,8 +1,8 @@
-# Enhanced Dynamic Prompt Generation System
+# Dynamic Prompt Generation System
 
 ## Overview
 
-The Gemini SRE Agent's **Enhanced Dynamic Prompt Generation System** represents a breakthrough in AI-powered code generation. This system automatically creates context-aware, specialized prompts that dramatically improve the quality and accuracy of generated code fixes.
+The Cloud SRE Agent's **Dynamic Prompt Generation System** represents a breakthrough in AI-powered code generation. This system automatically creates context-aware, specialized prompts that dramatically improve the quality and accuracy of generated code fixes.
 
 ## Architecture Overview
 
@@ -23,7 +23,7 @@ graph TB
     
     subgraph "Prompt Generation"
         MPG --> |Meta-Prompt| MPG2[Meta-Prompt Generator<br/>Gemini Pro]
-        MPG2 --> |Optimized Prompt| EAA[Enhanced Analysis Agent]
+        MPG2 --> |Optimized Prompt| EAA[Analysis Agent]
         SPT --> |Specialized Prompt| EAA
         GPT --> |Generic Prompt| EAA
     end
@@ -71,7 +71,7 @@ Domain-specific templates optimized for different issue types:
 - Connection pool management
 - Query optimization and deadlock resolution
 - Transaction handling and rollback strategies
-- Database schema validation and migration
+- Database schema validation and updates
 
 #### API Error Templates
 - Authentication and authorization issues
@@ -91,7 +91,7 @@ Domain-specific templates optimized for different issue types:
 - Resource exhaustion management
 - Circuit breaker and retry logic
 
-### 4. Enhanced Analysis Agent (`EnhancedAnalysisAgent`)
+### 4. Analysis Agent (`AnalysisAgent`)
 
 The integration layer that orchestrates all components:
 
@@ -175,14 +175,14 @@ The generated prompt is executed and results are validated:
 
 ```python
 # Execute analysis with generated prompt
-result = await enhanced_agent.analyze_issue(
+result = await analysis_agent.analyze_issue(
     triage_packet, historical_logs, configs, flow_id
 )
 
 # Validate and refine if needed
 if not result.get("success"):
     # Apply fallback strategy
-    result = await enhanced_agent._fallback_analysis(...)
+    result = await analysis_agent._fallback_analysis(...)
 
 # Convert to RemediationPlan for compatibility
 remediation_plan = RemediationPlan(
@@ -216,11 +216,11 @@ remediation_plan = RemediationPlan(
 
 ## Configuration
 
-The Enhanced Prompt Generation System is configured through the `EnhancedAnalysisConfig`:
+The Dynamic Prompt Generation System is configured through the `AnalysisConfig`:
 
 ```yaml
 # Example configuration
-enhanced_analysis:
+analysis:
   main_model: "gemini-1.5-pro-001"      # Primary analysis model
   meta_model: "gemini-1.5-flash-001"    # Meta-prompt generation model
   enable_meta_prompting: true            # Enable meta-prompt generation
@@ -312,7 +312,7 @@ Enable debug logging for detailed prompt generation insights:
 # config/config.yaml
 logging:
   level: DEBUG
-  enhanced_prompt_generation: true
+  dynamic_prompt_generation: true
   meta_prompt_details: true
   template_selection: true
 ```
@@ -333,11 +333,11 @@ logging:
 
 ## Conclusion
 
-The Enhanced Dynamic Prompt Generation System represents a significant advancement in AI-powered code generation. By combining meta-prompt generation, specialized templates, and adaptive strategy selection, it provides:
+The Dynamic Prompt Generation System represents a significant advancement in AI-powered code generation. By combining meta-prompt generation, specialized templates, and adaptive strategy selection, it provides:
 
 - **Higher Quality Code**: Context-aware, domain-specific generation
 - **Better Reliability**: Multiple fallback layers and validation
 - **Cost Efficiency**: Intelligent caching and optimization
 - **Adaptive Intelligence**: Automatic strategy selection based on context
 
-This system transforms the Gemini SRE Agent from a simple log analyzer into an intelligent, context-aware code generation engine that can handle the full spectrum of SRE challenges with superior results.
+This system transforms the Cloud SRE Agent from a simple log analyzer into an intelligent, context-aware code generation engine that can handle the full spectrum of SRE challenges with superior results.

@@ -1,10 +1,10 @@
 # Troubleshooting Guide
 
-This guide provides systematic approaches for troubleshooting the Gemini SRE Agent using the flow tracking system described in [LOGGING.md](LOGGING.md).
+This guide provides systematic approaches for troubleshooting the Cloud SRE Agent using the flow tracking system described in [LOGGING.md](LOGGING.md).
 
 ## Overview
 
-The Gemini SRE Agent uses structured logging with flow tracking to enable complete traceability from log ingestion through remediation. Every issue can be traced using:
+The Cloud SRE Agent uses structured logging with flow tracking to enable complete traceability from log ingestion through remediation. Every issue can be traced using:
 
 - **`flow_id`**: Tracks a single log entry through the entire pipeline
 - **`issue_id`**: Identifies a specific issue/incident across components
@@ -31,9 +31,9 @@ grep -E "(flow_id=$FLOW_ID.*ERROR_HANDLING|ERROR_HANDLING.*flow_id=$FLOW_ID)" /p
 ```
 
 **Common Solutions:**
-- **JSON Decode Errors**: Check Pub/Sub message format
-- **Model API Errors**: Verify GCP credentials and quotas
-- **Network Issues**: Check connectivity to Vertex AI
+- **JSON Decode Errors**: Check messaging service message format
+- **Model API Errors**: Verify cloud platform credentials and quotas
+- **Network Issues**: Check connectivity to AI services
 
 #### Symptom: Triage completes but analysis never starts
 ```bash
@@ -164,7 +164,7 @@ TIME_WINDOW="${1:-10m}"  # Default to last 10 minutes
 echo "=== Recent Activity (last $TIME_WINDOW) ==="
 
 echo
-echo "New flows started:"
+echo "Flows started:"
 grep "\[LOG_INGESTION\] Received message" /path/to/logs | tail -10
 
 echo
@@ -191,7 +191,7 @@ grep "\[TRIAGE\] Raw model response" /path/to/logs | tail -5
 grep "Failed to validate TriagePacket schema" /path/to/logs
 
 # Model call failures  
-grep "Error calling Gemini Triage model" /path/to/logs
+grep "Error calling AI Triage model" /path/to/logs
 ```
 
 ### AnalysisAgent Debugging
@@ -203,7 +203,7 @@ grep "\[ANALYSIS\] Raw model response" /path/to/logs | tail -5
 grep "Failed to validate RemediationPlan schema" /path/to/logs
 
 # Model call failures
-grep "Error calling Gemini Analysis model" /path/to/logs
+grep "Error calling AI Analysis model" /path/to/logs
 ```
 
 ### RemediationAgent Debugging
@@ -225,7 +225,7 @@ grep "Branch.*already exists\|Branch created successfully" /path/to/logs | tail 
 #!/bin/bash
 # health_check.sh - Daily system health verification
 
-echo "=== Gemini SRE Agent Health Check ==="
+echo "=== Cloud SRE Agent Health Check ==="
 echo "Date: $(date)"
 echo
 
@@ -336,7 +336,7 @@ When reporting issues, collect:
 1. **Flow trace:** Complete log output for affected flow_id
 2. **Error context:** All ERROR_HANDLING messages with timestamps
 3. **Configuration:** Current config.yaml (redacted)
-4. **System info:** Version, deployment environment
+4. **System info:** Configuration, deployment environment
 
 ### Support Information
 - **Documentation:** [LOGGING.md](LOGGING.md) for log format reference  

@@ -1,15 +1,15 @@
 # Mirascope Prompt Management Integration
 
-This document describes the comprehensive Mirascope integration for advanced prompt management in the Gemini SRE Agent system.
+This document describes the comprehensive Mirascope integration for advanced prompt management in the Cloud SRE Agent system.
 
 ## Overview
 
 The Mirascope integration provides enterprise-grade prompt management capabilities including:
 
-- **Version Control**: Track and manage multiple versions of prompts
+- **Configuration Control**: Track and manage multiple configurations of prompts
 - **Testing Framework**: Comprehensive testing and validation of prompts
 - **Performance Analytics**: Detailed metrics and performance tracking
-- **Environment Management**: Deploy different prompt versions across environments
+- **Environment Management**: Deploy different prompt configurations across environments
 - **Team Collaboration**: Review and approval workflows
 - **Optimization**: AI-powered prompt optimization
 - **Structured Output**: Integration with Pydantic response models
@@ -21,7 +21,7 @@ The Mirascope integration provides enterprise-grade prompt management capabiliti
 │                    Mirascope Integration                    │
 ├─────────────────────────────────────────────────────────────┤
 │  PromptManager  │  PromptEnvironment  │  CollaborationMgr  │
-│  - Versioning   │  - Environment      │  - Reviews         │
+│  - Configuration   │  - Environment      │  - Reviews         │
 │  - Testing      │  - Deployment       │  - Approvals       │
 │  - Metrics      │  - Fallback         │  - Workflow        │
 ├─────────────────────────────────────────────────────────────┤
@@ -35,7 +35,7 @@ The Mirascope integration provides enterprise-grade prompt management capabiliti
 
 ### 1. PromptManager
 
-The central component for managing prompts with full version control.
+The central component for managing prompts with full configuration control.
 
 ```python
 from gemini_sre_agent.llm.mirascope_integration import PromptManager
@@ -50,14 +50,14 @@ prompt_id = manager.create_prompt(
     description="Analyzes SRE logs for issues"
 )
 
-# Create a new version
-version = manager.create_version(
+# Create a new configuration
+config = manager.create_configuration(
     prompt_id,
     "Analyze this log for errors: {{log_data}}"
 )
 
 # Get a prompt (returns Mirascope Prompt object)
-prompt = manager.get_prompt(prompt_id, version)
+prompt = manager.get_prompt(prompt_id, config)
 ```
 
 ### 2. PromptEnvironment
@@ -71,9 +71,9 @@ from gemini_sre_agent.llm.mirascope_integration import PromptEnvironment
 prod_env = PromptEnvironment("production", manager)
 dev_env = PromptEnvironment("development", manager)
 
-# Deploy specific versions to environments
-prod_env.deploy_prompt(prompt_id, "1.0.0")  # Stable version
-dev_env.deploy_prompt(prompt_id, "1.1.0")  # Latest version
+# Deploy specific configurations to environments
+prod_env.deploy_prompt(prompt_id, "1.0.0")  # Stable configuration
+dev_env.deploy_prompt(prompt_id, "1.1.0")  # Latest configuration
 
 # Get environment-specific prompts
 prod_prompt = prod_env.get_prompt(prompt_id)
@@ -118,7 +118,7 @@ collab_manager = PromptCollaborationManager(manager)
 # Create a review
 review_id = collab_manager.create_review(
     prompt_id="sre_analysis",
-    version="1.1.0",
+    configuration="1.1.0",
     reviewer="senior@company.com",
     comments="This looks good but needs more context"
 )
@@ -145,7 +145,7 @@ test_cases = [
     {"inputs": {"log_data": "Warning: memory"}, "expected": "memory warning"}
 ]
 
-new_version = await optimizer.optimize_prompt(
+new_config = await optimizer.optimize_prompt(
     prompt_id="sre_analysis",
     optimization_goals=["clarity", "accuracy", "conciseness"],
     test_cases=test_cases
@@ -167,8 +167,8 @@ prompt_id = manager.create_prompt(
     description="Analyzes log entries for issues"
 )
 
-# Create improved version
-manager.create_version(
+# Create improved configuration
+manager.create_configuration(
     prompt_id,
     "Analyze this log entry for errors and warnings: {{log_entry}}"
 )
@@ -190,10 +190,10 @@ print(f"Test success rate: {results['success_rate']:.2%}")
 prod_env = PromptEnvironment("production", manager)
 staging_env = PromptEnvironment("staging", manager)
 
-# Deploy stable version to production
+# Deploy stable configuration to production
 prod_env.deploy_prompt(prompt_id, "1.0.0")
 
-# Deploy latest version to staging for testing
+# Deploy latest configuration to staging for testing
 staging_env.deploy_prompt(prompt_id, "1.1.0")
 
 # Use environment-specific prompts
@@ -233,11 +233,11 @@ result = await prompt_service.execute_prompt(
     record_metrics=True
 )
 
-# View metrics for a prompt version
+# View metrics for a prompt configuration
 prompt_data = manager.prompts[prompt_id]
-version_data = prompt_data.versions[prompt_data.current_version]
-print(f"Average duration: {version_data.metrics.get('duration_seconds', 0):.2f}s")
-print(f"Success rate: {version_data.metrics.get('success', 0):.2%}")
+config_data = prompt_data.configurations[prompt_data.current_configuration]
+print(f"Average duration: {config_data.metrics.get('duration_seconds', 0):.2f}s")
+print(f"Success rate: {config_data.metrics.get('success', 0):.2%}")
 ```
 
 ### Team Collaboration
@@ -246,18 +246,18 @@ print(f"Success rate: {version_data.metrics.get('success', 0):.2%}")
 # 5. Team collaboration workflow
 collab_manager = PromptCollaborationManager(manager)
 
-# Create a review for a new version
+# Create a review for a new configuration
 review_id = collab_manager.create_review(
     prompt_id="log_analysis",
-    version="1.2.0",
+    configuration="1.2.0",
     reviewer="team-lead@company.com",
-    comments="This version looks good but could be more specific about error types"
+    comments="This configuration looks good but could be more specific about error types"
 )
 
 # Approve after review
 collab_manager.approve_review(review_id)
 
-# Deploy approved version to production
+# Deploy approved configuration to production
 prod_env.deploy_prompt(prompt_id, "1.2.0")
 ```
 
@@ -266,19 +266,19 @@ prod_env.deploy_prompt(prompt_id, "1.2.0")
 ### A/B Testing
 
 ```python
-# A/B test different prompt versions
-def run_ab_test(prompt_id, version_a, version_b, test_cases):
-    # Test version A
-    results_a = manager.test_prompt(prompt_id, test_cases, version_a)
+# A/B test different prompt configurations
+def run_ab_test(prompt_id, config_a, config_b, test_cases):
+    # Test configuration A
+    results_a = manager.test_prompt(prompt_id, test_cases, config_a)
 
-    # Test version B
-    results_b = manager.test_prompt(prompt_id, test_cases, version_b)
+    # Test configuration B
+    results_b = manager.test_prompt(prompt_id, test_cases, config_b)
 
     # Compare results
     if results_a['success_rate'] > results_b['success_rate']:
-        return version_a
+        return config_a
     else:
-        return version_b
+        return config_b
 
 # Run A/B test
 winner = run_ab_test("log_analysis", "1.0.0", "1.1.0", test_cases)
@@ -292,14 +292,14 @@ print(f"Winner: {winner}")
 def analyze_prompt_performance(prompt_id):
     prompt_data = manager.prompts[prompt_id]
 
-    for version, version_data in prompt_data.versions.items():
-        print(f"\nVersion {version}:")
-        print(f"  Tests: {len(version_data.tests)}")
-        print(f"  Metrics: {version_data.metrics}")
+    for config, config_data in prompt_data.configurations.items():
+        print(f"\nConfiguration {config}:")
+        print(f"  Tests: {len(config_data.tests)}")
+        print(f"  Metrics: {config_data.metrics}")
 
         # Analyze metrics history
-        if version_data.metrics_history:
-            durations = [m['data'].get('duration_seconds', 0) for m in version_data.metrics_history]
+        if config_data.metrics_history:
+            durations = [m['data'].get('duration_seconds', 0) for m in config_data.metrics_history]
             avg_duration = sum(durations) / len(durations)
             print(f"  Average duration: {avg_duration:.2f}s")
 
@@ -335,7 +335,7 @@ manager = PromptManager(storage_path="/path/to/prompts")
 
 # The storage directory will contain:
 # - prompts.json: Main prompt data
-# - versions/: Individual version files
+# - configurations/: Individual configuration files
 # - metrics/: Performance metrics
 # - tests/: Test results
 ```
@@ -372,11 +372,11 @@ result = await integrated_service.execute_managed_prompt(
 
 ## Best Practices
 
-### 1. Version Management
+### 1. Configuration Management
 
 - Use semantic versioning (major.minor.patch)
-- Always test new versions before deployment
-- Keep detailed changelogs for each version
+- Always test new configurations before deployment
+- Keep detailed changelogs for each configuration
 
 ### 2. Testing
 
@@ -399,15 +399,15 @@ result = await integrated_service.execute_managed_prompt(
 ### 5. Environment Management
 
 - Use separate environments for development, staging, and production
-- Deploy stable versions to production
-- Test new versions in staging first
+- Deploy stable configurations to production
+- Test new configurations in staging first
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Prompt not found**: Ensure the prompt ID exists and is correctly spelled
-2. **Version not found**: Check that the version exists for the prompt
+2. **Configuration not found**: Check that the configuration exists for the prompt
 3. **Test failures**: Review test cases and expected outputs
 4. **Performance issues**: Check metrics and consider optimization
 
@@ -432,16 +432,16 @@ result = await prompt_service.execute_prompt(
 ### PromptManager
 
 - `create_prompt(name, template, description=None, prompt_type="chat")` → str
-- `get_prompt(prompt_id, version=None)` → Prompt
-- `create_version(prompt_id, template, version=None)` → str
-- `test_prompt(prompt_id, test_cases, version=None)` → Dict
-- `record_metrics(prompt_id, metrics, version=None)` → None
+- `get_prompt(prompt_id, configuration=None)` → Prompt
+- `create_configuration(prompt_id, template, configuration=None)` → str
+- `test_prompt(prompt_id, test_cases, configuration=None)` → Dict
+- `record_metrics(prompt_id, metrics, configuration=None)` → None
 - `list_prompts()` → List[Dict]
-- `get_prompt_versions(prompt_id)` → List[str]
+- `get_prompt_configurations(prompt_id)` → List[str]
 
 ### PromptEnvironment
 
-- `deploy_prompt(prompt_id, version)` → None
+- `deploy_prompt(prompt_id, configuration)` → None
 - `get_prompt(prompt_id)` → Prompt
 
 ### LLMPromptService
@@ -461,6 +461,6 @@ result = await prompt_service.execute_prompt(
 
 ## Conclusion
 
-The Mirascope integration provides a comprehensive solution for prompt management in the Gemini SRE Agent system. It enables version control, testing, optimization, and team collaboration while maintaining seamless integration with existing LLM services.
+The Mirascope integration provides a comprehensive solution for prompt management in the Cloud SRE Agent system. It enables version control, testing, optimization, and team collaboration while maintaining seamless integration with existing LLM services.
 
 For more information, see the unit tests in `tests/llm/test_mirascope_integration.py` and the implementation in `gemini_sre_agent/llm/mirascope_integration.py`.

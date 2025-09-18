@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide provides instructions for deploying the Gemini SRE Agent to Google Cloud Run, a fully managed compute platform for deploying containerized applications. While Cloud Run is the recommended deployment target for its simplicity and scalability, the provided `Dockerfile` allows for deployment to other container orchestration platforms like Google Kubernetes Engine (GKE) or custom environments.
+This guide provides instructions for deploying the Cloud SRE Agent to various cloud platforms and container orchestration systems. While Google Cloud Run is the recommended deployment target for its simplicity and scalability, the provided `Dockerfile` allows for deployment to other platforms like Google Kubernetes Engine (GKE), Amazon ECS, Azure Container Instances, or custom environments.
 
 ## Deployment Flow Overview
 
@@ -21,17 +21,17 @@ flowchart TB
         TAG[Tag Image]
     end
     
-    subgraph "Google Cloud Platform"
-        GCR[Google Container Registry]
-        CR[Cloud Run Service]
+    subgraph "Cloud Platform"
+        GCR[Container Registry]
+        CR[Cloud Service]
         SM[Secret Manager]
         LOGS[Cloud Logging]
     end
     
     subgraph "External Services"
         GITHUB[GitHub Repository]
-        VERTEX[Vertex AI Models]
-        PUBSUB[Pub/Sub Subscriptions]
+        AI[AI Models]
+        MSG[Messaging Service]
     end
     
     DEV --> BUILD
@@ -48,8 +48,8 @@ flowchart TB
     CR --> LOGS
     
     CR <--> |Pull Requests| GITHUB
-    CR <--> |Model Inference| VERTEX
-    CR <--> |Log Messages| PUBSUB
+    CR <--> |Model Inference| AI
+    CR <--> |Log Messages| MSG
     
     classDef dev fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
     classDef build fill:#fff3e0,stroke:#f57c00,stroke-width:2px
@@ -59,7 +59,7 @@ flowchart TB
     class DEV,CODE,CONFIG,DOCKER dev
     class BUILD,IMAGE,TAG build
     class GCR,CR,SM,LOGS gcp
-    class GITHUB,VERTEX,PUBSUB external
+    class GITHUB,AI,MSG external
 ```
 
 ## Containerization with Docker
@@ -93,14 +93,14 @@ CMD ["python", "main.py"]
 **Key aspects of the Dockerfile:**
 *   **Base Image:** Uses `python:3.12-slim-bookworm` for a lightweight Python environment.
 *   **Dependency Management:** Installs `uv` and then uses `uv sync` to install project dependencies defined in `pyproject.toml`.
-*   **Non-Root User:** Creates a dedicated `appuser` and switches to it for enhanced security, following best practices for containerized applications.
+*   **Non-Root User:** Creates a dedicated `appuser` and switches to it for security, following best practices for containerized applications.
 *   **Entrypoint:** Sets `CMD ["python", "main.py"]` to run the main application script when the container starts.
 
-## Deployment to Google Cloud Run
+## Deployment to Cloud Platforms
 
-Google Cloud Run is an ideal platform for the Gemini SRE Agent due to its event-driven nature (triggered by Pub/Sub messages), automatic scaling (including scaling to zero when idle), and fully managed environment.
+The Cloud SRE Agent can be deployed to various cloud platforms. Google Cloud Run is recommended for its event-driven nature (triggered by messaging services), automatic scaling (including scaling to zero when idle), and fully managed environment.
 
-The `deploy.sh` script automates the process of building the Docker image, pushing it to Google Container Registry (GCR), and deploying it to Cloud Run.
+The `deploy.sh` script automates the process of building the Docker image, pushing it to a container registry, and deploying it to your chosen cloud platform.
 
 ### `deploy.sh` Script
 
@@ -111,21 +111,21 @@ The `deploy.sh` script automates the process of building the Docker image, pushi
 set -e
 
 # --- Configuration ---
-PROJECT_ID="your-gcp-project-id" # Replace with your GCP Project ID
-SERVICE_NAME="gemini-sre-agent"
-REGION="us-central1" # Choose your desired GCP region
+PROJECT_ID="your-project-id" # Replace with your project ID
+SERVICE_NAME="cloud-sre-agent"
+REGION="us-central1" # Choose your desired region
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 
 # --- Build Docker Image ---
 echo "Building Docker image: ${IMAGE_NAME}"
 docker build -t "${IMAGE_NAME}" .
 
-# --- Push Docker Image to Google Container Registry ---
-echo "Pushing Docker image to GCR..."
+# --- Push Docker Image to Container Registry ---
+echo "Pushing Docker image to container registry..."
 docker push "${IMAGE_NAME}"
 
-# --- Deploy to Google Cloud Run ---
-echo "Deploying to Google Cloud Run..."
+# --- Deploy to Cloud Platform ---
+echo "Deploying to cloud platform..."
 gcloud run deploy "${SERVICE_NAME}" \
   --image "${IMAGE_NAME}" \
   --region "${REGION}" \
@@ -144,10 +144,10 @@ echo "Service URL: $(gcloud run services describe ${SERVICE_NAME} --region ${REG
 ### Deployment Steps
 
 1.  **Configure `deploy.sh`:**
-    Open `deploy.sh` and replace `"your-gcp-project-id"` with your actual GCP Project ID. Adjust `REGION` if desired.
+    Open `deploy.sh` and replace `"your-project-id"` with your actual project ID. Adjust `REGION` if desired.
 
-2.  **Ensure `gcloud` CLI is configured:**
-    Make sure your `gcloud` command-line tool is authenticated and configured for the correct GCP project. You can verify this with `gcloud config list`.
+2.  **Ensure cloud CLI is configured:**
+    Make sure your cloud command-line tool (e.g., `gcloud`, `aws`, `az`) is authenticated and configured for the correct project. You can verify this with the appropriate CLI command.
 
 3.  **Set GitHub Token Environment Variable:**
     Before running the script, ensure your `GITHUB_TOKEN` environment variable is set in your shell. This token is passed to the Cloud Run service as an environment variable.
@@ -163,20 +163,20 @@ echo "Service URL: $(gcloud run services describe ${SERVICE_NAME} --region ${REG
 
     The script will perform the following actions:
     *   Build a Docker image locally based on the `Dockerfile`.
-    *   Tag the image with your project's Google Container Registry (GCR) path.
-    *   Push the built Docker image to GCR.
-    *   Deploy the image to Google Cloud Run, creating a new service or updating an existing one. It configures the service to allow unauthenticated invocations (necessary for Pub/Sub push subscriptions, or if you plan to trigger it via HTTP) and sets the `GITHUB_TOKEN` environment variable within the Cloud Run instance.
+    *   Tag the image with your project's container registry path.
+    *   Push the built Docker image to the container registry.
+    *   Deploy the image to your chosen cloud platform, creating a service or updating an existing one. It configures the service to allow unauthenticated invocations (necessary for messaging service push subscriptions, or if you plan to trigger it via HTTP) and sets the `GITHUB_TOKEN` environment variable within the cloud service instance.
 
 5.  **Verify Deployment:**
-    After the script completes, it will output the service URL. You can also check the Cloud Run console in GCP to verify the deployment status.
+    After the script completes, it will output the service URL. You can also check the cloud platform console to verify the deployment status.
 
 ## Production Considerations
 
 For production deployments, consider the following:
 
-*   **Secrets Management:** Instead of passing `GITHUB_TOKEN` directly as an environment variable in the `deploy.sh` script, use Google Secret Manager to securely store and retrieve sensitive credentials at runtime. The `deploy.sh` includes a commented-out example: `--update-secrets="GITHUB_TOKEN=GITHUB_TOKEN:latest"`.
-*   **Service Account Permissions:** Ensure the Cloud Run service account has only the necessary IAM permissions (e.g., Pub/Sub Subscriber, Vertex AI User, Cloud Logging Viewer, and permissions to interact with GitHub if using a GitHub App or fine-grained PAT).
-*   **Resource Allocation:** Adjust CPU and memory limits for your Cloud Run service based on expected workload and model inference requirements.
+*   **Secrets Management:** Instead of passing `GITHUB_TOKEN` directly as an environment variable in the `deploy.sh` script, use your cloud platform's secret management service (e.g., Google Secret Manager, AWS Secrets Manager, Azure Key Vault) to securely store and retrieve sensitive credentials at runtime.
+*   **Service Account Permissions:** Ensure the cloud service account has only the necessary IAM permissions (e.g., messaging service subscriber, AI model user, cloud logging viewer, and permissions to interact with GitHub if using a GitHub App or fine-grained PAT).
+*   **Resource Allocation:** Adjust CPU and memory limits for your cloud service based on expected workload and model inference requirements.
 *   **Concurrency:** Configure the maximum number of concurrent requests a single container instance can handle.
-*   **Monitoring and Alerting:** Set up Cloud Monitoring and Cloud Logging alerts for the Cloud Run service to track its health and performance.
-*   **CI/CD Pipeline:** Integrate the build and deployment process into a Continuous Integration/Continuous Deployment (CI/CD) pipeline (e.g., Cloud Build, GitHub Actions) for automated and consistent deployments.
+*   **Monitoring and Alerting:** Set up cloud monitoring and logging alerts for the service to track its health and performance.
+*   **CI/CD Pipeline:** Integrate the build and deployment process into a Continuous Integration/Continuous Deployment (CI/CD) pipeline (e.g., Cloud Build, GitHub Actions, AWS CodePipeline, Azure DevOps) for automated and consistent deployments.

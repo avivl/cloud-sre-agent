@@ -1,6 +1,6 @@
 # Logging and Flow Tracking System
 
-The Gemini SRE Agent implements comprehensive flow tracking with structured logging to enable complete end-to-end traceability from log ingestion through remediation.
+The Cloud SRE Agent implements comprehensive flow tracking with structured logging to enable complete end-to-end traceability from log ingestion through remediation.
 
 ## Overview
 

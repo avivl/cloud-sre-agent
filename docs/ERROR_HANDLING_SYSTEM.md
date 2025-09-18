@@ -1,6 +1,6 @@
 # Error Handling System
 
-This document describes the comprehensive error handling system implemented in the Gemini SRE Agent for source control operations. The system provides robust error classification, circuit breakers, retry mechanisms, graceful degradation, health checks, and metrics integration.
+This document describes the comprehensive error handling system implemented in the Cloud SRE Agent for source control operations. The system provides robust error classification, circuit breakers, retry mechanisms, graceful degradation, health checks, and metrics integration.
 
 ## Table of Contents
 
@@ -296,7 +296,7 @@ await metrics.record_error(
 await metrics.record_circuit_breaker_state_change(
     circuit_name="github_operations",
     old_state=CircuitState.CLOSED,
-    new_state=CircuitState.OPEN,
+    state=CircuitState.OPEN,
     operation_type="file_operations"
 )
 ```
