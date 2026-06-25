@@ -1,0 +1,33 @@
+# Cloud SRE Agent — sample configuration.
+# Environment overrides use the SRE_ prefix with __ for nesting, e.g.
+#   SRE_LLM__MODEL=gemini-2.5-pro  ->  llm.model
+#   SRE_OUTPUT__DIR=/var/patches   ->  output.dir
+
+sources:
+  - type: file
+    path: ./testdata/sample.log
+
+llm:
+  provider: gemini
+  model: gemini-2.5-flash
+  # Backend selects the Google API. "vertex" (Vertex AI) is the default and the
+  # only BAA-eligible / HIPAA-covered option; it requires project + location.
+  # "gemini-api" is the consumer Gemini Developer API and is NOT covered by
+  # Google's BAA — it is refused at startup unless explicitly opted in (see
+  # allow_non_baa / SRE_ALLOW_NON_BAA below).
+  backend: vertex
+  project: my-gcp-project
+  location: us-central1
+  # Used only by the gemini-api backend. The API key is read from this
+  # environment variable, never stored here.
+  api_key_env: GEMINI_API_KEY
+  # Explicit, auditable acknowledgement required to use the non-BAA gemini-api
+  # backend. Either this bool or the env var SRE_ALLOW_NON_BAA=1 must be set.
+  # allow_non_baa: false
+
+output:
+  dir: ./out
+
+log:
+  level: info
+  format: json
