@@ -6,16 +6,45 @@ package obs
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"strings"
 
+	cloudtrace "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/metric"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
+
+// TraceExporter selects how spans are exported.
+type TraceExporter string
+
+const (
+	// TraceExporterNone records spans in the SDK but exports nothing. This is
+	// the default and keeps the MVP's no-op/explicit behavior.
+	TraceExporterNone TraceExporter = "none"
+	// TraceExporterStdout writes spans to the configured writer for local
+	// debugging.
+	TraceExporterStdout TraceExporter = "stdout"
+	// TraceExporterCloudTrace exports spans to Google Cloud Trace for the
+	// configured project.
+	TraceExporterCloudTrace TraceExporter = "cloudtrace"
+)
+
+// AllowedTraceExporters lists the valid TraceExporter values, for validation.
+var AllowedTraceExporters = []TraceExporter{TraceExporterNone, TraceExporterStdout, TraceExporterCloudTrace}
+
+// TracingOptions configures the trace exporter selector.
+type TracingOptions struct {
+	// Exporter is one of "none" (default), "stdout", or "cloudtrace".
+	Exporter TraceExporter
+	// Project is the GCP project ID, required by the cloudtrace exporter.
+	Project string
+}
 
 // flowIDKey is the unexported context key for the flow id.
 type flowIDKey struct{}
@@ -31,6 +60,9 @@ type Options struct {
 	Format string
 	// Writer is where logs are written; defaults to os.Stderr via the caller.
 	Writer io.Writer
+	// Tracing configures the span exporter. The zero value (empty exporter)
+	// is treated as "none".
+	Tracing TracingOptions
 }
 
 // Providers bundles the configured observability components.
@@ -50,9 +82,14 @@ func (p Providers) Shutdown(ctx context.Context) error {
 	return p.shutdown(ctx)
 }
 
-// Setup builds a slog logger plus OTel tracer/meter providers. For the MVP the
-// tracer uses the SDK with no exporter (spans are recorded but not exported)
-// and the meter is a no-op; later phases attach Cloud Trace/OTLP exporters.
+// Setup builds a slog logger plus OTel tracer/meter providers. The tracer's
+// span export is selected by opts.Tracing: "none" (default) records spans in
+// the SDK but exports nothing, "stdout" writes them to opts.Writer, and
+// "cloudtrace" exports to Google Cloud Trace. The meter is a no-op.
+//
+// If the configured exporter fails to construct (e.g. cloudtrace without
+// credentials), Setup logs the failure and falls back to the no-op exporter so
+// the agent still starts; it never returns an error.
 func Setup(opts Options) Providers {
 	w := opts.Writer
 	if w == nil {
@@ -73,12 +110,17 @@ func Setup(opts Options) Providers {
 	}
 	logger := slog.New(handler)
 
-	tp := sdktrace.NewTracerProvider()
+	tp, err := buildTracerProvider(opts.Tracing, w)
+	if err != nil {
+		logger.Warn("trace exporter setup failed, falling back to no-op",
+			"exporter", string(opts.Tracing.Exporter), "err", err.Error())
+		tp = sdktrace.NewTracerProvider()
+	}
 	otel.SetTracerProvider(tp)
-	// HIPAA: future span attributes must be sanitized before being recorded —
-	// raw log content, prompts, and error strings can carry PHI. The slog handler
-	// above redacts sensitive keys, but spans bypass it, so any attribute added
-	// here (or in pipeline stages) must run through security.Sanitizer first.
+	// HIPAA: span attributes must be sanitized before being recorded — raw log
+	// content, prompts, and error strings can carry PHI. The slog handler above
+	// redacts sensitive keys, but spans bypass it, so any attribute added here
+	// (or in pipeline stages) must run through security.Sanitizer first.
 	tracer := tp.Tracer("github.com/avivl/cloud-sre-agent")
 
 	mp := metricnoop.NewMeterProvider()
@@ -91,6 +133,54 @@ func Setup(opts Options) Providers {
 		Meter:    meter,
 		shutdown: tp.Shutdown,
 	}
+}
+
+// buildTracerProvider constructs an SDK TracerProvider for the selected
+// exporter. "none" (and the empty value) attaches no exporter; "stdout" and
+// "cloudtrace" attach a batch span processor over their respective exporter.
+func buildTracerProvider(opts TracingOptions, w io.Writer) (*sdktrace.TracerProvider, error) {
+	switch normalizeExporter(opts.Exporter) {
+	case TraceExporterNone:
+		return sdktrace.NewTracerProvider(), nil
+	case TraceExporterStdout:
+		exp, err := stdouttrace.New(stdouttrace.WithWriter(w))
+		if err != nil {
+			return nil, fmt.Errorf("stdout trace exporter: %w", err)
+		}
+		return sdktrace.NewTracerProvider(sdktrace.WithBatcher(exp)), nil
+	case TraceExporterCloudTrace:
+		if strings.TrimSpace(opts.Project) == "" {
+			return nil, fmt.Errorf("cloudtrace exporter requires a project id")
+		}
+		exp, err := cloudtrace.New(cloudtrace.WithProjectID(opts.Project))
+		if err != nil {
+			return nil, fmt.Errorf("cloudtrace exporter: %w", err)
+		}
+		return sdktrace.NewTracerProvider(sdktrace.WithBatcher(exp)), nil
+	default:
+		return nil, fmt.Errorf("unknown trace exporter %q", opts.Exporter)
+	}
+}
+
+// normalizeExporter lower-cases and defaults an exporter selector. The empty
+// value maps to "none".
+func normalizeExporter(e TraceExporter) TraceExporter {
+	if e == "" {
+		return TraceExporterNone
+	}
+	return TraceExporter(strings.ToLower(string(e)))
+}
+
+// ValidTraceExporter reports whether e is one of the allowed exporter values
+// (case-insensitive; the empty value is valid and means "none").
+func ValidTraceExporter(e TraceExporter) bool {
+	n := normalizeExporter(e)
+	for _, a := range AllowedTraceExporters {
+		if n == a {
+			return true
+		}
+	}
+	return false
 }
 
 func parseLevel(s string) slog.Level {

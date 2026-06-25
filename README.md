@@ -700,7 +700,44 @@ export ENABLE_MONITORING=true
 export ENABLE_LEGACY_FALLBACK=true
 ```
 
-You can run the agent locally with `python main.py` or deploy it to Cloud Run using the provided `deploy.sh` script. The system provides seamless deployment with full backward compatibility.
+You can run the agent locally by building `./cmd/sre-agent` and running `sre-agent run --config config.yaml`, or deploy it to GCP using the flow described below.
+
+## Deploy to GCP (Cloud Run worker pool)
+
+The agent runs as a Cloud Run **worker pool**, not a request-serving service. A worker pool has **no HTTP ingress** — it pulls work and runs the triage/remediation loop. Logs reach it through GCP-native log routing:
+
+```
+Cloud Logging sink (severity>=ERROR)
+  -> Pub/Sub topic
+    -> Pub/Sub PULL subscription
+      -> Cloud SRE Agent (worker pool)  -- pulls, detects, remediates
+```
+
+A Cloud Logging sink captures every `severity>=ERROR` log entry in the project and routes it to a Pub/Sub topic. The agent's dedicated service account pulls those entries from a PULL subscription (a pull subscription is required because a worker pool exposes no endpoint for a push subscription to call).
+
+### LLM backend: Vertex AI (BAA)
+
+The agent defaults to the **Vertex AI** backend (`llm.backend: vertex`), which is the only Gemini path covered by Google's BAA and therefore the only HIPAA-eligible option. `deploy.sh` wires this explicitly via `SRE_LLM__BACKEND=vertex` plus the project and location. The consumer Gemini Developer API is **not** BAA-covered and is refused at startup unless an operator explicitly opts in.
+
+### PHI warning
+
+The logs fed through Pub/Sub may contain PHI. The agent's sanitizer gate scrubs prompt input and any error strings before they are logged or sent to the LLM, and the Vertex backend keeps inference inside the BAA boundary. Do not disable the sanitizer or switch to the non-BAA backend on any project that processes PHI.
+
+### Steps
+
+1. **Provision infrastructure** (one-time, idempotent-ish). Creates the Artifact Registry repo, Pub/Sub topic + PULL subscription, the `severity>=ERROR` logging sink (and grants its writer identity publish rights on the topic), and a least-privilege service account (`pubsub.subscriber`, `logging.logWriter`, `cloudtrace.agent`, `aiplatform.user`):
+
+   ```bash
+   PROJECT_ID=my-gcp-project REGION=us-central1 ./infra/gcloud_setup.sh
+   ```
+
+2. **Build, push, and deploy** the worker pool. Builds the Go image, pushes it to Artifact Registry, and runs `gcloud beta run worker-pools deploy` with the service account and Vertex env wiring:
+
+   ```bash
+   PROJECT_ID=my-gcp-project REGION=us-central1 ./deploy.sh
+   ```
+
+Both scripts are fully parameterized via environment variables (`PROJECT_ID`, `REGION`, `AR_REPO`, `LOG_TOPIC_NAME`, `LOG_SUBSCRIPTION_NAME`, `LOG_SINK_NAME`, `WORKER_POOL_NAME`, `AGENT_SA_ID`, …) — there is no hardcoded project. Use the same `PROJECT_ID`/`REGION` for both.
 
 ## Contributing
 

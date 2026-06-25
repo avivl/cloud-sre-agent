@@ -170,3 +170,100 @@ func TestLoad_MissingSourcesFails(t *testing.T) {
 	_, err := Load(p)
 	assert.Error(t, err)
 }
+
+func TestLoad_PubSubSource(t *testing.T) {
+	p := writeConfig(t, `
+sources:
+  - type: pubsub
+    project_id: my-gcp-project
+    subscription_id: logs-sub
+llm:
+  project: my-gcp-project
+`)
+	cfg, err := Load(p)
+	require.NoError(t, err)
+	require.Len(t, cfg.Sources, 1)
+	assert.Equal(t, SourceTypePubSub, cfg.Sources[0].Type)
+	assert.Equal(t, "my-gcp-project", cfg.Sources[0].ProjectID)
+	assert.Equal(t, "logs-sub", cfg.Sources[0].SubscriptionID)
+	// Tracing defaults to none.
+	assert.Equal(t, TracingExporterNone, cfg.Tracing.Exporter)
+}
+
+func TestLoad_TracingBlock(t *testing.T) {
+	p := writeConfig(t, `
+sources:
+  - type: file
+    path: ./x.log
+llm:
+  project: my-gcp-project
+tracing:
+  exporter: cloudtrace
+  project: trace-project
+`)
+	cfg, err := Load(p)
+	require.NoError(t, err)
+	assert.Equal(t, TracingExporterCloudTrace, cfg.Tracing.Exporter)
+	assert.Equal(t, "trace-project", cfg.Tracing.Project)
+}
+
+func TestValidate_PubSubSource(t *testing.T) {
+	base := func() Config {
+		return Config{
+			Sources: []SourceConfig{{Type: SourceTypePubSub, ProjectID: "p", SubscriptionID: "s"}},
+			LLM: LLMConfig{
+				Provider: "gemini", Model: "m",
+				Backend: BackendVertex, Project: "p", Location: "us-central1",
+			},
+			Output: OutputConfig{Dir: "./out"},
+			Log:    LogConfig{Format: "json"},
+		}
+	}
+
+	require.NoError(t, base().Validate())
+
+	c := base()
+	c.Sources[0].ProjectID = ""
+	require.Error(t, c.Validate())
+
+	c = base()
+	c.Sources[0].SubscriptionID = ""
+	require.Error(t, c.Validate())
+}
+
+func TestValidate_UnknownSourceType(t *testing.T) {
+	c := Config{
+		Sources: []SourceConfig{{Type: "kafka"}},
+		LLM: LLMConfig{
+			Provider: "gemini", Model: "m",
+			Backend: BackendVertex, Project: "p", Location: "us-central1",
+		},
+		Output: OutputConfig{Dir: "./out"},
+		Log:    LogConfig{Format: "json"},
+	}
+	require.Error(t, c.Validate())
+}
+
+func TestValidate_Tracing(t *testing.T) {
+	base := func() Config {
+		return Config{
+			Sources: []SourceConfig{{Type: "file", Path: "x.log"}},
+			LLM: LLMConfig{
+				Provider: "gemini", Model: "m",
+				Backend: BackendVertex, Project: "p", Location: "us-central1",
+			},
+			Output: OutputConfig{Dir: "./out"},
+			Log:    LogConfig{Format: "json"},
+		}
+	}
+
+	for _, exp := range []string{"", TracingExporterNone, TracingExporterStdout, TracingExporterCloudTrace} {
+		c := base()
+		c.Tracing.Exporter = exp
+		require.NoErrorf(t, c.Validate(), "exporter %q should be valid", exp)
+	}
+
+	c := base()
+	c.Tracing.Exporter = "otlp"
+	require.Error(t, c.Validate())
+}

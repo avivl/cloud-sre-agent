@@ -23,6 +23,7 @@ import (
 	"github.com/avivl/cloud-sre-agent/internal/domain"
 	"github.com/avivl/cloud-sre-agent/internal/ingest"
 	"github.com/avivl/cloud-sre-agent/internal/ingest/file"
+	"github.com/avivl/cloud-sre-agent/internal/ingest/pubsub"
 	"github.com/avivl/cloud-sre-agent/internal/llm/gemini"
 	"github.com/avivl/cloud-sre-agent/internal/obs"
 	"github.com/avivl/cloud-sre-agent/internal/pipeline"
@@ -72,7 +73,15 @@ func run(parent context.Context, cfg config.Config, out io.Writer) error {
 	ctx, stop := signal.NotifyContext(parent, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	prov := obs.Setup(obs.Options{Level: cfg.Log.Level, Format: cfg.Log.Format, Writer: out})
+	prov := obs.Setup(obs.Options{
+		Level:  cfg.Log.Level,
+		Format: cfg.Log.Format,
+		Writer: out,
+		Tracing: obs.TracingOptions{
+			Exporter: obs.TraceExporter(cfg.Tracing.Exporter),
+			Project:  cfg.Tracing.Project,
+		},
+	})
 	defer func() { _ = prov.Shutdown(context.Background()) }()
 	log := prov.Logger
 
@@ -99,8 +108,8 @@ func run(parent context.Context, cfg config.Config, out io.Writer) error {
 	// Detector with default thresholds.
 	detector := detect.New(detect.Config{})
 
-	// Build the configured log sources. The MVP supports the file source.
-	sources, err := buildSources(cfg, log)
+	// Build the configured log sources (file and pubsub).
+	sources, err := buildSources(ctx, cfg, log)
 	if err != nil {
 		return err
 	}
@@ -149,19 +158,38 @@ func buildProvider(ctx context.Context, l config.LLMConfig) (*gemini.Provider, e
 	}
 }
 
-// buildSources constructs the ingest.LogSource list from config. Only the file
-// source is supported in the MVP; an unknown type is a configuration error.
-func buildSources(cfg config.Config, log *slog.Logger) ([]ingest.LogSource, error) {
+// buildSources constructs the ingest.LogSource list from config. The file and
+// pubsub source types are supported; an unknown type is a configuration error.
+// On a partial failure, sources already built are closed before returning.
+func buildSources(ctx context.Context, cfg config.Config, log *slog.Logger) ([]ingest.LogSource, error) {
 	var sources []ingest.LogSource
+	closeAll := func() {
+		for _, s := range sources {
+			_ = s.Close()
+		}
+	}
 	for i, sc := range cfg.Sources {
 		switch sc.Type {
-		case "file":
+		case config.SourceTypeFile:
 			fs, err := file.New(file.Config{Path: sc.Path, Watch: true, Logger: log})
 			if err != nil {
+				closeAll()
 				return nil, fmt.Errorf("build source[%d] (file): %w", i, err)
 			}
 			sources = append(sources, fs)
+		case config.SourceTypePubSub:
+			ps, err := pubsub.New(ctx, pubsub.Config{
+				ProjectID:      sc.ProjectID,
+				SubscriptionID: sc.SubscriptionID,
+				Logger:         log,
+			})
+			if err != nil {
+				closeAll()
+				return nil, fmt.Errorf("build source[%d] (pubsub): %w", i, err)
+			}
+			sources = append(sources, ps)
 		default:
+			closeAll()
 			return nil, fmt.Errorf("build source[%d]: unsupported type %q", i, sc.Type)
 		}
 	}
@@ -184,6 +212,16 @@ func consume(ctx context.Context, sources []ingest.LogSource, detector *detect.D
 			return nil
 		case ev, ok := <-merged:
 			if !ok {
+				// A closed channel means either a clean drain or a source that
+				// died. Distinguish them so a fatal source error (e.g. Pub/Sub
+				// permission revoked) exits non-zero instead of looking like a
+				// healthy shutdown to the worker pool.
+				if e := sourcesErr(sources); e != nil {
+					log.Error("sre-agent: source failed",
+						"error_type", fmt.Sprintf("%T", e),
+						"error_detail", sanitizer.Sanitize(e.Error()))
+					return fmt.Errorf("source failed: %w", e)
+				}
 				log.Info("sre-agent: all sources exhausted")
 				return nil
 			}
@@ -192,6 +230,20 @@ func consume(ctx context.Context, sources []ingest.LogSource, detector *detect.D
 			}
 		}
 	}
+}
+
+// sourcesErr returns the first terminal error reported by any source exposing
+// an Err() method (e.g. the Pub/Sub source). A non-nil result means a source
+// died rather than draining cleanly.
+func sourcesErr(sources []ingest.LogSource) error {
+	for _, s := range sources {
+		if e, ok := s.(interface{ Err() error }); ok {
+			if err := e.Err(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // handleIncident runs one incident through the pipeline, logging the outcome.

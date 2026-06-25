@@ -24,14 +24,40 @@ type Config struct {
 	LLM     LLMConfig      `koanf:"llm"`
 	Output  OutputConfig   `koanf:"output"`
 	Log     LogConfig      `koanf:"log"`
+	Tracing TracingConfig  `koanf:"tracing"`
 }
+
+// Source type identifiers.
+const (
+	SourceTypeFile   = "file"
+	SourceTypePubSub = "pubsub"
+)
 
 // SourceConfig describes one log source.
 type SourceConfig struct {
-	// Type selects the adapter (e.g. "file").
+	// Type selects the adapter ("file" or "pubsub").
 	Type string `koanf:"type"`
-	// Path is the source location (file path for the filesystem source).
+	// Path is the source location (file path/glob for the filesystem source).
 	Path string `koanf:"path"`
+	// ProjectID is the GCP project (required for the pubsub source).
+	ProjectID string `koanf:"project_id"`
+	// SubscriptionID is the Pub/Sub pull subscription (required for pubsub).
+	SubscriptionID string `koanf:"subscription_id"`
+}
+
+// Trace exporter identifiers.
+const (
+	TracingExporterNone       = "none"
+	TracingExporterStdout     = "stdout"
+	TracingExporterCloudTrace = "cloudtrace"
+)
+
+// TracingConfig selects the OTel span exporter.
+type TracingConfig struct {
+	// Exporter is one of "none" (default), "stdout", or "cloudtrace".
+	Exporter string `koanf:"exporter"`
+	// Project is the GCP project ID, required by the cloudtrace exporter.
+	Project string `koanf:"project"`
 }
 
 // LLM backend identifiers. Vertex AI is the only BAA-eligible Google backend
@@ -92,8 +118,9 @@ func Default() Config {
 			Backend:  BackendVertex,
 			Location: "us-central1",
 		},
-		Output: OutputConfig{Dir: "./out"},
-		Log:    LogConfig{Level: "info", Format: "json"},
+		Output:  OutputConfig{Dir: "./out"},
+		Log:     LogConfig{Level: "info", Format: "json"},
+		Tracing: TracingConfig{Exporter: TracingExporterNone},
 	}
 }
 
@@ -106,14 +133,15 @@ func Load(path string) (Config, error) {
 	// default (at least one must be configured).
 	d := Default()
 	if err := k.Load(confmap.Provider(map[string]any{
-		"llm.provider":    d.LLM.Provider,
-		"llm.model":       d.LLM.Model,
-		"llm.api_key_env": d.LLM.APIKeyEnv,
-		"llm.backend":     d.LLM.Backend,
-		"llm.location":    d.LLM.Location,
-		"output.dir":      d.Output.Dir,
-		"log.level":       d.Log.Level,
-		"log.format":      d.Log.Format,
+		"llm.provider":     d.LLM.Provider,
+		"llm.model":        d.LLM.Model,
+		"llm.api_key_env":  d.LLM.APIKeyEnv,
+		"llm.backend":      d.LLM.Backend,
+		"llm.location":     d.LLM.Location,
+		"output.dir":       d.Output.Dir,
+		"log.level":        d.Log.Level,
+		"log.format":       d.Log.Format,
+		"tracing.exporter": d.Tracing.Exporter,
 	}, "."), nil); err != nil {
 		return Config{}, fmt.Errorf("config: seed defaults: %w", err)
 	}
@@ -149,11 +177,8 @@ func (c Config) Validate() error {
 		return fmt.Errorf("config: at least one source is required")
 	}
 	for i, s := range c.Sources {
-		if s.Type == "" {
-			return fmt.Errorf("config: sources[%d]: type is required", i)
-		}
-		if s.Type == "file" && s.Path == "" {
-			return fmt.Errorf("config: sources[%d]: file source requires path", i)
+		if err := s.validate(i); err != nil {
+			return err
 		}
 	}
 	if c.LLM.Provider == "" {
@@ -173,7 +198,41 @@ func (c Config) Validate() error {
 	default:
 		return fmt.Errorf("config: log.format %q must be json or text", c.Log.Format)
 	}
+	if err := c.Tracing.validate(); err != nil {
+		return err
+	}
 	return nil
+}
+
+// validate checks one source's required fields by type.
+func (s SourceConfig) validate(i int) error {
+	switch s.Type {
+	case "":
+		return fmt.Errorf("config: sources[%d]: type is required", i)
+	case SourceTypeFile:
+		if s.Path == "" {
+			return fmt.Errorf("config: sources[%d]: file source requires path", i)
+		}
+	case SourceTypePubSub:
+		if s.ProjectID == "" || s.SubscriptionID == "" {
+			return fmt.Errorf("config: sources[%d]: pubsub source requires project_id and subscription_id", i)
+		}
+	default:
+		return fmt.Errorf("config: sources[%d]: unknown type %q", i, s.Type)
+	}
+	return nil
+}
+
+// validate checks the tracing block: the exporter must be one of the allowed
+// values, and the empty value is treated as "none".
+func (t TracingConfig) validate() error {
+	switch t.Exporter {
+	case "", TracingExporterNone, TracingExporterStdout, TracingExporterCloudTrace:
+		return nil
+	default:
+		return fmt.Errorf("config: tracing.exporter %q must be one of %q, %q, or %q",
+			t.Exporter, TracingExporterNone, TracingExporterStdout, TracingExporterCloudTrace)
+	}
 }
 
 // AllowsNonBAA reports whether the non-BAA Gemini Developer API is explicitly
