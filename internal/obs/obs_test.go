@@ -55,6 +55,8 @@ func TestRedacted(t *testing.T) {
 	// source and error are now sensitive keys.
 	assert.Equal(t, RedactedPlaceholder, Redacted("source", "file").Value.String())
 	assert.Equal(t, RedactedPlaceholder, Redacted("error", "boom for bob@x.com").Value.String())
+	// error_detail is a defense-in-depth backstop key.
+	assert.Equal(t, RedactedPlaceholder, Redacted("error_detail", "derived from err").Value.String())
 	// A non-sensitive key passes through.
 	assert.Equal(t, "us-central1", Redacted("region", "us-central1").Value.String())
 }

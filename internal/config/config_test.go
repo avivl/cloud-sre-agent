@@ -67,8 +67,10 @@ func TestValidate_Backend(t *testing.T) {
 				Provider: "gemini", Model: "m",
 				Backend: BackendVertex, Project: "p", Location: "us-central1",
 			},
-			Output: OutputConfig{Dir: "./out"},
-			Log:    LogConfig{Format: "json"},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
 		}
 	}
 
@@ -134,8 +136,10 @@ func TestValidate(t *testing.T) {
 				Provider: "gemini", Model: "m",
 				Backend: BackendVertex, Project: "p", Location: "us-central1",
 			},
-			Output: OutputConfig{Dir: "./out"},
-			Log:    LogConfig{Format: "json"},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
 		}
 	}
 	require.NoError(t, base().Validate())
@@ -215,8 +219,10 @@ func TestValidate_PubSubSource(t *testing.T) {
 				Provider: "gemini", Model: "m",
 				Backend: BackendVertex, Project: "p", Location: "us-central1",
 			},
-			Output: OutputConfig{Dir: "./out"},
-			Log:    LogConfig{Format: "json"},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
 		}
 	}
 
@@ -238,9 +244,132 @@ func TestValidate_UnknownSourceType(t *testing.T) {
 			Provider: "gemini", Model: "m",
 			Backend: BackendVertex, Project: "p", Location: "us-central1",
 		},
-		Output: OutputConfig{Dir: "./out"},
-		Log:    LogConfig{Format: "json"},
+		Output:    OutputConfig{Dir: "./out"},
+		Target:    TargetLocal,
+		Validator: ValidatorNone,
+		Log:       LogConfig{Format: "json"},
 	}
+	require.Error(t, c.Validate())
+}
+
+func TestLoad_TargetValidatorDefaults(t *testing.T) {
+	p := writeConfig(t, `
+sources:
+  - type: file
+    path: ./x.log
+llm:
+  project: my-gcp-project
+`)
+	cfg, err := Load(p)
+	require.NoError(t, err)
+	assert.Equal(t, TargetLocal, cfg.Target)
+	assert.Equal(t, ValidatorNone, cfg.Validator)
+	assert.Equal(t, "main", cfg.GitHub.BaseBranch)
+}
+
+func TestLoad_GitHubTargetBlock(t *testing.T) {
+	p := writeConfig(t, `
+sources:
+  - type: file
+    path: ./x.log
+llm:
+  project: my-gcp-project
+target: github
+validator: local
+github:
+  owner: my-org
+  repo: my-repo
+  base_branch: develop
+`)
+	cfg, err := Load(p)
+	require.NoError(t, err)
+	assert.Equal(t, TargetGitHub, cfg.Target)
+	assert.Equal(t, ValidatorLocal, cfg.Validator)
+	assert.Equal(t, "my-org", cfg.GitHub.Owner)
+	assert.Equal(t, "my-repo", cfg.GitHub.Repo)
+	assert.Equal(t, "develop", cfg.GitHub.BaseBranch)
+}
+
+func TestValidate_Target(t *testing.T) {
+	base := func() Config {
+		return Config{
+			Sources: []SourceConfig{{Type: "file", Path: "x.log"}},
+			LLM: LLMConfig{
+				Provider: "gemini", Model: "m",
+				Backend: BackendVertex, Project: "p", Location: "us-central1",
+			},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
+		}
+	}
+
+	t.Run("local needs no github fields", func(t *testing.T) {
+		require.NoError(t, base().Validate())
+	})
+
+	t.Run("github with owner+repo is valid", func(t *testing.T) {
+		c := base()
+		c.Target = TargetGitHub
+		c.GitHub = GitHubConfig{Owner: "o", Repo: "r"}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("github missing owner fails", func(t *testing.T) {
+		c := base()
+		c.Target = TargetGitHub
+		c.GitHub = GitHubConfig{Repo: "r"}
+		require.Error(t, c.Validate())
+	})
+
+	t.Run("github missing repo fails", func(t *testing.T) {
+		c := base()
+		c.Target = TargetGitHub
+		c.GitHub = GitHubConfig{Owner: "o"}
+		require.Error(t, c.Validate())
+	})
+
+	t.Run("unknown target fails", func(t *testing.T) {
+		c := base()
+		c.Target = "gitlab"
+		require.Error(t, c.Validate())
+	})
+
+	t.Run("empty target fails", func(t *testing.T) {
+		c := base()
+		c.Target = ""
+		require.Error(t, c.Validate())
+	})
+}
+
+func TestValidate_Validator(t *testing.T) {
+	base := func() Config {
+		return Config{
+			Sources: []SourceConfig{{Type: "file", Path: "x.log"}},
+			LLM: LLMConfig{
+				Provider: "gemini", Model: "m",
+				Backend: BackendVertex, Project: "p", Location: "us-central1",
+			},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
+		}
+	}
+
+	for _, v := range []string{ValidatorNone, ValidatorLocal} {
+		c := base()
+		c.Validator = v
+		require.NoErrorf(t, c.Validate(), "validator %q should be valid", v)
+	}
+
+	c := base()
+	c.Validator = "sandbox"
+	require.Error(t, c.Validate())
+
+	c = base()
+	c.Validator = ""
 	require.Error(t, c.Validate())
 }
 
@@ -252,8 +381,10 @@ func TestValidate_Tracing(t *testing.T) {
 				Provider: "gemini", Model: "m",
 				Backend: BackendVertex, Project: "p", Location: "us-central1",
 			},
-			Output: OutputConfig{Dir: "./out"},
-			Log:    LogConfig{Format: "json"},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
 		}
 	}
 
