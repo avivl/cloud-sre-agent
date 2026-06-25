@@ -1,98 +1,40 @@
-# Makefile for quality gates and development tasks
+# Cloud SRE Agent — Go build/test/lint tooling.
 
-.PHONY: help install test lint format type-check security quality-gates clean
+BINARY       := sre-agent
+PKG          := ./...
+CMD          := ./cmd/sre-agent
+COVER_MIN    := 80
+COVERPROFILE := coverage.out
 
-# Default target
-help:
-	@echo "Available targets:"
-	@echo "  install          Install dependencies"
-	@echo "  test             Run tests with coverage"
-	@echo "  lint             Run linting (ruff)"
-	@echo "  format           Format code (ruff)"
-	@echo "  type-check       Run type checking (pyright)"
-	@echo "  security         Run security scan (bandit)"
-	@echo "  quality-gates    Run all quality gates"
-	@echo "  quality-gates-quick  Run quick quality gates (static analysis only)"
-	@echo "  quality-gates-full    Run full quality gates with all checks"
-	@echo "  clean            Clean up generated files"
+.PHONY: all build run test cover vet lint tidy clean
 
-# Install dependencies
-install:
-	pip install -r requirements.txt
-	pip install ruff pyright bandit safety pytest-cov pre-commit
+all: vet lint test
 
-# Run tests with coverage
+build:
+	go build -o bin/$(BINARY) $(CMD)
+
+run:
+	go run $(CMD) run --config config.yaml
+
 test:
-	pytest --cov=gemini_sre_agent --cov-report=xml --cov-report=html --cov-fail-under=80
+	go test $(PKG)
 
-# Run linting
+vet:
+	go vet $(PKG)
+
 lint:
-	ruff check gemini_sre_agent tests
+	golangci-lint run
 
-# Format code
-format:
-	ruff format gemini_sre_agent tests
+tidy:
+	go mod tidy
 
-# Run type checking
-type-check:
-	pyright --strict
+# cover runs tests with coverage and fails if total coverage is below COVER_MIN.
+cover:
+	go test -coverprofile=$(COVERPROFILE) $(PKG)
+	@total=$$(go tool cover -func=$(COVERPROFILE) | grep total: | awk '{print $$3}' | tr -d '%'); \
+	echo "total coverage: $$total% (min $(COVER_MIN)%)"; \
+	awk "BEGIN { exit !($$total >= $(COVER_MIN)) }" || \
+		{ echo "coverage $$total% is below minimum $(COVER_MIN)%"; exit 1; }
 
-# Run security scan
-security:
-	bandit -r gemini_sre_agent -f json -o bandit-report.json
-	bandit -r gemini_sre_agent
-
-# Run quick quality gates (static analysis only)
-quality-gates-quick:
-	python -m gemini_sre_agent.core.quality.cli run \
-		--gates=static_analysis,style \
-		--output=quality-report-quick.json \
-		--format=json
-
-# Run full quality gates
-quality-gates-full:
-	python -m gemini_sre_agent.core.quality.cli run \
-		--output=quality-report-full.json \
-		--format=json \
-		--fail-on-warning
-
-# Run all quality gates (default)
-quality-gates:
-	python -m gemini_sre_agent.core.quality.cli run \
-		--output=quality-report.json \
-		--format=console
-
-# Install pre-commit hooks
-install-hooks:
-	pre-commit install
-
-# Run pre-commit on all files
-pre-commit-all:
-	pre-commit run --all-files
-
-# Clean up generated files
 clean:
-	rm -rf .coverage
-	rm -rf coverage.xml
-	rm -rf htmlcov/
-	rm -rf .pytest_cache/
-	rm -rf .ruff_cache/
-	rm -rf .pyright_cache/
-	rm -rf quality-report*.json
-	rm -rf bandit-report.json
-	rm -rf .mypy_cache/
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-
-# Development setup
-dev-setup: install install-hooks
-	@echo "Development environment setup complete!"
-	@echo "Run 'make quality-gates' to check code quality"
-
-# CI/CD pipeline simulation
-ci: clean quality-gates-full test security
-	@echo "CI pipeline completed successfully!"
-
-# Quick development check
-dev-check: format lint type-check
-	@echo "Quick development check completed!"
+	rm -rf bin $(COVERPROFILE)

@@ -1,0 +1,64 @@
+name: Go CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: build, vet, lint, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Verify tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.12.2
+
+      - name: Test (race)
+        run: go test -race ./...
+
+      - name: Coverage (logic packages)
+        run: go test -coverprofile=coverage.out -covermode=atomic ./internal/...
+
+      - name: Enforce coverage threshold
+        # Gate on the logic packages under internal/. cmd/sre-agent is the
+        # composition root (main, cobra wiring, signal handling) and is exercised
+        # via the pipeline e2e test, not unit-covered.
+        run: |
+          total=$(go tool cover -func=coverage.out | grep total: | awk '{print $3}' | tr -d '%')
+          echo "internal/ coverage: ${total}%"
+          awk "BEGIN { exit !(${total} >= 80) }" || { echo "coverage ${total}% below 80%"; exit 1; }
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.out
