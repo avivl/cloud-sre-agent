@@ -21,8 +21,10 @@ var sensitiveKeys = map[string]struct{}{
 	"secret":   {},
 	"password": {},
 	// error strings and source identifiers can echo raw log content / PHI, so
-	// their values are masked in structured output as well.
+	// their values are masked in structured output as well. "err" is the same
+	// class as "error"; both are masked so no call site can opt out by key name.
 	"error":  {},
+	"err":    {},
 	"source": {},
 }
 

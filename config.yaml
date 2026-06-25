@@ -6,6 +6,13 @@
 sources:
   - type: file
     path: ./testdata/sample.log
+  # Pub/Sub source: pulls Cloud Logging LogEntry JSON from a pull subscription.
+  # Wire a Cloud Logging sink to a Pub/Sub topic, then point this at the topic's
+  # pull subscription. Authentication uses ambient GCP credentials (ADC).
+  # HIPAA: raw message payloads are never logged — only message IDs and counts.
+  # - type: pubsub
+  #   project_id: my-gcp-project
+  #   subscription_id: sre-agent-logs-sub
 
 llm:
   provider: gemini
@@ -31,3 +38,13 @@ output:
 log:
   level: info
   format: json
+
+# Tracing selects the OpenTelemetry span exporter.
+#   none       — spans are recorded in the SDK but not exported (default).
+#   stdout     — spans are written to the process's log writer (local debug).
+#   cloudtrace — spans are exported to Google Cloud Trace (requires project).
+# HIPAA: span attributes must be sanitized before recording — raw log content,
+# prompts, and error strings can carry PHI.
+tracing:
+  exporter: none
+  # project: my-gcp-project  # required only for the cloudtrace exporter
