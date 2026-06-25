@@ -37,17 +37,23 @@ jobs:
         run: go vet ./...
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: v2.12.2
 
-      - name: Test with coverage
-        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Test (race)
+        run: go test -race ./...
+
+      - name: Coverage (logic packages)
+        run: go test -coverprofile=coverage.out -covermode=atomic ./internal/...
 
       - name: Enforce coverage threshold
+        # Gate on the logic packages under internal/. cmd/sre-agent is the
+        # composition root (main, cobra wiring, signal handling) and is exercised
+        # via the pipeline e2e test, not unit-covered.
         run: |
           total=$(go tool cover -func=coverage.out | grep total: | awk '{print $3}' | tr -d '%')
-          echo "total coverage: ${total}%"
+          echo "internal/ coverage: ${total}%"
           awk "BEGIN { exit !(${total} >= 80) }" || { echo "coverage ${total}% below 80%"; exit 1; }
 
       - name: Upload coverage
