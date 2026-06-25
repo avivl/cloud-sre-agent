@@ -31,6 +31,8 @@ vendor/
 logs
 *.log
 dev-debug.log
+# ...but keep .log test fixtures under any testdata/ directory
+!**/testdata/*.log
 
 # Environments / secrets
 .env

@@ -1,0 +1,5 @@
+2026-01-01T10:00:00Z INFO service started
+2026-01-01T10:00:01Z WARNING disk usage at 85%
+2026-01-01T10:00:02Z ERROR failed to connect to database
+{"timestamp":"2026-01-01T10:00:03Z","severity":"critical","message":"out of memory","labels":{"svc":"api"}}
+plain line with no level token
