@@ -65,12 +65,18 @@ type TracingConfig struct {
 }
 
 // LLM provider kinds. "gemini" is Google's Gemini (via Vertex AI or the
-// Developer API); "openai" and "anthropic" are external third-party services.
+// Developer API); "openai" and "anthropic" are external third-party services;
+// "ollama" is a local/self-hosted model server (no external disclosure).
 const (
 	KindGemini    = "gemini"
 	KindOpenAI    = "openai"
 	KindAnthropic = "anthropic"
+	KindOllama    = "ollama"
 )
+
+// DefaultOllamaHost is the Ollama daemon address used when an ollama provider's
+// host is left empty.
+const DefaultOllamaHost = "http://localhost:11434"
 
 // LLM backend identifiers (gemini kind only). Vertex AI is the only BAA-eligible
 // Google backend and is the default; the consumer Gemini Developer API is not
@@ -96,7 +102,7 @@ const AllowExternalLLMEnv = "SRE_ALLOW_EXTERNAL_LLM"
 // the gemini kind, BaseURL applies to openai/anthropic. API keys are never
 // stored here — they are read from the environment at wire time.
 type ProviderConfig struct {
-	// Kind selects the adapter: "gemini", "openai", or "anthropic".
+	// Kind selects the adapter: "gemini", "openai", "anthropic", or "ollama".
 	Kind string `koanf:"kind"`
 	// Model is the model name (e.g. "gemini-2.5-flash", "gpt-4o-mini",
 	// "claude-opus-4-8"). Required.
@@ -124,6 +130,13 @@ type ProviderConfig struct {
 	// BaseURL optionally overrides the provider API host (e.g. a compatible
 	// gateway). Empty uses the SDK default. Applies to openai/anthropic.
 	BaseURL string `koanf:"base_url"`
+
+	// --- ollama fields ---
+
+	// Host is the Ollama daemon base URL (e.g. "http://localhost:11434"). Empty
+	// defaults to DefaultOllamaHost. Applies to the ollama kind only; Ollama is
+	// local/self-hosted and uses no API key.
+	Host string `koanf:"host"`
 }
 
 // LLMConfig selects the primary LLM provider plus an ordered list of fallbacks.
@@ -154,6 +167,9 @@ type LLMConfig struct {
 	// BaseURL optionally overrides the primary provider API host when Provider is
 	// openai/anthropic. Ignored for gemini.
 	BaseURL string `koanf:"base_url"`
+	// Host is the Ollama daemon base URL when Provider is ollama. Empty defaults
+	// to DefaultOllamaHost. Ignored for other kinds.
+	Host string `koanf:"host"`
 
 	// Fallbacks is the ordered list of fallback providers, tried in turn when the
 	// primary (and preceding fallbacks) fail.
@@ -178,6 +194,7 @@ func (l LLMConfig) Primary() ProviderConfig {
 		APIKeyEnv:   l.APIKeyEnv,
 		AllowNonBAA: l.AllowNonBAA,
 		BaseURL:     l.BaseURL,
+		Host:        l.Host,
 	}
 }
 
@@ -471,6 +488,12 @@ func (l LLMConfig) validateProvider(where string, p ProviderConfig) error {
 	switch p.Kind {
 	case KindGemini:
 		return l.validateGeminiBackend(where, p)
+	case KindOllama:
+		// Ollama is local/self-hosted: prompt content stays on infrastructure
+		// the operator controls, so it is EXEMPT from the external-disclosure
+		// (BAA) gate. The model is already validated above; host defaults to
+		// DefaultOllamaHost when empty, so there is nothing further to check.
+		return nil
 	case KindOpenAI, KindAnthropic:
 		if !l.AllowsExternal() {
 			return fmt.Errorf("config: %s: provider %q is an external third-party service; prompt content "+
@@ -482,7 +505,7 @@ func (l LLMConfig) validateProvider(where string, p ProviderConfig) error {
 		}
 		return nil
 	default:
-		return fmt.Errorf("config: %s: provider kind %q must be %q, %q, or %q", where, p.Kind, KindGemini, KindOpenAI, KindAnthropic)
+		return fmt.Errorf("config: %s: provider kind %q must be %q, %q, %q, or %q", where, p.Kind, KindGemini, KindOpenAI, KindAnthropic, KindOllama)
 	}
 }
 

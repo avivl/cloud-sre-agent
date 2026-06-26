@@ -27,6 +27,7 @@ import (
 	"github.com/avivl/cloud-sre-agent/internal/llm"
 	"github.com/avivl/cloud-sre-agent/internal/llm/anthropic"
 	"github.com/avivl/cloud-sre-agent/internal/llm/gemini"
+	"github.com/avivl/cloud-sre-agent/internal/llm/ollama"
 	"github.com/avivl/cloud-sre-agent/internal/llm/openai"
 	"github.com/avivl/cloud-sre-agent/internal/llm/router"
 	"github.com/avivl/cloud-sre-agent/internal/obs"
@@ -227,6 +228,13 @@ func buildOneProvider(ctx context.Context, e config.ProviderConfig) (llm.Provide
 			Model:   e.Model,
 			APIKey:  apiKey,
 			BaseURL: e.BaseURL,
+		})
+	case config.KindOllama:
+		// Ollama is local/self-hosted: no API key, host defaults inside the
+		// adapter when empty.
+		return ollama.New(ollama.Config{
+			Model: e.Model,
+			Host:  e.Host,
 		})
 	default:
 		return nil, fmt.Errorf("unsupported llm provider kind %q", e.Kind)

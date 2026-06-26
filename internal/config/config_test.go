@@ -228,6 +228,81 @@ func TestValidate_ExternalProviders(t *testing.T) {
 	})
 }
 
+// TestValidate_Ollama covers the local/self-hosted ollama provider, which is
+// EXEMPT from the external-disclosure (BAA) gate: it must be selectable as
+// primary and as a fallback WITHOUT allow_external.
+func TestValidate_Ollama(t *testing.T) {
+	base := func() Config {
+		return Config{
+			Sources:   []SourceConfig{{Type: "file", Path: "x.log"}},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
+		}
+	}
+
+	t.Run("ollama as primary without opt-in is allowed", func(t *testing.T) {
+		c := base()
+		c.LLM = LLMConfig{Provider: KindOllama, Model: "llama3.1"}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("ollama as primary with explicit host is allowed", func(t *testing.T) {
+		c := base()
+		c.LLM = LLMConfig{Provider: KindOllama, Model: "llama3.1", Host: "http://ollama.internal:11434"}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("ollama as fallback without opt-in is allowed", func(t *testing.T) {
+		c := base()
+		c.LLM = LLMConfig{
+			Provider: KindGemini, Model: "gemini-2.5-flash",
+			Backend: BackendVertex, Project: "p", Location: "us-central1",
+			Fallbacks: []ProviderConfig{{Kind: KindOllama, Model: "llama3.1"}},
+		}
+		// No AllowExternal set: ollama is exempt from the external gate.
+		require.False(t, c.LLM.AllowsExternal())
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("ollama missing model fails", func(t *testing.T) {
+		c := base()
+		c.LLM = LLMConfig{Provider: KindOllama, Model: ""}
+		err := c.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "model is required")
+	})
+}
+
+// TestLoad_OllamaProvider loads an ollama config from YAML to confirm the host
+// field round-trips and the provider is accepted without allow_external.
+func TestLoad_OllamaProvider(t *testing.T) {
+	p := writeConfig(t, `
+sources:
+  - type: file
+    path: ./x.log
+llm:
+  provider: ollama
+  model: llama3.1
+  host: http://localhost:11434
+  fallbacks:
+    - kind: ollama
+      model: llama3.2
+      host: http://ollama.internal:11434
+`)
+	cfg, err := Load(p)
+	require.NoError(t, err)
+	assert.Equal(t, KindOllama, cfg.LLM.Provider)
+	assert.Equal(t, "http://localhost:11434", cfg.LLM.Host)
+	require.Len(t, cfg.LLM.Fallbacks, 1)
+	assert.Equal(t, KindOllama, cfg.LLM.Fallbacks[0].Kind)
+	assert.Equal(t, "http://ollama.internal:11434", cfg.LLM.Fallbacks[0].Host)
+
+	// Primary projection carries the host through.
+	assert.Equal(t, "http://localhost:11434", cfg.LLM.Primary().Host)
+}
+
 func TestLoad_PrimaryAndFallbacks(t *testing.T) {
 	p := writeConfig(t, `
 sources:

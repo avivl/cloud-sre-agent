@@ -24,6 +24,14 @@ sources:
 #               consumer Developer API (gated, see allow_non_baa).
 #   openai    — OpenAI (external third party; gated, see allow_external).
 #   anthropic — Anthropic (external third party; gated, see allow_external).
+#   ollama    — local/self-hosted model server. NOT an external third party:
+#               prompt content stays on infrastructure you control, so it is
+#               EXEMPT from the allow_external gate and needs no API key. Set a
+#               `host` (defaults to http://localhost:11434).
+#               IMPORTANT: the `host` MUST resolve to infrastructure within your
+#               HIPAA control boundary. Pointing it at a third-party
+#               "Ollama-compatible" endpoint reintroduces external disclosure
+#               WITHOUT the allow_external gate — the code cannot detect this.
 #
 # HIPAA gate: openai and anthropic are EXTERNAL third parties NOT covered by
 # Google's BAA. Selecting either (as primary or fallback) is refused at startup
@@ -74,6 +82,9 @@ llm:
   #     # base_url: https://my-compatible-gateway.example.com   # optional host override
   #   - kind: anthropic
   #     model: claude-opus-4-8
+  #   - kind: ollama          # local/self-hosted; no allow_external, no API key
+  #     model: llama3.1
+  #     host: http://localhost:11434   # optional; this is the default
 
 output:
   dir: ./out
