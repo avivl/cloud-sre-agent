@@ -128,6 +128,141 @@ func TestValidate_Backend(t *testing.T) {
 	})
 }
 
+func TestValidate_ExternalProviders(t *testing.T) {
+	base := func() Config {
+		return Config{
+			Sources: []SourceConfig{{Type: "file", Path: "x.log"}},
+			LLM: LLMConfig{
+				Provider: "gemini", Model: "m",
+				Backend: BackendVertex, Project: "p", Location: "us-central1",
+			},
+			Output:    OutputConfig{Dir: "./out"},
+			Target:    TargetLocal,
+			Validator: ValidatorNone,
+			Log:       LogConfig{Format: "json"},
+		}
+	}
+
+	t.Run("openai as primary without opt-in fails closed", func(t *testing.T) {
+		c := base()
+		c.LLM = LLMConfig{Provider: KindOpenAI, Model: "gpt-4o-mini"}
+		err := c.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "external")
+		require.Contains(t, err.Error(), "BAA")
+	})
+
+	t.Run("anthropic as primary without opt-in fails closed", func(t *testing.T) {
+		c := base()
+		c.LLM = LLMConfig{Provider: KindAnthropic, Model: "claude-opus-4-8"}
+		err := c.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "external")
+	})
+
+	t.Run("openai primary with config opt-in is allowed", func(t *testing.T) {
+		c := base()
+		c.LLM = LLMConfig{Provider: KindOpenAI, Model: "gpt-4o-mini", AllowExternal: true}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("openai primary with env opt-in is allowed", func(t *testing.T) {
+		t.Setenv(AllowExternalLLMEnv, "1")
+		c := base()
+		c.LLM = LLMConfig{Provider: KindOpenAI, Model: "gpt-4o-mini"}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("anthropic fallback without opt-in fails closed", func(t *testing.T) {
+		c := base()
+		c.LLM.Fallbacks = []ProviderConfig{{Kind: KindAnthropic, Model: "claude-opus-4-8"}}
+		err := c.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "fallbacks[0]")
+		require.Contains(t, err.Error(), "external")
+	})
+
+	t.Run("gemini primary + external fallback with opt-in is allowed", func(t *testing.T) {
+		c := base()
+		c.LLM.AllowExternal = true
+		c.LLM.Fallbacks = []ProviderConfig{
+			{Kind: KindOpenAI, Model: "gpt-4o-mini"},
+			{Kind: KindAnthropic, Model: "claude-opus-4-8"},
+		}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("gemini fallback validates its backend", func(t *testing.T) {
+		c := base()
+		c.LLM.Fallbacks = []ProviderConfig{{Kind: KindGemini, Model: "gemini-2.5-pro", Backend: BackendVertex}}
+		err := c.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "fallbacks[0]")
+		require.Contains(t, err.Error(), "Vertex")
+	})
+
+	t.Run("gemini fallback with full vertex config is allowed", func(t *testing.T) {
+		c := base()
+		c.LLM.Fallbacks = []ProviderConfig{
+			{Kind: KindGemini, Model: "gemini-2.5-pro", Backend: BackendVertex, Project: "p", Location: "us-central1"},
+		}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("fallback with unknown kind fails", func(t *testing.T) {
+		c := base()
+		c.LLM.AllowExternal = true
+		c.LLM.Fallbacks = []ProviderConfig{{Kind: "cohere", Model: "x"}}
+		err := c.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "fallbacks[0]")
+	})
+
+	t.Run("fallback missing model fails", func(t *testing.T) {
+		c := base()
+		c.LLM.AllowExternal = true
+		c.LLM.Fallbacks = []ProviderConfig{{Kind: KindOpenAI}}
+		err := c.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "model is required")
+	})
+}
+
+func TestLoad_PrimaryAndFallbacks(t *testing.T) {
+	p := writeConfig(t, `
+sources:
+  - type: file
+    path: ./x.log
+llm:
+  provider: gemini
+  model: gemini-2.5-flash
+  backend: vertex
+  project: my-gcp-project
+  location: us-central1
+  allow_external: true
+  fallbacks:
+    - kind: openai
+      model: gpt-4o-mini
+      base_url: https://gw.example.com
+    - kind: anthropic
+      model: claude-opus-4-8
+`)
+	cfg, err := Load(p)
+	require.NoError(t, err)
+	require.Len(t, cfg.LLM.Fallbacks, 2)
+	assert.Equal(t, KindOpenAI, cfg.LLM.Fallbacks[0].Kind)
+	assert.Equal(t, "gpt-4o-mini", cfg.LLM.Fallbacks[0].Model)
+	assert.Equal(t, "https://gw.example.com", cfg.LLM.Fallbacks[0].BaseURL)
+	assert.Equal(t, KindAnthropic, cfg.LLM.Fallbacks[1].Kind)
+
+	chain := cfg.LLM.Providers()
+	require.Len(t, chain, 3)
+	assert.Equal(t, KindGemini, chain[0].Kind)
+	assert.Equal(t, BackendVertex, chain[0].Backend)
+	assert.Equal(t, KindOpenAI, chain[1].Kind)
+	assert.Equal(t, KindAnthropic, chain[2].Kind)
+}
+
 func TestValidate(t *testing.T) {
 	base := func() Config {
 		return Config{

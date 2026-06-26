@@ -64,9 +64,17 @@ type TracingConfig struct {
 	Project string `koanf:"project"`
 }
 
-// LLM backend identifiers. Vertex AI is the only BAA-eligible Google backend
-// and is the default; the consumer Gemini Developer API is not covered by
-// Google's BAA and is gated behind an explicit opt-in.
+// LLM provider kinds. "gemini" is Google's Gemini (via Vertex AI or the
+// Developer API); "openai" and "anthropic" are external third-party services.
+const (
+	KindGemini    = "gemini"
+	KindOpenAI    = "openai"
+	KindAnthropic = "anthropic"
+)
+
+// LLM backend identifiers (gemini kind only). Vertex AI is the only BAA-eligible
+// Google backend and is the default; the consumer Gemini Developer API is not
+// covered by Google's BAA and is gated behind an explicit opt-in.
 const (
 	BackendVertex    = "vertex"
 	BackendGeminiAPI = "gemini-api"
@@ -77,8 +85,56 @@ const (
 // suffices.
 const AllowNonBAAEnv = "SRE_ALLOW_NON_BAA"
 
-// LLMConfig selects the LLM provider, model, and Google backend.
+// AllowExternalLLMEnv is the env var that, when set to "1", opts in to the
+// external third-party LLM providers (OpenAI, Anthropic) alongside (or instead
+// of) the llm.allow_external config bool. Either suffices.
+const AllowExternalLLMEnv = "SRE_ALLOW_EXTERNAL_LLM"
+
+// ProviderConfig describes one LLM provider in the chain (primary or a
+// fallback). Kind selects the adapter; Model is required. The remaining fields
+// are provider-specific: Backend/Project/Location/APIKeyEnv/AllowNonBAA apply to
+// the gemini kind, BaseURL applies to openai/anthropic. API keys are never
+// stored here — they are read from the environment at wire time.
+type ProviderConfig struct {
+	// Kind selects the adapter: "gemini", "openai", or "anthropic".
+	Kind string `koanf:"kind"`
+	// Model is the model name (e.g. "gemini-2.5-flash", "gpt-4o-mini",
+	// "claude-opus-4-8"). Required.
+	Model string `koanf:"model"`
+
+	// --- gemini-kind fields ---
+
+	// Backend selects the Google backend: "vertex" (default, BAA-eligible) or
+	// "gemini-api" (consumer Developer API, NOT covered by Google's BAA).
+	Backend string `koanf:"backend"`
+	// Project is the GCP project ID (required for the vertex backend).
+	Project string `koanf:"project"`
+	// Location is the GCP region, e.g. "us-central1" (required for vertex).
+	Location string `koanf:"location"`
+	// APIKeyEnv names the environment variable holding the API key, so the key
+	// itself is never written to the config file. Used by the gemini-api backend.
+	APIKeyEnv string `koanf:"api_key_env"`
+	// AllowNonBAA must be true (or the SRE_ALLOW_NON_BAA=1 env var set) to permit
+	// the non-BAA gemini-api backend. It is an explicit, auditable acknowledgement
+	// that the consumer API is not HIPAA-covered.
+	AllowNonBAA bool `koanf:"allow_non_baa"`
+
+	// --- openai / anthropic fields ---
+
+	// BaseURL optionally overrides the provider API host (e.g. a compatible
+	// gateway). Empty uses the SDK default. Applies to openai/anthropic.
+	BaseURL string `koanf:"base_url"`
+}
+
+// LLMConfig selects the primary LLM provider plus an ordered list of fallbacks.
+//
+// For backward compatibility the primary provider is expressed through the
+// top-level fields (Provider/Model/Backend/Project/Location/APIKeyEnv/
+// AllowNonBAA): the primary's "kind" is Provider. Fallbacks are full
+// ProviderConfig entries tried in order when the primary fails.
 type LLMConfig struct {
+	// Provider is the primary provider kind: "gemini" (default), "openai", or
+	// "anthropic".
 	Provider string `koanf:"provider"`
 	Model    string `koanf:"model"`
 	// APIKeyEnv names the environment variable holding the API key, so the key
@@ -95,6 +151,43 @@ type LLMConfig struct {
 	// the non-BAA gemini-api backend. It exists purely as an explicit, auditable
 	// acknowledgement that the consumer API is not HIPAA-covered.
 	AllowNonBAA bool `koanf:"allow_non_baa"`
+	// BaseURL optionally overrides the primary provider API host when Provider is
+	// openai/anthropic. Ignored for gemini.
+	BaseURL string `koanf:"base_url"`
+
+	// Fallbacks is the ordered list of fallback providers, tried in turn when the
+	// primary (and preceding fallbacks) fail.
+	Fallbacks []ProviderConfig `koanf:"fallbacks"`
+
+	// AllowExternal must be true (or SRE_ALLOW_EXTERNAL_LLM=1) to permit selecting
+	// an external third-party provider (openai/anthropic) as primary or fallback.
+	// It is an explicit, auditable acknowledgement that prompt content is
+	// disclosed to a third party not covered by a Google BAA.
+	AllowExternal bool `koanf:"allow_external"`
+}
+
+// Primary returns the primary provider as a ProviderConfig, projecting the
+// top-level LLMConfig fields onto it.
+func (l LLMConfig) Primary() ProviderConfig {
+	return ProviderConfig{
+		Kind:        l.Provider,
+		Model:       l.Model,
+		Backend:     l.Backend,
+		Project:     l.Project,
+		Location:    l.Location,
+		APIKeyEnv:   l.APIKeyEnv,
+		AllowNonBAA: l.AllowNonBAA,
+		BaseURL:     l.BaseURL,
+	}
+}
+
+// Providers returns the ordered provider chain: the primary first, then each
+// configured fallback.
+func (l LLMConfig) Providers() []ProviderConfig {
+	out := make([]ProviderConfig, 0, 1+len(l.Fallbacks))
+	out = append(out, l.Primary())
+	out = append(out, l.Fallbacks...)
+	return out
 }
 
 // OutputConfig controls where remediation artifacts are written.
@@ -242,13 +335,7 @@ func (c Config) Validate() error {
 			return err
 		}
 	}
-	if c.LLM.Provider == "" {
-		return fmt.Errorf("config: llm.provider is required")
-	}
-	if c.LLM.Model == "" {
-		return fmt.Errorf("config: llm.model is required")
-	}
-	if err := c.LLM.validateBackend(); err != nil {
+	if err := c.LLM.validate(); err != nil {
 		return err
 	}
 	if c.Output.Dir == "" {
@@ -343,24 +430,81 @@ func (l LLMConfig) AllowsNonBAA() bool {
 	return l.AllowNonBAA || os.Getenv(AllowNonBAAEnv) == "1"
 }
 
-// validateBackend enforces the HIPAA fail-closed posture on the LLM backend:
-// Vertex AI (BAA-eligible) requires project+location; the consumer Gemini
-// Developer API (not BAA-covered) is refused unless explicitly opted in.
-func (l LLMConfig) validateBackend() error {
-	switch l.Backend {
+// AllowsExternal reports whether external third-party LLM providers (OpenAI,
+// Anthropic) are explicitly opted in, either via the llm.allow_external config
+// bool or the SRE_ALLOW_EXTERNAL_LLM=1 env var. Either is sufficient.
+func (l LLMConfig) AllowsExternal() bool {
+	return l.AllowExternal || os.Getenv(AllowExternalLLMEnv) == "1"
+}
+
+// validate enforces the LLM configuration: the primary and every fallback must
+// name a known kind, carry a model, satisfy their kind-specific requirements,
+// and clear the relevant gates (BAA for the gemini-api backend; the external
+// opt-in for openai/anthropic).
+func (l LLMConfig) validate() error {
+	if l.Provider == "" {
+		return fmt.Errorf("config: llm.provider is required")
+	}
+	if l.Model == "" {
+		return fmt.Errorf("config: llm.model is required")
+	}
+	for i, p := range l.Providers() {
+		where := "llm (primary)"
+		if i > 0 {
+			where = fmt.Sprintf("llm.fallbacks[%d]", i-1)
+		}
+		if err := l.validateProvider(where, p); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// validateProvider validates a single provider entry by kind, enforcing the
+// HIPAA fail-closed posture: external third parties (openai/anthropic) are
+// refused unless the external opt-in is set, and the gemini-api backend is
+// refused unless the non-BAA opt-in is set.
+func (l LLMConfig) validateProvider(where string, p ProviderConfig) error {
+	if p.Model == "" {
+		return fmt.Errorf("config: %s: model is required", where)
+	}
+	switch p.Kind {
+	case KindGemini:
+		return l.validateGeminiBackend(where, p)
+	case KindOpenAI, KindAnthropic:
+		if !l.AllowsExternal() {
+			return fmt.Errorf("config: %s: provider %q is an external third-party service; prompt content "+
+				"(which may include log data) is disclosed to a provider NOT covered by Google's BAA. "+
+				"Opting in PRESUMES you have a signed BAA with the vendor AND zero-data-retention enabled "+
+				"on the account (the code cannot verify ZDR). "+
+				"Set llm.allow_external: true or %s=1 to opt in explicitly, or use the %q provider via Vertex AI",
+				where, p.Kind, AllowExternalLLMEnv, KindGemini)
+		}
+		return nil
+	default:
+		return fmt.Errorf("config: %s: provider kind %q must be %q, %q, or %q", where, p.Kind, KindGemini, KindOpenAI, KindAnthropic)
+	}
+}
+
+// validateGeminiBackend enforces the HIPAA fail-closed posture on a gemini-kind
+// provider's backend: Vertex AI (BAA-eligible) requires project+location; the
+// consumer Gemini Developer API (not BAA-covered) is refused unless explicitly
+// opted in.
+func (l LLMConfig) validateGeminiBackend(where string, p ProviderConfig) error {
+	switch p.Backend {
 	case BackendVertex:
-		if l.Project == "" || l.Location == "" {
-			return fmt.Errorf("config: llm.backend %q (Vertex AI) requires llm.project and llm.location", l.Backend)
+		if p.Project == "" || p.Location == "" {
+			return fmt.Errorf("config: %s: backend %q (Vertex AI) requires project and location", where, p.Backend)
 		}
 		return nil
 	case BackendGeminiAPI:
 		if !l.AllowsNonBAA() {
-			return fmt.Errorf("config: llm.backend %q is the consumer Gemini Developer API, which is NOT covered by Google's BAA; "+
+			return fmt.Errorf("config: %s: backend %q is the consumer Gemini Developer API, which is NOT covered by Google's BAA; "+
 				"set llm.allow_non_baa: true or %s=1 to opt in explicitly, or use the %q backend",
-				BackendGeminiAPI, AllowNonBAAEnv, BackendVertex)
+				where, BackendGeminiAPI, AllowNonBAAEnv, BackendVertex)
 		}
 		return nil
 	default:
-		return fmt.Errorf("config: llm.backend %q must be %q or %q", l.Backend, BackendVertex, BackendGeminiAPI)
+		return fmt.Errorf("config: %s: backend %q must be %q or %q", where, p.Backend, BackendVertex, BackendGeminiAPI)
 	}
 }

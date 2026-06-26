@@ -24,7 +24,11 @@ import (
 	"github.com/avivl/cloud-sre-agent/internal/ingest"
 	"github.com/avivl/cloud-sre-agent/internal/ingest/file"
 	"github.com/avivl/cloud-sre-agent/internal/ingest/pubsub"
+	"github.com/avivl/cloud-sre-agent/internal/llm"
+	"github.com/avivl/cloud-sre-agent/internal/llm/anthropic"
 	"github.com/avivl/cloud-sre-agent/internal/llm/gemini"
+	"github.com/avivl/cloud-sre-agent/internal/llm/openai"
+	"github.com/avivl/cloud-sre-agent/internal/llm/router"
 	"github.com/avivl/cloud-sre-agent/internal/obs"
 	"github.com/avivl/cloud-sre-agent/internal/pipeline"
 	"github.com/avivl/cloud-sre-agent/internal/scm"
@@ -136,6 +140,8 @@ func run(parent context.Context, cfg config.Config, out io.Writer) error {
 		"provider", cfg.LLM.Provider,
 		"backend", cfg.LLM.Backend,
 		"model", cfg.LLM.Model,
+		"llm_chain", provider.Name(),
+		"fallbacks", len(cfg.LLM.Fallbacks),
 		"sources", len(sources),
 		"output_dir", cfg.Output.Dir,
 		"target", target.Name(),
@@ -145,31 +151,85 @@ func run(parent context.Context, cfg config.Config, out io.Writer) error {
 	return consume(ctx, sources, detector, pipe, sanitizer, log)
 }
 
-// buildProvider constructs the gemini provider for the configured backend.
-// Vertex AI uses project/location; the gemini-api backend uses the API key from
-// the configured env var. config.Validate has already enforced the BAA gate, so
-// reaching the gemini-api branch means the operator opted in explicitly.
-func buildProvider(ctx context.Context, l config.LLMConfig) (*gemini.Provider, error) {
-	switch l.Backend {
-	case config.BackendVertex:
-		return gemini.New(ctx, gemini.Config{
-			Model:    l.Model,
-			Backend:  gemini.BackendVertexAI,
-			Project:  l.Project,
-			Location: l.Location,
-		})
-	case config.BackendGeminiAPI:
-		apiKey := os.Getenv(l.APIKeyEnv)
-		if apiKey == "" {
-			return nil, fmt.Errorf("llm api key not set: env %s is empty", l.APIKeyEnv)
+// Environment variables holding the external providers' API keys. They are
+// read at wire time and never stored in config nor logged.
+const (
+	openAIAPIKeyEnv    = "OPENAI_API_KEY"
+	anthropicAPIKeyEnv = "ANTHROPIC_API_KEY"
+)
+
+// buildProvider constructs the configured LLM provider chain — primary first,
+// then each fallback — and wraps it in a router that tries them in order. The
+// router satisfies llm.Provider, so the pipeline is unaware of the chain.
+// config.Validate has already enforced the BAA and external-disclosure gates,
+// so reaching the gemini-api / openai / anthropic branches means the operator
+// opted in explicitly. API keys are read from the environment here and never
+// logged.
+func buildProvider(ctx context.Context, l config.LLMConfig) (llm.Provider, error) {
+	entries := l.Providers()
+	built := make([]llm.Provider, 0, len(entries))
+	for i, e := range entries {
+		p, err := buildOneProvider(ctx, e)
+		if err != nil {
+			if i == 0 {
+				return nil, fmt.Errorf("primary provider (%s): %w", e.Kind, err)
+			}
+			return nil, fmt.Errorf("fallback provider %d (%s): %w", i-1, e.Kind, err)
 		}
-		return gemini.New(ctx, gemini.Config{
-			Model:   l.Model,
-			Backend: gemini.BackendGeminiAPI,
+		built = append(built, p)
+	}
+	return router.New(built[0], built[1:]...)
+}
+
+// buildOneProvider constructs a single provider adapter from one config entry,
+// reading the relevant API key from the environment and erroring clearly if a
+// selected provider's key is unset. Keys are never logged.
+func buildOneProvider(ctx context.Context, e config.ProviderConfig) (llm.Provider, error) {
+	switch e.Kind {
+	case config.KindGemini:
+		switch e.Backend {
+		case config.BackendVertex:
+			return gemini.New(ctx, gemini.Config{
+				Model:    e.Model,
+				Backend:  gemini.BackendVertexAI,
+				Project:  e.Project,
+				Location: e.Location,
+			})
+		case config.BackendGeminiAPI:
+			apiKey := os.Getenv(e.APIKeyEnv)
+			if apiKey == "" {
+				return nil, fmt.Errorf("gemini api key not set: env %s is empty", e.APIKeyEnv)
+			}
+			return gemini.New(ctx, gemini.Config{
+				Model:   e.Model,
+				Backend: gemini.BackendGeminiAPI,
+				APIKey:  apiKey,
+			})
+		default:
+			return nil, fmt.Errorf("unsupported gemini backend %q", e.Backend)
+		}
+	case config.KindOpenAI:
+		apiKey := os.Getenv(openAIAPIKeyEnv)
+		if apiKey == "" {
+			return nil, fmt.Errorf("openai api key not set: env %s is empty", openAIAPIKeyEnv)
+		}
+		return openai.New(openai.Config{
+			Model:   e.Model,
 			APIKey:  apiKey,
+			BaseURL: e.BaseURL,
+		})
+	case config.KindAnthropic:
+		apiKey := os.Getenv(anthropicAPIKeyEnv)
+		if apiKey == "" {
+			return nil, fmt.Errorf("anthropic api key not set: env %s is empty", anthropicAPIKeyEnv)
+		}
+		return anthropic.New(anthropic.Config{
+			Model:   e.Model,
+			APIKey:  apiKey,
+			BaseURL: e.BaseURL,
 		})
 	default:
-		return nil, fmt.Errorf("unsupported llm backend %q", l.Backend)
+		return nil, fmt.Errorf("unsupported llm provider kind %q", e.Kind)
 	}
 }
 

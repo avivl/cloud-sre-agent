@@ -14,6 +14,31 @@ sources:
   #   project_id: my-gcp-project
   #   subscription_id: sre-agent-logs-sub
 
+# LLM provider chain: a PRIMARY provider plus an ordered list of FALLBACKS.
+# Each generation is tried against the primary first; on failure the router
+# advances to each fallback in order. The primary is expressed by the top-level
+# fields below; fallbacks are listed under `fallbacks:`.
+#
+# Provider kinds:
+#   gemini    — Google Gemini, via Vertex AI (BAA-eligible default) or the
+#               consumer Developer API (gated, see allow_non_baa).
+#   openai    — OpenAI (external third party; gated, see allow_external).
+#   anthropic — Anthropic (external third party; gated, see allow_external).
+#
+# HIPAA gate: openai and anthropic are EXTERNAL third parties NOT covered by
+# Google's BAA. Selecting either (as primary or fallback) is refused at startup
+# unless you explicitly opt in via `allow_external: true` or the env var
+# SRE_ALLOW_EXTERNAL_LLM=1. This is an auditable acknowledgement that prompt
+# content (which may include log data) is disclosed to that provider. Opting in
+# PRESUMES you have a signed BAA with the vendor AND zero-data-retention (ZDR)
+# enabled on the account; the code cannot verify ZDR, so this is on you. Keeping
+# Gemini-via-Vertex as primary is the safe HIPAA-covered default.
+#
+# API keys are NEVER stored here. They are read from the environment at startup
+# and never logged:
+#   gemini (gemini-api backend) -> the env var named by api_key_env
+#   openai                       -> OPENAI_API_KEY
+#   anthropic                    -> ANTHROPIC_API_KEY
 llm:
   provider: gemini
   model: gemini-2.5-flash
@@ -31,6 +56,24 @@ llm:
   # Explicit, auditable acknowledgement required to use the non-BAA gemini-api
   # backend. Either this bool or the env var SRE_ALLOW_NON_BAA=1 must be set.
   # allow_non_baa: false
+  # Explicit, auditable acknowledgement required to use ANY external provider
+  # (openai/anthropic) as primary or fallback. Either this bool or the env var
+  # SRE_ALLOW_EXTERNAL_LLM=1 must be set. Leave false for the safe default.
+  # allow_external: false
+  # Ordered fallback chain, tried after the primary fails. Each entry needs a
+  # kind and model; provider-specific fields mirror the primary. Example (kept
+  # commented — uncommenting the external entries also requires allow_external):
+  # fallbacks:
+  #   - kind: gemini
+  #     model: gemini-2.5-pro
+  #     backend: vertex
+  #     project: my-gcp-project
+  #     location: us-central1
+  #   - kind: openai
+  #     model: gpt-4o-mini
+  #     # base_url: https://my-compatible-gateway.example.com   # optional host override
+  #   - kind: anthropic
+  #     model: claude-opus-4-8
 
 output:
   dir: ./out
