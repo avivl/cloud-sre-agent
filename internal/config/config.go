@@ -26,6 +26,7 @@ type Config struct {
 	Target    string         `koanf:"target"`
 	Validator string         `koanf:"validator"`
 	GitHub    GitHubConfig   `koanf:"github"`
+	GitLab    GitLabConfig   `koanf:"gitlab"`
 	Log       LogConfig      `koanf:"log"`
 	Tracing   TracingConfig  `koanf:"tracing"`
 }
@@ -102,10 +103,11 @@ type OutputConfig struct {
 }
 
 // Delivery target identifiers. "local" writes patches to the output directory;
-// "github" opens a real pull request.
+// "github" opens a real pull request; "gitlab" opens a real merge request.
 const (
 	TargetLocal  = "local"
 	TargetGitHub = "github"
+	TargetGitLab = "gitlab"
 )
 
 // Code validator identifiers. "none" accepts every patch (NoopValidator);
@@ -129,6 +131,24 @@ type GitHubConfig struct {
 	Repo string `koanf:"repo"`
 	// BaseBranch is the branch PRs target and branch from; defaults to "main".
 	BaseBranch string `koanf:"base_branch"`
+}
+
+// GitLabTokenEnv is the environment variable the GitLab target reads its access
+// token from at wire time. The token is NEVER stored in config and never logged.
+const GitLabTokenEnv = "GITLAB_TOKEN"
+
+// GitLabConfig configures the GitLab delivery target. The access token is not
+// stored here — it is read from the GitLabTokenEnv environment variable when the
+// target is constructed.
+type GitLabConfig struct {
+	// Project is the project path ("group/repo") or numeric project ID. Required
+	// for the gitlab target.
+	Project string `koanf:"project"`
+	// BaseBranch is the branch MRs target and branch from; defaults to "main".
+	BaseBranch string `koanf:"base_branch"`
+	// BaseURL overrides the GitLab API base URL for self-managed instances.
+	// Empty means public gitlab.com.
+	BaseURL string `koanf:"base_url"`
 }
 
 // LogConfig controls observability output.
@@ -155,6 +175,7 @@ func Default() Config {
 		Target:    TargetLocal,
 		Validator: ValidatorNone,
 		GitHub:    GitHubConfig{BaseBranch: "main"},
+		GitLab:    GitLabConfig{BaseBranch: "main"},
 		Log:       LogConfig{Level: "info", Format: "json"},
 		Tracing:   TracingConfig{Exporter: TracingExporterNone},
 	}
@@ -178,6 +199,7 @@ func Load(path string) (Config, error) {
 		"target":             d.Target,
 		"validator":          d.Validator,
 		"github.base_branch": d.GitHub.BaseBranch,
+		"gitlab.base_branch": d.GitLab.BaseBranch,
 		"log.level":          d.Log.Level,
 		"log.format":         d.Log.Format,
 		"tracing.exporter":   d.Tracing.Exporter,
@@ -250,8 +272,9 @@ func (c Config) Validate() error {
 }
 
 // validateTarget enforces the delivery target selector. "local" is the default
-// and needs nothing; "github" requires owner and repo (the token is read from
-// the environment at wire time, not validated here).
+// and needs nothing; "github" requires owner and repo; "gitlab" requires
+// project (tokens are read from the environment at wire time, not validated
+// here).
 func (c Config) validateTarget() error {
 	switch c.Target {
 	case TargetLocal:
@@ -261,8 +284,13 @@ func (c Config) validateTarget() error {
 			return fmt.Errorf("config: target %q requires github.owner and github.repo", c.Target)
 		}
 		return nil
+	case TargetGitLab:
+		if c.GitLab.Project == "" {
+			return fmt.Errorf("config: target %q requires gitlab.project", c.Target)
+		}
+		return nil
 	default:
-		return fmt.Errorf("config: target %q must be %q or %q", c.Target, TargetLocal, TargetGitHub)
+		return fmt.Errorf("config: target %q must be %q, %q, or %q", c.Target, TargetLocal, TargetGitHub, TargetGitLab)
 	}
 }
 

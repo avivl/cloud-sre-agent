@@ -29,6 +29,7 @@ import (
 	"github.com/avivl/cloud-sre-agent/internal/pipeline"
 	"github.com/avivl/cloud-sre-agent/internal/scm"
 	"github.com/avivl/cloud-sre-agent/internal/scm/github"
+	"github.com/avivl/cloud-sre-agent/internal/scm/gitlab"
 	"github.com/avivl/cloud-sre-agent/internal/scm/local"
 	"github.com/avivl/cloud-sre-agent/internal/security"
 	"github.com/avivl/cloud-sre-agent/internal/validate"
@@ -173,10 +174,11 @@ func buildProvider(ctx context.Context, l config.LLMConfig) (*gemini.Provider, e
 }
 
 // buildTarget selects the delivery target from config. "local" writes patches
-// to the output directory; "github" opens a real pull request, reading its
-// access token from the GITHUB_TOKEN environment variable at wire time — the
-// token is never stored in config and never logged. config.Validate has already
-// enforced that the github target carries owner+repo.
+// to the output directory; "github" opens a real pull request and "gitlab" a
+// real merge request, each reading its access token from an environment
+// variable (GITHUB_TOKEN / GITLAB_TOKEN) at wire time — the token is never
+// stored in config and never logged. config.Validate has already enforced that
+// the github target carries owner+repo and the gitlab target carries project.
 func buildTarget(cfg config.Config, log *slog.Logger) (scm.PRTarget, error) {
 	switch cfg.Target {
 	case config.TargetLocal:
@@ -200,6 +202,27 @@ func buildTarget(cfg config.Config, log *slog.Logger) (scm.PRTarget, error) {
 			"owner", cfg.GitHub.Owner,
 			"repo", cfg.GitHub.Repo,
 			"base_branch", cfg.GitHub.BaseBranch,
+		)
+		return t, nil
+	case config.TargetGitLab:
+		token := os.Getenv(config.GitLabTokenEnv)
+		if token == "" {
+			return nil, fmt.Errorf("gitlab target selected but %s is empty", config.GitLabTokenEnv)
+		}
+		t, err := gitlab.New(gitlab.Config{
+			Project:    cfg.GitLab.Project,
+			BaseBranch: cfg.GitLab.BaseBranch,
+			BaseURL:    cfg.GitLab.BaseURL,
+			Token:      token,
+		})
+		if err != nil {
+			return nil, err
+		}
+		// Token is held only inside the HTTP transport; log non-sensitive routing.
+		log.Info("gitlab delivery target configured",
+			"project", cfg.GitLab.Project,
+			"base_branch", cfg.GitLab.BaseBranch,
+			"base_url", cfg.GitLab.BaseURL,
 		)
 		return t, nil
 	default:

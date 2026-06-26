@@ -265,6 +265,7 @@ llm:
 	assert.Equal(t, TargetLocal, cfg.Target)
 	assert.Equal(t, ValidatorNone, cfg.Validator)
 	assert.Equal(t, "main", cfg.GitHub.BaseBranch)
+	assert.Equal(t, "main", cfg.GitLab.BaseBranch)
 }
 
 func TestLoad_GitHubTargetBlock(t *testing.T) {
@@ -288,6 +289,27 @@ github:
 	assert.Equal(t, "my-org", cfg.GitHub.Owner)
 	assert.Equal(t, "my-repo", cfg.GitHub.Repo)
 	assert.Equal(t, "develop", cfg.GitHub.BaseBranch)
+}
+
+func TestLoad_GitLabTargetBlock(t *testing.T) {
+	p := writeConfig(t, `
+sources:
+  - type: file
+    path: ./x.log
+llm:
+  project: my-gcp-project
+target: gitlab
+gitlab:
+  project: my-group/my-repo
+  base_branch: develop
+  base_url: https://gitlab.example.com
+`)
+	cfg, err := Load(p)
+	require.NoError(t, err)
+	assert.Equal(t, TargetGitLab, cfg.Target)
+	assert.Equal(t, "my-group/my-repo", cfg.GitLab.Project)
+	assert.Equal(t, "develop", cfg.GitLab.BaseBranch)
+	assert.Equal(t, "https://gitlab.example.com", cfg.GitLab.BaseURL)
 }
 
 func TestValidate_Target(t *testing.T) {
@@ -330,9 +352,23 @@ func TestValidate_Target(t *testing.T) {
 		require.Error(t, c.Validate())
 	})
 
+	t.Run("gitlab with project is valid", func(t *testing.T) {
+		c := base()
+		c.Target = TargetGitLab
+		c.GitLab = GitLabConfig{Project: "group/repo"}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("gitlab missing project fails", func(t *testing.T) {
+		c := base()
+		c.Target = TargetGitLab
+		c.GitLab = GitLabConfig{}
+		require.Error(t, c.Validate())
+	})
+
 	t.Run("unknown target fails", func(t *testing.T) {
 		c := base()
-		c.Target = "gitlab"
+		c.Target = "bitbucket"
 		require.Error(t, c.Validate())
 	})
 

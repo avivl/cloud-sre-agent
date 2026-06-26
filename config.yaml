@@ -38,6 +38,7 @@ output:
 # Delivery target: where a remediation is delivered.
 #   local  — write the patch and a JSON metadata sidecar under output.dir (default).
 #   github — open a real pull request against the repository below.
+#   gitlab — open a real merge request against the project below.
 target: local
 
 # GitHub delivery target (used only when target: github). The access token is
@@ -48,6 +49,17 @@ github:
   repo: my-repo
   # Branch PRs target and branch from; defaults to "main".
   base_branch: main
+
+# GitLab delivery target (used only when target: gitlab). The access token is
+# NEVER stored here — it is read from the GITLAB_TOKEN environment variable at
+# startup and is never logged. project is required when target: gitlab.
+gitlab:
+  # Project path ("group/repo") or numeric project ID.
+  project: my-group/my-repo
+  # Branch MRs target and branch from; defaults to "main".
+  base_branch: main
+  # API base URL for self-managed GitLab; omit (or leave blank) for gitlab.com.
+  # base_url: https://gitlab.example.com
 
 # Code validator: gates an LLM-generated patch before it is delivered.
 #   none   — accept every patch (default).
