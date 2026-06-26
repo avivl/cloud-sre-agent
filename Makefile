@@ -4,6 +4,10 @@ BINARY       := sre-agent
 PKG          := ./...
 CMD          := ./cmd/sre-agent
 COVER_MIN    := 80
+# Coverage gate scopes to the logic packages (matches CI). cmd/ is the thin
+# composition root and dogfood/ is local tooling — neither is unit-covered, and
+# including them would drag the threshold below a meaningful bar.
+COVER_PKG    := ./internal/...
 COVERPROFILE := coverage.out
 
 GENERATOR    := ./dogfood/cmd/generator
@@ -28,15 +32,18 @@ test:
 vet:
 	go vet $(PKG)
 
+# lint scopes to $(PKG) (./...) so an unscoped run can't wander into sibling
+# git worktrees via the shared module cache (which produces phantom findings).
 lint:
-	golangci-lint run
+	golangci-lint run $(PKG)
 
 tidy:
 	go mod tidy
 
-# cover runs tests with coverage and fails if total coverage is below COVER_MIN.
+# cover runs tests with coverage over the logic packages and fails if total
+# coverage is below COVER_MIN (matches the CI gate).
 cover:
-	go test -coverprofile=$(COVERPROFILE) $(PKG)
+	go test -coverprofile=$(COVERPROFILE) $(COVER_PKG)
 	@total=$$(go tool cover -func=$(COVERPROFILE) | grep total: | awk '{print $$3}' | tr -d '%'); \
 	echo "total coverage: $$total% (min $(COVER_MIN)%)"; \
 	awk "BEGIN { exit !($$total >= $(COVER_MIN)) }" || \
