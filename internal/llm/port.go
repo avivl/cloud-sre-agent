@@ -40,7 +40,7 @@ type Request struct {
 	// MaxTokens caps the response length; 0 uses the provider default.
 	MaxTokens int `json:"max_tokens,omitempty"`
 	// Schema, when set, requests JSON-schema-constrained structured output.
-	// Build it with NewSchemaFor[T]. SchemaName labels the schema for
+	// Build it with SchemaFor[T]. SchemaName labels the schema for
 	// providers that require a name.
 	Schema     json.RawMessage `json:"schema,omitempty"`
 	SchemaName string          `json:"schema_name,omitempty"`

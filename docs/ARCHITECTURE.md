@@ -1,208 +1,175 @@
-# Architecture Overview
+# Architecture
 
-The Cloud SRE Agent is designed with a modular and extensible architecture, enabling autonomous log monitoring, analysis, and remediation across multiple cloud environments. The system operates on a continuous, event-driven loop, leveraging 100+ AI providers (OpenAI, Anthropic, Google, Cohere, Ollama, and more) for intelligent decision-making and the `hyx` library for robust resilience.
+The Cloud SRE Agent is a **ports and adapters** (hexagonal) Go daemon. The core
+domain logic depends only on a small set of interfaces; every external system —
+log source, LLM, source-control destination, code validator — is an adapter
+behind one of those ports. The result is that the pipeline, detector, and
+domain types know nothing about Gemini, Pub/Sub, or GitHub.
 
-## Core Components
+See also: [CONFIGURATION.md](CONFIGURATION.md), [DEPLOYMENT.md](DEPLOYMENT.md),
+[HIPAA.md](HIPAA.md), and the project [README](../README.md).
 
-The agent's functionality is distributed across several key components, each with a specific role in the incident response workflow:
+## Data flow
 
-### 1. Log Ingestion (`LogIngestor`)
-*   **Role:** Responsible for retrieving historical logs from multiple cloud platforms (Google Cloud Logging, AWS CloudWatch, Azure Monitor, Kubernetes).
-*   **Functionality:** Primarily used for initial data loading or backfilling purposes. In a real-time scenario, logs are typically streamed via platform-specific messaging services (Pub/Sub, Kinesis, Event Hubs, etc.).
-
-### 2. Log Subscription (`LogSubscriber`)
-*   **Role:** Acts as the real-time entry point for log data from multiple cloud platforms.
-*   **Functionality:** Subscribes to various messaging services (Google Cloud Pub/Sub, AWS Kinesis, Azure Event Hubs, Kubernetes API) where logs are exported from cloud logging services. It receives, parses, and dispatches log entries for further processing via a configurable callback. Extracts `flow_id` from log `insertId` for complete pipeline traceability. Designed for continuous processing without fixed timeouts and includes comprehensive error handling with message acknowledgment patterns.
-
-### 3. Triage Agent (`TriageAgent`)
-*   **Role:** Performs rapid, preliminary analysis of incoming log data.
-*   **Functionality:** Utilizes **Fast AI models** (GPT-4o-mini, Claude-3 Haiku, Gemini Flash) for quick assessment. It identifies potential issues, assigns a preliminary severity score, and summarizes the findings into a structured `TriagePacket`. This acts as a crucial filtering step to prioritize critical events. Includes built-in retry mechanisms for model calls to enhance robustness. All operations include `flow_id` tracking for complete traceability.
-
-### 4. Analysis Agent (`AnalysisAgent`)
-*   **Role:** Conducts in-depth root cause analysis and generates comprehensive remediation plans using **revolutionary dynamic prompt generation**.
-*   **Functionality:** Receives `TriagePacket`s from the `TriageAgent`. It employs a **multi-provider approach** with **Balanced AI models for analysis** and **Fast AI models for meta-prompt generation**. The system automatically selects the optimal prompting strategy:
-    *   **Meta-Prompt Generation**: Uses Fast AI models to create optimized prompts for Advanced AI models (AI teaching AI across providers)
-    *   **Specialized Templates**: Domain-specific prompts for database, API, security, and service errors
-    *   **Adaptive Strategy Selection**: Automatically chooses the best approach based on issue complexity and available AI providers
-    *   **Context-Aware Generation**: Incorporates repository structure, technology stack, and historical patterns
-*   **Output:** A `RemediationPlan` with superior code quality, detailed root cause analysis, and production-ready fixes. Includes built-in retry mechanisms, comprehensive flow tracking, and multiple fallback layers for reliability.
-
-### 5. Remediation Agent (`RemediationAgent`)
-*   **Role:** Automates the implementation of proposed service code remediation actions.
-*   **Functionality:** Receives `RemediationPlan`s and interacts with GitHub to create branches, commit service code changes, and submit Pull Requests. Features idempotent branch creation for retry scenarios and extracts file paths from code patch comments. Integrates AI-driven insights into the development workflow with human-in-the-loop validation. All GitHub operations include comprehensive flow tracking.
-
-### 6. Quantitative Verification Agent (`QuantitativeAnalyzer`)
-*   **Role:** Provides empirical validation of analysis findings through automated code execution.
-*   **Implementation:** Uses AI models with code execution capabilities to:
-    *   Generate Python code for precise error rate calculations
-    *   Validate hypotheses with statistical analysis
-    *   Perform quantitative verification of findings
-*   **Integration:** Works in conjunction with AnalysisAgent to provide data-driven validation of AI analysis results.
-
-### 7. Pattern Detection System (`pattern_detector`)
-*   **Role:** Advanced pattern recognition system for proactive incident detection and analysis.
-*   **Components:**
-    *   **TimeWindow Management:** Accumulates logs into sliding time windows for temporal analysis
-    *   **Threshold Evaluator:** Applies smart thresholds (frequency, rate, service impact, cascade detection)
-    *   **Pattern Classifier:** Identifies specific failure patterns (cascade failures, service degradation, traffic spikes, configuration issues, dependency failures, resource exhaustion, sporadic errors)
-    *   **Confidence Scorer:** Provides sophisticated confidence scoring with 15+ factors including temporal patterns, service correlation, error consistency, and baseline deviations
-    *   **Baseline Tracker:** Maintains dynamic baselines for anomaly detection
-*   **Integration:** Enhances TriageAgent with proactive pattern detection capabilities, enabling early warning systems and more accurate incident classification.
-
-### 8. Dynamic Prompt Generation System
-*   **Role:** Revolutionary AI-powered prompt generation that automatically creates context-aware, specialized prompts for optimal code generation across multiple AI providers.
-*   **Components:**
-    *   **Adaptive Prompt Strategy**: Intelligently selects between meta-prompt, specialized, or generic approaches based on issue complexity and available AI providers
-    *   **Meta-Prompt Generator**: Uses Fast AI models to generate optimized prompts for Advanced AI models (AI teaching AI approach across providers)
-    *   **Specialized Templates**: Domain-specific prompts for database errors, API failures, security issues, and service problems
-    *   **Context Builder**: Constructs comprehensive context from issue details, repository structure, and historical patterns
-    *   **Validation & Refinement**: Implements iterative refinement with feedback loops and fallback mechanisms
-*   **Benefits:**
-    *   **Superior Code Quality**: Context-aware generation with domain expertise across multiple AI providers
-    *   **Adaptive Intelligence**: Automatic strategy selection without manual intervention
-    *   **Cost Optimization**: Smart caching and similarity matching reduce API costs
-    *   **Reliability**: Multiple fallback layers ensure system stability
-*   **Integration:** Seamlessly integrated with the Analysis Agent, providing the foundation for all code generation operations.
-
-## Flow Tracking System
-
-The system implements comprehensive end-to-end traceability using standardized identifiers:
-
-*   **`flow_id`**: Extracted from the original log's `insertId`, tracks a single log entry through the entire pipeline
-*   **`issue_id`**: Generated during triage analysis, identifies a specific issue/incident across all components
-
-Every log message uses standardized prefixes (`[LOG_INGESTION]`, `[TRIAGE]`, `[ANALYSIS]`, `[REMEDIATION]`, `[ERROR_HANDLING]`) with both identifiers for complete operational visibility. For detailed information on using this system for troubleshooting and monitoring, see [LOGGING.md](LOGGING.md) and [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
-
-## Data Flow and Interaction
-
-The agent operates in a continuous feedback loop with complete flow tracking:
-
-```mermaid
-sequenceDiagram
-    participant CL as Cloud Logging
-    participant PS as Pub/Sub
-    participant LS as LogSubscriber
-    participant PD as Pattern Detector
-    participant TA as TriageAgent<br/>(Fast AI Models)
-    participant AA as AnalysisAgent<br/>(Multi-Provider AI)
-    participant QA as QuantitativeAnalyzer<br/>(Code Execution)
-    participant RA as RemediationAgent
-    participant GH as GitHub
-
-    CL->>PS: Export logs (severity>=ERROR)
-    PS->>LS: Push log message
-    
-    LS->>PD: accumulate_log(log_entry)
-    Note over PD: Time window management<br/>Pattern analysis
-    
-    alt Pattern Detected
-        PD->>TA: process_pattern(pattern_match)
-        Note over TA: Classification<br/>with pattern context
-    else No Pattern
-        LS->>TA: process_log_data(log_entry)
-        Note over TA: Standard triage<br/>classification
-    end
-    
-    TA->>TA: Generate TriagePacket
-    
-    alt Issue Severity >= HIGH
-        TA->>AA: analyze_issue(triage_packet)
-        
-        Note over AA: Analysis with<br/>dynamic prompt generation
-        AA->>AA: Analyze historical logs<br/>+ configuration context
-        
-        AA->>QA: validate_hypothesis(analysis_result)
-        Note over QA: Generate & execute<br/>Python validation code
-        QA->>AA: empirical_data
-        
-        AA->>RA: create_pull_request(remediation_plan)
-        Note over RA: Generate code patches<br/>& PR description
-        RA->>GH: Create branch & PR
-        GH-->>RA: PR URL
-        
-        RA-->>LS: Success notification
-    else Issue Severity < HIGH
-        TA-->>LS: Log and continue
-    end
+```
+                                  ┌──────────────────────────────────────────┐
+  ingest.LogSource                │            pipeline.Pipeline              │
+  ┌──────────┐   domain.LogEvent  │                                          │
+  │ file     │──┐                 │  triage ──> analysis ──> remediation     │
+  │ pubsub   │──┼──> detect ──────┼─> (llm.Provider via router)              │
+  └──────────┘  │   .Detector     │       │                                  │
+                │   (sliding      │   sanitizer on every prompt input        │
+                │    window)      │       │                                  │
+                │                 │   CodeValidator gates the patch          │
+   domain.Incident ───────────────>      │                                  │
+                                  │       v                                  │
+                                  │   scm.PRTarget.Deliver ──> scm.Ref       │
+                                  └──────────────────────────────────────────┘
+                                          local / github / gitlab
 ```
 
-### Detailed Process Flow
+`cmd/sre-agent` (`run` subcommand) constructs each adapter from config, wires
+them through the ports, merges the source channels, and drives the consume loop
+until the sources drain or a signal arrives.
 
-1.  **Logs to Pub/Sub:** Google Cloud Logging is configured to export relevant log streams to designated Pub/Sub topics.
-2.  **Subscriber Activation:** The `main.py` orchestrator launches an asynchronous task for each configured service. The `LogSubscriber` within each task listens to its respective Pub/Sub topic. Upon receiving a new log message, it triggers an asynchronous processing pipeline via a callback.
-3.  **Triage & Analysis Pipeline:** The received log data is first sent to the `TriageAgent`. If a significant issue is identified, the resulting `TriagePacket` is then passed to the `AnalysisAgent` for deeper investigation. Both agents incorporate retry logic for their AI model interactions across multiple providers. The `AnalysisAgent` may also interact with the `QuantitativeAnalyzer` for empirical validation of its findings.
-4.  **Remediation Trigger:** Once the `AnalysisAgent` generates a `RemediationPlan`, it is forwarded to the `RemediationAgent`.
-5.  **GitHub Integration:** The `RemediationAgent` interacts with the configured GitHub repository to create a new branch, commit the proposed changes (code patches, IaC fixes), and open a Pull Request. This PR serves as a critical human-in-the-loop checkpoint for reviewing and approving automated remediation.
+## Ports
 
-## Multi-Service and Multi-Repository Design
+All four ports live next to (or in) the package that owns the seam:
 
-The agent is designed to monitor multiple services concurrently across multiple cloud platforms. This is achieved through a flexible configuration (`config.yaml`) that allows defining a list of services, each with its own cloud platform (GCP, AWS, Azure, Kubernetes), project, location, and messaging service subscription. Furthermore, each service can optionally override the default GitHub repository settings, enabling remediation actions to be directed to different repositories as needed. This modularity ensures scalability and adaptability across diverse microservice architectures and multi-cloud environments.
+| Port | Package | Contract |
+|---|---|---|
+| `LogSource` | `internal/ingest` | `Name()`, `Stream(ctx) (<-chan domain.LogEvent, error)`, `Close()`. `Stream` is single-use and closes its channel on drain, cancel, or `Close`. |
+| `Provider` | `internal/llm` | `Name()`, `Generate(ctx, Request) (Response, error)`. `Request` may carry a JSON `Schema` + `SchemaName` for structured output. |
+| `PRTarget` | `internal/scm` | `Name()`, `Deliver(ctx, Change) (Ref, error)`. A `Change` is one file patch + reviewer context + severity. |
+| `CodeValidator` | `internal/pipeline` | `Validate(ctx, patch, lang) (ValidationResult, error)`. `ValidationResult{OK, Diagnostics}`. |
 
-## Pattern Detection Architecture
+The pipeline additionally depends on a small `Sanitizer` interface (matching
+`*security.Sanitizer`) so it depends on behavior, not a concrete struct.
 
-The Pattern Detection System operates as a sophisticated multi-layer analysis engine with the following architecture:
+## Domain types
 
-```mermaid
-graph TD
-    A[Log Entry] --> B[Time Window Accumulator]
-    B --> C{Window Full?}
-    C -->|Yes| D[Threshold Evaluator]
-    C -->|No| B
-    
-    D --> E[Error Frequency Check]
-    D --> F[Service Impact Check]
-    D --> G[Cascade Failure Check]
-    D --> H[Rate Change Check]
-    
-    E --> I{Threshold Triggered?}
-    F --> I
-    G --> I
-    H --> I
-    
-    I -->|Yes| J[Pattern Classifier]
-    I -->|No| K[Store Baseline Data]
-    
-    J --> L[Confidence Scorer]
-    L --> M[Pattern Match Result]
-    
-    K --> N[Continue Monitoring]
-    M --> O[Triage]
-```
+`internal/domain` is dependency-free and the shared vocabulary:
 
-### Pattern Detection Layers
+- `LogEvent` — a normalized log line: id, timestamp, `Severity`, message,
+  source, labels.
+- `Severity` — ordered enum (`unknown` < `debug` < `info` < `warning` <
+  `error` < `critical`). Marshals to/from lowercase string labels, and exposes
+  a `JSONSchema()` so structured-output schemas advertise a string enum.
+- `Incident` — a correlated cluster the detector judged anomalous: id, pattern,
+  severity score in [0,1], affected services, sample events, summary.
+- `TriageResult`, `Analysis`, `RemediationPlan` — the three pipeline-stage
+  artifacts. Each carries a server-owned `IncidentID` (`json:"-"`) the pipeline
+  sets after decoding, so it is never requested from the model.
 
-1. **Time Window Management**
-   - Sliding time windows (configurable duration)
-   - Log accumulation and temporal organization
-   - Window expiration and processing triggers
+## The detector
 
-2. **Smart Threshold Evaluation**
-   - **Error Frequency:** Absolute count thresholds with service grouping
-   - **Error Rate:** Percentage increase from dynamic baselines
-   - **Service Impact:** Multi-service failure detection
-   - **Cascade Failure:** Cross-service correlation analysis
-   - **Severity Weighted:** Weighted scoring by log severity levels
+`internal/detect` is an in-memory, single-goroutine sliding-window threshold
+detector. `Observe(LogEvent)` appends the event, advances a monotonic
+"window now" clock (a stale- or future-dated event never rewinds it), evicts
+events older than `Window`, and evaluates two triggers:
 
-3. **Pattern Classification**
-   - **Sporadic Errors:** Random distributed failures
-   - **Service Degradation:** Single service performance issues
-   - **Cascade Failure:** Multi-service dependency chains
-   - **Traffic Spike:** Volume-induced system stress
-   - **Configuration Issue:** Deployment-related problems
-   - **Dependency Failure:** External service problems
-   - **Resource Exhaustion:** Memory/CPU/storage limits
+- **Error rate** — fraction of events at `SeverityError`+ over the window,
+  once `MinEvents` is reached, crossing `ErrorRateThreshold`.
+- **Critical burst** — count of `SeverityCritical` events reaching
+  `CriticalCount` (zero disables this trigger).
 
-4. **Advanced Confidence Scoring**
-   - 15+ quantitative factors including:
-     - Temporal concentration and correlation
-     - Service distribution and cross-correlation
-     - Error consistency and message similarity
-     - Baseline deviation and trend analysis
-     - Resource utilization and deployment correlation
-   - Configurable weighting and decay functions
-   - Multi-level confidence assessment (VERY_LOW to VERY_HIGH)
+When a trigger fires and the `Cooldown` since the last incident has elapsed, it
+emits a `domain.Incident` with a blended severity score, the distinct affected
+sources, and up to five highest-severity sample events. `DefaultConfig` is a
+60s window, 5 min events, 50% error rate, 3 criticals, 60s cooldown; `New`
+fills unset fields from those defaults. The agent constructs it with
+`detect.New(detect.Config{})`, i.e. all defaults.
 
-## Resilience and Observability
+## The pipeline
 
-*   **Resilience:** Critical operations within the agents are wrapped with resilience patterns (retries, circuit breakers, bulkheads, rate limiting) using the `hyx` library. Additionally, `asyncio.wait_for()` is used to enforce timeouts on asynchronous operations, ensuring the system remains stable and responsive even under adverse conditions like transient network issues, API rate limits, or service outages.
-*   **Structured Logging:** All components utilize a centralized structured logging framework with comprehensive flow tracking. The system implements complete end-to-end traceability using `flow_id` (from log `insertId`) and `issue_id` parameters that flow through all subsystems. For detailed information on the logging format and flow tracking system, see [LOGGING.md](LOGGING.md).
+`internal/pipeline` orchestrates triage -> analysis -> remediation, wired
+entirely through ports: an `llm.Provider`, a `Sanitizer`, a `CodeValidator`
+(defaults to `NoopValidator`), and a `PRTarget`. `Process(ctx, Incident)`:
+
+1. Validates the incident and attaches a flow id (`flow-<incidentID>`) to the
+   context via `obs`, so every stage's logs correlate.
+2. **Triage** — classify category/severity, decide `Actionable`, confidence,
+   reasoning, next actions. If not actionable, returns `ErrNotActionable` (a
+   benign skip; later stages and delivery are not called).
+3. **Analysis** — root cause + proposed fix + key points + confidence.
+4. **Remediation** — a concrete `RemediationPlan` (target file, code patch,
+   proposed fix, priority, estimated effort). Priority defaults from the
+   incident severity score when the model leaves it unset; the plan is
+   validated (`code_patch` and `target_file` required).
+5. **Validate** — the `CodeValidator` gates the patch; a rejection returns
+   `ErrPatchRejected` with diagnostics.
+6. **Deliver** — the `PRTarget` applies the change and returns a `scm.Ref`.
+
+Each stage builds a JSON schema for its target type with `llm.SchemaFor[T]()`
+and attaches it to the request via `Request.WithSchema(schema, "<name>")`. The
+provider returns structured output that `Response.Decode` unmarshals into the
+domain type.
+
+### Prompt construction (HIPAA-relevant)
+
+`incidentPrompt` renders only the detector's synthetic, PHI-free fields —
+pattern, severity score, summary, affected-service identifiers, and an aggregate
+severity breakdown of sample events. Raw sample-event message bodies are
+**never** included. Every system and user message is also run through the
+sanitizer before it is sent. This is a hard gate; details in [HIPAA.md](HIPAA.md).
+
+## The router
+
+`internal/llm/router` is itself an `llm.Provider` composed of an ordered list:
+primary first, then fallbacks. `Generate` tries each in turn and returns the
+first success; if all fail it returns an aggregated error (`errors.Join`) naming
+each provider. Context cancellation is checked between attempts. Because the
+router satisfies the port, the pipeline is unaware a chain exists; its `Name()`
+reads e.g. `router[gemini->openai]`. `cmd/sre-agent` builds the chain from
+`llm.Providers()` (primary + configured fallbacks).
+
+## LLM adapters and schema
+
+`internal/llm` defines the `Provider` port and the `Request`/`Response`/`Usage`
+value types. `SchemaFor[T]()` reflects a self-contained JSON schema for `T`
+(inlined `$defs`, no `$schema`/`$id`) and forces `required` to cover every
+property at every object level — OpenAI's strict `json_schema` mode demands it,
+and Gemini/Anthropic tolerate it, so one schema serves all three. Adapters:
+`gemini` (Vertex AI or Developer API backends), `openai`, `anthropic`, `ollama`
+(local/self-hosted), and `stub` (offline, deterministic, NON-PRODUCTION).
+
+## Runtime (worker pool)
+
+`cmd/sre-agent`'s `run`:
+
+1. Loads and validates config (`config.Load`).
+2. Sets up observability (`obs.Setup`): slog logger + OTel tracer/meter +
+   selected span exporter.
+3. Builds the provider chain (`buildProvider` -> router), delivery target
+   (`buildTarget`), sanitizer, validator (`buildValidator`), and the pipeline.
+4. Builds the detector and the configured log sources (`buildSources`).
+5. `consume` merges every source's event channel (`fanIn`), feeds each event to
+   the detector, and runs `pipeline.Process` on each emitted incident.
+
+Signals (SIGINT/SIGTERM) cancel the root context, which stops the sources and
+unwinds the loop cleanly. A closed merged channel is disambiguated: a clean
+drain returns nil (healthy exit), but a source that died with a terminal error
+(e.g. Pub/Sub permission revoked, surfaced via an `Err()` method) returns a
+non-nil error so the process exits non-zero rather than looking healthy to the
+worker pool. Errors are logged with their type and a **sanitized** detail
+string, never the raw error (which may have wrapped log content).
+
+In production this binary runs as a Cloud Run worker pool with no HTTP ingress;
+see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Package map
+
+| Package | Role |
+|---|---|
+| `internal/domain` | Core types; no I/O, no provider coupling. |
+| `internal/ingest` | `LogSource` port. Adapters: `ingest/file`, `ingest/pubsub`. |
+| `internal/detect` | Sliding-window threshold detector. |
+| `internal/pipeline` | Triage/analysis/remediation orchestration + `CodeValidator` port + `NoopValidator`. |
+| `internal/llm` | `Provider` port, `Request`/`Response`, `SchemaFor`. Adapters: `llm/gemini`, `llm/openai`, `llm/anthropic`, `llm/ollama`, `llm/stub`; chain in `llm/router`. |
+| `internal/scm` | `PRTarget` port. Adapters: `scm/local`, `scm/github`, `scm/gitlab`. |
+| `internal/validate` | Local Go-toolchain `CodeValidator`. |
+| `internal/security` | Sanitizer (secret/PII redaction). |
+| `internal/config` | koanf-based typed config + validation gates. |
+| `internal/obs` | slog + OTel + flow-id propagation + log redaction. |
+| `internal/resilience` | Retry / circuit-breaker helpers. |
+| `cmd/sre-agent` | Entrypoint and spine wiring. |

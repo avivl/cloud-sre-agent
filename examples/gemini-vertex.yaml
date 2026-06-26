@@ -1,0 +1,46 @@
+# Cloud SRE Agent — Gemini via Vertex AI + GitHub delivery.
+#
+# The HIPAA-covered production default: Gemini through Vertex AI (BAA-eligible),
+# with remediations delivered as real GitHub pull requests.
+#
+# Requires:
+#   - Ambient GCP credentials (ADC) with Vertex AI access for the project below.
+#   - GITHUB_TOKEN in the environment (read at startup, NEVER stored or logged).
+#
+# Run:  GITHUB_TOKEN=ghp_... sre-agent run --config examples/gemini-vertex.yaml
+
+sources:
+  - type: file
+    path: ./testdata/sample.log
+
+# Primary provider: Gemini on the Vertex AI backend (the only BAA-eligible
+# Google backend). Vertex requires project + location. No allow_external needed —
+# Vertex is HIPAA-covered, not an external third party.
+llm:
+  provider: gemini
+  model: gemini-2.5-flash
+  backend: vertex
+  project: my-gcp-project
+  location: us-central1
+
+output:
+  dir: ./out
+
+# GitHub delivery: open a real PR. owner and repo are required. The access token
+# is read from GITHUB_TOKEN at startup and is never written here or logged.
+target: github
+github:
+  owner: my-org
+  repo: my-repo
+  base_branch: main
+
+# Gate generated Go patches with the local toolchain (parse, gofmt, go vet)
+# before opening a PR.
+validator: local
+
+log:
+  level: info
+  format: json
+
+tracing:
+  exporter: none

@@ -32,6 +32,12 @@ sources:
 #               HIPAA control boundary. Pointing it at a third-party
 #               "Ollama-compatible" endpoint reintroduces external disclosure
 #               WITHOUT the allow_external gate — the code cannot detect this.
+#   stub      — NON-PRODUCTION, offline provider for dev/dogfooding/CI. Makes no
+#               network call and contacts no external service, so it is EXEMPT
+#               from the allow_external gate and needs no API key, host, or
+#               model. It returns deterministic, schema-valid canned output so
+#               the pipeline runs end to end with no LLM. DO NOT use in
+#               production. Example primary: `provider: stub` / `model: stub`.
 #
 # HIPAA gate: openai and anthropic are EXTERNAL third parties NOT covered by
 # Google's BAA. Selecting either (as primary or fallback) is refused at startup

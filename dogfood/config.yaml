@@ -1,0 +1,50 @@
+# Cloud SRE Agent — fully-local dogfooding configuration.
+#
+# This wires the agent end to end with NO credentials and NO GCP:
+#   source   : filesystem, reading the log file the generator appends to
+#   provider : stub      — NON-PRODUCTION, offline, deterministic, no network
+#   target   : local     — writes the remediation patch + metadata under out/
+#
+# Run it with `make dogfood` from the repo root, which generates the log,
+# runs the agent for a bounded time, and prints the produced patch file.
+
+sources:
+  - type: file
+    # The generator (`dogfood/generator`) appends ERROR-level JSON lines here.
+    # Relative to the repo root, where `make dogfood` invokes the agent.
+    path: ./dogfood/out/dogfood.log
+
+# Stub provider: offline, deterministic, schema-valid canned output. Exempt from
+# the external-disclosure (BAA) gate; needs no API key, host, or model.
+#
+# To swap in a real provider, change just these three fields. Examples:
+#   ollama (local/self-hosted, no key, no allow_external):
+#     provider: ollama
+#     model: llama3.1
+#     host: http://localhost:11434
+#   gemini via Vertex AI (BAA-eligible default; needs GCP project + ADC):
+#     provider: gemini
+#     model: gemini-2.5-flash
+#     backend: vertex
+#     project: my-gcp-project
+#     location: us-central1
+llm:
+  provider: stub
+  model: stub
+
+output:
+  # Patch + JSON sidecar land here; the generated log also lives under this dir.
+  dir: ./dogfood/out
+
+# Local delivery: write the patch and a JSON metadata sidecar under output.dir.
+target: local
+
+# No patch validation for the canned stub output.
+validator: none
+
+log:
+  level: info
+  format: json
+
+tracing:
+  exporter: none

@@ -1,0 +1,46 @@
+# Cloud SRE Agent — Pub/Sub ingestion + Cloud Trace export.
+#
+# Production ingestion shape: pull Cloud Logging LogEntry JSON from a Pub/Sub
+# subscription, reason with Gemini on Vertex AI, deliver patches locally, and
+# export OpenTelemetry spans to Google Cloud Trace.
+#
+# Wire a Cloud Logging sink to a Pub/Sub topic, then point the source at that
+# topic's PULL subscription. Authentication uses ambient GCP credentials (ADC).
+# HIPAA: raw message payloads are never logged — only message IDs and counts.
+#
+# Requires:
+#   - Ambient GCP credentials (ADC) with: Pub/Sub subscriber on the subscription,
+#     Vertex AI access, and Cloud Trace write access.
+#
+# Run:  sre-agent run --config examples/pubsub-workerpool.yaml
+
+# Pub/Sub source: pulls from a subscription. Both project_id and subscription_id
+# are required for this source type.
+sources:
+  - type: pubsub
+    project_id: my-gcp-project
+    subscription_id: sre-agent-logs-sub
+
+llm:
+  provider: gemini
+  model: gemini-2.5-flash
+  backend: vertex
+  project: my-gcp-project
+  location: us-central1
+
+output:
+  dir: ./out
+target: local
+validator: none
+
+log:
+  level: info
+  format: json
+
+# Export spans to Google Cloud Trace. The cloudtrace exporter requires project.
+# HIPAA: spans bypass the log redactor, so any span attribute the agent records
+# must be sanitized first — raw log content, prompts, and error strings can carry
+# PHI. The agent records no PHI-bearing span attributes today.
+tracing:
+  exporter: cloudtrace
+  project: my-gcp-project

@@ -30,6 +30,7 @@ import (
 	"github.com/avivl/cloud-sre-agent/internal/llm/ollama"
 	"github.com/avivl/cloud-sre-agent/internal/llm/openai"
 	"github.com/avivl/cloud-sre-agent/internal/llm/router"
+	"github.com/avivl/cloud-sre-agent/internal/llm/stub"
 	"github.com/avivl/cloud-sre-agent/internal/obs"
 	"github.com/avivl/cloud-sre-agent/internal/pipeline"
 	"github.com/avivl/cloud-sre-agent/internal/scm"
@@ -236,6 +237,10 @@ func buildOneProvider(ctx context.Context, e config.ProviderConfig) (llm.Provide
 			Model: e.Model,
 			Host:  e.Host,
 		})
+	case config.KindStub:
+		// Stub is the NON-PRODUCTION, offline provider for dev/dogfooding/CI:
+		// no key, host, or network call. It ignores the model field.
+		return stub.New(), nil
 	default:
 		return nil, fmt.Errorf("unsupported llm provider kind %q", e.Kind)
 	}

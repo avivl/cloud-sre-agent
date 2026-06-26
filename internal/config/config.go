@@ -66,12 +66,15 @@ type TracingConfig struct {
 
 // LLM provider kinds. "gemini" is Google's Gemini (via Vertex AI or the
 // Developer API); "openai" and "anthropic" are external third-party services;
-// "ollama" is a local/self-hosted model server (no external disclosure).
+// "ollama" is a local/self-hosted model server (no external disclosure);
+// "stub" is a NON-PRODUCTION, offline provider for dev/dogfooding/CI that makes
+// no network call and contacts no external service.
 const (
 	KindGemini    = "gemini"
 	KindOpenAI    = "openai"
 	KindAnthropic = "anthropic"
 	KindOllama    = "ollama"
+	KindStub      = "stub"
 )
 
 // DefaultOllamaHost is the Ollama daemon address used when an ollama provider's
@@ -494,6 +497,12 @@ func (l LLMConfig) validateProvider(where string, p ProviderConfig) error {
 		// (BAA) gate. The model is already validated above; host defaults to
 		// DefaultOllamaHost when empty, so there is nothing further to check.
 		return nil
+	case KindStub:
+		// Stub is a NON-PRODUCTION, offline provider: it makes no network call
+		// and discloses nothing to any third party, so it is EXEMPT from the
+		// external-disclosure (BAA) gate. It needs no key or host; the model
+		// field is already validated above and is otherwise ignored.
+		return nil
 	case KindOpenAI, KindAnthropic:
 		if !l.AllowsExternal() {
 			return fmt.Errorf("config: %s: provider %q is an external third-party service; prompt content "+
@@ -505,7 +514,7 @@ func (l LLMConfig) validateProvider(where string, p ProviderConfig) error {
 		}
 		return nil
 	default:
-		return fmt.Errorf("config: %s: provider kind %q must be %q, %q, %q, or %q", where, p.Kind, KindGemini, KindOpenAI, KindAnthropic, KindOllama)
+		return fmt.Errorf("config: %s: provider kind %q must be %q, %q, %q, %q, or %q", where, p.Kind, KindGemini, KindOpenAI, KindAnthropic, KindOllama, KindStub)
 	}
 }
 

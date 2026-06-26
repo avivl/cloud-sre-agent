@@ -1,182 +1,116 @@
-# Deployment Guide
+# Deployment
 
-This guide provides instructions for deploying the Cloud SRE Agent to various cloud platforms and container orchestration systems. While Google Cloud Run is the recommended deployment target for its simplicity and scalability, the provided `Dockerfile` allows for deployment to other platforms like Google Kubernetes Engine (GKE), Amazon ECS, Azure Container Instances, or custom environments.
+The Cloud SRE Agent runs on GCP as a Cloud Run **worker pool**. A worker pool
+has no HTTP ingress — it pulls work and runs the agent loop until SIGTERM, which
+is exactly the agent's shape: it pulls error logs from a Pub/Sub subscription
+and processes incidents. This is why deployment uses
+`gcloud beta run worker-pools deploy`, not `gcloud run deploy`.
 
-## Deployment Flow Overview
+See also: [ARCHITECTURE.md](ARCHITECTURE.md), [CONFIGURATION.md](CONFIGURATION.md),
+[HIPAA.md](HIPAA.md), and the [README](../README.md).
 
-The deployment process follows a straightforward containerization and Cloud Run deployment pattern:
+## The log flow
 
-```mermaid
-flowchart TB
-    subgraph "Development Environment"
-        DEV[Developer Workstation]
-        CODE[Application Code]
-        CONFIG[config.yaml]
-        DOCKER[Dockerfile]
-    end
-    
-    subgraph "Build Process"
-        BUILD[Docker Build]
-        IMAGE[Docker Image]
-        TAG[Tag Image]
-    end
-    
-    subgraph "Cloud Platform"
-        GCR[Container Registry]
-        CR[Cloud Service]
-        SM[Secret Manager]
-        LOGS[Cloud Logging]
-    end
-    
-    subgraph "External Services"
-        GITHUB[GitHub Repository]
-        AI[AI Models]
-        MSG[Messaging Service]
-    end
-    
-    DEV --> BUILD
-    CODE --> BUILD
-    CONFIG --> BUILD
-    DOCKER --> BUILD
-    
-    BUILD --> IMAGE
-    IMAGE --> TAG
-    TAG --> GCR
-    
-    GCR --> CR
-    SM --> |Secrets| CR
-    CR --> LOGS
-    
-    CR <--> |Pull Requests| GITHUB
-    CR <--> |Model Inference| AI
-    CR <--> |Log Messages| MSG
-    
-    classDef dev fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    classDef build fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    classDef gcp fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
-    classDef external fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    
-    class DEV,CODE,CONFIG,DOCKER dev
-    class BUILD,IMAGE,TAG build
-    class GCR,CR,SM,LOGS gcp
-    class GITHUB,AI,MSG external
+```
+your services ──> Cloud Logging
+                      │  sink filter: severity>=ERROR
+                      v
+                 Pub/Sub topic ──> Pub/Sub PULL subscription
+                                        │  (the agent pulls from here)
+                                        v
+                              Cloud Run worker pool (sre-agent)
+                                        │  Gemini via Vertex AI
+                                        v
+                              triage -> analysis -> remediation
 ```
 
-## Containerization with Docker
+A Cloud Logging sink routes `severity>=ERROR` entries to a Pub/Sub topic. The
+agent subscribes to a **pull** subscription on that topic (a push subscription
+would need an HTTP endpoint, which a worker pool does not have). Each delivered
+`LogEntry` is parsed into a `domain.LogEvent` and fed to the detector.
 
-The agent is packaged as a Docker image, ensuring a consistent and isolated runtime environment. The `Dockerfile` defines the steps to build this image:
+## Prerequisites
 
-```dockerfile
-FROM python:3.12-slim-bookworm
+- `gcloud` authenticated to a project you can deploy to.
+- Docker, for building and pushing the image.
+- A project with billing enabled.
 
-WORKDIR /app
+## Step 1 — provision infrastructure
 
-# Install uv
-RUN pip install uv
+`infra/gcloud_setup.sh` is idempotent: each create is guarded so re-runs
+converge. It is fully parameterized — no hardcoded project.
 
-# Copy dependency files
-COPY pyproject.toml /app/
-
-# Install dependencies
-RUN uv sync
-
-# Copy application code
-COPY . /app
-
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
-CMD ["python", "main.py"]
+```sh
+PROJECT_ID=my-proj REGION=us-central1 ./infra/gcloud_setup.sh
 ```
 
-**Key aspects of the Dockerfile:**
-*   **Base Image:** Uses `python:3.12-slim-bookworm` for a lightweight Python environment.
-*   **Dependency Management:** Installs `uv` and then uses `uv sync` to install project dependencies defined in `pyproject.toml`.
-*   **Non-Root User:** Creates a dedicated `appuser` and switches to it for security, following best practices for containerized applications.
-*   **Entrypoint:** Sets `CMD ["python", "main.py"]` to run the main application script when the container starts.
+It provisions:
 
-## Deployment to Cloud Platforms
+1. **Enabled APIs** — logging, pubsub, aiplatform (Vertex AI), artifactregistry,
+   run, cloudtrace.
+2. **Artifact Registry repo** (`AR_REPO`, default `sre-agent`) for the image.
+3. **Pub/Sub topic** (`LOG_TOPIC_NAME`, default `sre-agent-logs`).
+4. **Pub/Sub pull subscription** (`LOG_SUBSCRIPTION_NAME`, default
+   `sre-agent-logs-sub`) with a 600s ack deadline and 7d retention.
+5. **Dedicated service account** (`AGENT_SA_ID`, default `sre-agent-sa`) with
+   least-privilege roles: `pubsub.subscriber`, `logging.logWriter`,
+   `cloudtrace.agent`, `aiplatform.user`.
+6. **Cloud Logging sink** (`LOG_SINK_NAME`, default `sre-agent-error-sink`,
+   filter `severity>=ERROR`) routed to the topic, plus a `pubsub.publisher`
+   grant to the sink's auto-provisioned writer identity so routing can deliver.
 
-The Cloud SRE Agent can be deployed to various cloud platforms. Google Cloud Run is recommended for its event-driven nature (triggered by messaging services), automatic scaling (including scaling to zero when idle), and fully managed environment.
+All names, the region, the sink filter, ack deadline, and retention are
+overridable via env vars (see the script header).
 
-The `deploy.sh` script automates the process of building the Docker image, pushing it to a container registry, and deploying it to your chosen cloud platform.
+## Step 2 — build, push, deploy
 
-### `deploy.sh` Script
+`deploy.sh` builds the image, pushes it to Artifact Registry, and deploys the
+worker pool. Use the same `PROJECT_ID`/`REGION` as setup.
 
-```bash
-#!/bin/bash
-
-# Exit immediately if a command exits with a non-zero status.
-set -e
-
-# --- Configuration ---
-PROJECT_ID="your-project-id" # Replace with your project ID
-SERVICE_NAME="cloud-sre-agent"
-REGION="us-central1" # Choose your desired region
-IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
-
-# --- Build Docker Image ---
-echo "Building Docker image: ${IMAGE_NAME}"
-docker build -t "${IMAGE_NAME}" .
-
-# --- Push Docker Image to Container Registry ---
-echo "Pushing Docker image to container registry..."
-docker push "${IMAGE_NAME}"
-
-# --- Deploy to Cloud Platform ---
-echo "Deploying to cloud platform..."
-gcloud run deploy "${SERVICE_NAME}" \
-  --image "${IMAGE_NAME}" \
-  --region "${REGION}" \
-  --platform "managed" \
-  --allow-unauthenticated \
-  --project "${PROJECT_ID}" \
-  --set-env-vars="GITHUB_TOKEN=${GITHUB_TOKEN}" \
-  # Add other environment variables as needed, e.g., for specific service configs
-  # --set-env-vars="SERVICE_CONFIG_PATH=/app/config/config.yaml" \
-  # --update-secrets="GITHUB_TOKEN=GITHUB_TOKEN:latest" # Example for Secret Manager
-
-echo "Deployment to Cloud Run complete!"
-echo "Service URL: $(gcloud run services describe ${SERVICE_NAME} --region ${REGION} --project ${PROJECT_ID} --format='value(status.url)')"
+```sh
+PROJECT_ID=my-proj REGION=us-central1 ./deploy.sh
 ```
 
-### Deployment Steps
+It:
 
-1.  **Configure `deploy.sh`:**
-    Open `deploy.sh` and replace `"your-project-id"` with your actual project ID. Adjust `REGION` if desired.
+1. Configures Docker auth for `<region>-docker.pkg.dev`.
+2. Builds the image (multi-stage `Dockerfile`: static binary on
+   `distroless/static:nonroot`, no shell, runs as UID 65532, no exposed port).
+   The tag defaults to the short git SHA, else `latest`.
+3. Pushes to Artifact Registry.
+4. Deploys the worker pool with `gcloud beta run worker-pools deploy`, running
+   as the agent service account, and sets the LLM wiring via env overrides:
+   `SRE_LLM__BACKEND=vertex`, `SRE_LLM__PROJECT=<project>`,
+   `SRE_LLM__LOCATION=<region>`.
 
-2.  **Ensure cloud CLI is configured:**
-    Make sure your cloud command-line tool (e.g., `gcloud`, `aws`, `az`) is authenticated and configured for the correct project. You can verify this with the appropriate CLI command.
+There are no `--port` or `--allow-unauthenticated` flags — a worker pool has no
+ingress.
 
-3.  **Set GitHub Token Environment Variable:**
-    Before running the script, ensure your `GITHUB_TOKEN` environment variable is set in your shell. This token is passed to the Cloud Run service as an environment variable.
-    ```bash
-    export GITHUB_TOKEN="YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
-    ```
+## Configuration in the image
 
-4.  **Execute the deployment script:**
-    ```bash
-    chmod +x deploy.sh # Make the script executable
-    ./deploy.sh
-    ```
+The `Dockerfile` bakes the in-repo `config.yaml` into `/app/config.yaml` as a
+default so the image runs standalone. Override per environment **without
+rebuilding** by either:
 
-    The script will perform the following actions:
-    *   Build a Docker image locally based on the `Dockerfile`.
-    *   Tag the image with your project's container registry path.
-    *   Push the built Docker image to the container registry.
-    *   Deploy the image to your chosen cloud platform, creating a service or updating an existing one. It configures the service to allow unauthenticated invocations (necessary for messaging service push subscriptions, or if you plan to trigger it via HTTP) and sets the `GITHUB_TOKEN` environment variable within the cloud service instance.
+- **(a)** setting `SRE_`-prefixed env vars (what `deploy.sh` does — sets the
+  Vertex backend/project/location), or
+- **(b)** mounting a config file and passing `--config /etc/sre-agent/config.yaml`.
 
-5.  **Verify Deployment:**
-    After the script completes, it will output the service URL. You can also check the cloud platform console to verify the deployment status.
+To point the agent at the pull subscription in production, configure a `pubsub`
+source — either by mounting a config (option b) or by templating it in. See
+`examples/pubsub-workerpool.yaml` for the production ingestion shape (Pub/Sub
+source + Vertex AI + Cloud Trace export).
 
-## Production Considerations
+## Terraform alternative
 
-For production deployments, consider the following:
+`infra/terraform/` (`main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`)
+mirrors the `gcloud_setup.sh` provisioning declaratively for teams that prefer
+IaC over the script.
 
-*   **Secrets Management:** Instead of passing `GITHUB_TOKEN` directly as an environment variable in the `deploy.sh` script, use your cloud platform's secret management service (e.g., Google Secret Manager, AWS Secrets Manager, Azure Key Vault) to securely store and retrieve sensitive credentials at runtime.
-*   **Service Account Permissions:** Ensure the cloud service account has only the necessary IAM permissions (e.g., messaging service subscriber, AI model user, cloud logging viewer, and permissions to interact with GitHub if using a GitHub App or fine-grained PAT).
-*   **Resource Allocation:** Adjust CPU and memory limits for your cloud service based on expected workload and model inference requirements.
-*   **Concurrency:** Configure the maximum number of concurrent requests a single container instance can handle.
-*   **Monitoring and Alerting:** Set up cloud monitoring and logging alerts for the service to track its health and performance.
-*   **CI/CD Pipeline:** Integrate the build and deployment process into a Continuous Integration/Continuous Deployment (CI/CD) pipeline (e.g., Cloud Build, GitHub Actions, AWS CodePipeline, Azure DevOps) for automated and consistent deployments.
+## HIPAA note
+
+The deploy keeps the BAA-eligible Vertex AI backend (`aiplatform.user` on the
+agent SA) as the LLM. Raw Pub/Sub message payloads are never logged — only
+message IDs and counts. Any span attribute the agent records must be sanitized
+first (spans bypass the log redactor); the agent records none today. See
+[HIPAA.md](HIPAA.md).
