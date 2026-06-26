@@ -1,0 +1,430 @@
+// Package app is the composition root for the Cloud SRE Agent run loop. It
+// hand-wires the spine — log sources -> threshold detector -> triage/analysis/
+// remediation pipeline -> delivery target — and drives the consume loop until
+// the sources are exhausted or the context is cancelled. There is no DI
+// framework: every dependency is constructed explicitly here.
+//
+// Run builds from already-validated config (config.Validate enforces the BAA,
+// external-disclosure, and value gates before Run is called); the builders in
+// this package only translate validated config into live adapters and never
+// re-validate. API keys are read from the environment at wire time and never
+// stored in config nor logged.
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"os"
+	"sync"
+
+	"github.com/avivl/cloud-sre-agent/internal/config"
+	"github.com/avivl/cloud-sre-agent/internal/detect"
+	"github.com/avivl/cloud-sre-agent/internal/domain"
+	"github.com/avivl/cloud-sre-agent/internal/ingest"
+	"github.com/avivl/cloud-sre-agent/internal/ingest/file"
+	"github.com/avivl/cloud-sre-agent/internal/ingest/pubsub"
+	"github.com/avivl/cloud-sre-agent/internal/llm"
+	"github.com/avivl/cloud-sre-agent/internal/llm/anthropic"
+	"github.com/avivl/cloud-sre-agent/internal/llm/gemini"
+	"github.com/avivl/cloud-sre-agent/internal/llm/ollama"
+	"github.com/avivl/cloud-sre-agent/internal/llm/openai"
+	"github.com/avivl/cloud-sre-agent/internal/llm/router"
+	"github.com/avivl/cloud-sre-agent/internal/llm/stub"
+	"github.com/avivl/cloud-sre-agent/internal/pipeline"
+	"github.com/avivl/cloud-sre-agent/internal/scm"
+	"github.com/avivl/cloud-sre-agent/internal/scm/github"
+	"github.com/avivl/cloud-sre-agent/internal/scm/gitlab"
+	"github.com/avivl/cloud-sre-agent/internal/scm/local"
+	"github.com/avivl/cloud-sre-agent/internal/security"
+	"github.com/avivl/cloud-sre-agent/internal/validate"
+)
+
+// Environment variables holding the external providers' API keys. They are
+// read at wire time and never stored in config nor logged.
+const (
+	openAIAPIKeyEnv    = "OPENAI_API_KEY"
+	anthropicAPIKeyEnv = "ANTHROPIC_API_KEY"
+)
+
+// Run hand-wires the dependencies and drives the consume loop. The caller owns
+// context cancellation (signal handling), logger/tracer setup, and config
+// loading; Run constructs the provider/target/validator/pipeline/detector/
+// sources from the already-validated config and runs the loop until the context
+// is cancelled or all sources drain. Sources are closed before Run returns.
+func Run(ctx context.Context, cfg config.Config, log *slog.Logger) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// LLM provider. Vertex AI (BAA-eligible) is the default; the consumer Gemini
+	// Developer API is gated behind an explicit opt-in in config.Validate.
+	provider, err := BuildProvider(ctx, cfg.LLM)
+	if err != nil {
+		return fmt.Errorf("build llm provider: %w", err)
+	}
+
+	// Delivery target: local patch directory or a GitHub pull request.
+	target, err := BuildTarget(cfg, log)
+	if err != nil {
+		return fmt.Errorf("build delivery target: %w", err)
+	}
+
+	// Sanitizer is the prompt-input scrubber and also the last line of defense
+	// for any error string we log (errors may echo log content / PHI).
+	sanitizer := security.New()
+
+	// Code validator gating the generated patch before delivery.
+	validator := BuildValidator(cfg, log)
+
+	// Pipeline: sanitizer + selected validator wired through the ports.
+	pipe, err := pipeline.New(provider, sanitizer, target,
+		pipeline.WithLogger(log),
+		pipeline.WithValidator(validator),
+	)
+	if err != nil {
+		return fmt.Errorf("build pipeline: %w", err)
+	}
+
+	// Detector with default thresholds.
+	detector := detect.New(detect.Config{})
+
+	// Build the configured log sources (file and pubsub).
+	sources, err := BuildSources(ctx, cfg, log)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		for _, s := range sources {
+			_ = s.Close()
+		}
+	}()
+
+	log.Info("sre-agent starting",
+		"provider", cfg.LLM.Provider,
+		"backend", cfg.LLM.Backend,
+		"model", cfg.LLM.Model,
+		"llm_chain", provider.Name(),
+		"fallbacks", len(cfg.LLM.Fallbacks),
+		"sources", len(sources),
+		"output_dir", cfg.Output.Dir,
+		"target", target.Name(),
+		"validator", cfg.Validator,
+	)
+
+	return consume(ctx, sources, detector, pipe, sanitizer, log)
+}
+
+// BuildProvider constructs the configured LLM provider chain — primary first,
+// then each fallback — and wraps it in a router that tries them in order. The
+// router satisfies llm.Provider, so the pipeline is unaware of the chain.
+// config.Validate has already enforced the BAA and external-disclosure gates,
+// so reaching the gemini-api / openai / anthropic branches means the operator
+// opted in explicitly. API keys are read from the environment here and never
+// logged.
+func BuildProvider(ctx context.Context, l config.LLMConfig) (llm.Provider, error) {
+	entries := l.Providers()
+	built := make([]llm.Provider, 0, len(entries))
+	for i, e := range entries {
+		p, err := buildOneProvider(ctx, e)
+		if err != nil {
+			if i == 0 {
+				return nil, fmt.Errorf("primary provider (%s): %w", e.Kind, err)
+			}
+			return nil, fmt.Errorf("fallback provider %d (%s): %w", i-1, e.Kind, err)
+		}
+		built = append(built, p)
+	}
+	return router.New(built[0], built[1:]...)
+}
+
+// buildOneProvider constructs a single provider adapter from one config entry,
+// reading the relevant API key from the environment and erroring clearly if a
+// selected provider's key is unset. Keys are never logged.
+func buildOneProvider(ctx context.Context, e config.ProviderConfig) (llm.Provider, error) {
+	switch e.Kind {
+	case config.KindGemini:
+		switch e.Backend {
+		case config.BackendVertex:
+			return gemini.New(ctx, gemini.Config{
+				Model:    e.Model,
+				Backend:  gemini.BackendVertexAI,
+				Project:  e.Project,
+				Location: e.Location,
+			})
+		case config.BackendGeminiAPI:
+			apiKey := os.Getenv(e.APIKeyEnv)
+			if apiKey == "" {
+				return nil, fmt.Errorf("gemini api key not set: env %s is empty", e.APIKeyEnv)
+			}
+			return gemini.New(ctx, gemini.Config{
+				Model:   e.Model,
+				Backend: gemini.BackendGeminiAPI,
+				APIKey:  apiKey,
+			})
+		default:
+			return nil, fmt.Errorf("unsupported gemini backend %q", e.Backend)
+		}
+	case config.KindOpenAI:
+		apiKey := os.Getenv(openAIAPIKeyEnv)
+		if apiKey == "" {
+			return nil, fmt.Errorf("openai api key not set: env %s is empty", openAIAPIKeyEnv)
+		}
+		return openai.New(openai.Config{
+			Model:   e.Model,
+			APIKey:  apiKey,
+			BaseURL: e.BaseURL,
+		})
+	case config.KindAnthropic:
+		apiKey := os.Getenv(anthropicAPIKeyEnv)
+		if apiKey == "" {
+			return nil, fmt.Errorf("anthropic api key not set: env %s is empty", anthropicAPIKeyEnv)
+		}
+		return anthropic.New(anthropic.Config{
+			Model:   e.Model,
+			APIKey:  apiKey,
+			BaseURL: e.BaseURL,
+		})
+	case config.KindOllama:
+		// Ollama is local/self-hosted: no API key, host defaults inside the
+		// adapter when empty.
+		return ollama.New(ollama.Config{
+			Model: e.Model,
+			Host:  e.Host,
+		})
+	case config.KindStub:
+		// Stub is the NON-PRODUCTION, offline provider for dev/dogfooding/CI:
+		// no key, host, or network call. It ignores the model field.
+		return stub.New(), nil
+	default:
+		return nil, fmt.Errorf("unsupported llm provider kind %q", e.Kind)
+	}
+}
+
+// BuildTarget selects the delivery target from config. "local" writes patches
+// to the output directory; "github" opens a real pull request and "gitlab" a
+// real merge request, each reading its access token from an environment
+// variable (GITHUB_TOKEN / GITLAB_TOKEN) at wire time — the token is never
+// stored in config and never logged. config.Validate has already enforced that
+// the github target carries owner+repo and the gitlab target carries project.
+func BuildTarget(cfg config.Config, log *slog.Logger) (scm.PRTarget, error) {
+	switch cfg.Target {
+	case config.TargetLocal:
+		return local.New(cfg.Output.Dir), nil
+	case config.TargetGitHub:
+		token := os.Getenv(config.GitHubTokenEnv)
+		if token == "" {
+			return nil, fmt.Errorf("github target selected but %s is empty", config.GitHubTokenEnv)
+		}
+		t, err := github.New(github.Config{
+			Owner:      cfg.GitHub.Owner,
+			Repo:       cfg.GitHub.Repo,
+			BaseBranch: cfg.GitHub.BaseBranch,
+			Token:      token,
+		})
+		if err != nil {
+			return nil, err
+		}
+		// Token is held only inside the HTTP transport; log non-sensitive routing.
+		log.Info("github delivery target configured",
+			"owner", cfg.GitHub.Owner,
+			"repo", cfg.GitHub.Repo,
+			"base_branch", cfg.GitHub.BaseBranch,
+		)
+		return t, nil
+	case config.TargetGitLab:
+		token := os.Getenv(config.GitLabTokenEnv)
+		if token == "" {
+			return nil, fmt.Errorf("gitlab target selected but %s is empty", config.GitLabTokenEnv)
+		}
+		t, err := gitlab.New(gitlab.Config{
+			Project:    cfg.GitLab.Project,
+			BaseBranch: cfg.GitLab.BaseBranch,
+			BaseURL:    cfg.GitLab.BaseURL,
+			Token:      token,
+		})
+		if err != nil {
+			return nil, err
+		}
+		// Token is held only inside the HTTP transport; log non-sensitive routing.
+		log.Info("gitlab delivery target configured",
+			"project", cfg.GitLab.Project,
+			"base_branch", cfg.GitLab.BaseBranch,
+			"base_url", cfg.GitLab.BaseURL,
+		)
+		return t, nil
+	default:
+		return nil, fmt.Errorf("unsupported delivery target %q", cfg.Target)
+	}
+}
+
+// BuildValidator selects the code validator from config. "none" is the no-op
+// default; "local" gates Go patches with the local toolchain. config.Validate
+// has already rejected unknown values, so the default arm should be unreachable;
+// it falls back to the no-op validator rather than panic.
+func BuildValidator(cfg config.Config, log *slog.Logger) pipeline.CodeValidator {
+	switch cfg.Validator {
+	case config.ValidatorLocal:
+		return validate.New(validate.WithLogger(log))
+	case config.ValidatorNone:
+		return pipeline.NoopValidator{}
+	default:
+		return pipeline.NoopValidator{}
+	}
+}
+
+// BuildSources constructs the ingest.LogSource list from config. The file and
+// pubsub source types are supported; an unknown type is a configuration error.
+// On a partial failure, sources already built are closed before returning.
+func BuildSources(ctx context.Context, cfg config.Config, log *slog.Logger) ([]ingest.LogSource, error) {
+	var sources []ingest.LogSource
+	closeAll := func() {
+		for _, s := range sources {
+			_ = s.Close()
+		}
+	}
+	for i, sc := range cfg.Sources {
+		switch sc.Type {
+		case config.SourceTypeFile:
+			fs, err := file.New(file.Config{Path: sc.Path, Watch: true, Logger: log})
+			if err != nil {
+				closeAll()
+				return nil, fmt.Errorf("build source[%d] (file): %w", i, err)
+			}
+			sources = append(sources, fs)
+		case config.SourceTypePubSub:
+			ps, err := pubsub.New(ctx, pubsub.Config{
+				ProjectID:      sc.ProjectID,
+				SubscriptionID: sc.SubscriptionID,
+				Logger:         log,
+			})
+			if err != nil {
+				closeAll()
+				return nil, fmt.Errorf("build source[%d] (pubsub): %w", i, err)
+			}
+			sources = append(sources, ps)
+		default:
+			closeAll()
+			return nil, fmt.Errorf("build source[%d]: unsupported type %q", i, sc.Type)
+		}
+	}
+	return sources, nil
+}
+
+// consume fans the sources' event streams into the detector and runs the
+// pipeline on each emitted incident. It returns when the context is cancelled
+// or all source streams close.
+func consume(ctx context.Context, sources []ingest.LogSource, detector *detect.Detector, pipe *pipeline.Pipeline, sanitizer *security.Sanitizer, log *slog.Logger) error {
+	merged, err := merge(ctx, sources)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info("sre-agent stopping", "reason", ctx.Err())
+			return nil
+		case ev, ok := <-merged:
+			if !ok {
+				// A closed channel means either a clean drain or a source that
+				// died. Distinguish them so a fatal source error (e.g. Pub/Sub
+				// permission revoked) exits non-zero instead of looking like a
+				// healthy shutdown to the worker pool.
+				if e := sourcesErr(sources); e != nil {
+					log.Error("sre-agent: source failed",
+						"error_type", fmt.Sprintf("%T", e),
+						"error_detail", sanitizer.Sanitize(e.Error()))
+					return fmt.Errorf("source failed: %w", e)
+				}
+				log.Info("sre-agent: all sources exhausted")
+				return nil
+			}
+			if inc := detector.Observe(ev); inc != nil {
+				handleIncident(ctx, pipe, *inc, sanitizer, log)
+			}
+		}
+	}
+}
+
+// sourcesErr returns the first terminal error reported by any source exposing
+// an Err() method (e.g. the Pub/Sub source). A non-nil result means a source
+// died rather than draining cleanly.
+func sourcesErr(sources []ingest.LogSource) error {
+	for _, s := range sources {
+		if e, ok := s.(interface{ Err() error }); ok {
+			if err := e.Err(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// handleIncident runs one incident through the pipeline, logging the outcome.
+// A non-actionable incident is a benign skip, not an error. A failure is logged
+// with its error type and a sanitized error string, never the raw error (which
+// may have wrapped log content / PHI).
+func handleIncident(ctx context.Context, pipe *pipeline.Pipeline, inc domain.Incident, sanitizer *security.Sanitizer, log *slog.Logger) {
+	res, err := pipe.Process(ctx, inc)
+	switch {
+	case errors.Is(err, pipeline.ErrNotActionable):
+		log.Info("incident not actionable, skipped", "incident_id", inc.ID)
+	case err != nil:
+		log.Error("incident processing failed",
+			"incident_id", inc.ID,
+			"error_type", fmt.Sprintf("%T", err),
+			"error_detail", sanitizer.Sanitize(err.Error()),
+		)
+	default:
+		log.Info("incident remediated", "incident_id", inc.ID, "ref", res.Ref.ID, "url", res.Ref.URL)
+	}
+}
+
+// merge starts every source's stream and fans them into a single channel,
+// closed when all upstream channels close or the context is cancelled.
+func merge(ctx context.Context, sources []ingest.LogSource) (<-chan domain.LogEvent, error) {
+	chans := make([]<-chan domain.LogEvent, 0, len(sources))
+	for _, s := range sources {
+		ch, err := s.Stream(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("start source %q: %w", s.Name(), err)
+		}
+		chans = append(chans, ch)
+	}
+	return fanIn(ctx, chans), nil
+}
+
+// fanIn merges multiple event channels into one. The output channel closes when
+// every input closes or the context is cancelled.
+func fanIn(ctx context.Context, ins []<-chan domain.LogEvent) <-chan domain.LogEvent {
+	out := make(chan domain.LogEvent)
+	var wg sync.WaitGroup
+	wg.Add(len(ins))
+	for _, in := range ins {
+		go func(in <-chan domain.LogEvent) {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case ev, ok := <-in:
+					if !ok {
+						return
+					}
+					select {
+					case out <- ev:
+					case <-ctx.Done():
+						return
+					}
+				}
+			}
+		}(in)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
