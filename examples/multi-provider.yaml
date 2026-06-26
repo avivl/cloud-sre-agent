@@ -1,0 +1,61 @@
+# Cloud SRE Agent — multi-provider chain with external fallbacks.
+#
+# Demonstrates the PRIMARY + ordered FALLBACKS router and the allow_external
+# HIPAA gate. Each generation tries the primary first; on failure the router
+# advances through the fallbacks in order.
+#
+#   primary   : gemini  (Vertex AI, HIPAA-covered)
+#   fallback 1: gemini  (Vertex AI, a larger model)
+#   fallback 2: openai  (EXTERNAL third party — gated)
+#   fallback 3: anthropic (EXTERNAL third party — gated)
+#
+# HIPAA gate: openai and anthropic are NOT covered by Google's BAA. Selecting
+# either (even as a fallback) is REFUSED at startup unless you explicitly opt in
+# with `allow_external: true` (set below) or the env var SRE_ALLOW_EXTERNAL_LLM=1.
+# Opting in PRESUMES you have a signed BAA with the vendor AND zero-data-retention
+# enabled — the code cannot verify ZDR, so that is on you.
+#
+# Requires (only when the external fallbacks are actually reached):
+#   - Ambient GCP credentials (ADC) for the Vertex providers.
+#   - OPENAI_API_KEY and ANTHROPIC_API_KEY in the environment (read at startup,
+#     never stored here or logged).
+#
+# Run:  sre-agent run --config examples/multi-provider.yaml
+
+sources:
+  - type: file
+    path: ./testdata/sample.log
+
+llm:
+  provider: gemini
+  model: gemini-2.5-flash
+  backend: vertex
+  project: my-gcp-project
+  location: us-central1
+
+  # Auditable opt-in required because the chain below names external providers.
+  allow_external: true
+
+  fallbacks:
+    - kind: gemini
+      model: gemini-2.5-pro
+      backend: vertex
+      project: my-gcp-project
+      location: us-central1
+    - kind: openai
+      model: gpt-4o-mini
+      # base_url: https://my-compatible-gateway.example.com   # optional host override
+    - kind: anthropic
+      model: claude-opus-4-8
+
+output:
+  dir: ./out
+target: local
+validator: none
+
+log:
+  level: info
+  format: json
+
+tracing:
+  exporter: none

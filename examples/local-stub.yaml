@@ -1,0 +1,37 @@
+# Cloud SRE Agent — fully offline example (NO credentials required).
+#
+# Demonstrates the minimal end-to-end spine that runs with zero setup:
+#   filesystem log source -> stub LLM provider -> local delivery.
+# The stub provider is NON-PRODUCTION: it makes no network call and contacts
+# no external service, returning deterministic, schema-valid canned output so
+# the whole pipeline flows offline. Use this for dev, dogfooding, and CI.
+#
+# Run:  sre-agent run --config examples/local-stub.yaml
+# No API keys, GCP project, or tokens are needed.
+
+# Filesystem source: tails a local file or glob of Cloud Logging LogEntry JSON.
+sources:
+  - type: file
+    path: ./testdata/sample.log
+
+# Stub LLM: EXEMPT from the allow_external gate; needs no key, host, or real
+# model. DO NOT use in production — output is canned, not reasoned.
+llm:
+  provider: stub
+  model: stub
+
+# Local delivery: write the patch plus a JSON metadata sidecar under output.dir.
+output:
+  dir: ./out
+target: local
+
+# Accept every patch — no toolchain gating. Good for offline demos.
+validator: none
+
+log:
+  level: info
+  format: text
+
+# No span export. Keeps the run self-contained.
+tracing:
+  exporter: none

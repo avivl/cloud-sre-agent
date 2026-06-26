@@ -1,122 +1,36 @@
-# Error Handling Integration Examples
+# Example configurations
 
-This directory contains examples demonstrating how the advanced error handling system is integrated into the source control providers.
+Ready-to-run config files for the Cloud SRE Agent. Each validates against the
+current config schema (`internal/config`). Point the agent at one with:
 
-## Examples
-
-### `error_handling_integration_example.py`
-
-A comprehensive example that demonstrates:
-
-- **Error Handling Factory**: How to create error handling components for different providers
-- **Provider Integration**: How GitHub, GitLab, and Local providers automatically initialize error handling
-- **Advanced Features**: Monitoring dashboard and self-healing capabilities
-- **Configuration**: How to configure error handling for different providers
-
-## Running the Examples
-
-```bash
-# Run the integration example
-python examples/error_handling_integration_example.py
+```
+sre-agent run --config examples/<file>.yaml
 ```
 
-## What You'll See
+All configs use the `SRE_` env-override convention (double underscore for
+nesting, e.g. `SRE_LLM__MODEL=gemini-2.5-pro` overrides `llm.model`). API keys
+and delivery tokens are NEVER stored in config — they are read from the
+environment at startup and never logged.
 
-The example will show:
+| Example | Demonstrates | Credentials needed |
+|---|---|---|
+| `local-stub.yaml` | Fully offline spine: filesystem source -> `stub` LLM -> local delivery. The stub provider is NON-PRODUCTION and returns deterministic, schema-valid output so the pipeline runs end to end with no LLM. | None |
+| `gemini-vertex.yaml` | Production default: Gemini via Vertex AI (BAA-eligible) with GitHub PR delivery and local Go patch validation. | GCP ADC (Vertex AI) + `GITHUB_TOKEN` |
+| `multi-provider.yaml` | Primary + ordered fallbacks router and the `allow_external` HIPAA gate: Gemini primary, Gemini fallback, then external OpenAI and Anthropic fallbacks (gated). | GCP ADC; `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` only if the external fallbacks are reached |
+| `pubsub-workerpool.yaml` | Production ingestion: Pub/Sub log source + Gemini on Vertex + Cloud Trace span export. | GCP ADC (Pub/Sub subscriber, Vertex AI, Cloud Trace write) |
 
-1. ✅ Error handling components being created for each provider
-2. ✅ Providers automatically initializing error handling systems
-3. ✅ Circuit breakers, retry managers, and fallback strategies being set up
-4. ✅ Monitoring dashboard providing system health and metrics
-5. ✅ Self-healing capabilities analyzing errors and triggering recovery actions
+## Credential and gate notes
 
-## Key Integration Points
-
-### 1. Automatic Initialization
-
-All providers automatically initialize error handling when they start up:
-
-```python
-# In GitHubProvider._setup_client()
-self._initialize_error_handling("github", self.repo_config.error_handling.model_dump())
-
-# In GitLabProvider.initialize()
-self._initialize_error_handling("gitlab", self.repo_config.error_handling.model_dump())
-
-# In LocalProvider.__init__()
-self._initialize_error_handling("local", self.repo_config.error_handling.model_dump())
-```
-
-### 2. Operation Wrapping
-
-All critical operations are wrapped with error handling:
-
-```python
-async def get_file_content(self, path: str, ref: Optional[str] = None) -> str:
-    return await self._execute_with_error_handling(
-        "get_file_content", self.operations.get_file_content, path, ref
-    )
-```
-
-### 3. Graceful Fallback
-
-If advanced error handling fails to initialize, providers fall back to legacy error handling:
-
-```python
-async def _execute_with_error_handling(self, operation_name: str, func: Callable, *args, **kwargs) -> Any:
-    if self._error_handling_components:
-        # Use advanced error handling system
-        resilient_manager = self._error_handling_components.get("resilient_manager")
-        if resilient_manager:
-            return await resilient_manager.execute_resilient_operation(
-                operation_name, func, *args, **kwargs
-            )
-    
-    # Fall back to legacy resilient manager
-    return await self._execute_resilient_operation(operation_name, func, *args, **kwargs)
-```
-
-## Configuration
-
-Each provider can have custom error handling configuration:
-
-```python
-config = GitHubRepositoryConfig(
-    name="my-repo",
-    owner="my-org",
-    token="ghp_...",
-    error_handling=ErrorHandlingConfig(
-        circuit_breaker={
-            "failure_threshold": 5,
-            "recovery_timeout": 30,
-            "expected_exception": "Exception"
-        },
-        retry={
-            "max_attempts": 3,
-            "base_delay": 1.0,
-            "max_delay": 10.0,
-            "exponential_base": 2.0
-        }
-    )
-)
-```
-
-## Monitoring
-
-The monitoring dashboard provides real-time insights:
-
-- System health status
-- Error handling metrics
-- Circuit breaker states
-- Recovery action status
-
-## Self-Healing
-
-The self-healing system automatically:
-
-- Analyzes error patterns
-- Triggers recovery actions
-- Monitors system health
-- Provides fallback strategies
-
-This integration ensures that all source control operations are resilient, monitored, and self-healing!
+- **Stub** (`local-stub.yaml`) is the only example that runs with zero setup. It
+  is NON-PRODUCTION — output is canned, not reasoned. Do not ship it.
+- **Vertex AI** is the HIPAA-covered Google backend and requires `project` +
+  `location`. It is not an external third party, so it needs no opt-in.
+- **`allow_external`** (`multi-provider.yaml`) is a mandatory, auditable opt-in
+  for OpenAI/Anthropic — external services NOT covered by Google's BAA. Set
+  `llm.allow_external: true` (as the example does) or `SRE_ALLOW_EXTERNAL_LLM=1`.
+  Opting in presumes a signed BAA with the vendor and zero-data-retention
+  enabled; the code cannot verify ZDR.
+- **GitHub / GitLab tokens** are read from `GITHUB_TOKEN` / `GITLAB_TOKEN`.
+- **Cloud Trace** (`pubsub-workerpool.yaml`) requires `tracing.project`; any span
+  attribute the agent records must be sanitized first (raw log content can carry
+  PHI). The agent records none today.
