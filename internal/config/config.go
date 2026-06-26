@@ -20,11 +20,14 @@ const EnvPrefix = "SRE_"
 
 // Config is the full, typed agent configuration.
 type Config struct {
-	Sources []SourceConfig `koanf:"sources"`
-	LLM     LLMConfig      `koanf:"llm"`
-	Output  OutputConfig   `koanf:"output"`
-	Log     LogConfig      `koanf:"log"`
-	Tracing TracingConfig  `koanf:"tracing"`
+	Sources   []SourceConfig `koanf:"sources"`
+	LLM       LLMConfig      `koanf:"llm"`
+	Output    OutputConfig   `koanf:"output"`
+	Target    string         `koanf:"target"`
+	Validator string         `koanf:"validator"`
+	GitHub    GitHubConfig   `koanf:"github"`
+	Log       LogConfig      `koanf:"log"`
+	Tracing   TracingConfig  `koanf:"tracing"`
 }
 
 // Source type identifiers.
@@ -98,6 +101,36 @@ type OutputConfig struct {
 	Dir string `koanf:"dir"`
 }
 
+// Delivery target identifiers. "local" writes patches to the output directory;
+// "github" opens a real pull request.
+const (
+	TargetLocal  = "local"
+	TargetGitHub = "github"
+)
+
+// Code validator identifiers. "none" accepts every patch (NoopValidator);
+// "local" gates patches with the local Go toolchain.
+const (
+	ValidatorNone  = "none"
+	ValidatorLocal = "local"
+)
+
+// GitHubTokenEnv is the environment variable the GitHub target reads its access
+// token from at wire time. The token is NEVER stored in config and never logged.
+const GitHubTokenEnv = "GITHUB_TOKEN"
+
+// GitHubConfig configures the GitHub delivery target. The access token is not
+// stored here — it is read from the GitHubTokenEnv environment variable when the
+// target is constructed.
+type GitHubConfig struct {
+	// Owner is the repository owner (user or org). Required for the github target.
+	Owner string `koanf:"owner"`
+	// Repo is the repository name. Required for the github target.
+	Repo string `koanf:"repo"`
+	// BaseBranch is the branch PRs target and branch from; defaults to "main".
+	BaseBranch string `koanf:"base_branch"`
+}
+
 // LogConfig controls observability output.
 type LogConfig struct {
 	// Level is one of debug, info, warn, error.
@@ -118,9 +151,12 @@ func Default() Config {
 			Backend:  BackendVertex,
 			Location: "us-central1",
 		},
-		Output:  OutputConfig{Dir: "./out"},
-		Log:     LogConfig{Level: "info", Format: "json"},
-		Tracing: TracingConfig{Exporter: TracingExporterNone},
+		Output:    OutputConfig{Dir: "./out"},
+		Target:    TargetLocal,
+		Validator: ValidatorNone,
+		GitHub:    GitHubConfig{BaseBranch: "main"},
+		Log:       LogConfig{Level: "info", Format: "json"},
+		Tracing:   TracingConfig{Exporter: TracingExporterNone},
 	}
 }
 
@@ -133,15 +169,18 @@ func Load(path string) (Config, error) {
 	// default (at least one must be configured).
 	d := Default()
 	if err := k.Load(confmap.Provider(map[string]any{
-		"llm.provider":     d.LLM.Provider,
-		"llm.model":        d.LLM.Model,
-		"llm.api_key_env":  d.LLM.APIKeyEnv,
-		"llm.backend":      d.LLM.Backend,
-		"llm.location":     d.LLM.Location,
-		"output.dir":       d.Output.Dir,
-		"log.level":        d.Log.Level,
-		"log.format":       d.Log.Format,
-		"tracing.exporter": d.Tracing.Exporter,
+		"llm.provider":       d.LLM.Provider,
+		"llm.model":          d.LLM.Model,
+		"llm.api_key_env":    d.LLM.APIKeyEnv,
+		"llm.backend":        d.LLM.Backend,
+		"llm.location":       d.LLM.Location,
+		"output.dir":         d.Output.Dir,
+		"target":             d.Target,
+		"validator":          d.Validator,
+		"github.base_branch": d.GitHub.BaseBranch,
+		"log.level":          d.Log.Level,
+		"log.format":         d.Log.Format,
+		"tracing.exporter":   d.Tracing.Exporter,
 	}, "."), nil); err != nil {
 		return Config{}, fmt.Errorf("config: seed defaults: %w", err)
 	}
@@ -193,6 +232,12 @@ func (c Config) Validate() error {
 	if c.Output.Dir == "" {
 		return fmt.Errorf("config: output.dir is required")
 	}
+	if err := c.validateTarget(); err != nil {
+		return err
+	}
+	if err := c.validateValidator(); err != nil {
+		return err
+	}
 	switch c.Log.Format {
 	case "", "json", "text":
 	default:
@@ -202,6 +247,34 @@ func (c Config) Validate() error {
 		return err
 	}
 	return nil
+}
+
+// validateTarget enforces the delivery target selector. "local" is the default
+// and needs nothing; "github" requires owner and repo (the token is read from
+// the environment at wire time, not validated here).
+func (c Config) validateTarget() error {
+	switch c.Target {
+	case TargetLocal:
+		return nil
+	case TargetGitHub:
+		if c.GitHub.Owner == "" || c.GitHub.Repo == "" {
+			return fmt.Errorf("config: target %q requires github.owner and github.repo", c.Target)
+		}
+		return nil
+	default:
+		return fmt.Errorf("config: target %q must be %q or %q", c.Target, TargetLocal, TargetGitHub)
+	}
+}
+
+// validateValidator enforces the code-validator selector: "none" (default) or
+// "local".
+func (c Config) validateValidator() error {
+	switch c.Validator {
+	case ValidatorNone, ValidatorLocal:
+		return nil
+	default:
+		return fmt.Errorf("config: validator %q must be %q or %q", c.Validator, ValidatorNone, ValidatorLocal)
+	}
 }
 
 // validate checks one source's required fields by type.

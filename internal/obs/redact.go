@@ -26,6 +26,10 @@ var sensitiveKeys = map[string]struct{}{
 	"error":  {},
 	"err":    {},
 	"source": {},
+	// error_detail/error_type carry sanitized-but-error-derived strings;
+	// redacting them as well is a defense-in-depth backstop.
+	"error_detail": {},
+	"error_type":   {},
 }
 
 // redactAttr is a slog ReplaceAttr hook that masks the value of any attribute

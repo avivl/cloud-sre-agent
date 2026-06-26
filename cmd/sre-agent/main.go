@@ -27,8 +27,11 @@ import (
 	"github.com/avivl/cloud-sre-agent/internal/llm/gemini"
 	"github.com/avivl/cloud-sre-agent/internal/obs"
 	"github.com/avivl/cloud-sre-agent/internal/pipeline"
+	"github.com/avivl/cloud-sre-agent/internal/scm"
+	"github.com/avivl/cloud-sre-agent/internal/scm/github"
 	"github.com/avivl/cloud-sre-agent/internal/scm/local"
 	"github.com/avivl/cloud-sre-agent/internal/security"
+	"github.com/avivl/cloud-sre-agent/internal/validate"
 )
 
 func main() {
@@ -92,15 +95,24 @@ func run(parent context.Context, cfg config.Config, out io.Writer) error {
 		return fmt.Errorf("build llm provider: %w", err)
 	}
 
-	// Delivery target: local patch directory.
-	target := local.New(cfg.Output.Dir)
+	// Delivery target: local patch directory or a GitHub pull request.
+	target, err := buildTarget(cfg, log)
+	if err != nil {
+		return fmt.Errorf("build delivery target: %w", err)
+	}
 
 	// Sanitizer is the prompt-input scrubber and also the last line of defense
 	// for any error string we log (errors may echo log content / PHI).
 	sanitizer := security.New()
 
-	// Pipeline: sanitizer + noop validator wired through the ports.
-	pipe, err := pipeline.New(provider, sanitizer, target, pipeline.WithLogger(log))
+	// Code validator gating the generated patch before delivery.
+	validator := buildValidator(cfg, log)
+
+	// Pipeline: sanitizer + selected validator wired through the ports.
+	pipe, err := pipeline.New(provider, sanitizer, target,
+		pipeline.WithLogger(log),
+		pipeline.WithValidator(validator),
+	)
 	if err != nil {
 		return fmt.Errorf("build pipeline: %w", err)
 	}
@@ -125,6 +137,8 @@ func run(parent context.Context, cfg config.Config, out io.Writer) error {
 		"model", cfg.LLM.Model,
 		"sources", len(sources),
 		"output_dir", cfg.Output.Dir,
+		"target", target.Name(),
+		"validator", cfg.Validator,
 	)
 
 	return consume(ctx, sources, detector, pipe, sanitizer, log)
@@ -155,6 +169,56 @@ func buildProvider(ctx context.Context, l config.LLMConfig) (*gemini.Provider, e
 		})
 	default:
 		return nil, fmt.Errorf("unsupported llm backend %q", l.Backend)
+	}
+}
+
+// buildTarget selects the delivery target from config. "local" writes patches
+// to the output directory; "github" opens a real pull request, reading its
+// access token from the GITHUB_TOKEN environment variable at wire time — the
+// token is never stored in config and never logged. config.Validate has already
+// enforced that the github target carries owner+repo.
+func buildTarget(cfg config.Config, log *slog.Logger) (scm.PRTarget, error) {
+	switch cfg.Target {
+	case config.TargetLocal:
+		return local.New(cfg.Output.Dir), nil
+	case config.TargetGitHub:
+		token := os.Getenv(config.GitHubTokenEnv)
+		if token == "" {
+			return nil, fmt.Errorf("github target selected but %s is empty", config.GitHubTokenEnv)
+		}
+		t, err := github.New(github.Config{
+			Owner:      cfg.GitHub.Owner,
+			Repo:       cfg.GitHub.Repo,
+			BaseBranch: cfg.GitHub.BaseBranch,
+			Token:      token,
+		})
+		if err != nil {
+			return nil, err
+		}
+		// Token is held only inside the HTTP transport; log non-sensitive routing.
+		log.Info("github delivery target configured",
+			"owner", cfg.GitHub.Owner,
+			"repo", cfg.GitHub.Repo,
+			"base_branch", cfg.GitHub.BaseBranch,
+		)
+		return t, nil
+	default:
+		return nil, fmt.Errorf("unsupported delivery target %q", cfg.Target)
+	}
+}
+
+// buildValidator selects the code validator from config. "none" is the no-op
+// default; "local" gates Go patches with the local toolchain. config.Validate
+// has already rejected unknown values, so the default arm should be unreachable;
+// it falls back to the no-op validator rather than panic.
+func buildValidator(cfg config.Config, log *slog.Logger) pipeline.CodeValidator {
+	switch cfg.Validator {
+	case config.ValidatorLocal:
+		return validate.New(validate.WithLogger(log))
+	case config.ValidatorNone:
+		return pipeline.NoopValidator{}
+	default:
+		return pipeline.NoopValidator{}
 	}
 }
 
